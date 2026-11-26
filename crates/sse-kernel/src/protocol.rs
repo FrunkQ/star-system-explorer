@@ -723,6 +723,33 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         asks: Vec<serde_json::Value>,
     },
+    /// The Hazard map's reading (exotic objects design 3.8, XO18): how close
+    /// a ship can go round a dangerous body, along a stated line ("equator",
+    /// the magnetic equator's plane, or "poles"). Rows in three tones (heat,
+    /// trapped belts, air, climbing out), safe bands, the Park and Dive
+    /// marks with the hazard that set each, the totals for a pass, the
+    /// belts' dose beside each moon, fixed marks. Each of `asks` is
+    /// `sse_hazard::Ask` (body, its belts from `read_field`, ship, line);
+    /// or `fixture: "solar-system"` with `body` ("jupiter" or "sol/jupiter")
+    /// reads a measured Solar System body. With no ship, the stated stock
+    /// ship stands in.
+    HazardMap {
+        #[serde(default)]
+        #[ts(type = "unknown[]")]
+        asks: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        ship: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        line: Option<String>,
+    },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
     /// description), each with a line-of-sight speed; the observer gives the
@@ -2594,6 +2621,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::HazardMap { .. } => "hazard_map",
             Request::ReadScattering { .. } => "read_scattering",
             Request::ReadShadowLight { .. } => "read_shadow_light",
             Request::DescribeStar { .. } => "describe_star",
@@ -2859,6 +2887,11 @@ pub fn ops() -> Vec<OpInfo> {
             "effect_at_range",
             Cost::Light,
             "per ask: a few formula blocks, and four bisections of about eighty steps for the rings",
+        ),
+        o(
+            "hazard_map",
+            Cost::Light,
+            "per ask: a 400-point line of a few blocks each, and up to 400 passes of 2000 steps for the Dive",
         ),
         o(
             "read_spectrum",
@@ -3583,6 +3616,11 @@ pub enum Response {
     EffectsAtRange {
         #[ts(type = "unknown[]")]
         effects: Vec<serde_json::Value>,
+    },
+    /// `hazard_map`: each of `maps` is `sse_hazard::HazardMap`.
+    HazardMaps {
+        #[ts(type = "unknown[]")]
+        maps: Vec<serde_json::Value>,
     },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {

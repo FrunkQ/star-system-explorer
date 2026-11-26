@@ -1815,6 +1815,20 @@
         "range": null
       },
       {
+        "description": "share of a belt's equatorial dose left at a magnetic latitude along its field line",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.latitude_share",
+        "range": null
+      },
+      {
         "description": "the Kennel-Petschek cap on a belt: normalisation C of the spectrum C E^-1 per cm² s sr keV",
         "dim": [
           0,
@@ -3481,6 +3495,188 @@
         "range": null
       },
       {
+        "description": "angle a light ray is turned by a mass, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.bend_angle",
+        "range": null
+      },
+      {
+        "description": "rate of a clock held still near a mass, against a far clock",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.clock_rate_hovering",
+        "range": null
+      },
+      {
+        "description": "rate of a clock on a circular orbit near a mass, against a far clock",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.clock_rate_orbiting",
+        "range": null
+      },
+      {
+        "description": "distance from a mass's centre (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.distance",
+        "range": null
+      },
+      {
+        "description": "angular radius of the Einstein ring of a lens, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.einstein_angle",
+        "range": null
+      },
+      {
+        "description": "GM/c², the length every strong-gravity distance scales with (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.gravitational_radius",
+        "range": null
+      },
+      {
+        "description": "radius of a black hole's surface of no return (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.horizon_radius",
+        "range": null
+      },
+      {
+        "description": "distance at which a light ray would pass a mass if space were flat (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.impact_parameter",
+        "range": null
+      },
+      {
+        "description": "innermost stable circular orbit round a compact mass, a disc's inner edge (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.last_stable_orbit_radius",
+        "range": null
+      },
+      {
+        "description": "radius at which light circles a compact mass (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.photon_orbit_radius",
+        "range": null
+      },
+      {
+        "description": "angular radius of a black hole's shadow as a viewer sees it, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.shadow_angle",
+        "range": null
+      },
+      {
+        "description": "a black hole's spin a = Jc/GM², 0 to 1; signed where the direction of an orbit or ray matters",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.spin",
+        "range": null
+      },
+      {
+        "description": "difference in pull per metre along the line to a mass (s-2)",
+        "dim": [
+          0,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.tide_per_metre",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,
@@ -4965,6 +5161,48 @@
           0
         ],
         "id": "nebula.zone_share",
+        "range": null
+      },
+      {
+        "description": "distance of a viewer from a body's centre (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "observer.distance",
+        "range": null
+      },
+      {
+        "description": "distance from a viewer to a bending mass (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "observer.lens_distance",
+        "range": null
+      },
+      {
+        "description": "distance from a viewer to the light behind a bending mass (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "observer.source_distance",
         "range": null
       },
       {
