@@ -58,3 +58,19 @@ Still to come: an immature highland soil (the RELAB LSCC page also lists Apollo 
 | H2S ice, silicate, alkali haze, iron (sulphide is troilite, above) | giant bands | (not yet searched) | |
 | SO2 frost; S8 and the red S3/S4 allotropes; N2 ice and CH4 ice in the visible; CO2 frost (Hansen 2005); a space-weathering darkening rule (Hapke 2001, npFe0) | plumes | Lab sources Trumbo et al. 2022 (PSJ, HST/STIS Io map) uses, read from the summary of its reference list and still to be checked: SO2 frost, Hapke et al. 1981 (Icarus 47, 361, about 77 K); alpha-S8, Gradie et al. 1980 (Icarus 44, 373); beta-S8 and quenched melt, Moses and Nash 1991 (Icarus 89, 277); S4 and red sulphur glass, Meyer et al. 1972 (J. Mol. Spectrosc. 42, 335; ACS Adv. Chem. 110, 53); Na2S, Nash and Nelson 1979 (Nature 280, 763); S2O, Hapke and Graham 1989 (Icarus 79, 47). Also Grundy and Schmitt 1998 (CH4), Grundy 1993 (N2). | Queued as MP34. Where only reflectance is published, use a `{lambda_nm, reflectance, grain size}` table. |
 | Mature lunar regolith reflectance and the npFe0 darkening rule (hematite, basalt, limonite and magnetite are on the sheet, above) | plumes thread, to replace the typed `cover.colours` in packs/base-surface | Morris et al. 2000 and Bell et al. 2000 (Pathfinder spectra); Christensen et al. 2000 (hematite); RELAB spectra; Hapke 2001 (npFe0) | Queued as MP34. The plumes thread's order of use: tholin, ferric oxide, SO2 and sulphur, N2 and CH4 ice, then the rest. |
+
+## MP36: sulphur and Venus cloud acid (26 Nov 2026)
+
+Read in Claude's built-in browser on the owner's PC, because the cloud's network refuses these hosts. Every number below was copied from a data file that was opened, not from memory or a figure. All rows are `unverified` until the citation check reads them.
+
+| Id | What | Source |
+|---|---|---|
+| mixture `sulfur` (the kernel's stain id) | `optical.reflectance`, absolute reflectance of reagent sulphur powder, 25 printed rows from 301 to 2496 nm. Dark below 400 nm (about 0.04), the yellow edge from 410 to 500 nm, about 0.83 from 650 to 800 nm. | USGS splib05a, Sulfur GDS94 Reagent (Clark et al. 2003, OFR 03-395), file `ASCII/M/sulfur_gds94.6449.asc`. Its XRD matches JCPDS 8-247, which is orthorhombic alpha S8. The file gives no grain size or viewing geometry. |
+| mixtures `sulfuric-acid-75`, `sulfuric-acid-84p5` | `optical.refractive_index` n,k at 300 K from 702 to 2500 nm, every row with a measured k (72 and 71 rows). `optical.n_visible` holds the real index only, from 360 to 702 nm, because the paper prints no k there. | Palmer and Williams 1975, Appl. Opt. 14, 208. The ARIA `.ri` files and HITRAN's `palmer_williams_h2so4.dat` were both read, and they agree. |
+
+### Still unsourced (searched 26 Nov)
+
+- **SO2 frost.** Hapke et al. 1981 (Icarus 47, 361) is the visible lab spectrum that Trumbo et al. 2022 use. Its abstract says only that reflectance has "a sharp drop at 0.32 μm". The full text sits behind Elsevier. The SSHADE SO2 data are mid-infrared only: Trotta and Schmitt 1996 cover 400 to 2700 cm-1, and Nash and Betts 1995 cover 2.3 to 23 µm. The USGS splib05a has no SO2 frost. Next places to look: splib07a on ScienceBase (it blocks automated browsers behind a bot check) or RELAB.
+- **Beta-S8, quenched red sulphur, S4.** Moses and Nash 1991 and Meyer et al. 1972 are paywalled. Trumbo 2022 gives no data location for them.
+- **`jupiter-chromophore`.** Carlson et al. 2016 (INAF open copy) and Sromovsky et al. 2017 (arXiv 1706.02779) show k only in figures (Carlson Fig. 3A, Sromovsky Fig. 6B). n = 1.4 is assumed in both. Neither paper names a data file.
+- **`nh4sh`.** ARIA and HITRAN have no NH4SH and no ammonia ice. The only n values found so far are model assumptions (Sato 2013: 1.85).

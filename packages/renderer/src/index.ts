@@ -132,7 +132,7 @@ export { baumbach, CORONA_DECADES, CORONA_REFERENCES, coronaShape, cycleActivity
 export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
-export { trueStill, type TrueStill } from "./true-still.ts";
+export { trueStill, trueTurn, type TrueStill, type TrueTurn } from "./true-still.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
 // Hot things glow in Visible and plumes above the limb (third audit R10 to R12, track TRUE).
 export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";
@@ -149,6 +149,8 @@ export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "
 export type { StainFact, StainHue } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
+export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
+export type { CometActivity } from "./comet.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";

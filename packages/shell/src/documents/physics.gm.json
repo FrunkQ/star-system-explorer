@@ -29,6 +29,7 @@
       "scale": "system",
       "group": "understand",
       "label": "The physics",
+      "desks": ["explore", "build"],
       "order": 2,
       "hint": "The flows that work out every derived value"
     },
@@ -36,6 +37,7 @@
       "scale": "world",
       "group": "understand",
       "label": "The physics",
+      "desks": ["explore", "build"],
       "order": 2,
       "hint": "The flows that work out every derived value"
     },

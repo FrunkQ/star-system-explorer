@@ -28,6 +28,7 @@
     "moon"
    ],
    "desks": [
+    "explore",
     "build"
    ],
    "box": {
@@ -198,6 +199,7 @@
     "moon"
    ],
    "desks": [
+    "explore",
     "build"
    ],
    "reach": [
@@ -219,6 +221,7 @@
    },
    "refs": [],
    "desks": [
+    "explore",
     "build"
    ],
    "waits": "the cutaway and the heat and redox strips are ED9 part 2"
@@ -242,6 +245,7 @@
     "earth"
    ],
    "desks": [
+    "explore",
     "build"
    ]
   },
@@ -264,6 +268,7 @@
     "venus"
    ],
    "desks": [
+    "explore",
     "build"
    ]
   },
@@ -294,6 +299,7 @@
     "mercury"
    ],
    "desks": [
+    "explore",
     "build"
    ],
    "box": {
@@ -368,6 +374,7 @@
     "sun"
    ],
    "desks": [
+    "explore",
     "build"
    ]
   },
@@ -394,6 +401,7 @@
     "sun"
    ],
    "desks": [
+    "explore",
     "build"
    ],
    "box": {

@@ -4,6 +4,7 @@
 // the bodies that orbit it, at log-scaled display distances.
 import { KM_PER_AU, constant, fact, parentOf, primaryOf, subjectName, type Mark, type PlayerScene, type PlayerSubject, type SceneSubject, type SystemScene } from "../../../ui-contract/src/index.ts";
 import type { FrameNode } from "../../../renderer/src/index.ts";
+import type { SmallSample } from "./small-sample.ts";
 
 export interface Body3D {
   id: string;
@@ -25,8 +26,15 @@ export interface Body3D {
   tilt_rad?: number;
   /** Its mass, kg, when known: a ringed world's moons cut gaps and edges in its rings by it (renderer ring-structure.ts). */
   mass_kg?: number;
+  /** A belt member the kernel resolved for True (small-sample.ts): drawn in its own shape, with its coma and tails when active. */
+  small?: SmallSample;
   /** Where the kernel places it from its parent's centre (metres, the system's frame), when placed by date: shadows in True. */
   r_m?: [number, number, number];
+}
+
+/** A resolved belt member as a body round the star, where its orbit puts it now (True only). */
+export function fromSmallSample(s: SmallSample, star: string): Body3D {
+  return { id: s.address, parent: star, name: s.name, a_m: s.r_m, phase_deg: s.longitude_deg, phase_known: true, mark: null, radius_m: s.radius_m, small: s };
 }
 
 export interface Ring3D {

@@ -16,9 +16,9 @@
 -->
 <script lang="ts">
   import { onDestroy, tick, untrack } from "svelte";
-  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
-  import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { constant, SEEN_ELEVATION, thermalColour, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { rangeRingLines } from "./range-rings.ts";
   import { bandLines, hasChildren, layout, layoutReal, moonsOf, placedBodies, shellDots, type Band3D, type Body3D } from "./bodies.ts";
@@ -330,7 +330,8 @@
   // Readable: sizes for reading. Real: the body's own radius on the frame's scale, but never under a pixel or two at
   // the camera's distance, so a world too small to show as a disc still shows as a point of light (fudge register).
   const sizeOf = (b: Body3D, centre: boolean) => {
-    if (!realScale) return centre ? 0.55 : 0.13 * Math.max(0.6, (b.mark?.size ?? 5) / 5);
+    // A belt member is drawn smaller than a world (it is one), but large enough to see its shape when chosen.
+    if (!realScale) return centre ? 0.55 : b.small ? 0.06 : 0.13 * Math.max(0.6, (b.mark?.size ?? 5) / 5);
     const n = lay?.nodes.find((x) => x.id === b.id);
     const far = n ? Math.hypot(n.local[0] - cam.eye[0], n.local[1] - cam.eye[1], n.local[2] - cam.eye[2]) : Math.hypot(...cam.eye);
     const px = (2 * Math.tan(cam.fovY / 2) * far) / Math.max(1, h);
@@ -605,6 +606,56 @@
       .join(" "),
   );
 
+  // Comets in True (renderer comet.ts): an active belt member's coma and tails, from the kernel's activity, in the
+  // star's frame. A tail grain s metres down the tail and w across it is drawn where the frame's own scale puts a point
+  // that far from the star: s along the line from the star (tails point away from it), w as the angle it makes there,
+  // so a tail bends the same way the orbits do on the log scale. Bodies are drawn larger than their scale in Readable,
+  // so the coma is drawn at least three of the nucleus's drawn radii round it (fudge register, COMET-coma).
+  const COMA_PICTURE = 64;
+  const cometLooks = $derived.by(() => {
+    if (!isTrue || !lay || centreId !== root) return [];
+    const starRgb = hexLinear(thermalColour(starK));
+    const out: { name: string; act: CometActivity; coma: { key: string; version: number; texture: { width: number; data: Uint8ClampedArray }; radius: number; at: [number, number, number] }; dots: { points: [number, number, number][]; colour: string; glow: number; size: number }[] }[] = [];
+    for (const b of lay.placed) {
+      const act = b.small?.activity;
+      if (!isActive(act) || !(b.a_m && b.a_m > 0)) continue;
+      const n = lay.nodes.find((x) => x.id === b.id);
+      if (!n) continue;
+      const r = b.a_m;
+      const phi = Math.atan2(n.local[1], n.local[0]);
+      const place = (s: number, w: number, h: number): [number, number, number] => {
+        const R = r + s;
+        const d = Math.min(14, lay!.dist(R));
+        return [d * Math.cos(phi + w / R), d * Math.sin(phi + w / R), d * (h / R)];
+      };
+      const tails = cometTails(act);
+      const toPts = (g: Float64Array) => {
+        const pts: [number, number, number][] = [];
+        for (let i = 0; i < g.length; i += 3) pts.push(place(g[i]!, g[i + 1]!, g[i + 2]!));
+        return pts;
+      };
+      const strength = showing(act.dust_kg_s);
+      const drawn = sizeOf(b, false);
+      const radius = Math.max(3 * drawn, lay.dist(r) * ((act.coma_km * 1000) / r));
+      out.push({
+        name: b.name,
+        act,
+        coma: { key: `coma|${b.id}|${Math.round(strength * 1000)}`, version: 1, texture: comaPicture(starRgb, strength, COMA_PICTURE), radius, at: [n.local[0], n.local[1], n.local[2]] },
+        dots: [
+          ...(tails.dust.length ? [{ points: toPts(tails.dust), colour: linearCss(starRgb), glow: 0.5 * tails.dustShows, size: 1.5 }] : []),
+          ...(tails.ion.length ? [{ points: toPts(tails.ion), colour: linearCss(ionColour(act)), glow: 0.5 * tails.ionShows, size: 1.5 }] : []),
+        ],
+      });
+    }
+    return out;
+  });
+  const smallShown = $derived(isTrue ? shown.filter((b) => b.small) : []);
+  const smallNote = $derived(
+    smallShown.length
+      ? [`Belt members drawn in their own shapes, as the kernel resolves them: the largest, 10th, 100th and 1000th largest of each belt, where their orbits put them (${smallShown.length} shown).`, ...cometLooks.map((c) => cometNote(c.name, c.act))].join(" ")
+      : "",
+  );
+
   let canvas2d: HTMLCanvasElement | undefined = $state();
   $effect(() => {
     if (!lay || w === 0 || h === 0) return;
@@ -652,7 +703,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });
@@ -676,8 +727,8 @@
           items,
           rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...(hud ? rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.kind === "even odds" ? faint : accent })) : []), ...magRings(fieldOut, fieldIn, faint)],
           // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
-          dots: trueBand === "visible" && !mag ? beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST, size: 1.5 })) : [],
-          glows: halo ? [halo] : [],
+          dots: trueBand === "visible" && !mag ? [...beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST, size: 1.5 })), ...cometLooks.flatMap((c) => c.dots.map((d) => ({ ...d, points: d.points.map(rel) })))] : [],
+          glows: [...(halo ? [halo] : []), ...(trueBand === "visible" && !mag ? cometLooks.map((c) => ({ ...c.coma, rel: rel(c.coma.at) })) : [])],
           forward: f,
           up: u,
           fovY: cam.fovY,
@@ -953,6 +1004,7 @@
     {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
     {#if isTrue && using === "gpu" && ringNote && trueBand === "visible" && !mag}<span data-true-rings={ringed.length} data-true-belts={beltHazes.length}>{ringNote}</span>{/if}
     {#if using === "gpu" && plumeNotes}<span data-true-plumes>{plumeNotes}</span>{/if}
+    {#if isTrue && using === "gpu" && smallNote && trueBand === "visible" && !mag}<span data-true-small={smallShown.length} data-true-comets={cometLooks.length}>{smallNote}</span>{/if}
     {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
     {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
     {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)} data-star-ejections={starNow?.ejections.length ?? 0} data-star-calm={calm ? "yes" : "no"}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}. {(starNow?.words ?? []).join(" ")}</span>{/if}

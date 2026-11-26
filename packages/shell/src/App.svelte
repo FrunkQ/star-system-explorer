@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -98,6 +98,7 @@
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { EXOTIC_SCREENS } from "./screens.exotic.ts";
+  import { FORMATION_SCREENS } from "./screens.formation.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
   import { ATLAS_SCREENS } from "./atlas/screens.atlas.ts";
   import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
@@ -134,7 +135,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(FORMATION_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -193,7 +194,6 @@
     const packs = st ? [...st.base, ...(st.campaign ? [st.campaign] : [])] : [];
     return (need: string) => stackProvides(packs, need);
   });
-  const rail = $derived(railOf(SCREENS, railScale, stackHas));
   // A screen opened from elsewhere (a why?'s "Open the flow", a key) takes the rail to a scale that lists it.
   $effect(() => {
     const on = scalesOf(SCREENS[ws.screen] ?? {});
@@ -671,6 +671,9 @@
   $effect(() => {
     ws.desk = desk;
   });
+  // The rail at the scale in view, for this desk (TM2, three desks design section 5): an entry not listed on the desk
+  // in front is left off; Find and the desk switch still reach it.
+  const rail = $derived(railOf(SCREENS, railScale, stackHas, desk));
   $effect(() => {
     ws.players_online = share?.state.players ?? 0;
     ws.sendLanding = (show) => {
@@ -1755,7 +1758,7 @@
       </label>
     {/if}
     <!-- How much (2.4): the depth. On a phone it lives in More. -->
-    <div class="depth-bar"><Segmented label="Depth" value={depth} options={DEPTHS} onchange={chooseDepth} slide /></div>
+    {#if partShows("depth", desk)}<div class="depth-bar"><Segmented label="Depth" value={depth} options={DEPTHS} onchange={chooseDepth} slide /></div>{/if}
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
@@ -1763,7 +1766,7 @@
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
-          <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
+          <div class="depth-more" data-always={partShows("depth", desk) ? undefined : ""}><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
             <!-- The edit group reads its words and keys from the one action list (ui-contract actions.ts), as the object menu does. -->
             <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>{moreWords("copy")} {selName ?? "a body"} <kbd>{moreKey("copy")}</kbd></button>
@@ -1813,6 +1816,7 @@
         {toSystem}
         toGalaxy={() => toScale("galaxy")}
         {toWorkshop}
+        workshopDoor={partShows("workshop-door", desk)}
       />
       {#key ws.screen}
       <Stage
@@ -1868,7 +1872,7 @@
     {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
-      <span>Seat: {session.seat.label}</span>
+      {#if partShows("status-line", desk, "seat")}<span>Seat: {session.seat.label}</span>{/if}
       <span class="kept">
         <span data-kept={savedAt ?? ""} title={saveProblem ?? "The campaign is kept in this browser after every change"}>{saveProblem ? "Not kept" : savedWords}</span>
       </span>
@@ -1891,7 +1895,7 @@
         />
       {/if}
       <!-- The engine's own numbers by depth (2.4): Science adds the device tier, Engine the kernel and the hashes. -->
-      {#if depth !== "curious"}
+      {#if depth !== "curious" && partShows("status-line", desk, "engine")}
         <span class="engine-line">
           {#if depth === "engine"}<span>kernel {status.kernel}</span>{/if}
           <span title="Measured capability tier of this device">tier {status.tier}</span>
@@ -2237,6 +2241,10 @@
     gap: 12px;
     padding: 8px 16px;
     border-bottom: var(--sse-line) solid var(--sse-rule);
+  }
+  /* On Run the dial is not in the bar, so More carries it at every width (three desks design 3.1). */
+  .depth-more[data-always] {
+    display: flex;
   }
   .depth-more .depth-k {
     font-size: 12px;

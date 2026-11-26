@@ -10,8 +10,8 @@
 // on all three desks. No screen tests the desk by name: `tests/ui/desk-ledger.test.ts` counts the places that still do,
 // and the count only goes down.
 //
-// TM1 is the contract only. SHELL_PARTS says what each part does TODAY (design section 2), so nothing on screen moves;
-// TM2 gives each part its row of section 3.1 as the shell starts reading `shows()` for it, one small change at a time.
+// SHELL_PARTS says what each part does on screen now. TM1 wrote it as the shell was (design section 2); TM2 moves each
+// row to its section 3.1 desks as the shell starts reading `partShows()` for it, one small change at a time.
 
 import type { PartControl } from "./part-controls.ts";
 
@@ -47,11 +47,11 @@ export interface DeskDoc {
 
 /**
  * The three shipped desks. The hints are the switch's words today; `writes` and `time` are the accepted design's
- * answers. Today the shell reads `writes` only as Build arms editing ("campaign"); TM3 and TM4 make the other answers
- * true on screen.
+ * answers. The shell reads `writes` as Build arms editing ("campaign"); on Explore ("try") the handles and grips are live
+ * and the first change opens a what-if by itself (`deskTries`, TM4); TM3 makes the time answers true on screen.
  */
 export const SHIPPED_DESKS: readonly DeskDoc[] = [
-  { schema: DESK_SCHEMA, id: "explore", label: "Explore", key: "V", hint: "Look around: nothing changes by accident (V)", line: "Try anything, nothing is kept.", writes: "try", time: "look" },
+  { schema: DESK_SCHEMA, id: "explore", label: "Explore", key: "V", hint: "Look around and try anything: nothing is kept by accident (V)", line: "Try anything, nothing is kept.", writes: "try", time: "look" },
   { schema: DESK_SCHEMA, id: "build", label: "Build", key: "E", hint: "Change things: values edit, bodies drag, undo and redo (E)", line: "What you change is the campaign.", writes: "campaign", time: "set", lens: "building" },
   { schema: DESK_SCHEMA, id: "run", label: "Run", key: "R", hint: "At the table: what players know, their screens and requests (R)", line: "The picture, the place and the clock.", writes: "play", time: "clock", lens: "running" },
 ];
@@ -68,6 +68,19 @@ export function deskDoc(id: Desk): DeskDoc {
 /** Whether a desk's changes go into the campaign (today: whether the chart is armed for editing). */
 export function deskKeeps(id: Desk): boolean {
   return deskDoc(id).writes === "campaign";
+}
+
+/**
+ * Whether a desk's changes are a try (Explore, three desks TM4): its handles and grips are live, and the first change
+ * opens a what-if by itself, so nothing reaches the campaign unless "Keep it" is pressed. Left out, no desk (a player).
+ */
+export function deskTries(id: Desk | undefined): boolean {
+  return !!id && deskDoc(id).writes === "try";
+}
+
+/** Whether things can be changed on a desk at all, kept or tried (Build, Explore); Run changes only the acts of play. */
+export function deskChanges(id: Desk | undefined): boolean {
+  return !!id && deskDoc(id).writes !== "play";
 }
 
 /** Problems with a desk record; empty when it is fine. */
@@ -124,8 +137,9 @@ export interface ShellPart extends OnDesks {
 }
 
 /**
- * The shell's parts and the desks each shows on TODAY (design section 2): nothing moves in TM1. TM2 changes each row to
- * its section 3.1 desks as the shell reads it. The clock (7.3) joins with TM3. Form changes on one desk (the place line
+ * The shell's parts and the desks each shows on, as the shell draws them now. TM2a gave the rail entries their desks;
+ * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run. The rest
+ * are on every desk until their part of TM2 or TM3 (the clock joins with TM3). Form changes on one desk (the place line
  * as a stepper, the folded rail) are the shell's, not a field here.
  */
 export const SHELL_PARTS: readonly ShellPart[] = [
@@ -133,22 +147,25 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "subtitle", words: "The line under the name: the place's subtitle and the date" },
   { id: "desk-switch", words: "The desk switch: Explore, Build, Run" },
   { id: "see-as", words: "See as: the lens the chart is seen through" },
-  { id: "depth", words: "Depth: how much every card, number and Why? says" },
+  // On Run the dial leaves the bar and is in More (design 3.1); More always carries it on Run.
+  { id: "depth", words: "Depth: how much every card, number and Why? says (on Run, in More)", desks: ["explore", "build"] },
   { id: "ask", words: "Ask: Orac and Minerva" },
   { id: "more", words: "More: campaign, Workshop, help and the rest" },
   { id: "rail", words: "The instrument rail" },
+  // The Workshop changes the tool, not the universe: on Run its door is in More only (design section 5).
+  { id: "workshop-door", words: "The Workshop door at the foot of the rail (on Run, in More)", desks: ["explore", "build"] },
   { id: "view-controls", words: "View style, Seen from, Scale, HUD and Band" },
   {
     id: "tools",
     words: "The stage's tools",
     controls: [
-      { id: "select", words: "Select", kind: "button", default: true },
+      { id: "select", words: "Select", kind: "button", default: true, desks: ["explore", "build"] },
       { id: "undo", words: "Undo (also on Explore while a what-if is open)", kind: "button", default: true, desks: ["build"] },
       { id: "redo", words: "Redo (also on Explore while a what-if is open)", kind: "button", default: true, desks: ["build"] },
       { id: "copy", words: "Copy", kind: "button", default: true, desks: ["build"] },
       { id: "add", words: "Add here", kind: "button", default: true, desks: ["build"] },
       { id: "cut", words: "Cut", kind: "button", default: true, desks: ["build"] },
-      { id: "keys", words: "Keyboard shortcuts", kind: "button", default: true },
+      { id: "keys", words: "Keyboard shortcuts (the ? key still opens them on Run)", kind: "button", default: true, desks: ["explore", "build"] },
     ],
   },
   { id: "card", words: "The card for the thing selected" },
@@ -157,7 +174,16 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "ruler", words: "The time ruler, with What if and Look ahead" },
   { id: "light", words: "Light" },
   { id: "sound", words: "Sound" },
-  { id: "status-line", words: "The status line" },
+  {
+    id: "status-line",
+    words: "The status line",
+    // On Run it says whether the campaign is kept, and the table's own line; the on-air chip is in the bar (design 3.1).
+    controls: [
+      { id: "seat", words: "Who is at this screen", kind: "link", default: true, desks: ["explore", "build"] },
+      { id: "kept", words: "Whether the campaign is kept", kind: "link", default: true },
+      { id: "engine", words: "The engine's numbers, by depth", kind: "link", default: true, desks: ["explore", "build"] },
+    ],
+  },
 ];
 
 /** A shell part by id (throws on an unknown id, so a typo fails its test, not the screen). */

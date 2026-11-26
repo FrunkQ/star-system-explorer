@@ -38,7 +38,7 @@
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
-  import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
+  import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readSmallSample, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
   import { readUmbras, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
@@ -648,7 +648,36 @@
   // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
   const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
   const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
-  const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
+  // Belt members in True (render audit item 3): a few members of each belt round the star resolved by the kernel
+  // (system-3d small-sample.ts), read once per system after the worlds' surfaces (they share the kernel), GM seat only.
+  let smalls = $state<{ key: string; list: SmallSample[] } | null>(null);
+  const smallsKept = new Map<string, SmallSample[]>();
+  let smallsAsking = "";
+  $effect(() => {
+    const sys = scene.system;
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || smalls?.key === sys || smallsAsking === sys) return;
+    if (!reading || reading.done < reading.of) return;
+    const star = primaryOf(scene)?.address;
+    const belts = scene.subjects.filter((s) => s.kind === "belt" && s.shape !== "sphere" && s.band_au && (!s.parent || s.parent === star)).map((s) => ({ address: s.address, name: s.label }));
+    smallsAsking = sys;
+    untrack(() =>
+      void (async () => {
+        const kept = smallsKept.get(sys);
+        const list = kept ?? (await readSmallSample(ctx.session as unknown as SmallReader, sys, belts, () => scene.system === sys && looksTrue));
+        smallsAsking = "";
+        // Cut short (another system, or True left): nothing kept, it is asked again next time.
+        if (scene.system !== sys || !looksTrue) return;
+        smallsKept.set(sys, list);
+        smalls = { key: sys, list };
+      })(),
+    );
+  });
+  const bodies3d = $derived.by(() => {
+    if (dims !== "3d") return [];
+    const out = fromSystemScene(scene, ctx.mark);
+    const star = out.find((b) => b.parent === null)?.id;
+    return looksTrue && star && smalls?.key === scene.system ? [...out, ...smalls.list.map((s) => fromSmallSample(s, star))] : out;
+  });
   // Shadows in True (renderer eclipse-read.ts): the light each world's air bends into its shadow on its moons, and each
   // moon's on its world, read once per system and set of orbits (the places move; the distances do not).
   let umbras = $state.raw<Map<string, [number, number, number]>>(new Map());
