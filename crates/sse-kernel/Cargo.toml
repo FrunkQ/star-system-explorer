@@ -13,6 +13,7 @@ sse-flow.workspace = true
 sse-pack.workspace = true
 sse-reference.workspace = true
 sse-atoms.workspace = true
+sse-physics.workspace = true
 sse-observe = { path = "../sse-observe" }
 sse-record = { path = "../sse-record" }
 sse-trigger = { path = "../sse-trigger" }
@@ -41,6 +42,7 @@ sse-gravity = { path = "../sse-gravity" }
 sse-codes = { path = "../sse-codes" }
 sse-names = { path = "../sse-names" }
 sse-sector-io = { path = "../sse-sector-io" }
+sse-catalogue = { path = "../sse-catalogue" }
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = { version = "=12.0.1", features = ["serde-json-impl"] }

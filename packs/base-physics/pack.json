@@ -5220,6 +5220,20 @@
         "range": null
       },
       {
+        "description": "how long a molecule of a gas lasts in a quiet Sun's light at 1 AU before it is broken up or ionised",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.photo_lifetime_1au",
+        "range": null
+      },
+      {
         "description": "share of light a material's ground sends back, against a white Lambertian surface",
         "dim": [
           0,

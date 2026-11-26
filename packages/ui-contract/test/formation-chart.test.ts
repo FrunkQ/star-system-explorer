@@ -9,6 +9,7 @@ import { gmSeat } from "../src/seat.ts";
 import { formationChart, massWidth, stageAt, chartXY } from "../src/formation-chart.ts";
 import { formationOf } from "../src/formation-record.ts";
 import { howWorkedOut, storyFor, worldStory } from "../src/formation-story.ts";
+import { chartFate, fatePlan, withFate, FATE_LIMIT_MYR } from "../src/formation-fate.ts";
 import { nodeKernel } from "./node-kernel.ts";
 
 const root = new URL("../../../", import.meta.url);
@@ -109,6 +110,79 @@ test("an imported system has no formation history, and says why", async () => {
       assert.match(src.why, /^This system came from an SSE 3 save/);
     }
     assert.equal((await formationOf(s, "u:kestrel/sys:99")).kind, "failed");
+  } finally {
+    await k.close();
+  }
+});
+
+test("the star's end: a Sun-like star swells, swallows its near worlds, widens the rest, and the chart ends there", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, packs);
+    // u:kestrel/sys:5 grows a 0.74 Sun star with six worlds; u:kestrel/sys:3 a red dwarf that outlives the chart.
+    const red = await s.runFormation({ seed: "first light", system: "u:kestrel/sys:3" });
+    assert.ok(red.ok);
+    const redPlan = fatePlan(red.result, formationChart(red.result));
+    assert.equal(redPlan.kind, "outlives");
+    assert.match(redPlan.kind === "outlives" ? redPlan.words : "", /trillion years/);
+
+    const r = await s.runFormation({ seed: "first light", system: "u:kestrel/sys:5" });
+    assert.ok(r.ok);
+    const c = formationChart(r.result, { seed: "first light" });
+    const plan = fatePlan(r.result, c);
+    assert.equal(plan.kind, "ahead");
+    if (plan.kind !== "ahead") return;
+    const lasting = c.tracks.filter((t) => t.end.how === "lasts");
+    assert.equal(plan.spec.planets.length, lasting.length, "every world that lasts is aged");
+    assert.ok(plan.target_myr > plan.end_myr && plan.end_myr < FATE_LIMIT_MYR);
+    const h = await s.stateHash();
+    const la = await s.lookAhead(plan.spec, plan.target_myr);
+    assert.ok(la.ok, JSON.stringify(la));
+    if (!la.ok) return;
+    assert.ok(await s.discardBranch(la.result.branch));
+    assert.equal(await s.stateHash(), h, "looking at the star's end writes nothing");
+
+    const f = chartFate(c, plan, la.result);
+    assert.ok(f.ms_end > c.now && f.ms_end < f.end && f.end <= f.until, `${f.ms_end} ${f.end} ${f.until}`);
+    assert.equal(f.remnant, "white dwarf");
+    assert.ok(f.star.some((x) => x.r_au > 0.5), "the giant reaches out past half an AU");
+    const gone = f.worlds.filter((w) => w.engulfed !== undefined);
+    const kept = f.worlds.filter((w) => w.engulfed === undefined);
+    assert.ok(gone.length > 0 && kept.length > 0, `some swallowed (${gone.length}), some left (${kept.length})`);
+    // Swallowed worlds are the near ones, each where the star's surface reached it.
+    assert.ok(Math.max(...gone.map((w) => w.pts[0]!.a)) < Math.min(...kept.map((w) => w.pts[0]!.a)));
+    for (const w of gone) {
+      const surf = f.star.filter((x) => x.t <= w.engulfed!).pop()!;
+      assert.ok(surf.r_au >= w.pts[w.pts.length - 1]!.a * 0.5, `${w.label} is swallowed where the star is (${surf.r_au} vs ${w.pts.at(-1)!.a})`);
+    }
+    // The survivors' orbits widen as the star loses mass: a(after) / a(before) is about M(before) / M(after).
+    const m0 = f.star[0]!.m;
+    const m1 = f.star.at(-1)!.m;
+    for (const w of kept) {
+      const ratio = w.pts.at(-1)!.a / w.pts[0]!.a;
+      assert.ok(Math.abs(ratio - m0 / m1) < 0.15 * (m0 / m1), `${w.label} widens ${ratio} for a mass ratio ${m0 / m1}`);
+    }
+    assert.ok(!/NaN|undefined/.test(JSON.stringify(f)), f.text);
+
+    // A star that skips a span, or changes into a phase the chart has no words of its own for, still reads.
+    const odd = chartFate(c, plan, { ...la.result, events: [...la.result.events.filter((e) => e.kind !== "red_giant"), { ...la.result.events[0]!, kind: "phase", why: "the star is now a Wolf-Rayet star" }] });
+    assert.equal(odd.giant, null);
+    assert.ok(odd.marks.some((m) => m.words === "becomes a Wolf-Rayet star"));
+    assert.doesNotMatch(odd.text, /into a giant|NaN|undefined/);
+
+    // The chart runs on to the end; swallowed tracks stop there; the story says so.
+    const g = withFate(c, f);
+    assert.ok(g.t_bottom >= f.until && g.t_bottom >= c.t_bottom);
+    assert.equal(g.tracks.filter((t) => t.end.how === "engulfed").length, gone.length);
+    for (const t of g.tracks) for (let i = 1; i < t.segs.length; i++) assert.ok(t.segs[i]!.t0 >= t.segs[i - 1]!.t0, `${t.id} runs down the page`);
+    for (const t of g.tracks.filter((x) => x.end.how === "lasts")) assert.ok(Math.abs(t.segs.at(-1)!.t1 - g.t_bottom) < 1e-6 * g.t_bottom);
+    assert.ok(g.events.some((e) => e.kind === "engulfed"));
+    const st = worldStory(r.result, g, gone[0]!.id)!;
+    assert.ok(st.lines.some((l) => /^now at /.test(l.text)), "a world to be swallowed is still there now");
+    assert.ok(st.lines.at(-1)!.violent && /swallowed/.test(st.lines.at(-1)!.text), JSON.stringify(st.lines.at(-1)));
+    const kt = worldStory(r.result, g, kept[0]!.id)!;
+    assert.match(kt.lines.at(-1)!.text, /white dwarf; its orbit has widened/);
+    assert.equal(storyFor(g, null), [...g.tracks].filter((t) => t.end.how === "lasts" || t.end.how === "engulfed").sort((a, b) => b.m_end - a.m_end)[0]!.id);
   } finally {
     await k.close();
   }

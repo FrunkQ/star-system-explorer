@@ -504,6 +504,7 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("material.ice_density", "density of ice at low pressure"),
     ("material.vapour_pressure", "pressure of a substance's own vapour over its solid or liquid at a temperature"),
     ("material.molar_mass", "mass of one mole of a substance"),
+    ("material.photo_lifetime_1au", "how long a molecule of a gas lasts in a quiet Sun's light at 1 AU before it is broken up or ionised"),
     ("orbit.star_distance", "distance from the star (a moon's is its planet's)"),
     ("surface.ice_lost", "depth of open ice an airless world loses over its age"),
     ("material.reflectance", "share of light a material's ground sends back, against a white Lambertian surface"),

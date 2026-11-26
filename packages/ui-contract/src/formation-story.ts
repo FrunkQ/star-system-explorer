@@ -8,6 +8,16 @@ import type { FormationChart } from "./formation-chart.ts";
 import { chartAu, chartTime } from "./formation-chart.ts";
 import { bandWords } from "./replay.ts";
 import { sayNumber } from "./figures.ts";
+import { fateLine } from "./formation-fate.ts";
+import type { ChartTrack } from "./formation-chart.ts";
+
+/** A world that is still there now (it may be swallowed when the star ends). */
+const alive = (t: ChartTrack) => t.end.how === "lasts" || t.end.how === "engulfed";
+/** Where a track is now: the end of the stretch that reaches now (the chart may run on past it). */
+function aNow(c: FormationChart, t: ChartTrack): number {
+  const g = t.segs.find((x) => x.t1 >= c.now * (1 - 1e-9));
+  return g ? g.a1 : t.end.a;
+}
 
 type Solid = number[];
 interface Entry { kind: string; band?: string; t_myr?: number; solid?: Solid; gas?: number; ledger?: { entries: Entry[] } }
@@ -114,7 +124,10 @@ export function worldStory(run: FormationRan, c: FormationChart, id: string): Wo
   for (const e of c.events) if (e.ids.includes(id) && e.kind !== "captured-in-resonance") lines.push({ t: e.t, when: chartTime(e.t), text: e.text.replace(/\.$/, ""), violent: /^(impact|scatter|ejected)/.test(e.kind) });
   for (const e of c.events) if (e.ids.includes(id) && e.kind === "captured-in-resonance") lines.push({ t: e.t, when: chartTime(e.t), text: e.text.replace(/\.$/, "") });
   if (track.address) for (const e of r.events) if (e.subject === track.address && e.text) lines.push({ t: e.t_myr, when: chartTime(e.t_myr), text: e.text.replace(/\.$/, "") });
-  if (track.end.how === "lasts") lines.push({ t: c.now, when: chartTime(c.now), text: `now at ${chartAu(track.end.a)}, ${sayNumber(track.m_end, 2)} Earth masses` });
+  if (alive(track)) lines.push({ t: c.now, when: chartTime(c.now), text: `now at ${chartAu(aNow(c, track))}, ${sayNumber(track.m_end, 2)} Earth masses` });
+  // The star's end, once the look-ahead has answered.
+  const fl = c.fate ? fateLine(c.fate, id) : null;
+  if (fl) lines.push({ t: fl.t, when: chartTime(fl.t), text: fl.text, ...(track.end.how === "engulfed" ? { violent: true } : {}) });
   lines.sort((a, b) => a.t - b.t);
   // Lines at the same moment keep one "when".
   const seen = new Set<string>();
@@ -134,7 +147,7 @@ export function worldStory(run: FormationRan, c: FormationChart, id: string): Wo
 export function storyFor(c: FormationChart, selected: string | null): string | null {
   const sel = selected ? c.tracks.find((t) => t.address === selected) : undefined;
   if (sel) return sel.id;
-  return [...c.tracks].filter((t) => t.end.how === "lasts").sort((a, b) => b.m_end - a.m_end)[0]?.id ?? null;
+  return [...c.tracks].filter(alive).sort((a, b) => b.m_end - a.m_end)[0]?.id ?? null;
 }
 
 /** "How this was worked out" (formation design section 4): what each part of the history rests on. */
