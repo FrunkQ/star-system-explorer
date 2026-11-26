@@ -7,12 +7,12 @@ What it is, in one line: Alex asked (25 Nov 12:45 UTC) what each display looks l
 
 Seam with the grand zoom (track GZ), agreed by message 25 Nov: this note is the authority for what a desk shows at each level; the grand zoom note for how travel between levels works. The points held in common are in this note's section 9 and the grand zoom note's 5.9.
 
-TM1 (the contract) is built. TM2 part 1: the Run desk's rail leaves off the seven instruments of section 5. TM is a code only, never shown in the product.
+TM1 (the contract) is built. TM2 parts 1 and 2: the Run desk's rail leaves off the seven instruments of section 5, and its bar, tools and status line are trimmed (depth in More, no Workshop door, Select, Keyboard shortcuts, seat or engine line). TM is a code only, never shown in the product.
 
 | Package | State | Owner |
 |---|---|---|
 | TM1 the contract: `sse.desk/1`, `desks` on rail entries, shell parts and part controls, `shows()`, per-desk memory keys, the desk-test ledger check | done 26 Nov 2026 (`packages/TM1.md`) | "Build the three desks" |
-| TM2 the frame by desk: Run's folded rail, bar, tools and status line; rail entries given their desks | part 1 (the rail by desk) done 26 Nov 2026 (`packages/TM2a.md`); the frame's parts next | "Build the three desks" |
+| TM2 the frame by desk: Run's folded rail, bar, tools and status line; rail entries given their desks | part 1 (the rail by desk) and part 2 (Run's bar, tools and status line) done 26 Nov 2026 (`packages/TM2a.md`, `TM2b.md`); the folded rail next | "Build the three desks" |
 | TM3 Run's clock in place of the ruler; the ruler's span by desk; "Keep on Build…" | queued | "Build the three desks", with the chart room |
 | TM4 Explore tries at once: handles and grips live, the what-if opening by itself | queued | planet and star editing |
 | TM5 the Run card: closed until pressed | queued | chart room |

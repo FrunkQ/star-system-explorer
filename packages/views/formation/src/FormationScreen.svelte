@@ -1,13 +1,16 @@
 <!--
   The Formation screen (formation design section 7, F10, the reading half): the nine stages as a strip to jump along,
-  what the system inherited from its patch on the left, and the formation chart. The time slice is the time ruler's
+  what the system inherited from its patch and how its history was worked out on the left, the formation chart, and
+  the chosen world's story on the right. "Watch it form" plays the same record as the replay. The time slice is the time ruler's
   date: moving the slice moves the ruler (and every other view) when let go, and moving the ruler moves the slice.
   Read from the system's own record (kernel `formation_record`); the history is stored, so moving the slice
   recomputes nothing.
 -->
 <script lang="ts">
-  import { chartTime, formationChart, formationOf, noWorldsWhy, stageAt, type FormationSource, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { chartTime, formationChart, formationOf, howWorkedOut, noWorldsWhy, stageAt, storyFor, worldStory, type FormationSource, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import FormationReplay from "../../system-chart/src/FormationReplay.svelte";
   import FormationChart from "./FormationChart.svelte";
+  import StoryCard from "./StoryCard.svelte";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
 
@@ -38,11 +41,32 @@
     ctx.workspace.setTime(t * 1e6);
   }
   const worldsAt = $derived(chart ? chart.tracks.filter((k) => k.born.t <= slice && (k.end.how === "lasts" || k.end.t > slice)).length : 0);
-  const selected = $derived(ctx.workspace.selection);
+  // The story shows the track pressed here (a lost body has no address, so it is the screen's own pick), else the
+  // world selected anywhere in the app, else the heaviest world.
+  let picked = $state<string | null>(null);
+  const storyId = $derived.by(() => {
+    if (!chart) return null;
+    const p = picked ? chart.tracks.find((k) => k.id === picked) : undefined;
+    if (p && (!p.address || p.address === ctx.workspace.selection)) return p.id;
+    return storyFor(chart, ctx.workspace.selection);
+  });
+  const chosen = $derived(!!storyId && (storyId === picked || chart?.tracks.find((k) => k.id === storyId)?.address === ctx.workspace.selection));
+  const story = $derived(chart && storyId && source?.kind === "run" ? worldStory(source.run, chart, storyId) : null);
   function pick(id: string) {
+    picked = id;
     const a = chart?.tracks.find((k) => k.id === id)?.address;
     if (a) ctx.workspace.select(a);
   }
+  const how = $derived(source?.kind === "run" ? howWorkedOut(source.run) : []);
+
+  // "Watch it form": the replay of the same record, over the page.
+  let watching = $state(false);
+  let dlg = $state<HTMLDialogElement | undefined>();
+  $effect(() => {
+    if (!dlg) return;
+    if (watching && !dlg.open) (dlg.showModal(), dlg.querySelector<HTMLElement>(".replay")?.focus());
+    else if (!watching && dlg.open) dlg.close();
+  });
 </script>
 
 <div class="formation" data-formation={source?.kind ?? "loading"}>
@@ -58,6 +82,7 @@
     </div>
   {:else if chart && stage}
     <nav class="stages" aria-label="The nine stages">
+      <button type="button" class="play" onclick={() => (watching = true)} data-watch-form>▶ Watch it form</button>
       <span class="k">Stage</span>
       {#each chart.stages as st (st.n)}
         <button type="button" aria-current={stage.n === st.n ? "step" : undefined} onclick={() => commit(st.from)} title={st.text} data-stage={st.n}>{st.n} {st.name}</button>
@@ -85,11 +110,26 @@
         </dl>
       </aside>
 
+
       <section class="chart" aria-label="Formation chart">
-        <FormationChart {chart} {slice} {selected} onslice={(t) => (held = t)} onslicedone={commit} onpick={pick} />
+        <FormationChart {chart} {slice} selected={storyId} onslice={(t) => (held = t)} onslicedone={commit} onpick={pick} />
         <p class="at" data-slice-words>At {chartTime(slice)}: stage {stage.n}, {stage.name.toLowerCase()} · {worldsAt} {worldsAt === 1 ? "body" : "bodies"}{chart.gas_until > slice ? " · gas still in the disc" : ""}</p>
+        <details class="how" data-how-panel>
+          <summary>How this was worked out <span class="k">one seed</span></summary>
+          <dl>
+            {#each how as r (r.label)}
+              <div title={r.title} data-how={r.value}><dt>{r.label}</dt><dd>{r.value}</dd></div>
+            {/each}
+          </dl>
+          <p class="foot">Nothing is worked out again when you move the slice: the history is stored.</p>
+        </details>
       </section>
+
+      {#if story}<StoryCard {story} {chosen} />{/if}
     </div>
+    <dialog class="replay-dlg" bind:this={dlg} aria-label="How {scene.title} formed" onclose={() => (watching = false)}>
+      {#if watching}<FormationReplay run={source.run} title={scene.title} onclose={() => (watching = false)} view={ctx.workspace.view} onview={(c) => ctx.workspace.pickView?.(c)} />{/if}
+    </dialog>
   {/if}
 </div>
 
@@ -167,17 +207,73 @@
   }
   .body {
     display: grid;
-    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(250px, 300px);
+    grid-template-areas: "inh chart story";
     gap: 16px;
     flex: 1 1 0;
     min-height: 420px;
     min-width: 0;
+  }
+  .inherited {
+    grid-area: inh;
+  }
+  .how {
+    font-size: 13px;
+  }
+  .how summary {
+    cursor: pointer;
+    font-family: var(--sse-font-display);
+    font-size: 16px;
+    padding: 4px 0;
+  }
+  .how summary:hover {
+    color: var(--sse-accent-ink);
+  }
+  .how dl {
+    max-width: 40em;
+  }
+  .chart {
+    grid-area: chart;
+  }
+  .body > :global(.story) {
+    grid-area: story;
+  }
+  .foot {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
+  .play {
+    font: inherit;
+    font-size: 13px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-ink);
+    color: var(--sse-ground);
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  .replay-dlg {
+    width: min(1400px, 100vw);
+    height: min(920px, 100dvh);
+    max-width: 100vw;
+    max-height: 100dvh;
+    padding: 0;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-ground);
+  }
+  .replay-dlg::backdrop {
+    background: color-mix(in srgb, var(--sse-ink) 35%, transparent);
   }
   .panel {
     border: var(--sse-line) solid var(--sse-ink);
     box-shadow: 4px 4px 0 var(--sse-ink);
     padding: 12px 14px;
     align-self: start;
+    max-height: calc(100% - 6px);
+    overflow: auto;
+    box-sizing: border-box;
     background: var(--sse-ground);
   }
   .panel h2 {
@@ -238,17 +334,32 @@
   .hint {
     color: var(--sse-ink-muted);
   }
+  @media (max-width: 1180px) {
+    .body {
+      grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+      grid-template-areas: "inh chart" "story story";
+    }
+  }
   @media (max-width: 800px) {
     .body {
       grid-template-columns: 1fr;
+      grid-template-areas: "chart" "story" "inh";
     }
     .chart {
-      order: -1;
       min-height: 480px;
+    }
+    .stages {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
     }
     .stages button {
       font-size: 12px;
       padding: 0 8px;
+      flex: none;
+    }
+    .formation {
+      padding: 8px 12px;
     }
   }
 </style>
