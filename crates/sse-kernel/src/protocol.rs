@@ -699,6 +699,13 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
+    /// How a system in the open universe was made (the Formation screen, F10):
+    /// a grown system's formation request, re-run through the same pure
+    /// pipeline as `run_formation`. Read-only; an imported or authored system
+    /// answers with no record and why.
+    FormationRecord {
+        system: String,
+    },
     /// One star from the life line formation draws (K18, editing design
     /// section 9): `mass_msun` (0.0124 to 100), `age_yr` from birth and
     /// optional `feh` ([Fe/H], default 0). Read-only, no system, no events.
@@ -2228,6 +2235,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         stars: Option<bool>,
+        /// GZ6: with the galaxies, every one of home's satellites' paths
+        /// since infall, in `galaxy_walk.satellites.paths` (default false).
+        #[serde(default)]
+        #[ts(optional)]
+        satellite_paths: Option<bool>,
     },
     /// Y3: the glow of every star the sky draw does not show, as a HEALPix
     /// map (RING order, galactic l and b from the observer) per passband:
@@ -2652,6 +2664,7 @@ impl Request {
             Request::ReadScattering { .. } => "read_scattering",
             Request::ReadShadowLight { .. } => "read_shadow_light",
             Request::DescribeStar { .. } => "describe_star",
+            Request::FormationRecord { .. } => "formation_record",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ReferenceTiles { .. } => "reference_tiles",
@@ -3062,6 +3075,11 @@ pub fn ops() -> Vec<OpInfo> {
             "every surface stage for one world: about 1 to 5 s native at pack defaults (plates, wear, register), well under 1 s with quick; plus about 0.2 s per tile, at most 24",
         ),
         o("systems", Cost::Light, "linear in the universe's facts"),
+        o(
+            "formation_record",
+            Cost::Medium,
+            "one formation pipeline run for a grown system (as run_formation); none for an imported or authored one",
+        ),
         o("life_view", Cost::Light, "one fixture's signatures, epochs and hooks"),
         o("export_chronicle", Cost::Light, "linear in the events"),
         o(
@@ -4181,6 +4199,27 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         calendar: Option<serde_json::Value>,
+    },
+    /// `formation_record`: `source` is `formation`, `v3` or `facts`. For a
+    /// grown system, `request` is the formation request its adoption kept,
+    /// `adopted_manifest` the manifest hash recorded then, and `record` the
+    /// `formation_ran` answer of re-running it (compare its
+    /// `run.history.manifest_hash` with `adopted_manifest`). Otherwise `why`.
+    FormationRecord {
+        system: String,
+        source: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        request: Option<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        adopted_manifest: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        record: Option<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        why: Option<String>,
     },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.

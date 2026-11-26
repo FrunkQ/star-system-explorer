@@ -94,16 +94,47 @@
   // Class looks are bound to planets (a small body on a chart is drawn by the same tables), so every tile asks as one.
   const markOf = (c: AtlasClass) => marker?.mark({ kind: "planet", classes: [c.id], tags: [] }) ?? null;
 
-  // Pictures (V14i): a class opened is drawn from a sample world the kernel makes for it (a world's tiles are heavy, so
-  // only on opening), and its tile then shows it too; the chart mark stands until then, and wherever none can be drawn
-  // (a player's seat, a giant).
+  // Pictures (V14i): each class drawn as a turning True globe from a sample world of it, the page's tiles in order and a
+  // class opened first. The shipped atlases' globes come pre-drawn (class-picture.svelte.ts); others are drawn live on
+  // the game master's seat. The chart mark stands until a globe is drawn, and wherever none can be (a small body, a
+  // thick air, an edited atlas on a player's seat).
   const pictureAtlas = $derived(shownAtlas?.pack ?? "");
   const pictureExtra = $derived(trying ? offered.filter((p) => p.id === shownAtlas?.pack) : []);
+  const pictureDocs = $derived<PackDoc[]>(trying ? offered : [...info.base, ...(info.campaign ? [info.campaign] : [])]);
+  const docOf = (cls: string): PackDoc | null => {
+    const from = atlas ? findClass(atlas, cls)?.pack : undefined;
+    return pictureDocs.find((p) => p.id === from) ?? null;
+  };
+  // The gallery a page at a time (Alex, 24 Nov: 12, 24 or 48 at once, paged).
+  const PAGE_SIZES = [12, 24, 48] as const;
+  let pageSize = $state<number>(12);
+  let pageAt = $state(0);
+  const pages = $derived(Math.max(1, Math.ceil(tree.base.length / pageSize)));
+  const pageNow = $derived(Math.min(pageAt, pages - 1));
+  const paged = $derived(tree.base.slice(pageNow * pageSize, (pageNow + 1) * pageSize));
+  $effect(() => {
+    void scheme?.id;
+    void atlas;
+    untrack(() => (pageAt = 0));
+  });
+  $effect(() => {
+    const a = pictureAtlas;
+    const ids = paged.map((n) => n.cls.id);
+    const extra = pictureExtra;
+    if (a && ids.length) untrack(() => drawClassPictures(session, a, ids, extra, { docOf, page: true }));
+  });
   $effect(() => {
     const c = open?.id;
     const a = pictureAtlas;
     const extra = pictureExtra;
-    if (a && c) untrack(() => drawClassPictures(session, a, [c], extra));
+    if (a && c) untrack(() => drawClassPictures(session, a, [c], extra, { docOf, first: true }));
+  });
+  // A class opened from search or a link shows its page.
+  $effect(() => {
+    const id = openId;
+    if (!id) return;
+    const i = untrack(() => tree.base.findIndex((n) => n.cls.id === id));
+    if (i >= 0) untrack(() => (pageAt = Math.floor(i / pageSize)));
   });
 
   const editable = $derived(workspace.mode === "edit" && session.seat.authority === "gm");
@@ -183,15 +214,19 @@
       <h2 id="classes-gallery">{scheme.question || scheme.id}</h2>
       <svg width="0" height="0" class="defs" aria-hidden="true"><HatchDefs prefix="cl" /></svg>
       <ul class="tiles" aria-label="Classes in {scheme.id}">
-        {#each tree.base as n (n.cls.id)}
+        {#each paged as n (n.cls.id)}
           {@const m = markOf(n.cls)}
           {@const pic = pictureOf(pictureAtlas, n.cls.id)}
           <li class:under={n.depth > 0} style:--depth={n.depth}>
-            <button type="button" class="tile" aria-pressed={openId === n.cls.id} data-class={n.cls.id} onclick={(e) => show(n.cls, e.currentTarget)}>
-              <svg class="icon" width="84" height="40" viewBox="0 0 84 40" aria-hidden="true">
-                <!-- The mark centred, with room on its right for its class code (up to three letters). -->
-                {#if pic?.state === "drawn"}<image href={pic.url} x="22" y="0" width="40" height="40" data-tile-picture />{:else if m}<Mark mark={{ ...m, size: Math.max(9, Math.min(14, m.size * 1.4)) }} cx={42} cy={20} prefix="cl" />{:else}<circle cx="42" cy="20" r="11" fill="none" stroke="currentColor" />{/if}
-              </svg>
+            <button type="button" class="tile" aria-pressed={openId === n.cls.id} data-class={n.cls.id} data-picture-state={pic?.state ?? "pending"} data-picture-why={pic?.state === "none" ? pic.why : undefined} onclick={(e) => show(n.cls, e.currentTarget)}>
+              {#if pic?.state === "drawn"}
+                <span class="turn" style:--n={pic.frames} style:--w="64px" style:background-image="url({pic.sheet})" data-tile-picture data-baked={pic.baked} data-caption={pic.caption} aria-hidden="true"></span>
+              {:else}
+                <svg class="icon" width="84" height="40" viewBox="0 0 84 40" aria-hidden="true" data-drawing={pic?.state === "drawing" || undefined}>
+                  <!-- The mark centred, with room on its right for its class code (up to three letters). -->
+                  {#if m}<Mark mark={{ ...m, size: Math.max(9, Math.min(14, m.size * 1.4)) }} cx={42} cy={20} prefix="cl" />{:else}<circle cx="42" cy="20" r="11" fill="none" stroke="currentColor" />{/if}
+                </svg>
+              {/if}
               <span class="tname">{className(n.cls)}</span>
               {#if n.depth > 0 && parentOf(n.cls)}<span class="muted small">a kind of {parentOf(n.cls)!.names.plain}</span>{/if}
               {#if n.cls.evidence === "fictional"}<Stamp kind="fictional" />{/if}
@@ -199,6 +234,22 @@
           </li>
         {/each}
       </ul>
+      {#if tree.base.length > PAGE_SIZES[0] || session.seat.authority === "gm"}
+        <nav class="pager" aria-label="Pages of classes" data-pager>
+          <button type="button" class="chip" disabled={pageNow === 0} onclick={() => (pageAt = pageNow - 1)} data-page-prev>‹ Earlier</button>
+          <span class="muted small" data-page-shown>{pageNow * pageSize + 1} to {Math.min(tree.base.length, (pageNow + 1) * pageSize)} of {tree.base.length}</span>
+          <button type="button" class="chip" disabled={pageNow >= pages - 1} onclick={() => (pageAt = pageNow + 1)} data-page-next>Later ›</button>
+          <label class="muted small">At once
+            <select bind:value={pageSize} onchange={() => (pageAt = 0)} data-page-size>
+              {#each PAGE_SIZES as n (n)}<option value={n}>{n}</option>{/each}
+            </select>
+          </label>
+          {#if session.seat.authority === "gm" && session.classSample}
+            <!-- The page's globes drawn again on this device with today's renderer, past the pre-drawn set (to see a new look at once). -->
+            <button type="button" class="chip" onclick={() => drawClassPictures(session, pictureAtlas, paged.map((n) => n.cls.id), pictureExtra, { docOf, page: true, live: true })} data-redraw title="Draw this page's globes again here, with this build's renderer">Draw again</button>
+          {/if}
+        </nav>
+      {/if}
       {#if tree.modifiers.length}
         <h3>Marks that add to a class</h3>
         <ul class="mods" aria-label="Modifiers in {scheme.id}">
@@ -259,7 +310,7 @@
         <ul class="mods">{#each kids as k (k.id)}<li><button type="button" class="chip" data-kid={k.id} onclick={(e) => show(k, e.currentTarget)}>{className(k)}</button></li>{/each}</ul>
       {/if}
       {#if pic?.state === "drawn"}
-        <figure class="picture" data-picture="drawn"><img src={pic.url} alt="A sample world of the class {open.names.plain}" width="192" height="192" /><figcaption class="muted small">{pic.caption}</figcaption></figure>
+        <figure class="picture" data-picture="drawn"><span class="turn big" role="img" aria-label="A sample world of the class {open.names.plain}, turning" style:--n={pic.frames} style:--w="{pic.size}px" style:background-image="url({pic.sheet})"></span><figcaption class="muted small">{pic.caption}{pic.baked ? " Drawn ahead of time for this atlas." : ""}</figcaption></figure>
       {:else if pic?.state === "drawing"}
         <p class="muted small picture" data-picture="drawing">Drawing a sample world of this class…</p>
       {:else if pic?.state === "none"}
@@ -522,11 +573,35 @@
     gap: 6px;
     justify-items: start;
   }
-  figure.picture img {
-    width: 192px;
-    max-width: 100%;
-    height: auto;
+  /* A turning globe: one turn as a strip of frames, stepped through on the compositor; no GPU or kernel of its own.
+     Asked for by Alex (24 Nov), so it loops; reduced motion holds it still on its first frame. */
+  .turn {
+    display: block;
+    flex: none;
+    width: var(--w);
+    height: var(--w);
     border-radius: 50%;
+    background-repeat: no-repeat;
+    background-size: calc(var(--w) * var(--n)) var(--w);
+    background-position: 0 0;
+    animation: turn 24s steps(var(--n)) infinite;
+  }
+  @keyframes turn {
+    to {
+      background-position: calc(var(--w) * var(--n) * -1) 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .turn {
+      animation: none;
+    }
+  }
+  .pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 0;
   }
   .btn {
     height: auto;

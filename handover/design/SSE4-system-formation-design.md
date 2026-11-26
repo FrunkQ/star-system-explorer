@@ -124,6 +124,14 @@ Mockup: "System formation". A GM workspace screen in the chart-room style; it is
 - **Below**: the nine stages as a strip to jump along; "how this was worked out" (calculated, tabulated, drawn); and actions: pin, branch from here, ask why, compare blocks (Classic Accrete against the modern block), open in the flow editor, ask Orac.
 - It fits with the rest: the system chart shows *now*; this chart shows *how it got here and where it is going*. One click moves between them, holding the selected body.
 
+**On each desk** (three desks note, section 13A; built as "How it formed", `status/formation-screen.md`):
+
+| Desk | What the screen shows |
+|---|---|
+| Explore | The whole reading half: chart, stages, slice, Inherited, the selected world's story. Moving the slice moves the ruler to look; nothing is recorded |
+| Build | The same, and later the actions that change the story (pin, branch from here), which write a branch |
+| Run | Not on the rail (deep time is not Run's) |
+
 ## 8. Stages for the build (track F, replacing package P2)
 
 | Stage | Contents | Needs | Evidence |
