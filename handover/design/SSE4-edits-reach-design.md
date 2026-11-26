@@ -1,6 +1,6 @@
 # SSE4: edits that reach everything (track ER)
 
-Status: **PROPOSED 26 Nov 2026, not accepted.** Six questions for Alex in section 13, each with a recommendation. Design only; nothing here is built. ER is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 26 Nov 2026 18:18 UTC** ("yes to all": the six questions of section 13, rulings in section 13A). Design only; nothing here is built yet. ER is a code only, never shown in the product.
 
 Readable copy with a diagram: https://claude.ai/artifact/W7jGCQx6taFgncpojsmt2N
 
@@ -265,9 +265,22 @@ Each package is sized for one agent. "Identical" means `tests/golden/` does not 
 5. **A pack may replace a block's formula, not only its settings,** under the same rule as every other override: it says what it replaces, every letter has a source line, and results carry the "authored" or "fictional" mark. The 13 blocks still in Rust and the Big Blocks stay settings-only and say so on their face. **Recommended: yes.** It makes "editable blocks" literally true for the 161 formula blocks.
 6. **A postcard on the shop may carry physics edits inside it** (a short list of changed numbers and formulas, shown on the back), without those edits first being published as a pack. Your rule that a shop postcard shows only content in the game or on the store stays for worlds, pictures and names. **Recommended: yes.** An edit is a few numbers, not content, and otherwise every small tweak needs a published pack before a card can be shared. Direct sends to a friend carry the edits either way.
 
+### 13A. Alex's answers (26 Nov 2026, 18:18 UTC): "yes to all"
+
+All six are rulings as recommended:
+
+1. Units never move. The Sun as a body can change; the unit named after it cannot.
+2. An edit to physics is timeless. Change at a date inside the story stays a law with a date on a constant's row.
+3. After an edit everything generated is worked out again automatically, with a preview first. What a person authored and what the players did is never touched.
+4. An edit to a block applies everywhere that block runs in this universe. A value typed on one node of one flow still wins there.
+5. A pack may replace a block's formula, not only its settings, under the usual override rule. Rust blocks and Big Blocks stay settings-only and say so.
+6. A postcard on the shop may carry physics edits inside it, shown on its back.
+
+With his framing of 18:14 UTC (top of this note): the remaining sites are a ledger, changed as each area is come to.
+
 ---
 
-## 14. Routine choices, for the coordinator
+## 14. Routine choices, for the coordinator (agreed as proposed, 26 Nov 18:14 UTC)
 
 - Track code ER and the status file `handover/status/edits-reach.md`.
 - `sse.table/1` and `bake` as the shared seam for the renderer fix jobs already running (section 11), so they do not each invent a table format.

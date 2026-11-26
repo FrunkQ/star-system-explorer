@@ -1,7 +1,7 @@
 # Status: edits that reach everything (track ER)
 
 Owner thread: "Design edits that reach everything" (Fable, design only, 26 Nov 2026) for the note. No builder thread yet. Until one exists, each package below belongs to the thread named in its row, and that thread records it in its own status file too.
-Design: `design/SSE4-edits-reach-design.md`, **PROPOSED 26 Nov 2026, not accepted**. Its section 13 holds 6 questions for Alex, each with a recommendation. Readable copy: https://claude.ai/artifact/W7jGCQx6taFgncpojsmt2N
+Design: `design/SSE4-edits-reach-design.md`, **ACCEPTED by Alex 26 Nov 2026 18:18 UTC** ("yes to all": the six questions of its section 13; rulings in its section 13A and `decisions.md`). Readable copy: https://claude.ai/artifact/W7jGCQx6taFgncpojsmt2N
 
 What it is, in one line: an edit to a block, the data sheet or a pack's numbers already has a home (the universe's own pack on top of its stack), but compiled kernel code mostly reads values fixed when the app was built; this track builds one unchanging object from the stack ("the physics in force"), makes it the only door compiled code reads physics through, shuts the side doors with a check, marks every result that rests on an edit, and has the kernel bake tables for the renderer.
 
@@ -30,16 +30,16 @@ Nothing is built. ER is a code only, never shown in the product. Every package l
 | ER4 the sheet's fast table: every single-number row in force, formula blocks may name any row | proposed, needs ER1 | data sheet, kernel |
 | ER5 (standing rule, not a queued package) the sheet ledger, about 84 files: changed as touched; each read is follows, estimated or kept real | starts once ER4 lands | every thread, in its own crates |
 | ER6 (standing rule) the settings ledger, 96 call sites: changed as touched; an area's first package after ER1 moves its settings block into the physics object | starts once ER1 lands | every thread, in its own area |
-| ER3 blocks load from the stack; a pack may replace a block's formula; base flows from the stack | proposed, needs ER2 and question 5; core golden slot | kernel |
-| ER7 caches keyed by physics hash; kept results stamped and worked out again | proposed, needs ER1 and questions 2, 3; agree with the conserved chain build | kernel |
+| ER3 blocks load from the stack; a pack may replace a block's formula; base flows from the stack | proposed, needs ER2; core golden slot | kernel |
+| ER7 caches keyed by physics hash; kept results stamped and worked out again | proposed, needs ER1; agree with the conserved chain build | kernel |
 | ER8 marks from the door: `rests_on`, reach report from observed reads | proposed, needs ER2, ER4 | kernel |
-| ER9 the interface: mark, "Physics changed here" with its rail entry, the chip, editing sheet values and block settings | proposed, needs ER8 and question 4; mock-ups to Alex first | planet and star editing, chart room |
-| ER10 saves and postcards carry the physics hash and the edit list | proposed, needs ER3, ER8 and question 6 | postcards |
+| ER9 the interface: mark, "Physics changed here" with its rail entry, the chip, editing sheet values and block settings | proposed, needs ER8; mock-ups to Alex first | planet and star editing, chart room |
+| ER10 saves and postcards carry the physics hash and the edit list | proposed, needs ER3, ER8 | postcards |
 | ER11b onwards each renderer law onto a baked table | proposed, needs ER11a | the thread that owns each |
 | ER12 the interface asks the session for constants in force | proposed, needs ER4 | chart room |
 | ER13 clear up at the end: one agent converts what is left, then the gate is a hard check and the old doors go private | opened when the ledgers are short | kernel |
 
 ## Next
-- Alex answers section 13 of the note; his answers go in a section 13A there and in `decisions.md`.
-- ER1, ER1b, ER2 and ER11a depend on none of the six questions and can open on the coordinator's word.
+- ER1 is being opened by the coordinator; ER1b, ER2 and ER11a follow it, then ER4.
+- Every package's questions are answered, so nothing in the table waits on Alex. ER9 still shows him mock-ups first.
 - The coordinator's routine choices are listed in the note's section 14.
