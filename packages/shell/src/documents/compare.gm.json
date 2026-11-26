@@ -26,6 +26,7 @@
       "scale": "system",
       "group": "look",
       "label": "Sizes",
+      "desks": ["explore", "build"],
       "order": 2,
       "hint": "Worlds and stars side by side, with stock references"
     },
@@ -33,6 +34,7 @@
       "scale": "world",
       "group": "look",
       "label": "Sizes",
+      "desks": ["explore", "build"],
       "order": 3,
       "hint": "This world beside others and stock references"
     }

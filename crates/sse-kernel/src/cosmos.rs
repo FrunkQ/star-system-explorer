@@ -1471,6 +1471,80 @@ mod tests {
     }
 
     #[test]
+    fn satellite_paths_are_asked_for_and_end_where_the_sky_puts_each_survivor() {
+        let mut k = open();
+        let plain = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":30,"bands":["V"],"stars":false}"#,
+        );
+        // Off by default: the sky's answer does not change.
+        assert!(plain["sky"]["galaxy_walk"]["satellites"]
+            .get("paths")
+            .is_none());
+        let r = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":30,"bands":["V"],"stars":false,"satellite_paths":true}"#,
+        );
+        assert_eq!(r["sky"]["galaxies"], plain["sky"]["galaxies"]);
+        let walk = &r["sky"]["galaxy_walk"]["satellites"];
+        let paths = walk["paths"].as_array().unwrap();
+        // One path for every member followed, whatever became of it.
+        assert_eq!(paths.len() as f64, walk["subhaloes"].as_f64().unwrap());
+        let merged = paths.iter().filter(|p| p["fate"] == "merged").count();
+        assert_eq!(merged as f64, walk["merged"].as_f64().unwrap());
+        assert!(paths.iter().any(|p| p["fate"] == "torn apart"), "{walk}");
+        let now = r["sky"]["t_myr"].as_f64().unwrap() / 1000.0;
+        let r200 = walk["r200_kpc"].as_f64().unwrap();
+        let c = walk["centre_kpc"].as_array().unwrap();
+        let c: Vec<f64> = c.iter().map(|v| v.as_f64().unwrap()).collect();
+        for p in paths {
+            let pts = p["path"].as_array().unwrap();
+            let t0 = pts[0][0].as_f64().unwrap();
+            assert!(
+                (t0 - p["infall_gyr"].as_f64().unwrap()).abs() < 1.0e-9,
+                "{p}"
+            );
+            // Time runs forward along it, and it starts at the host's edge
+            // then (smaller than now for an early infall), never past
+            // today's.
+            let ts: Vec<f64> = pts.iter().map(|x| x[0].as_f64().unwrap()).collect();
+            assert!(ts.windows(2).all(|w| w[1] > w[0]), "{p}");
+            let r0 = sse_core::math::sqrt(
+                (0..3)
+                    .map(|i| {
+                        let d = pts[0][i + 1].as_f64().unwrap() - c[i];
+                        d * d
+                    })
+                    .sum::<f64>(),
+            );
+            assert!(r0 > 1.0 && r0 < 1.5 * r200, "{r0} {p}");
+            if p["fate"] == "merged" {
+                assert!(ts.last().unwrap() <= &(now + 1.0e-9));
+            } else {
+                assert!((ts.last().unwrap() - now).abs() < 1.0e-6, "{p}");
+            }
+        }
+        // A survivor's path ends where the sky puts it: its direction times
+        // its distance from the observer.
+        let mut checked = 0;
+        for g in r["sky"]["galaxies"].as_array().unwrap() {
+            if g["satellite"] != true {
+                continue;
+            }
+            let p = paths.iter().find(|p| p["address"] == g["address"]).unwrap();
+            let last = p["path"].as_array().unwrap().last().unwrap();
+            let d = g["distance_kpc"].as_f64().unwrap();
+            for i in 0..3 {
+                let want = g["dir"][i].as_f64().unwrap() * d;
+                let got = last[i + 1].as_f64().unwrap();
+                assert!((want - got).abs() < 1.0e-6 * d.max(1.0), "{want} {got}");
+            }
+            checked += 1;
+        }
+        assert!(checked > 0);
+    }
+
+    #[test]
     fn our_galaxy_s_satellites_are_its_surviving_subhaloes() {
         let mut k = open();
         let r = ask(
