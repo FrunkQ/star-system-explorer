@@ -1212,11 +1212,13 @@ fn save_and_reopen_a_universe_and_read_life_views() {
         serde_json::json!({"op": "life_view", "fixture": "mars"}),
     );
     assert_eq!(e["code"], "unknown_fixture");
+    // A grown world reads its own life (L3).
     let e = send(
         &mut k,
         serde_json::json!({"op": "life_view", "body": "u:home/sys:5/body:1"}),
     );
-    assert_eq!(e["code"], "no_habitats");
+    assert_eq!(e["type"], "life_viewed", "{e}");
+    assert_eq!(e["source"], "u:home/sys:5/body:1");
 }
 
 /// S7 served: a fixture world's survey (layers, register, aerostat band,
