@@ -6,7 +6,7 @@ import { AdditiveBlending, AmbientLight, CustomBlending, OneFactor, OneMinusSrcA
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
-import { ringLight } from "./rings.ts";
+import { ringLight, ringLook, RING_LOOK_SCALE, type RingLookData } from "./rings.ts";
 import { startFinish, type Finish } from "./finish.ts";
 import type { AirLuts, AirShape } from "./air-luts.ts";
 import { flattenScale } from "./true-shape.ts";
@@ -44,7 +44,7 @@ export interface GpuItem {
    * True look: the world's rings (rings.ts `ringProfile`), lit by the star: edges in units of the world's drawn
    * radius, the ring plane's normal, and the profile's row of RGBA pixels from the inner edge out. Keyed: uploaded once.
    */
-  rings?: { key: string; inner: number; outer: number; normal: Vec3; width: number; data: Uint8ClampedArray };
+  rings?: { key: string; inner: number; outer: number; normal: Vec3; width: number; data: Uint8ClampedArray; /** Per pixel, what the light reads (rings.ts `ringLook`, VP-R2): with it, each pixel is lit by its own depth. */ look?: RingLookData };
   /**
    * The globe's own axes (x, y, and z its north pole) in camera space: it is drawn turned and tilted to them, so a
    * surface or a graticule turns with it (the size comparison's spinning globes). Left out: pole on z, unturned.
@@ -387,7 +387,10 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
   };
   const torus = new TorusGeometry(1.8, 0.08, 6, 48);
   // A world's rings: an annulus in units of its radius, its texture's u running from the inner edge out.
-  const ringSets = new Map<string, { geom: RingGeometry; tex: DataTexture; mat: MeshBasicMaterial }>();
+  // `tex` is the profile (face-on cover in alpha, what the ring shadow reads); a ring the kernel describes is shown
+  // through `lookTex`, its pixels lit by their own depth for this sun and eye (rings.ts ringLook, VP-R2), refreshed
+  // when the angles move.
+  const ringSets = new Map<string, { geom: RingGeometry; tex: DataTexture; mat: MeshBasicMaterial; lookTex?: DataTexture; lookAt?: string }>();
   const zAxis = new Vector3(0, 0, 1);
   const ringSet = (r: NonNullable<GpuItem["rings"]>) => {
     const hit = ringSets.get(r.key);
@@ -402,9 +405,16 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     tex.magFilter = LinearFilter;
     tex.minFilter = LinearFilter;
     tex.needsUpdate = true;
-    // Lit by hand (ringLight in rings.ts), not by the scene's lights: a ring is a layer of particles, not a surface.
-    const mat = new MeshBasicMaterial({ map: tex, transparent: true, side: DoubleSide, depthWrite: false });
-    const e = { geom, tex, mat };
+    let lookTex: DataTexture | undefined;
+    if (r.look) {
+      lookTex = new DataTexture(new Uint8Array(r.width * 4), r.width, 1, RGBAFormat);
+      lookTex.colorSpace = SRGBColorSpace;
+      lookTex.magFilter = LinearFilter;
+      lookTex.minFilter = LinearFilter;
+    }
+    // Lit by hand (ringLight or ringLook in rings.ts), not by the scene's lights: a ring is a layer of particles, not a surface.
+    const mat = new MeshBasicMaterial({ map: lookTex ?? tex, transparent: true, side: DoubleSide, depthWrite: false, premultipliedAlpha: !!lookTex });
+    const e: { geom: RingGeometry; tex: DataTexture; mat: MeshBasicMaterial; lookTex?: DataTexture; lookAt?: string } = { geom, tex, mat, ...(lookTex ? { lookTex } : {}) };
     ringSets.set(r.key, e);
     return e;
   };
@@ -542,7 +552,18 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
           const toLight: Vec3 = o.light.at ? [o.light.at[0] - it.rel[0], o.light.at[1] - it.rel[1], o.light.at[2] - it.rel[2]] : (o.light.from ?? [0, 0, 1]);
           const toEye: Vec3 = [-it.rel[0], -it.rel[1], -it.rel[2]];
           // The point light's strength (3) over π, as a lit world's diffuse surface gets.
-          rs.mat.color.setScalar((3 / Math.PI) * ringLight(n, toLight, toEye));
+          if (rs.lookTex && it.rings.look) {
+            const look: RingLookData = it.rings.look;
+            // Refreshed only when the sun or the eye has moved by about a tenth of a degree as seen from the ring.
+            const u = (v: Vec3) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return v.map((x) => Math.round((x / l) * 600)).join(","); };
+            const at = `${u(toLight)}|${u(toEye)}|${u(n)}`;
+            if (rs.lookAt !== at) {
+              ringLook(look, n, toLight, toEye, rs.lookTex.image.data as Uint8Array);
+              rs.lookTex.needsUpdate = true;
+              rs.lookAt = at;
+            }
+            rs.mat.color.setScalar((3 / Math.PI) * RING_LOOK_SCALE);
+          } else rs.mat.color.setScalar((3 / Math.PI) * ringLight(n, toLight, toEye));
           const rm = new Mesh(rs.geom, rs.mat);
           rm.position.copy(m.position);
           rm.scale.setScalar(it.radius);

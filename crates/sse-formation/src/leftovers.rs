@@ -123,6 +123,13 @@ pub struct SmallBody {
     pub swarm: Option<String>,
 }
 
+impl Moon {
+    /// Its mass, Earth masses.
+    pub fn mass_earth(&self) -> f64 {
+        earth(sum6(&self.solid))
+    }
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Moon {
     pub address: Address,

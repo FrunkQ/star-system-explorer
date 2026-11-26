@@ -94,7 +94,7 @@ system?: string, at_s?: bigint, } | { "op": "read_composition", system: string, 
  * SB4: distance from the star for an icy body's activity, AU
  * (perihelion when left out).
  */
-r_au?: number, } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
+r_au?: number, } | { "op": "ring_structure", system?: string, cloud?: string, ask?: unknown, variant?: bigint, samples?: number, window?: [number, number], } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
 /**
  * Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
  * dusty shells (O3b).

@@ -4146,6 +4146,56 @@ impl Kernel {
                     r_au,
                 )?
             }
+            Request::RingStructure {
+                system,
+                cloud,
+                ask,
+                variant,
+                samples,
+                window,
+            } => {
+                let u = self.universe()?;
+                let ask = match (ask, system, cloud) {
+                    (Some(a), None, None) => {
+                        let mut a: sse_small::ring::RingAsk = serde_json::from_value(a)
+                            .map_err(|e| err("bad_request", format!("ring ask: {e}")))?;
+                        if let Some(v) = variant {
+                            a.variant = v;
+                        }
+                        if samples.is_some() {
+                            a.samples = samples.map(|n| n as usize);
+                        }
+                        if window.is_some() {
+                            a.window = window;
+                        }
+                        a
+                    }
+                    (None, Some(system), Some(cloud)) => {
+                        let sa = in_universe(&u.root, &system)?;
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &sa) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        small::ring_ask_from_run(
+                            u.runs.get(&system),
+                            &cloud,
+                            variant.unwrap_or(0),
+                            samples.map(|n| n as usize),
+                            window,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give an ask, or a system and its ring's cloud",
+                        ))
+                    }
+                };
+                let seed = u.seed;
+                small::ring_structure(&ask, &seed, &self.observe.reference)?
+            }
             Request::MakeSmallBody {
                 system,
                 address,

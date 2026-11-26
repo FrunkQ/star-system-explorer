@@ -861,6 +861,38 @@ pub enum Request {
         #[ts(optional)]
         r_au: Option<f64>,
     },
+    /// VP-R3: one ring, whole (sse-small ring.rs): its zones, the marks its
+    /// moons leave (edges, gaps, density-wave trains), optical depth across
+    /// it and its grains' colour from what they are made of. Give `ask`
+    /// (sse-small `RingAsk` {key, variant, host {mass_kg, radius_m, j2?,
+    /// flattening?, rotation_period_s?}, sculptors [{id, name, a_m,
+    /// mass_kg}], ring {inner_m, outer_m, mass_kg?, makeup?, grain_radius_m?,
+    /// contaminant?, zones [{name?, inner_m, outer_m, tau?, tau_range?,
+    /// albedo?, share?, makeup?, contaminant?, contaminant_grain_m?,
+    /// source?}]}, samples?, window?}); or `system` and `cloud` for a ring
+    /// formation made (the kernel builds the ask from the run). `variant` 0
+    /// is the generator's pick; others are other plausible rings from the
+    /// same inputs. Nothing is stored.
+    RingStructure {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        cloud: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        ask: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        variant: Option<u64>,
+        #[serde(default)]
+        #[ts(optional)]
+        samples: Option<u32>,
+        #[serde(default)]
+        #[ts(optional)]
+        window: Option<[f64; 2]>,
+    },
     /// SB2: a small body a GM adds by hand (the Add list), made of the
     /// system's own nearest cloud: `kind` asteroid, comet-nucleus,
     /// contact-binary or binary-pair, a `diameter_km` or `mass_kg`, at
@@ -2631,6 +2663,7 @@ impl Request {
             Request::ReadInventory { .. } => "read_inventory",
             Request::SmallBody { .. } => "small_body",
             Request::MakeSmallBody { .. } => "make_small_body",
+            Request::RingStructure { .. } => "ring_structure",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
@@ -2946,6 +2979,11 @@ pub fn ops() -> Vec<OpInfo> {
             "make_small_body",
             Cost::Trivial,
             "one body: the same as small_body on a one-member field",
+        ),
+        o(
+            "ring_structure",
+            Cost::Trivial,
+            "one ring: a few hundred resonance solves and four samples per profile pixel (4,096 by default)",
         ),
         o(
             "read_photometry",
@@ -3684,6 +3722,16 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown[]")]
         notables: Option<Vec<serde_json::Value>>,
+    },
+    /// `ring_structure`: `ring` (sse-small `RingSystem`: inner_m, outer_m,
+    /// mass_kg, j2, variant, zones [{name?, inner_m, outer_m, mass_kg, tau,
+    /// tau_range?, sigma_kg_m2, albedo, rgb, dark_share, contaminant, cause
+    /// {kind, sculptor?, m?}, assumed}], marks [{kind, sculptor, m, r_m,
+    /// half_width_m, ratio, depth, wave_lambda_m?, damping_m?, edge_wave_m?,
+    /// edge_amplitude_m?}], profile {lo_m, hi_m, tau [], zone []}, why []).
+    RingStructureIs {
+        #[ts(type = "unknown")]
+        ring: serde_json::Value,
     },
     /// `read_inventory`: each of `bodies` is a world's address, mass and
     /// kinds (id, matter, reach, kg, per_kg, by_reservoir, note), with

@@ -120,6 +120,30 @@
       {"id": "co", "group": 5, "lifetime_s_at_1au": 1300000.0}
      ]
     },
+    "rings": {
+     "about": "One ring per world (VP-R3, track SB): a world's ring is one object that describes its own zones, gaps, edges and wave trains. Moons place them (first-order inner Lindblad resonances with the world's J2, each torque weighed against the ring's viscosity, Tajeddine et al. 2017; gaps round embedded moons; density-wave trains from the dispersion relation, Shu 1984). Optical depth varies inside each zone by a seeded structure whose spread is the zone's measured range. A grain's colour is ice dirtied by a contaminant from the data sheet, mixed by single-scattering albedo (Hapke). Stand-ins: fudges SB-ring-*.",
+     "collisional_nu_m2_s": 0.002,
+     "resonance_f": 8.6,
+     "gap_per_root_mu": 415.0,
+     "gap_min_hill_radii": 2.0,
+     "edge_slack": 0.01,
+     "m_max": 30,
+     "min_ratio": 0.001,
+     "grain_radius_m": 1.0,
+     "grain_porosity": 0.5,
+     "contaminant": "titan-tholin",
+     "contaminant_grain_m": 1e-06,
+     "bands_nm": [650.0, 550.0, 450.0],
+     "ice": "h2o",
+     "fallback_tau": 0.5,
+     "fallback_albedo": 0.5,
+     "structure": {"scale_m": 1000000.0, "octaves": 14, "hurst": 0.6, "ln_amplitude": 0.6, "tau_half": 0.5, "range_sigmas": 2.0},
+     "generated": {"zones_min": 2, "zones_max": 5, "ln_sigma": 0.9},
+     "waves": {"max_amplitude": 0.7, "edge_wave_coefficient": 2.24},
+     "phase": {"about": "How the ring's light depends on the angle between sun and eye (VP-R2). Metre-sized particles scatter back (one Henyey-Greenstein lobe, g < 0) with an opposition surge of about a third (visual polish design section 17, checked) and a half-width of about 0.1 degrees (French et al. 2007); micron dust scatters forward. Which share of a zone's depth is dust is read off its depth: the faintest rings are dust, the dense ones metre-sized ice (fudge SB-ring-dust).", "back_g": -0.3, "forward_g": 0.7, "surge_b0": 0.33, "surge_width_deg": 0.1, "dusty_below_tau": 0.001, "clean_above_tau": 0.1, "dust_share_clean": 0.01},
+     "samples_default": 4096,
+     "samples_max": 16384
+    },
     "recipes": [
      {
       "id": "small-body",

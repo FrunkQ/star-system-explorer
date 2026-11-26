@@ -24,8 +24,10 @@ export interface Body3D {
   rings?: Ring3D[];
   /** Its axial tilt, radians, when known: the rings lie in its equator. */
   tilt_rad?: number;
-  /** Its mass, kg, when known: a ringed world's moons cut gaps and edges in its rings by it (renderer ring-structure.ts). */
+  /** Its mass, kg, when known: the kernel places its ring's gaps, edges and waves from it and its moons (ring-read.ts). */
   mass_kg?: number;
+  /** Its ring, whole, as the kernel worked it out (ring-read.ts, `ring_structure`), once read; True draws it instead of `rings`. */
+  ring_kernel?: import("../../../renderer/src/index.ts").KernelRing;
   /** A belt member the kernel resolved for True (small-sample.ts): drawn in its own shape, with its coma and tails when active. */
   small?: SmallSample;
 }
@@ -41,6 +43,10 @@ export interface Ring3D {
   outer_m: number;
   tau: number | null;
   albedo: number | null;
+  /** Its measured range of optical depth, when printed. */
+  tau_range?: [number, number];
+  /** A ring formation made: its cloud's address (the kernel reads the rest from the run). */
+  cloud?: string;
 }
 
 export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => Mark): Body3D[] {
@@ -63,11 +69,6 @@ function massOf(s: SceneSubject): { mass_kg?: number } {
   if (me !== null) return { mass_kg: me * constant("M_earth") };
   const ms = v("mass_sun");
   return ms !== null ? { mass_kg: ms * constant("M_sun") } : {};
-}
-
-/** A world's moons as the rings need them: name, distance and mass, for those known. */
-export function moonsOf(bodies: readonly Body3D[], id: string): { name: string; a_m: number; mass_kg: number }[] {
-  return bodies.filter((b) => b.parent === id && b.a_m !== null && b.mass_kg !== undefined).map((b) => ({ name: b.name, a_m: b.a_m!, mass_kg: b.mass_kg! }));
 }
 
 /** A subject's surface temperature in kelvin: a star's effective, a world's surface, else its equilibrium. */
