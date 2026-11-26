@@ -89,9 +89,9 @@ pub struct MotionNote {
     pub model: String,
     /// The span it holds over, universe seconds (absent when unusable).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub from_s: Option<f64>,
+    pub from_s: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub to_s: Option<f64>,
+    pub to_s: Option<i64>,
     /// Why the model is not used, when it is not.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unused: Option<String>,
@@ -127,13 +127,13 @@ struct Plain {
     a_m: f64,
     e: f64,
     m0: f64,
-    epoch: f64,
+    epoch: i64,
     n: f64,
     rot: [[f64; 2]; 3],
 }
 
 impl Plain {
-    fn from_elements(el: [f64; 6], epoch: f64, mu: f64) -> Plain {
+    fn from_elements(el: [f64; 6], epoch: i64, mu: f64) -> Plain {
         let [a_m, e, inc, node, peri, m0] = el;
         Plain {
             a_m,
@@ -144,8 +144,8 @@ impl Plain {
             rot: rotation(inc, node, peri),
         }
     }
-    fn rel(&self, t: f64) -> [f64; 3] {
-        let mean = self.m0 + self.n * (t - self.epoch);
+    fn rel(&self, t: i64) -> [f64; 3] {
+        let mean = self.m0 + self.n * (t - self.epoch) as f64;
         perifocal(self.a_m, self.e, mean, &self.rot)
     }
 }
@@ -154,7 +154,7 @@ impl Plain {
 struct Measured {
     series: &'static sse_time::series::Series,
     /// Universe second of J2000.0 in this system.
-    anchor: f64,
+    anchor: i64,
     /// mu for the hand-over orbit.
     mu: f64,
     /// Hand-overs fitted at the span's start and end, worked out only when a
@@ -164,7 +164,7 @@ struct Measured {
 }
 
 impl Measured {
-    fn new(series: &'static sse_time::series::Series, anchor: f64, mu: f64) -> Measured {
+    fn new(series: &'static sse_time::series::Series, anchor: i64, mu: f64) -> Measured {
         Measured {
             series,
             anchor,
@@ -180,7 +180,7 @@ impl Measured {
     }
     /// `measured` inside the span, `plausible` outside it.
     fn label(&self, t: i64) -> &'static str {
-        if self.series.covers(crate::motion::jd(t as f64, self.anchor)) {
+        if self.series.covers(crate::motion::jd(t, self.anchor)) {
             "measured"
         } else {
             "plausible"
@@ -188,7 +188,7 @@ impl Measured {
     }
     /// Where it is from its host's centre at `t`, and whether that is measured.
     fn at(&self, t: i64) -> Option<([f64; 3], &'static str)> {
-        let jd = crate::motion::jd(t as f64, self.anchor);
+        let jd = crate::motion::jd(t, self.anchor);
         if self.series.covers(jd) {
             return Some((self.series.position_m(jd), "measured"));
         }
@@ -197,7 +197,7 @@ impl Measured {
         } else {
             self.after.get_or_init(|| self.fit(self.series.to_jd))
         };
-        p.as_ref().map(|p| (p.rel(t as f64), "plausible"))
+        p.as_ref().map(|p| (p.rel(t), "plausible"))
     }
 }
 
@@ -478,14 +478,17 @@ type Read = (
 
 /// The universe second of J2000.0 for `a`'s system: `time.j2000_s` on the
 /// top of its host chain (the root star).
-fn anchor_of(facts: &Facts, a: &Address) -> Option<f64> {
+fn anchor_of(facts: &Facts, a: &Address) -> Option<i64> {
     let mut at = a.clone();
     for _ in 0..64 {
         if let Some(v) = facts
             .get(&at)
             .and_then(|r| r.get(crate::motion::ANCHOR_FIELD))
         {
-            return num(v);
+            return match v {
+                Value::Int(i) => i64::try_from(*i).ok(),
+                v => num(v).map(|x| m::round(x) as i64),
+            };
         }
         let row = facts.get(&at);
         let up = row

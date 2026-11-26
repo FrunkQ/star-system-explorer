@@ -12,6 +12,7 @@
 //! (`packs/base-sol/motion/`, built by `scripts/build-sol-motion.py`), read
 //! once and kept.
 
+use sse_core::math as m;
 use sse_time::earth::EarthOrientation;
 use sse_time::series::Series;
 use std::collections::BTreeMap;
@@ -64,12 +65,13 @@ pub fn earth() -> &'static EarthOrientation {
 }
 
 /// Universe seconds to the Julian date the series read (TT, which they
-/// treat as TDB: the two differ by under 2 ms).
-pub fn jd(at_s: f64, anchor_s: f64) -> f64 {
-    sse_time::series::J2000_JD + (at_s - anchor_s) / sse_core::sheet::DAY
+/// treat as TDB: the two differ by under 2 ms). The gap from the anchor is
+/// taken in whole seconds first, so no absolute time is held in a double.
+pub fn jd(at_s: i64, anchor_s: i64) -> f64 {
+    sse_time::series::J2000_JD + (at_s - anchor_s) as f64 / sse_core::sheet::DAY
 }
 
-/// Julian date back to universe seconds.
-pub fn at_s(jd: f64, anchor_s: f64) -> f64 {
-    anchor_s + (jd - sse_time::series::J2000_JD) * sse_core::sheet::DAY
+/// Julian date back to universe seconds (to the nearest second).
+pub fn at_s(jd: f64, anchor_s: i64) -> i64 {
+    anchor_s + m::round((jd - sse_time::series::J2000_JD) * sse_core::sheet::DAY) as i64
 }
