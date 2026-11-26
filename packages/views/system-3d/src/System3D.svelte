@@ -225,12 +225,13 @@
     if (!a || !centreBody) return;
     // Its world first comes to the centre (the frame it is drawn in), then the camera goes where it was.
     if (a.about !== centreBody.id) {
-      if (byId(a.about)) untrack(() => ((flying += 1), (frame = a.about)));
+      if (byId(a.about)) untrack(() => ((flying += 1), (tweening = false), (frame = a.about)));
       return;
     }
     if (!(centreR > 0)) return;
     untrack(() => {
       flying += 1;
+      tweening = false;
       const o = orbitOf(a.dir, a.radii, centreR);
       yaw = o.yaw;
       pitch = o.pitch;
@@ -242,6 +243,8 @@
   });
 
   function enter(id: string) {
+    flying += 1; // a fly-in still under way stops here, or it would drag the camera on in the new frame
+    tweening = false;
     frame = id;
     dist = 26;
     onselect(id);
@@ -251,6 +254,10 @@
   // to the body's own while the eye is close, and the camera eases back out to show it with its moons. Two short
   // moves that read as one; no motion when the person asks for less.
   let flying = 0;
+  // Whether a fly-in is under way, from the first move to the last, said on the chart (data-flying) so a test can wait
+  // for it to finish rather than guess from the camera holding still.
+  let tweening = $state(false);
+  let flights = 0;
   const easeIn = (u: number) => u * u * u;
   const easeOut = (u: number) => 1 - (1 - u) ** 3;
   function tweenCam(to: { pan: [number, number]; dist: number }, ms: number, ease: (u: number) => number): Promise<boolean> {
@@ -295,15 +302,27 @@
       await litTurn(id);
       return;
     }
-    const near = Math.max(MIN, Math.min(3, dist / 6));
-    if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
-    frame = id;
-    pan = [0, 0];
-    dist = 2.5;
-    await litTurn(id);
-    await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
+    const flight = ++flights;
+    tweening = true;
+    try {
+      const near = Math.max(MIN, Math.min(3, dist / 6));
+      if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
+      frame = id;
+      pan = [0, 0];
+      dist = 2.5;
+      const at = flying;
+      await litTurn(id);
+      if (at !== flying) return; // stopped (‹ back, a zoom across frames) while it turned to the light
+      await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
+    } finally {
+      if (flight === flights) tweening = false;
+    }
   }
   function leave() {
+    // Coming back out stops a fly-in still under way: left running, it carried on setting the camera after the frame
+    // changed, so a quick "‹ back" (or a slow device) left the view part-way into a close-up of the frame just left.
+    flying += 1;
+    tweening = false;
     const back = centreId;
     frame = byId(centreId)?.parent && byId(centreId)!.parent !== root ? byId(centreId)!.parent : null;
     dist = 26;
@@ -967,6 +986,7 @@
   data-scale={realScale ? "real" : "readable"}
   data-hud={overlay ? "on" : "off"}
   data-dist={Math.round(dist * 1000) / 1000}
+  data-flying={tweening ? "yes" : undefined}
   class:true-look={isTrue && using === "gpu"}
 >
   <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true" data-quality={quality || undefined}></canvas>
