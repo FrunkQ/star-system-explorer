@@ -91,7 +91,7 @@ def loss(p,T,M,g,ve,d,t,ri=RHO_I,k=1.2e-5):
     ph=1-math.exp(-hop*rate); lam=ve*ve/v2; j=(1+lam)*math.exp(-lam)
     return flux*min(ph+j,1.0)*max(t,0)/ri
 AU=1.495978707e11
-ex=[dict(p=p,T=T,M=0.018015,g=g,ve=ve,d=d*AU,t=1.4e17,ri=RHO_I,k=1.2e-5,L=loss(p,T,0.018015,g,ve,d,1.4e17)) for (p,T,g,ve,d) in [(76.0,250.0,1.62,2380.0,1.0),(2.0e-6,130.0,1.24,2440.0,5.2),(1.0e-12,100.0,1.31,2025.0,5.2)]]
+ex=[dict(p=p,T=T,M=0.018,g=g,ve=ve,d=d*1.5e11,t=1.4e17,ri=RHO_I,k=1.2e-5,L=loss(p,T,0.018,g,ve,d*1.5e11/AU,1.4e17)) for (p,T,g,ve,d) in [(76.0,250.0,1.62,2380.0,1.0),(2.0e-6,130.0,1.24,2440.0,5.2),(1.0e-12,100.0,1.31,2025.0,5.2)]]
 atoms.append({"id":"sse.surface.open_ice_loss","version":"1.0.0","cost":"trivial",
  "inputs":[inp("vapour_pressure","p"),inp("temperature","T"),inp("molar_mass","M"),inp("gravity","g"),inp("escape_speed","ve"),inp("star_distance","d"),inp("age","t"),inp("ice_density","ri")],
  "outputs":[inp("ice_lost","L")],
