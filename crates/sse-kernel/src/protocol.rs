@@ -2512,6 +2512,35 @@ pub enum Request {
         #[ts(optional, type = "Record<string, unknown>")]
         facts: Option<serde_json::Value>,
     },
+    /// RW3: read a catalogue (`sse.catalogue/1`, format spec
+    /// `handover/design/SSE4-catalogue-format.md`) and preview it, before
+    /// anything is applied: what it is, every source's credit in full, the
+    /// price rule, the rows at each step, what the cut read, the first
+    /// `limit` rows (default 20, at most 200) with each value's grade and
+    /// source, and the rows it cannot place. Give `text` (the text form) or
+    /// `packed_b64` (the packed form, base64). The cut is `min_size` (the
+    /// catalogue's size unit: rows at or above it), or `rank` (the first
+    /// `rank` rows), or neither (all). A packed file is read only to the
+    /// cut. A catalogue with no credit, out of size order or with a value
+    /// whose source is unknown is refused (code `catalogue_<reason>`).
+    /// Read-only; needs no universe.
+    ReadCatalogue {
+        #[serde(default)]
+        #[ts(optional)]
+        text: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        packed_b64: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        min_size: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        rank: Option<u64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit: Option<u32>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -2738,6 +2767,7 @@ impl Request {
             Request::FixNames { .. } => "fix_names",
             Request::PackReports { .. } => "pack_reports",
             Request::AtmosphereAdvice { .. } => "atmosphere_advice",
+            Request::ReadCatalogue { .. } => "read_catalogue",
         }
     }
 }
@@ -3265,6 +3295,11 @@ pub fn ops() -> Vec<OpInfo> {
             "atmosphere_advice",
             Cost::Light,
             "two formula blocks and one equilibrium search (about 60 sweeps of 5 reactions); read only",
+        ),
+        o(
+            "read_catalogue",
+            Cost::Light,
+            "linear in the rows above the cut (a packed file is decoded only to the cut); one SHA-256 per block read; read only",
         ),
     ]
 }
@@ -4493,6 +4528,17 @@ pub enum Response {
     AtmosphereAdvised {
         #[ts(type = "unknown")]
         advice: serde_json::Value,
+    },
+    /// `read_catalogue`: `{id, title, version, level, frame, anchor, epoch,
+    /// size, columns, credits ([{id, name, version, kind, licence, credit,
+    /// link, retrieved}]), price ({may_sell, why}), completeness, steps
+    /// ([{size, label, rows}]), motions, notes, total_rows, total_bytes,
+    /// header_sha256, read ({rows, bytes, largest, smallest}), rows (each
+    /// present value, with `_from` {column: {grade, source}}),
+    /// warnings_total, warnings ([{id, column, what}])}`.
+    CatalogueRead {
+        #[ts(type = "unknown")]
+        preview: serde_json::Value,
     },
 }
 
