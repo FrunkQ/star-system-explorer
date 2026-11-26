@@ -21,7 +21,7 @@ On kernel K18 `describe_star` (PR 592). A star's Mass handle now opens the choos
 Honest notes:
 - The catalogued planets of the Solar System carry their measured temperatures, so changing the Sun moves a hand-added world's temperature (the unit test: a world at 1 AU warms under 1.1 solar masses) but not Earth's or Mars's on the card ("nothing else this card watches moved"). Whether a changed star should override a measured temperature is a question for the physics, not this package.
 - A what-if's own resolve of the Solar System takes several seconds in the browser, so on Explore the card's "what was set" line arrives a few seconds after the strip moves.
-- The new browser test `tests/ui/star-chooser.e2e.mjs` is not yet in `ci.yml` (adding the line was blocked in this session; it needs Alex's yes or another hand).
+- The new browser test `tests/ui/star-chooser.e2e.mjs` is not yet in `ci.yml` (the coordinator said yes on 26 Nov, but this session's permission guard refused the edit twice; another session, or Alex, adds the line `- run: node tests/ui/star-chooser.e2e.mjs --screens ui-screens/star-chooser` after the manifest line).
 
 Checks: `packages/ui-contract/test/star-chooser.test.ts` (letters; the strip ends; Sun-like near 1, a red giant found and checked to be a giant now, each other kind checked against its phase, no blue giant at 4.57 Gyr but one at 5 Myr; choosing for the Sun is one change, reopens at the birth mass, warms a world at 1 AU). `tests/ui/star-chooser.e2e.mjs` desk and phone (painted strip, walls, life bar, kinds greyed and live, Red giant kept with one Undo on Build, White dwarf as a try on Explore with the main line unmoved, nothing off the side on a phone). Screens: `sse4/handover-screens/ED6-screens/`.
 
