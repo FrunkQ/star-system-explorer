@@ -8,6 +8,7 @@ import { Session } from "../src/session.ts";
 import { gmSeat } from "../src/seat.ts";
 import { formationChart, massWidth, stageAt, chartXY } from "../src/formation-chart.ts";
 import { formationOf } from "../src/formation-record.ts";
+import { howWorkedOut, storyFor, worldStory } from "../src/formation-story.ts";
 import { nodeKernel } from "./node-kernel.ts";
 
 const root = new URL("../../../", import.meta.url);
@@ -68,6 +69,28 @@ test("a grown system's history reads back and draws as tracks, lines, events and
     assert.ok(Math.abs(xy.y(c.t_top)) < 1e-9 && Math.abs(xy.y(c.t_bottom) - 1000) < 1e-9);
     assert.ok(Math.abs(xy.t(xy.y(41)) - 41) < 1e-6);
     assert.ok(massWidth(1e-4) < massWidth(1) && massWidth(1) < massWidth(300));
+
+    // F10b: a world's story. The card opens on the heaviest lasting world; any track can be chosen.
+    const first = storyFor(c, null)!;
+    assert.equal(first, [...lasting].sort((a, b) => b.m_end - a.m_end)[0]!.id);
+    assert.equal(storyFor(c, lasting[0]!.address!), lasting[0]!.id, "a selected world opens its own story");
+    for (const t of c.tracks) {
+      const st = worldStory(src.run, c, t.id)!;
+      assert.ok(st, t.id);
+      const shares = st.material.reduce((a, m) => a + m.share, 0);
+      assert.ok(st.material.length === 0 || Math.abs(shares - 1) < 1e-9, `${t.id}: material shares sum to one (${shares})`);
+      assert.ok(st.lines.length >= 1 && st.lines.every((l, i) => i === 0 || l.t >= st.lines[i - 1]!.t), `${t.id}: its story in time order`);
+      assert.ok(!/NaN|undefined/.test(JSON.stringify(st)), JSON.stringify(st).slice(0, 300));
+    }
+    // A world that swallowed another carries its share "from" that body, and its impact is drawn, not calculated.
+    const target = c.tracks.find((t) => t.end.how === "merged")!;
+    const host = worldStory(src.run, c, target.end.how === "merged" ? target.end.into : "")!;
+    assert.ok(host.material.some((m) => m.kind === "impactor" && m.key === target.id), "the merged body's share is named");
+    assert.ok(host.sure.some((r) => r.label.startsWith("Impact") && r.value === "drawn"));
+    assert.ok(host.lines.some((l) => l.violent), "its impact is in its story");
+    // Every lasting world's story says where it is now (what is still to come follows it).
+    for (const t of lasting) assert.ok(worldStory(src.run, c, t.id)!.lines.some((l) => /^now at /.test(l.text) && l.t === c.now));
+    assert.deepEqual(howWorkedOut(src.run).map((r) => r.value), ["tabulated", "calculated, stepped in time", "drawn from calibrated odds", "calculated", "not yet"]);
   } finally {
     await k.close();
   }

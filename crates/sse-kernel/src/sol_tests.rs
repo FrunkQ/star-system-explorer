@@ -18,7 +18,7 @@ const SOL: &str = "u:home/sys:sol";
 /// The base-sol bodies at the start sheet's addresses (Sun star:0, bodies
 /// body:N in sheet order, moons under their host), values as the pack has
 /// them, plus `extra` facts by body id.
-fn open_sol(extra: &[(&str, &str, serde_json::Value)]) -> crate::Kernel {
+pub(crate) fn open_sol(extra: &[(&str, &str, serde_json::Value)]) -> crate::Kernel {
     open_sol_with(&[], extra)
 }
 
@@ -1263,4 +1263,69 @@ fn saturns_top_deck_is_ammonia_from_its_one_bar_temperature() {
         serde_json::json!({"op":"weather","want":"field","system":SOL,"body":u["address"]}),
     );
     assert!(w.to_string().contains("methane ice"), "{w:.600}");
+}
+
+/// IG2: a catalogued moon that carries only its mass and radius is as icy
+/// to the regime rules as to its ice ground (one door, read off its
+/// density), so Europa's thin shell cracks and renews its ground (young,
+/// bright ice) while Callisto's thick lid keeps old dark ground. Titan
+/// carries its measured air (Huygens), so it is a hydrocarbon world, not
+/// airless. Ceres's open ice sublimes away, so its ice regime is rock.
+#[test]
+fn icy_moons_take_their_regime_from_their_ice() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let tiles: Vec<serde_json::Value> = (0..6)
+        .map(|f| serde_json::json!({"face":f,"level":0,"x":0,"y":0}))
+        .collect();
+    let mut look = |name: &str| {
+        let a = r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap();
+        let s = send(
+            &mut k,
+            serde_json::json!({"op":"survey_surface","system":SOL,"body":a,"limit":0,"tiles":tiles}),
+        );
+        assert_eq!(s["type"], "surface_surveyed", "{s}");
+        let sv = &s["survey"];
+        let (mut al, mut age, mut ice, mut n) = (0.0, 0.0, 0.0, 0.0);
+        for t in sv["tiles"].as_array().unwrap() {
+            for (i, x) in t["albedo"].as_array().unwrap().iter().enumerate() {
+                al += x.as_f64().unwrap() / 1000.0;
+                age += t["surface_age_myr"][i].as_f64().unwrap();
+                ice += f64::from(u8::from(t["material"][i] == 3));
+                n += 1.0;
+            }
+        }
+        let regime = sv["envelope"]["regime_now"].as_str().unwrap().to_string();
+        (regime, al / n, age / n, ice / n)
+    };
+    let europa = look("Europa");
+    let callisto = look("Callisto");
+    assert_eq!(europa.0, "ice-shell", "{europa:?}");
+    assert_eq!(callisto.0, "cold-ice-lid", "{callisto:?}");
+    // Europa's craters say its surface is tens of millions of years old;
+    // the whole age (4567 Myr) is the fault this fixes.
+    assert!(europa.2 < 500.0, "Europa's ground is young: {europa:?}");
+    assert!(callisto.2 > 4000.0, "Callisto's lid is old: {callisto:?}");
+    assert!(europa.1 > 0.5, "young ice is bright: {europa:?}");
+    assert!(europa.1 > callisto.1 + 0.3, "{europa:?} {callisto:?}");
+    let titan = look("Titan");
+    assert_eq!(titan.0, "hydrocarbon", "{titan:?}");
+    let ceres = look("Ceres");
+    assert_eq!(ceres.0, "cold-ice-lid", "{ceres:?}");
+    assert_eq!(ceres.3, 0.0, "Ceres's open ice is lost: {ceres:?}");
+    let facts = r["facts"].as_object().unwrap();
+    let t = facts.values().find(|f| f["name"] == "Titan").unwrap();
+    assert!(
+        (t["atmosphere.surface_pressure"].as_f64().unwrap() - 146_700.0).abs() < 1.0,
+        "{t}"
+    );
 }

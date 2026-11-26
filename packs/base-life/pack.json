@@ -10,6 +10,63 @@
  "provides": {
   "other": {
    "about": "Life suite sockets (L0): the default habitat kinds of the life design section 2, as rules over world stacks. No life model.",
+   "life_from_world": {
+    "about": "Life on a world of the chart (L3): how a world's physical description (its climate by latitude band, air, water, ice and inner heat, as the surface and climate suites resolve them) becomes a world stack for the habitat rules, and what supplies each habitat gets. Every supply is scaled from Earth by the physical quantity that drives it; these are sketches calibrated to one world, labelled as such.",
+    "band_edges_deg": [
+     -90.0,
+     -60.0,
+     -30.0,
+     30.0,
+     60.0,
+     90.0
+    ],
+    "band_names": [
+     "Southern polar lands",
+     "Southern temperate lands",
+     "Tropical lands",
+     "Northern temperate lands",
+     "Northern polar lands"
+    ],
+    "atmosphere_top_m": 100000.0,
+    "crust_depth_m": 30000.0,
+    "pore_water_fraction": 0.01,
+    "warming_at_depth_k_per_w_m2": 2000.0,
+    "dose_open_msv_yr": 500.0,
+    "dose_column_kg_m2": 1760.0,
+    "dose_floor_msv_yr": 1.0,
+    "weathering_p_mol_m2_yr": 0.001,
+    "weathering_precip_m_yr": 0.75,
+    "river_p_share": 0.2,
+    "vent_h2_mol_yr_per_w": 0.0064,
+    "anoxic_below_o2": 1e-05,
+    "anoxic_fe2_mol_yr_per_w": 7.0,
+    "vents_above_w_m2": 0.03,
+    "recycling_gyr": {
+     "mobile-lid": 0.8,
+     "ice-shell": 0.05
+    },
+    "air_reductant_mol_yr_per_w": 0.064,
+    "reducing_above_h2": 0.1,
+    "sources": {
+     "band_edges_deg": "Five bands of latitude, tropics to 30 degrees and poles from 60: enough to separate a world's warm and cold lands without the 18 bands of the climate grid",
+     "crust_depth_m": "A continental crust about 30 to 40 km thick (Christensen and Mooney 1995); the deep-crust habitat only reads its top 5 km",
+     "pore_water_fraction": "As the Earth fixture: about 1% of the upper crust is water-filled pore space, the deep biosphere's home (Magnabosco et al. 2018)",
+     "warming_at_depth_k_per_w_m2": "5 km of rock with a thermal conductivity of about 2.5 W/m/K: each W/m² of heat flowing out warms the rock 2000 K at 5 km (Turcotte and Schubert 2014)",
+     "dose_open_msv_yr": "About 1.37 mSv a day on the Moon's surface (Zhang et al. 2020, Chang'e 4 LND, Science Advances 6, eaaz1334)",
+     "dose_column_kg_m2": "Calibrated so Earth's 10,300 kg/m² of air brings the open dose down to its 1.4 mSv/yr of cosmic and terrestrial radiation above the floor (UNSCEAR 2008: 2.4 mSv/yr in all); Mars then reads about 450 mSv/yr, about twice the measured 0.64 mSv a day (Hassler et al. 2014), so this is a sketch within a factor of two",
+     "dose_floor_msv_yr": "Radiation from the ground itself, about 1 mSv/yr on Earth (UNSCEAR 2008)",
+     "weathering_p_mol_m2_yr": "New phosphorus from rock weathering, about 1.5e11 mol per year over Earth's 1.5e14 m² of land (Cleveland et al. 2013), at Earth's mean land rainfall",
+     "weathering_precip_m_yr": "Earth's mean rainfall over land, about 0.75 m a year (Trenberth et al. 2007); weathering scales with rain",
+     "river_p_share": "Rivers and dust bring the ocean about 3e10 mol of new phosphorus a year (Benitez-Nelson 2000), a fifth of what land weathering releases: a world with no land has no new phosphorus from rivers",
+     "vent_h2_mol_yr_per_w": "Hydrothermal hydrogen, about 3e11 mol a year (Kharecha et al. 2005; Sleep and Bird 2007), over Earth's 47 TW of internal heat (Davies and Davies 2010)",
+     "anoxic_fe2_mol_yr_per_w": "Ferrous iron from vents into an ocean without oxygen: about 1e15 mol a year in the Archean (Canfield et al. 2006) over about three times today's heat flow",
+     "anoxic_below_o2": "Below this O2 mixing ratio the ocean is taken as anoxic and keeps its dissolved iron (the Archean ocean, Lyons et al. 2014)",
+     "vents_above_w_m2": "Hydrothermal vents need an interior hot enough to drive water through rock; a sketch threshold between Mars (about 0.02 W/m², no vents today) and Europa (about 0.05 W/m², tidal heat)",
+     "recycling_gyr": "How long a surface lasts: about 0.8 Gyr under plate tectonics (the L1d fixture's Earth), about 50 Myr for an active ice shell (Europa's surface age, Zahnle et al. 2003); none for a stagnant lid",
+     "reducing_above_h2": "Air with a tenth or more hydrogen is reducing: methane is what its carbon becomes without life (a giant's air), so methane there is no sign of anything (Krissansen-Totton et al. 2018, Science Advances 4, eaao5747)",
+     "air_reductant_mol_yr_per_w": "The air box's volcanic reducing gases, 3e12 mol O2-equivalent a year (life_feedback) over Earth's 47 TW: a world's volcanism scales with its heat"
+    }
+   },
    "habitat_rules": [
     {
      "id": "ocean-sunlit",
