@@ -177,5 +177,5 @@ export type { Ops, V3 } from "./ladder-noise.ts";
 // The GPU bake is texture-ladder-gpu.ts, used by gpu.ts.
 export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_CAP, FACE_MIN, faceDirection, faceSize, faceWords, levelFor as tileLevelFor, reliefNormal, sampleFaces, texelAngle, TILE_SAMPLES, tilesFacing, withFiner, composePatch, frameAt, patchDirection, patchFor, patchLevel, PATCH_N, PATCH_PX_PER_SAMPLE, PATCH_TILES, samplePatch, tilesNear } from "./texture-ladder.ts";
 export type { Composite, FacePicture, GroundAsk, PatchPicture, TileKey } from "./texture-ladder.ts";
-export { discCover, GLINT_FALLBACK, glintBrdf, MAX_CASTERS, ringPassAt, shadeFor, starLightAt, turnOnto, umbraLight, type Caster, type Placed, type Shade, type ShadowLightRead } from "./eclipse.ts";
+export { discCover, GLINT_FALLBACK, glintBrdf, MAX_CASTERS, ringPassAt, seenFrom, shadeFor, starLightAt, turnOnto, umbraLight, type Caster, type Placed, type Shade, type ShadowLightRead } from "./eclipse.ts";
 export { readSeaGlint, readUmbras, umbraKey, type GlintReader, type SeaGlint, type UmbraPair, type UmbraReader } from "./eclipse-read.ts";

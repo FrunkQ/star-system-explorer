@@ -20,6 +20,14 @@ Munk's law there. Thread "Draw shadows, eclipses and sea glint".
   `readSeaGlint` (eclipse-read.ts) asks the weather op; the system chart asks for each world whose face shows liquid,
   and System3D passes it to `trueLook`.
 
+## Light time for every caster (from RW17, "Make eclipses happen on time")
+- A shadow's caster is read where it stood when the starlight now reaching the world went past it: its place less its
+  velocity times the light's time to the world (`eclipse.ts` `seenFrom`; the Moon over Earth, 1.25 s and 1.28 km). Any
+  caster, no special case. RW17 found eclipses about 37 s late without it.
+- Velocities come from the kernel: the shell asks `orbits_at` for now and 60 s earlier (`MOTION_STEP_S`), and
+  `motionsFrom` takes each body's move between them; `orbit.v_m_s` on the scene, `Body3D.v_m_s`, summed up the chain
+  in `placedBodies` (a velocity only where the whole chain has one).
+
 ## Golden
 - `tests/golden/areas/light.jsonl` gains two lines at the end (weather glint for the Earth and Jupiter fixtures);
   nothing existing moves.

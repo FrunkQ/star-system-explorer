@@ -10,6 +10,10 @@
 // an airless world). Rings let light through by e^(−τ/μ₀) along the slant path (the same τ the ring's picture is drawn
 // from, rings.ts), so a ringed world wears its rings' shadow across its face and its shadow lies across the rings.
 import type { Vec3 } from "./frames.ts";
+import { constant } from "../../ui-contract/src/index.ts";
+
+/** Light's speed (m/s), from the sheet. */
+const C = constant("c");
 
 /** A body between a world and its star, in the world's own radii, in the drawing's frame, centred on the world. */
 export interface Caster {
@@ -103,6 +107,20 @@ export interface Placed {
   radius_m: number;
   /** Its umbra's light per channel (`umbraLight`), when its air bends any into its shadow. */
   umbra?: [number, number, number];
+  /** Its velocity in the same frame (m/s), when known: a caster is read where it was when the light passed it. */
+  v_m_s?: readonly [number, number, number];
+}
+
+/**
+ * Where a caster stood when the starlight now reaching the world went past it: its place now, less its velocity times
+ * the light's time from it to the world (about 1.3 s, 40 km, for the Moon over Earth: without it, eclipses run some
+ * 37 s late). A caster without a known velocity stays where it is.
+ */
+export function seenFrom(c: Placed, world: Placed): readonly [number, number, number] {
+  const v = c.v_m_s;
+  if (!v) return c.at_m;
+  const tau = len(sub(c.at_m, world.at_m)) / C;
+  return [c.at_m[0] - v[0] * tau, c.at_m[1] - v[1] * tau, c.at_m[2] - v[2] * tau];
 }
 
 /** A rotation taking direction `a` onto direction `b` by the shortest turn (Rodrigues); returned as a function. */
@@ -145,7 +163,7 @@ export function shadeFor(world: Placed, others: readonly Placed[], star: Placed,
   const found: { c: Placed; off: Vec3; reach: number }[] = [];
   for (const c of others) {
     if (c.id === world.id || c.id === star.id || !(c.radius_m > 0)) continue;
-    const off = sub(c.at_m, world.at_m);
+    const off = sub(seenFrom(c, world), world.at_m);
     const d_c = len(off);
     if (!(d_c > world.radius_m + c.radius_m) || d_c >= d_s) continue;
     const a_c = Math.asin(Math.min(1, c.radius_m / d_c));

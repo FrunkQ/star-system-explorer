@@ -1,7 +1,7 @@
 // Shadows and eclipses in True (eclipse.ts): the processor twin of the GPU's shadow sums.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { discCover, GLINT_FALLBACK, glintBrdf, ringPassAt, shadeFor, starLightAt, turnOnto, umbraLight, type Placed } from "../src/eclipse.ts";
+import { discCover, GLINT_FALLBACK, glintBrdf, ringPassAt, seenFrom, shadeFor, starLightAt, turnOnto, umbraLight, type Placed } from "../src/eclipse.ts";
 
 const near = (a: number, b: number, tol: number, what: string) => assert.ok(Math.abs(a - b) <= tol, `${what}: ${a} not within ${tol} of ${b}`);
 
@@ -38,6 +38,20 @@ test("a total eclipse of the Sun: dark at the spot under the Moon, a penumbra a 
   const mid = at(2000);
   assert.ok(mid > 0.05 && mid < 0.95, `penumbra ${mid}`);
   assert.equal(at(6000), 1);
+});
+
+test("a caster is read where it was when the light passed it: the Moon 1.25 s and 1.28 km back along its path", () => {
+  // The Moon on the Sun–Earth line now, moving at 1.022 km/s across it: the light reaching Earth passed it 3.75e8/c s ago.
+  const moving: Placed = { ...moonAt(0), v_m_s: [0, 1022, 0] };
+  const back = seenFrom(moving, earth);
+  const tau = 3.75e8 / 299792458;
+  near(back[1], -1022 * tau, 1e-9, "the light time's step back");
+  near(back[1], -1278.4, 0.5, "about 1.28 km");
+  // In the shade the caster sits that far off the line, in the world's radii (Earth's here, turned onto +x light).
+  const sh = shadeFor(earth, [moving], sun, [1, 0, 0])!;
+  near(sh.casters[0]!.at[1], (-1022 * tau) / 6.371e6, 1e-12, "drawn where the light passed it");
+  // No velocity, no step: the caster stays where it is.
+  assert.deepEqual(seenFrom(moonAt(0), earth), moonAt(0).at_m);
 });
 
 test("no eclipse when the Moon passes 5° to one side, as it does most months", () => {
