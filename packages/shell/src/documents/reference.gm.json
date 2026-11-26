@@ -23,6 +23,7 @@
       "scale": "system",
       "group": "understand",
       "label": "Look up",
+      "desks": ["explore", "build"],
       "order": 3,
       "hint": "Constants, elements, units, names and classes, each with where it comes from"
     },
@@ -30,6 +31,7 @@
       "scale": "world",
       "group": "understand",
       "label": "Look up",
+      "desks": ["explore", "build"],
       "order": 3,
       "hint": "Constants, elements, units, names and classes, each with where it comes from"
     },

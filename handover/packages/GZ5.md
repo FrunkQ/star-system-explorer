@@ -35,7 +35,7 @@ package GZ5 in section 13 (Stage B, after the kernel tie-up, before the zoom).
 - Shapes are drawn as seen from home (the sky's tilt), not from an axis in space (GZ14 gives one).
 - One place per halo is not yet true: the web cube moves haloes by the Zel'dovich step, `galaxies_seen` does not
   (grand zoom gap 4, GZ15).
-- The sky is read at the present day, so the view says "as it is now" whatever the campaign clock says.
+- ~~The sky is read at the present day~~ Corrected 26 Nov (GZ6 part 1): the kernel reads the sky at the campaign's date by default; the chip now says so.
 - Galaxy names are catalogue labels ("Halo 2, cell 0.-1.1") until the naming track gives galaxies a scheme.
 - Space is an inverted panel (ink ground) so the theme tokens hold; True will draw it in light.
 

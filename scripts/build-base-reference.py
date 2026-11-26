@@ -896,6 +896,9 @@ for _k, _v in optical_rows.SOURCES.items():
     SOURCES[_k] = _v
 for _m in optical_rows.apply(MIXTURES):
     MIXTURES.append(_m)
+# MP36: alpha sulphur's reflectance and Venus cloud acid (scripts/optical_rows.py, sulphur_rows).
+for _m in optical_rows.sulphur_rows(MIXTURES):
+    MIXTURES.append(_m)
 optical_rows.apply_ices(SUBSTANCES, val)
 
 

@@ -7,6 +7,7 @@ import type { AppliedEdit, Workspace } from "./view.ts";
 import type { SceneFact, SystemScene } from "./scene.ts";
 import type { IntentResult, ViewSession } from "./session.ts";
 import type { Intent } from "./intent.ts";
+import { deskTries } from "./desk.ts";
 
 /**
  * Where a typed value goes: a fact read back from the universe is held at its kernel field in SI (SceneFact.kernel),
@@ -19,6 +20,28 @@ export function factEdit(f: SceneFact, value: Json): { field: string; value: Jso
 }
 
 export async function commitEdit(
+  session: ViewSession,
+  ws: Workspace,
+  change: { address: string; field: string; value: Json; display: string; before: { value: Json; display: string } },
+): Promise<IntentResult> {
+  return (await tryFirst(session, ws)) ?? sendEdit(session, ws, change);
+}
+
+/** The label a what-if opened by itself on Explore carries on its stamp, under the time ruler and in "What followed". */
+export const TRY_LABEL = "Trying it";
+
+/**
+ * On a desk whose changes are a try (Explore, three desks TM4), the first change opens a what-if by itself, so the
+ * change goes to it and the main line does not move; Keep it and Throw away stay under the time ruler. Null when the
+ * change can go where it would anyway; a refusal when the what-if could not be opened.
+ */
+export async function tryFirst(session: ViewSession, ws: Workspace): Promise<IntentResult | null> {
+  if (ws.branch || !deskTries(ws.desk) || session.seat.authority !== "gm") return null;
+  const problem = await openWhatIf(session, ws, TRY_LABEL);
+  return problem ? { status: "refused", reason: problem } : null;
+}
+
+async function sendEdit(
   session: ViewSession,
   ws: Workspace,
   change: { address: string; field: string; value: Json; display: string; before: { value: Json; display: string } },
@@ -88,6 +111,8 @@ export async function commitFields(
   ws: Workspace,
   change: { address: string; edits: { address?: string; field: string; value: Json; before: Json }[]; display: string; before_display: string; evidence?: "authored" | "catalogued"; source?: string },
 ): Promise<IntentResult> {
+  const tried = await tryFirst(session, ws);
+  if (tried) return tried;
   const at = (e: { address?: string }) => e.address ?? change.address;
   const b = ws.branch;
   if (b) {
@@ -183,7 +208,8 @@ export async function keepWhatIf(session: ViewSession, ws: Workspace): Promise<s
   await session.discardBranch(b.id);
   ws.branch = null;
   for (const e of b.edits) {
-    const r = await commitEdit(session, ws, { address: e.address, field: e.field, value: e.after.value, display: e.after.display, before: e.before });
+    // Straight to the main line: on Explore, keeping must not open a fresh what-if for the kept edits.
+    const r = await sendEdit(session, ws, { address: e.address, field: e.field, value: e.after.value, display: e.after.display, before: e.before });
     if (r.status !== "applied") return r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the GM to approve";
   }
   ws.revision += 1;

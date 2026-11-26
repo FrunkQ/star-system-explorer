@@ -212,6 +212,8 @@ export interface ViewSession {
   setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }>;
   /** The top pack's calendar (kernel `calendar`), if any pack gives one. */
   calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }>;
+  /** How a system in the open universe was made (kernel `formation_record`, F10): a grown system's run, re-run from its kept request. GM only. */
+  formationRecord?(system: string): Promise<{ ok: true; result: import("./formation-record.ts").FormationRecordRead } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** The links between places the record holds (kernel `links_in`, HW1): gates, lanes, routes; the GM sees all. Read only. */
@@ -238,6 +240,12 @@ export interface ViewSession {
    * the branch with `discardBranch` when done. GM only.
    */
   classSample?(classes: readonly string[], extra?: readonly PackDoc[]): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }>;
+  /**
+   * One star read off the life line formation draws (kernel `describe_star`, K18): mass, age from birth and [Fe/H] in;
+   * the phase now with its temperature, luminosity and radius, each phase's ages, the remnant and the mass walls. Read
+   * only, no system, no events; the star chooser (ED6) reads its strips from it.
+   */
+  describeStar?(mass_msun: number, age_yr: number, feh?: number): Promise<{ ok: true; star: import("./star-chooser.ts").StarDescription } | { ok: false; code: string; message: string }>;
   classifyPreview?(ask: ClassifyAsk): Promise<{ ok: true; result: ClassifyPreview } | { ok: false; code: string; message: string }>;
   /** The story finder (U8, kernel `sift`): sifters over the campaign, hits with evidence. GM only. */
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
@@ -295,13 +303,17 @@ export interface ViewSession {
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
   /** The kernel `weather` op: a fixture `world`, or a `body` of an adopted `system` at `at_s`; `want` picks climate, systems, field (a cube-sphere `tile`), report, column or sound, at `day` (days since the campaign epoch). */
   /** Y2: the stars seen from a place at a time down to a limiting magnitude (kernel `sky_from_here`); read only. */
-  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
+  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean; satellite_paths?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
   /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
   readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
+  /** SB2: one member of a belt, ring or cloud resolved into a definite body (kernel `small_body`): by `member` address,
+   * or `cloud` and `rank` (1 the largest); with neither, the notable bodies formation made. `r_au` sets where an icy
+   * body's activity is worked out (perihelion when left out). Nothing is stored; the same body comes back every time. */
+  smallBody(ask: { system: string; member?: string; cloud?: string; rank?: number; r_au?: number }): Promise<{ ok: true; body: Json | null; notables: Json[] } | { ok: false; code: string; message: string }>;
   /** XO18: the Hazard map's reading (kernel `hazard_map`): a measured Solar System body by `fixture` and `body`, or
    * handed `asks`; along `line` ("equator" or "poles"); with `ship`, or the stated stock ship. Read only. */
   hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }>;
@@ -875,6 +887,11 @@ export class Session implements ViewSession {
     return r.type === "sifted" ? { ok: true, result: r as unknown as import("./story.ts").SiftResult } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async describeStar(mass_msun: number, age_yr: number, feh?: number): Promise<{ ok: true; star: import("./star-chooser.ts").StarDescription } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "describe_star", mass_msun, age_yr, ...(feh !== undefined ? { feh } : {}) });
+    return r.type === "star_described" ? { ok: true, star: r.star as import("./star-chooser.ts").StarDescription } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async classSample(classes: readonly string[], extra: readonly PackDoc[] = []): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a class's sample world is made on a what-if branch, on the game master's machine" };
     const stack = this.#packs();
@@ -908,7 +925,7 @@ export class Session implements ViewSession {
     return { ok: true, frames: f.frames, label: f.label, source: f.source };
   }
 
-  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
+  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean; satellite_paths?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "sky_from_here", ...ask } as Json);
     return r.type === "sky" ? { ok: true, sky: (r as unknown as { sky: Json }).sky } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -928,6 +945,12 @@ export class Session implements ViewSession {
   async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_activity", ...ask } as Json);
     return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async smallBody(ask: { system: string; member?: string; cloud?: string; rank?: number; r_au?: number }): Promise<{ ok: true; body: Json | null; notables: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "small_body", ...ask } as Json);
+    const o = r as unknown as { body?: Json; notables?: Json[] };
+    return r.type === "small_body_is" ? { ok: true, body: o.body ?? null, notables: o.notables ?? [] } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
@@ -1178,6 +1201,12 @@ export class Session implements ViewSession {
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "systems" });
     return r.type === "systems_listed" ? { ok: true, systems: (r as unknown as { systems: ListedSystem[] }).systems } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async formationRecord(system: string): Promise<{ ok: true; result: import("./formation-record.ts").FormationRecordRead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads how a system was made" };
+    const r = await this.#call({ op: "formation_record", system } as never);
+    return r.type === "formation_record" ? { ok: true, result: r as unknown as import("./formation-record.ts").FormationRecordRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
