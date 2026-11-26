@@ -105,7 +105,7 @@ pub fn plumes(b: &Body, env: &SurfaceEnvelope, seed: &Seed) -> Option<Plumes> {
         .last()
         .map(|s| s.heat_flow_w_m2[1])
         .unwrap_or(0.0);
-    let w = b.water_fraction.clamp(0.0, 1.0);
+    let w = crate::ice_ground::water_share(b).clamp(0.0, 1.0);
     if b.deep_envelope || r <= 0.0 || mass <= 0.0 || w <= 0.0 || q <= 0.0 || t_s >= T_MELT_ICE_K {
         return None;
     }

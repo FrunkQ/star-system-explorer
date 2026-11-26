@@ -50,11 +50,14 @@ fn access_labels_follow_the_facts_on_sol_and_kestrel() {
     // Gas skimming on the four giants only; never the Sun.
     assert_eq!(with(&t, "access.gas-skimming"), giants);
     // Aerobraking where the catalogue's surface pressure is at least 100 Pa
-    // (Venus, Earth, Mars at 636 Pa) and in the giants' envelopes; not
-    // Pluto (1.3 Pa) and not Mercury (no air).
+    // (Venus, Earth, Mars at 636 Pa, Titan at 1467 hPa) and in the giants'
+    // envelopes; not Pluto (1.3 Pa) and not Mercury (no air).
     let body = |n: u32| format!("{sys}/body:{n}");
     let aero = with(&t, "access.aerobraking");
-    assert_eq!(aero, (1..=7).map(body).collect::<Vec<_>>(), "{aero:?}");
+    let mut want: Vec<String> = (1..=7).map(body).collect();
+    // Titan, in Saturn's moon slot 6 (IG2: its measured air from Huygens).
+    want.insert(5, format!("{sys}/body:5/body:6"));
+    assert_eq!(aero, want, "{aero:?}");
     assert!(
         !aero.contains(&body(8)) && !aero.contains(&body(0)),
         "{aero:?}"
