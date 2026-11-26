@@ -7431,6 +7431,7 @@ impl Kernel {
                 max_stars,
                 galaxies,
                 stars,
+                satellite_paths,
             } => {
                 let u = self.universe()?;
                 let pins =
@@ -7453,6 +7454,7 @@ impl Kernel {
                             max_stars: max_stars.unwrap_or(20_000) as usize,
                             galaxies: galaxies.unwrap_or(true),
                             stars: stars.unwrap_or(true),
+                            satellite_paths: satellite_paths.unwrap_or(false),
                         },
                     )
                 })?;

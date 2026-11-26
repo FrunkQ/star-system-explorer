@@ -2,7 +2,7 @@
 
 Track CC. Written 26 Nov 2026 by the design thread, after the CC1 measurements (main at d726d46, home galaxy seed g3; report https://claude.ai/artifact/LtTgFC1uNKb7A2YcMEGtBm). Read with `SSE4-conserved-chain-design.md` (the accepted note) and `SSE4-conserved-chain-checks.md` (the check set).
 
-State: **draft for the builders. One ruling is owed by Alex (section 4).** The roster part (section 6A) is written from the CC4 prototype's report. Nothing here changes code. Each section is the spec its package reads before it starts.
+State: **draft for the builders. Alex ruled on section 4 on 26 Nov 2026 (17:05 UTC): anchor at the campaign date.** The roster part (section 6A) is written from the CC4 prototype's report. Nothing here changes code. Each section is the spec its package reads before it starts.
 
 The working rule holds throughout (Alex, 26 Nov): plausible, repeatable and explained, not exact. Where the measurements showed a join already closes to a few percent, this note says "leave it" and registers the tolerance instead of building machinery.
 
@@ -57,7 +57,7 @@ Stars are born in groups, and the groups are where the interest is: a system's s
 - No stand-in: no system reads a constant Al-26 or Mg/Si.
 - Seen red first: the death-count test fails on today's code (factor two).
 
-## 4. The star field at other dates (ruling owed)
+## 4. The star field at other dates (ruled 26 Nov)
 
 The measurement is blunt: the field is rebuilt every 0.1 Myr and no star is carried from one frame to the next. Within the working rule there are three honest choices.
 
@@ -67,7 +67,9 @@ The measurement is blunt: the field is rebuilt every 0.1 Myr and no star is carr
 
 Choice 1 keeps every star a GM has looked at fixed through time, and makes the rest plausible and repeatable. It is the one place the design says "hold on, that is enough" about the deep past of the general field.
 
-**Question for Alex:** yes to choice 1, with a 10 pc bubble by default and 50 pc on request?
+**Ruling (Alex, 26 Nov 2026):** choice 1. The bubble radius is a pack number on the performance side: 10 pc by default, and 50 pc is to be timed against real star density; a few milliseconds is fine.
+
+**What this means for motion.** Every star in the bubble has a determined velocity and follows its closed-form orbit at every date. The machinery exists: `stars.rs` already gives each drawn system an epicyclic orbit, and a promoted system (a pin) is the same system at any time asked in any order. What is missing is only that unopened fill stars are redrawn each frame, so their orbits are discarded. Anchoring promotes the bubble's fill at the campaign date, in effect making them pins without the cost of a full system resolve (a tracked star is its fill record: key, mass, birth, orbit).
 
 ## 5. The neighbourhood stream
 

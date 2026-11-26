@@ -2215,6 +2215,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         stars: Option<bool>,
+        /// GZ6: with the galaxies, every one of home's satellites' paths
+        /// since infall, in `galaxy_walk.satellites.paths` (default false).
+        #[serde(default)]
+        #[ts(optional)]
+        satellite_paths: Option<bool>,
     },
     /// Y3: the glow of every star the sky draw does not show, as a HEALPix
     /// map (RING order, galactic l and b from the observer) per passband:

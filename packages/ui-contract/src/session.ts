@@ -240,6 +240,12 @@ export interface ViewSession {
    * the branch with `discardBranch` when done. GM only.
    */
   classSample?(classes: readonly string[], extra?: readonly PackDoc[]): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }>;
+  /**
+   * One star read off the life line formation draws (kernel `describe_star`, K18): mass, age from birth and [Fe/H] in;
+   * the phase now with its temperature, luminosity and radius, each phase's ages, the remnant and the mass walls. Read
+   * only, no system, no events; the star chooser (ED6) reads its strips from it.
+   */
+  describeStar?(mass_msun: number, age_yr: number, feh?: number): Promise<{ ok: true; star: import("./star-chooser.ts").StarDescription } | { ok: false; code: string; message: string }>;
   classifyPreview?(ask: ClassifyAsk): Promise<{ ok: true; result: ClassifyPreview } | { ok: false; code: string; message: string }>;
   /** The story finder (U8, kernel `sift`): sifters over the campaign, hits with evidence. GM only. */
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
@@ -297,7 +303,7 @@ export interface ViewSession {
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
   /** The kernel `weather` op: a fixture `world`, or a `body` of an adopted `system` at `at_s`; `want` picks climate, systems, field (a cube-sphere `tile`), report, column or sound, at `day` (days since the campaign epoch). */
   /** Y2: the stars seen from a place at a time down to a limiting magnitude (kernel `sky_from_here`); read only. */
-  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
+  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean; satellite_paths?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
   /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
@@ -881,6 +887,11 @@ export class Session implements ViewSession {
     return r.type === "sifted" ? { ok: true, result: r as unknown as import("./story.ts").SiftResult } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async describeStar(mass_msun: number, age_yr: number, feh?: number): Promise<{ ok: true; star: import("./star-chooser.ts").StarDescription } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "describe_star", mass_msun, age_yr, ...(feh !== undefined ? { feh } : {}) });
+    return r.type === "star_described" ? { ok: true, star: r.star as import("./star-chooser.ts").StarDescription } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async classSample(classes: readonly string[], extra: readonly PackDoc[] = []): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a class's sample world is made on a what-if branch, on the game master's machine" };
     const stack = this.#packs();
@@ -914,7 +925,7 @@ export class Session implements ViewSession {
     return { ok: true, frames: f.frames, label: f.label, source: f.source };
   }
 
-  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
+  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean; satellite_paths?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "sky_from_here", ...ask } as Json);
     return r.type === "sky" ? { ok: true, sky: (r as unknown as { sky: Json }).sky } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
