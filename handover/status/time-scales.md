@@ -49,6 +49,10 @@ Nothing is built. Golden notes are expectations.
 - Three desks TM3b: "what is due" and "jump to a date" come from `happenings` once TP6 exists.
 - Everyone: no new absolute time in a double, no new `_yr` clock field.
 
+## Changes to the note since TP0
+
+- 26 Nov 2026, 21:17 UTC: the march rule (section 6, point 1) names a third fixed anchor, a measured state's own date, at the ask of the thread "Design melting inside worlds" (HF6, PR 666) with the coordinator's agreement. HF6.3 would share TP5's two-legs test harness.
+
 ## Open questions for Alex
 
 The note's section 12, eight questions: the one axis; where the real Solar System sits on it; dated time past 292 billion years; galaxies past the present; default pacing by desk; ticks or traces for events too fast to see; the track code and owner; whether TP5 and TP8 may move the Solar System's look-ahead figures.

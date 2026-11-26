@@ -189,7 +189,7 @@ Every piece of physics that depends on time is one of these. A new piece says wh
 
 **The march rule.** A march is allowed only if it ends up as a line:
 
-1. It starts from a fixed anchor: the subject's birth, or a checkpoint recorded in the chronicle.
+1. It starts from a fixed anchor: the subject's birth, a checkpoint recorded in the chronicle, or a measured state's own date (the pack's epoch; J2000 for Sol). A real or authored body cannot be marched forward from birth, because today's measured orbit is the fact: its march runs backward from the date that state was measured at, and the same kept table is read for its future. That date belongs to the subject, never to the date asked from or to, so points 2 to 5 hold unchanged. The reconstructed past is never marched forward again to reach today, so today stays the measured state to the bit. (Asked for by the tidal orbits design, `SSE4-tidal-orbits-design.md` sections 4.1 and 4.2, HF6; any real body's march has the same need.)
 2. Its grid is a function of the subject alone (the star's own phases, the body's own cooling time), never of the date asked from or to.
 3. What it works out is kept as a table against time, with the whole state at each grid point (for orbits: all six elements and their date, not three).
 4. A read between grid points uses a stated rule (the analytic step from the grid point before).
