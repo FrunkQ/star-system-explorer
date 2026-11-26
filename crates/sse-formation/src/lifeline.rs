@@ -26,6 +26,9 @@ pub enum Phase {
     MainSequence,
     HertzsprungGap,
     Giant,
+    /// A massive star whose winds have stripped its hydrogen envelope: a hot,
+    /// small helium star burning to its end (above the Humphreys-Davidson limit).
+    WolfRayet,
     /// Below the hydrogen-burning limit: never a main-sequence star.
     BrownDwarf,
     WhiteDwarf,
@@ -46,6 +49,7 @@ impl Phase {
             Phase::MainSequence => "main sequence",
             Phase::HertzsprungGap => "subgiant",
             Phase::Giant => "giant",
+            Phase::WolfRayet => "Wolf-Rayet star",
             Phase::BrownDwarf => "brown dwarf",
             Phase::WhiteDwarf => "white dwarf",
             Phase::NeutronStar => "neutron star",
@@ -86,6 +90,9 @@ pub struct LifeLine {
     /// Ages from birth, Myr.
     pub t_tms: f64,
     pub t_bgb: f64,
+    /// Age from birth at which the envelope is stripped (a Wolf-Rayet star
+    /// until `t_end`); equal to `t_end` for stars that stay giants.
+    pub t_strip: f64,
     pub t_end: f64,
     pub remnant: Phase,
     pub remnant_mass: f64,
@@ -102,9 +109,34 @@ pub struct LifeLine {
 /// branch) last this fraction of the main-sequence life (HPT00 figure 4 gives
 /// about 0.06 for 1 solar mass to about 0.1 for massive stars).
 pub const GIANT_FRACTION: f64 = 0.1;
-/// Sketch: luminosity at the tip of the giant phases for stars with a
-/// degenerate helium core (red giant branch tip, about 2500 L_sun).
+/// Sketch: luminosity at the tip of the red giant branch for stars with a
+/// degenerate helium core (helium flash at a core of about 0.47 M_sun, about
+/// 2500 L_sun). A star too small to grow that core stops below it (see
+/// `LifeLine::new`).
 pub const L_TIP_LOW_MASS: f64 = 2500.0;
+/// Fully convective stars below this mass never become red giants: they mix
+/// their whole hydrogen supply, brighten and heat as "blue dwarfs" and end as
+/// helium white dwarfs of almost their whole mass (Laughlin, Bodenheimer and
+/// Adams 1997, ApJ 482, 420; figure from memory, not yet checked).
+pub const NO_GIANT_BELOW: f64 = 0.25;
+/// Paczynski 1970 (Acta Astron. 20, 47) core mass-luminosity relation of the
+/// asymptotic giant branch, L = A (Mc - B) in L_sun and M_sun: the tip
+/// luminosity of a star that ends as a white dwarf of core mass Mc.
+pub const PACZYNSKI_A: f64 = 59250.0;
+pub const PACZYNSKI_B: f64 = 0.522;
+/// Sketch: a massive star (no white dwarf) brightens by this factor from the
+/// end of the main sequence to the end of core burning; the luminosity of a
+/// massive star crossing to the red follows its core, which grows modestly
+/// (Geneva tracks, Ekstrom et al. 2012, A&A 537, A146, give about 1.5 to 2.5
+/// for 12 to 25 M_sun; from memory, not yet checked). The old sketch used 10,
+/// which put a 25 M_sun star at 2 x 10^6 L_sun and 7,000 R_sun.
+pub const MASSIVE_BRIGHTENING: f64 = 2.0;
+/// Humphreys-Davidson limit (Humphreys and Davidson 1979, ApJ 232, 409,
+/// doi:10.1086/157301): no cool supergiant is brighter than log L about 5.8.
+/// A star brighter than this sheds its envelope (eruptions and winds) and
+/// burns on as a hot helium (Wolf-Rayet) star. Same value as the night sky's
+/// `cool_limit_lsun` (sse-cosmos), which reads it from its pack.
+pub const L_HD: f64 = 6.3e5;
 /// Upper initial mass for white dwarfs (HPT00 `Mup` is about 6.1 + 1.0 log Z/0.02
 /// for carbon ignition; 8 solar masses is the usual observed limit).
 pub const M_UP_WD: f64 = 8.0;
@@ -145,7 +177,13 @@ impl LifeLine {
         let t_bgb_ms = fits.t_bgb(mass).max(t_ms);
         let t_tms = t_zams + t_ms;
         let t_bgb = t_zams + t_bgb_ms;
-        let t_end = t_bgb + GIANT_FRACTION * t_ms;
+        let no_giant = mass < NO_GIANT_BELOW;
+        let (t_bgb, t_end) = if no_giant {
+            // Straight from the main sequence to a helium white dwarf.
+            (t_tms, t_tms)
+        } else {
+            (t_bgb, t_bgb + GIANT_FRACTION * t_ms)
+        };
         let low = mass <= fits.zpars[3];
         let l_tms = fits.l_tms(mass);
         let l_bgb = if low {
@@ -153,17 +191,41 @@ impl LifeLine {
         } else {
             l_tms
         };
-        let l_tip = if mass <= fits.zpars[2] {
-            L_TIP_LOW_MASS.max(l_bgb)
-        } else {
-            10.0 * l_bgb
-        };
-        let (remnant, remnant_mass) = if mass < M_UP_WD {
+        let (remnant, remnant_mass) = if no_giant {
+            (Phase::WhiteDwarf, mass)
+        } else if mass < M_UP_WD {
             (Phase::WhiteDwarf, white_dwarf_mass(mass).min(mass))
         } else if mass < M_BH {
             (Phase::NeutronStar, 1.4)
         } else {
             (Phase::BlackHole, (0.25 * mass).max(3.0))
+        };
+        // The giant phase ends where the core it has grown says it must.
+        let l_tip = if no_giant {
+            l_tms
+        } else if mass <= fits.zpars[2] {
+            // Degenerate helium core: the red giant branch tip, or lower when
+            // the whole star is smaller than the flash core and the envelope
+            // runs out first (HPT00 eq. 37, L = D Mc^6 at the final core).
+            let d = m::pow(10.0, fits.zpars[6]);
+            L_TIP_LOW_MASS.min(d * m::pow(remnant_mass, 6.0)).max(l_bgb)
+        } else if remnant == Phase::WhiteDwarf {
+            // Non-degenerate helium core, white dwarf end: the asymptotic
+            // giant branch tip at the white dwarf's core mass.
+            (PACZYNSKI_A * (remnant_mass - PACZYNSKI_B)).max(l_bgb)
+        } else {
+            MASSIVE_BRIGHTENING * l_bgb
+        };
+        // A giant passing the Humphreys-Davidson limit is stripped there.
+        let t_strip = if l_tip > L_HD && t_end > t_bgb {
+            let tau = if l_bgb >= L_HD {
+                0.0
+            } else {
+                m::ln(L_HD / l_bgb) / m::ln(l_tip / l_bgb)
+            };
+            t_bgb + tau * (t_end - t_bgb)
+        } else {
+            t_end
         };
         Ok(LifeLine {
             initial_mass: mass,
@@ -171,6 +233,7 @@ impl LifeLine {
             t_zams,
             t_tms,
             t_bgb,
+            t_strip,
             t_end,
             remnant,
             remnant_mass,
@@ -191,6 +254,7 @@ impl LifeLine {
             t_zams: never,
             t_tms: never,
             t_bgb: never,
+            t_strip: never,
             t_end: never,
             remnant: Phase::BrownDwarf,
             remnant_mass: mass,
@@ -221,8 +285,10 @@ impl LifeLine {
             Phase::MainSequence
         } else if t < self.t_bgb {
             Phase::HertzsprungGap
-        } else if t < self.t_end {
+        } else if t < self.t_strip {
             Phase::Giant
+        } else if t < self.t_end {
+            Phase::WolfRayet
         } else {
             self.remnant
         }
@@ -242,18 +308,31 @@ impl LifeLine {
                 (l, r, Level::Standard, mass)
             }
             Phase::HertzsprungGap => {
-                // HPT00 eqs. 26-27: geometric from TMS to BGB.
+                // HPT00 eqs. 26-27: geometric from TMS to BGB. A star already
+                // past the Humphreys-Davidson limit never crosses to the red:
+                // it stays near its main-sequence size until it is stripped.
                 let tau = (t - self.t_tms) / (self.t_bgb - self.t_tms);
                 let l = self.l_tms * m::pow(self.l_bgb / self.l_tms, tau);
-                let rg = fits.r_gb(mass, self.l_bgb).max(self.r_tms);
+                let rg = if self.l_bgb >= L_HD {
+                    self.r_tms
+                } else {
+                    fits.r_gb(mass, self.l_bgb).max(self.r_tms)
+                };
                 let r = self.r_tms * m::pow(rg / self.r_tms, tau);
                 (l, r, Level::Sketch, mass)
             }
             Phase::Giant => {
-                let tau = (t - self.t_bgb) / (self.t_end - self.t_bgb);
-                let l = self.l_bgb * m::pow(self.l_tip / self.l_bgb, tau);
+                let l = self.giant_luminosity(t);
                 let r = fits.r_gb(mass, l).max(self.r_tms);
                 (l, r, Level::Sketch, mass)
+            }
+            Phase::WolfRayet => {
+                // The bare helium core: a helium star of this luminosity
+                // (HPT00 eqs. 77-78, helium zero-age main sequence; from
+                // memory, check against the paper), so hot and small.
+                let l = self.giant_luminosity(t);
+                let mhe = helium_star_mass(l).min(mass);
+                (l, helium_star_radius(mhe), Level::Sketch, mass)
             }
             Phase::BrownDwarf => {
                 // Burrows et al. 2001 (Rev. Mod. Phys. 73, 719) eq. 3: cooling
@@ -302,6 +381,41 @@ impl LifeLine {
             level,
         }
     }
+}
+
+impl LifeLine {
+    /// Luminosity through the giant phases: geometric from the base of the
+    /// giant branch to the tip.
+    fn giant_luminosity(&self, t: f64) -> f64 {
+        let tau = ((t - self.t_bgb) / (self.t_end - self.t_bgb)).clamp(0.0, 1.0);
+        self.l_bgb * m::pow(self.l_tip / self.l_bgb, tau)
+    }
+}
+
+/// Zero-age helium star luminosity, L_sun (HPT00 eq. 77).
+pub fn helium_star_luminosity(mhe: f64) -> f64 {
+    15262.0 * m::pow(mhe, 10.25)
+        / (m::pow(mhe, 9.0) + 29.54 * m::pow(mhe, 7.5) + 31.18 * m::pow(mhe, 6.0) + 0.0469)
+}
+
+/// Zero-age helium star radius, R_sun (HPT00 eq. 78).
+pub fn helium_star_radius(mhe: f64) -> f64 {
+    0.2391 * m::pow(mhe, 4.6) / (m::pow(mhe, 4.0) + 0.162 * m::pow(mhe, 3.0) + 0.0065)
+}
+
+/// The helium star mass that shines at `l` (eq. 77 inverted by bisection in
+/// log mass, fixed 60 steps; the luminosity rises with mass throughout).
+pub fn helium_star_mass(l: f64) -> f64 {
+    let (mut lo, mut hi) = (m::ln(0.3), m::ln(300.0));
+    for _ in 0..60 {
+        let mid = 0.5 * (lo + hi);
+        if helium_star_luminosity(m::exp(mid)) < l {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    m::exp(0.5 * (lo + hi))
 }
 
 /// Effective temperature from luminosity and radius (solar units).
