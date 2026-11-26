@@ -10,6 +10,8 @@ python3 scripts/build-base-reference.py --check
 # The catalogued Solar System must match its sources and agree with the sheet.
 python3 scripts/build-base-sol.py --check
 python3 scripts/build-base-starters.py --check
+# The Trojan blocks are written by their builder (CO1).
+python3 scripts/build-coorbital-blocks.py --check
 python3 scripts/build-base-names.py --check
 # The class atlas reads the sheet and base-sol (its builder is what the MP22 audit reads).
 python3 scripts/build-base-atlas.py --check

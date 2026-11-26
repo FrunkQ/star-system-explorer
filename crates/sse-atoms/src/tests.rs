@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 176,
+        n, 180,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
