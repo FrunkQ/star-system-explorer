@@ -33,9 +33,13 @@ leave the browser.
 - **One builder thread per screen section** (chart room, object selector and menus, Run desk and players' side,
   planet and star editing, ...) so contexts stay small and threads do not collide. `shell/src/` is split into section
   folders for this.
-- **PRs into `main` merge when their checks pass** ("main is entirely yours"). Every merge deploys the live site.
-- **CI workflow or merge-check edits need Alex's own yes.** So do database, storage or user-data changes on the
-  Explorers site (repo `FrunkQ/starsystemx-creator-hub`). The converter (`FrunkQ/starsystem-convert`) merges when green.
+- **PRs into `main` merge when their checks pass** ("main is entirely yours"): an agent merges its own PR once every
+  check is green on the head it checked, never red, and there is no merge queue (26 Nov). Every merge deploys the live site.
+- **CI workflow or merge-check edits need Alex's own yes**, except a thread adding its own test line to `ci.yml`.
+  Agents may add tests, and update a test to follow a design Alex accepted; loosening a limit, a press budget or a
+  check still goes to Alex first (26 Nov). On the Explorers site (repo `FrunkQ/starsystemx-creator-hub`) storage
+  changes no longer need a separate yes ("explorers is ours", 26 Nov); anything that could alter or delete what people
+  have already published there still does. The converter (`FrunkQ/starsystem-convert`) merges when green.
 - **Golden changes by area** (`tests/golden/` hashes change only on purpose, reason in the package log): see the golden lane rule below. PRs in different areas may merge in parallel; within one area, or for the shared core, one at a time.
 - **No temporary files in the repo**: screenshots and working artefacts go to project files
   (`sse4/handover-screens/<PKG>-screens/`), never committed. **No history rewrites** (old screenshots stay in history).
@@ -65,7 +69,7 @@ leave the browser.
 
 ## Standing rulings of 24 Nov 2026 (afternoon and evening)
 
-- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Confirmed as a standing rule on 25 Nov 02:00 UTC (Alex: "in future yes to 'any thread may add its own test line to ci.yml, nothing else'"): a thread may add only its own test line, with no need to ask. Every other CI workflow or merge-check edit still needs Alex's own yes.
+- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Confirmed as a standing rule on 25 Nov 02:00 UTC (Alex: "in future yes to 'any thread may add its own test line to ci.yml, nothing else'"): a thread may add only its own test line, with no need to ask. Every other CI workflow or merge-check edit still needs Alex's own yes. On 26 Nov Alex added: agents may add tests and update a test to follow an accepted design; loosening anything still goes to him.
 - **Frozen physics for the golden** (Alex 18:07 UTC): the shared contract golden may run on a frozen copy of the base-physics pack, with the live pack's loading tested separately. The kernel thread builds this after the barycentre PR.
 - **Golden lane (by area, 25 Nov, the coordinator's call on Alex's "split the golden by area"):** the contract golden is split.
   - **Areas.** New contract cases go in `tests/contract/areas/<area>.json`, never in `tests/contract/requests.json`. Each area file runs on a fresh kernel, starting with its own `load_stack` (`"$pack:base-physics"` and so on) and `open_universe`. Its golden is `tests/golden/areas/<area>.jsonl`. One area per owning thread; create the file if your area has none. Bless with `SSE_BLESS=1 cargo test -p sse-kernel contract`.
