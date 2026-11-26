@@ -7,6 +7,8 @@
 // of AT15). The view controls (View style, Seen from, Scale, HUD, Band) stay where they are (`ViewModule.controls`):
 // these are the part's own presses.
 
+import { deskWords, type Desk } from "./desk.ts";
+
 /** The kinds of control a part may declare (11A.4 rule 5). */
 export const PART_CONTROL_KINDS = ["button", "switch", "choice", "step", "dial", "tab", "link"] as const;
 export type PartControlKind = (typeof PART_CONTROL_KINDS)[number];
@@ -19,6 +21,8 @@ export interface PartControl {
   kind: PartControlKind;
   /** On unless a layout says otherwise (true), or off unless asked for (false). */
   default: boolean;
+  /** The desks the control is drawn on when the part is on a GM's desk (three desks design section 10); left out: all three. */
+  desks?: readonly Desk[];
 }
 
 /** What a layout item says about its part's controls: each by id, or all of them at once. */
@@ -62,5 +66,10 @@ export function isPicture(declared: readonly PartControl[] | undefined, given: I
 
 /** The parts catalogue's line for a part's controls (Reference and Orac): "sort (button, on): Sort by a column". */
 export function controlLines(declared: readonly PartControl[] | undefined): string {
-  return (declared ?? []).map((c) => `- ${c.id} (${c.kind}, ${c.default ? "on" : "off"} by default): ${c.words}`).join("\n");
+  return (declared ?? [])
+    .map((c) => {
+      const on = deskWords(c);
+      return `- ${c.id} (${c.kind}, ${c.default ? "on" : "off"} by default${on ? `, on ${on} only` : ""}): ${c.words}`;
+    })
+    .join("\n");
 }
