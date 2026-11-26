@@ -6,7 +6,7 @@
 // Space weathering darkens and reddens soil (nanophase iron, Hapke 2001): blend in log space, so a mature fraction m
 // gives fresh^(1-m) * mature^m, the same as fresh * (mature/fresh)^m.
 import type { SurfaceTile } from "../../ui-contract/src/index.ts";
-import { SURFACE_MATERIALS as MATERIALS, SURFACE_COVERS as COVERS } from "../../ui-contract/src/index.ts";
+import { softenGround, SURFACE_MATERIALS as MATERIALS, SURFACE_COVERS as COVERS } from "../../ui-contract/src/index.ts";
 import ROWS from "./ground-rows.json" with { type: "json" };
 import { GRAIN_UM, grainAlbedo, indexAt, indexTableOf, layerReflectance } from "./sheet-optics.ts";
 
@@ -116,9 +116,13 @@ const enc = (v: number) => 255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(
  * shows the soil as dark as it is.
  */
 export function withGround(tiles: readonly SurfaceTile[], o: GroundOptics): SurfaceTile[] {
-  if (!Object.keys(o).length) return tiles.slice();
-  return tiles.map((t) => {
-    const n = t.material.length;
+  // Then softened over its neighbours (natural outlines, ui-contract softenGround), so ground colour has no square patches.
+  if (!Object.keys(o).length) return tiles.map((t) => softenGround(t));
+  return tiles.map((t) => softenGround(withRows(t, o)));
+}
+
+function withRows(t: SurfaceTile, o: GroundOptics): SurfaceTile {
+  const n = t.material.length;
     const rgb = new Float32Array(n * 3).fill(NaN);
     let any = false;
     for (let i = 0; i < n; i++) {
@@ -130,6 +134,5 @@ export function withGround(tiles: readonly SurfaceTile[], o: GroundOptics): Surf
       rgb[i * 3 + 2] = enc(r[2]);
       any = true;
     }
-    return any ? { ...t, ground_rgb: rgb } : t;
-  });
+  return any ? { ...t, ground_rgb: rgb } : t;
 }

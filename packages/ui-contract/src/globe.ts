@@ -82,6 +82,210 @@ export function sampleAt(globe: Globe, d: V3): { tile: SurfaceTile; i: number } 
   return { tile, i: j * s + i };
 }
 
+// ---------------------------------------------------------------- natural outlines
+
+/*
+ * Natural outlines (Alex 25 Nov: "they look a bit bitmap"): the kernel's cells drawn with sub-cell coasts, ice edges
+ * and patch shapes instead of square steps. One deterministic step, keyed only on the direction (and an optional
+ * seed), never on time, so the same place always wiggles the same way and a time-lapse does not shimmer: an edge moves
+ * only where the facts move. Presentation only; never a kernel fact. Fudge register: "Natural outlines".
+ *
+ * The step is a domain warp: the direction a view looks up is nudged sideways by fractal noise, by at most
+ * NATURAL_WARP of a cell. A cell's centre is never nudged out of its own cell, so every cell keeps its own fact
+ * where the kernel computed it; only the shapes between centres change.
+ */
+
+/** The most a direction is nudged, as a share of the cell's angular size (under half, so no centre leaves its cell). */
+export const NATURAL_WARP = 0.42;
+/** Octaves of the edge noise, from two cells across down to an eighth of a cell. */
+const NATURAL_OCTAVES = 4;
+
+/** A lattice hash to -1..1: integer mixing only, the same in every browser. */
+function lattice(x: number, y: number, z: number, seed: number): number {
+  let h = Math.imul(x | 0, 0x27d4eb2d) ^ Math.imul(y | 0, 0x165667b1) ^ Math.imul(z | 0, 0x1b873593) ^ Math.imul(seed | 0, 0x9e3779b1);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  h ^= h >>> 16;
+  return ((h >>> 0) / 4294967295) * 2 - 1;
+}
+
+/** Smooth 3D value noise at a point, -1..1 (quintic easing, so its slope has no creases). */
+function valueNoise(x: number, y: number, z: number, seed: number): number {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const zi = Math.floor(z);
+  const e = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+  const fx = e(x - xi);
+  const fy = e(y - yi);
+  const fz = e(z - zi);
+  const l = (a: number, b: number, t: number) => a + (b - a) * t;
+  const c = (dx: number, dy: number, dz: number) => lattice(xi + dx, yi + dy, zi + dz, seed);
+  return l(l(l(c(0, 0, 0), c(1, 0, 0), fx), l(c(0, 1, 0), c(1, 1, 0), fx), fy), l(l(c(0, 0, 1), c(1, 0, 1), fx), l(c(0, 1, 1), c(1, 1, 1), fx), fy), fz);
+}
+
+/**
+ * The edge noise at a direction, about -1..1: fractal value noise whose largest wiggle is about two cells across for
+ * cells `cell_rad` radians wide, keyed only on the direction and `seed`. The time-lapse and every globe share it.
+ */
+export function edgeNoise(d: readonly number[], cell_rad: number, seed = 0): number {
+  const f0 = 1 / (2 * Math.max(1e-9, cell_rad));
+  let sum = 0;
+  let amp = 0.5;
+  let f = f0;
+  for (let o = 0; o < NATURAL_OCTAVES; o++) {
+    sum += amp * valueNoise(d[0]! * f, d[1]! * f, d[2]! * f, seed + o * 1013);
+    f *= 2;
+    amp *= 0.5;
+  }
+  return sum / 0.9375;
+}
+
+/**
+ * The direction to look a cell up at, for natural outlines: `d` nudged sideways along the sphere by the edge noise,
+ * at most NATURAL_WARP of a cell `cell_rad` radians wide. Look up the nearest cell at the result, as before.
+ */
+export function naturalDirection(d: readonly number[], cell_rad: number, seed = 0): [number, number, number] {
+  const r: V3 = [d[0]!, d[1]!, d[2]!];
+  const a = edgeNoise(r, cell_rad, seed + 17);
+  const b = edgeNoise(r, cell_rad, seed + 7919);
+  // Two directions along the sphere at r.
+  const ref: V3 = Math.abs(r[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  let e: V3 = [ref[1] * r[2] - ref[2] * r[1], ref[2] * r[0] - ref[0] * r[2], ref[0] * r[1] - ref[1] * r[0]];
+  const el = Math.hypot(e[0], e[1], e[2]);
+  e = [e[0] / el, e[1] / el, e[2] / el];
+  const n: V3 = [r[1] * e[2] - r[2] * e[1], r[2] * e[0] - r[0] * e[2], r[0] * e[1] - r[1] * e[0]];
+  let s = Math.hypot(a, b);
+  const k = s > 1 ? 1 / s : 1;
+  s = NATURAL_WARP * cell_rad * k;
+  const o: V3 = [r[0] + s * (a * e[0] + b * n[0]), r[1] + s * (a * e[1] + b * n[1]), r[2] + s * (a * e[2] + b * n[2])];
+  const l = Math.hypot(o[0], o[1], o[2]);
+  return [o[0] / l, o[1] / l, o[2] / l];
+}
+
+/**
+ * Which side of an edge a blended field falls once the edge noise is added: true where `value` (blended between
+ * cells) is above `threshold`, the noise moving the edge by up to `scale` in the field's own units. Keep `scale`
+ * under the field's step between neighbouring cells' values so each cell keeps its own side at its centre.
+ */
+export function naturalEdge(d: readonly number[], value: number, threshold: number, scale: number, cell_rad: number, seed = 0): boolean {
+  return value + scale * edgeNoise(d, cell_rad, seed) > threshold;
+}
+
+/** The smallest angle a level-0 sample of this globe spans (the equiangular map's cells are smallest at the corners). */
+export function globeCellAngle(globe: Globe): number {
+  const t = globe.find((x) => !!x);
+  return t ? (Math.PI / 2 / (t.samples * (1 << t.key.level))) * 0.72 : 0;
+}
+
+/** How far the edge noise moves an edge in natural outlines, in blended-share units (under half: centres keep their fact). */
+export const NATURAL_EDGE = 0.3;
+
+type Kind = 0 | 1 | 2;
+/** A sample's kind for outlines: 0 bare ground, 1 ice, 2 liquid (water, magma, hydrocarbon). */
+const kindOf = (t: SurfaceTile, k: number): Kind => {
+  const c = COVERS[t.cover[k]!] ?? "none";
+  return c === "none" ? 0 : c === "ice" ? 1 : 2;
+};
+
+/**
+ * sampleAt with natural outlines: the sample whose colour a direction shows, with coasts and ice edges drawn as smooth
+ * contours between cells instead of steps. The four samples round the point are blended (bilinear); each kind (bare
+ * ground, ice, liquid) gets its blended share plus the edge noise (NATURAL_EDGE, keyed on the direction and `seed`),
+ * and the largest wins; the answer is the nearest of the four of that kind. At a sample's centre its own share is 1
+ * and every other 0, so its own kind always wins: no fact moves. Clamped at a face's edge (no blend across faces).
+ */
+export function sampleNatural(globe: Globe, d: V3, seed = 0): { tile: SurfaceTile; i: number } | null {
+  const { face, u, v } = faceOf(d);
+  const t = globe[face];
+  if (!t) return null;
+  const s = t.samples;
+  const x = Math.min(s - 1, Math.max(0, ((u + 1) / 2) * s - 0.5));
+  const y = Math.min(s - 1, Math.max(0, ((v + 1) / 2) * s - 0.5));
+  const i0 = Math.max(0, Math.min(s - 2, Math.floor(x)));
+  const j0 = Math.max(0, Math.min(s - 2, Math.floor(y)));
+  const fx = Math.min(1, Math.max(0, x - i0));
+  const fy = Math.min(1, Math.max(0, y - j0));
+  const i1 = Math.min(s - 1, i0 + 1);
+  const j1 = Math.min(s - 1, j0 + 1);
+  const ks = [j0 * s + i0, j0 * s + i1, j1 * s + i0, j1 * s + i1];
+  const ws = [(1 - fx) * (1 - fy), fx * (1 - fy), (1 - fx) * fy, fx * fy];
+  const share: number[] = [0, 0, 0];
+  const kinds = ks.map((k) => kindOf(t, k));
+  for (let q = 0; q < 4; q++) share[kinds[q]!] = share[kinds[q]!]! + ws[q]!;
+  let best: Kind = kinds[ws.indexOf(Math.max(...ws))]!;
+  if (share[best]! < 1) {
+    const cell = globeCellAngle(globe);
+    let top = -Infinity;
+    for (const kd of [0, 1, 2] as Kind[]) {
+      if (share[kd]! <= 0) continue;
+      const v = share[kd]! + NATURAL_EDGE * edgeNoise(d, cell, seed + 101 * (kd + 1));
+      if (v > top) ((top = v), (best = kd));
+    }
+  }
+  let pick = -1;
+  for (let q = 0; q < 4; q++) if (kinds[q] === best && (pick < 0 || ws[q]! > ws[pick]!)) pick = q;
+  return { tile: t, i: ks[pick]! };
+}
+
+/** Cells each way the bare ground's colour is softened over (two box passes, about a Gaussian of this width). */
+export const SOFT_GROUND_CELLS = 2;
+
+/**
+ * Bare ground's colour softened over its neighbours (natural outlines' second half): square patches of ground colour
+ * become gradients, as they look from a distance. Only bare samples are averaged, and only with bare samples, so a
+ * coast or an ice edge stays where it is. Laid on as `ground_rgb` (presentation only); covers and every kernel value
+ * are untouched. Fudge register: "Natural outlines".
+ */
+export function softenGround(t: SurfaceTile, cells = SOFT_GROUND_CELLS): SurfaceTile {
+  const s = t.samples;
+  const n = s * s;
+  const bare = new Uint8Array(n);
+  const rgb = new Float32Array(n * 3);
+  let any = false;
+  for (let k = 0; k < n; k++) {
+    if ((COVERS[t.cover[k]!] ?? "none") !== "none") continue;
+    bare[k] = 1;
+    any = true;
+    const c = sampleColour(t, k, 1);
+    rgb[k * 3] = c[0];
+    rgb[k * 3 + 1] = c[1];
+    rgb[k * 3 + 2] = c[2];
+  }
+  if (!any || cells < 1) return t;
+  const pass = (src: Float32Array, horizontal: boolean): Float32Array => {
+    const out = new Float32Array(n * 3);
+    for (let a = 0; a < s; a++) {
+      for (let b = 0; b < s; b++) {
+        const k = horizontal ? a * s + b : b * s + a;
+        if (!bare[k]) continue;
+        let r = 0;
+        let g = 0;
+        let bl = 0;
+        let w = 0;
+        for (let o = -cells; o <= cells; o++) {
+          const c = b + o;
+          if (c < 0 || c >= s) continue;
+          const q = horizontal ? a * s + c : c * s + a;
+          if (!bare[q]) continue;
+          r += src[q * 3]!;
+          g += src[q * 3 + 1]!;
+          bl += src[q * 3 + 2]!;
+          w++;
+        }
+        out[k * 3] = r / w;
+        out[k * 3 + 1] = g / w;
+        out[k * 3 + 2] = bl / w;
+      }
+    }
+    return out;
+  };
+  let soft: Float32Array = rgb;
+  for (let p = 0; p < 2; p++) soft = pass(pass(soft, true), false);
+  const ground = new Float32Array(n * 3).fill(NaN);
+  for (let k = 0; k < n; k++) if (bare[k]) ground.set([soft[k * 3]!, soft[k * 3 + 1]!, soft[k * 3 + 2]!], k * 3);
+  return { ...t, ground_rgb: ground };
+}
+
 const MATERIAL_RGB: Record<string, V3> = {
   basalt: [92, 88, 84],
   granite: [150, 132, 112],

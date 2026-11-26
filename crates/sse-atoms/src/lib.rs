@@ -21,6 +21,7 @@ pub mod ledger;
 pub mod light;
 pub mod magnetic;
 pub mod matter;
+pub mod mie;
 pub mod nebula;
 pub mod orbit;
 pub mod planet;
@@ -49,6 +50,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(magnetic::atoms())
         .chain(nebula::atoms())
         .chain(extinction::atoms())
+        .chain(mie::atoms())
         .chain(aurora::atoms())
         .chain(belts::atoms())
         .chain(chem::atoms())
@@ -406,6 +408,28 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("nebula.expansion_speed", "speed at which a nebula's shell expands"),
     ("nebula.age", "time since the nebula's cause (a star's death, an explosion, a cluster's birth)"),
     ("nebula.shell_radius", "radius of a nebula's shell or shock"),
+    ("nebula.electron_temperature", "temperature of the free electrons in a nebula's glowing gas"),
+    ("nebula.photons_above_threshold", "photons a second from the lighting stars hard enough to make or strip an ion"),
+    ("nebula.photons_taken", "ionising photons a second a nebula takes up, balancing its recombinations"),
+    ("nebula.taker_share", "atoms per hydrogen atom of the gas that takes up a range of ionising photons"),
+    ("light.photon_energy", "energy of one photon"),
+    ("light.fit_energy", "energy scale of a fit to an ion's photoionisation cross-section"),
+    ("light.fit_cross_section", "cross-section scale of a fit to an ion's photoionisation cross-section"),
+    ("light.photoionisation_cross_section", "target area an ion offers a photon that can strip it"),
+    ("nebula.photoionisation_rate", "how often each ion is stripped by the starlight where it is"),
+    ("nebula.recombination_coefficient", "rate coefficient for an ion catching an electron back"),
+    ("nebula.electron_density", "free electrons per cubic metre in a nebula's glowing gas"),
+    ("nebula.lower_ion_share", "share of an element left as the lower of two ions"),
+    ("light.fit_ya", "shape number y_a of a fit to an ion's photoionisation cross-section (Verner et al. 1996)"),
+    ("light.fit_power", "power P of a fit to an ion's photoionisation cross-section (Verner et al. 1996)"),
+    ("light.fit_yw", "shape number y_w of a fit to an ion's photoionisation cross-section (Verner et al. 1996)"),
+    ("light.fit_y0", "shape number y_0 of a fit to an ion's photoionisation cross-section (Verner et al. 1996)"),
+    ("light.fit_y1", "shape number y_1 of a fit to an ion's photoionisation cross-section (Verner et al. 1996)"),
+    ("atmosphere.grazing_column", "molecules per square metre along a ray grazing a world's limb"),
+    ("light.bend_angle", "angle through which an air turns a ray of light"),
+    ("light.refraction_dilution", "share of light's brightness left after refraction spreads the rays apart"),
+    ("shadow.distance", "distance behind a world, along its shadow"),
+    ("nebula.zone_share", "share of a nebula's glowing gas, nearest the star first, that a kind of ion fills"),
     ("event.explosion_energy", "kinetic energy of an explosion"),
     ("event.ejecta_mass", "mass thrown out by an explosion"),
     // stellar activity (O10)
@@ -489,6 +513,11 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("convection.supergranule_lifetime", "how long one supergranule lasts"),
     // air optics
     ("light.wavelength", "a wavelength of light"),
+    ("light.collision_strength", "how readily an electron's knock lifts an ion to a level, averaged over the electrons' speeds"),
+    ("light.lower_level_weight", "statistical weight of the lower level or term of a line"),
+    ("light.upper_level_weight", "statistical weight of the upper level of a line"),
+    ("light.excitation_rate_coefficient", "rate at which electron knocks lift ions to a level, per ion per electron density"),
+    ("light.deexcitation_rate_coefficient", "rate at which electron knocks bring ions down without light, per ion per electron density"),
     ("gas.refractivity", "refractive index minus one of a gas at its reference density"),
     ("gas.reference_density", "number density at which a gas's refractivity is given"),
     ("gas.king_factor", "King correction factor for scattering by non-spherical molecules (1 for spheres)"),
@@ -617,6 +646,8 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("light.limb_cosine", "cosine between the line of sight and straight out of a surface: 1 at a disc's centre, 0 at its edge"),
     ("light.seen_temperature", "temperature of the layer a disc's light comes from at one point"),
     ("light.refractive_index", "how strongly a liquid or crystal bends light"),
+    ("light.absorption_index", "the imaginary part of the refractive index: how strongly the material soaks up light inside it"),
+    ("particle.scattering_efficiency", "light a particle scatters, over its cross-section"),
     ("light.bow_radius", "radius of a rainbow round the point opposite the sun, as an angle"),
     ("light.prism_angle", "angle between two faces of a crystal light passes through"),
     ("light.halo_radius", "radius of a halo round the sun or moon, as an angle"),

@@ -213,6 +213,31 @@ How rows are counted: Proxima is counted unverified (its radius is verified, but
 | Earth's upper air (sol-field.json) | US Standard Atmosphere 1976, NOAA-S/T 76-1562. https://ntrs.nasa.gov/citations/19770009539 | number density and mean molecular weight, 90 to 500 km | from memory | Values as tabulated; not re-fetched. |
 | `AuroraSettings` | Evans, D. S. 1974, J. Geophys. Res. 79, 2853. doi:10.1029/JA079i019p02853; Gustin, J. et al. 2004, Icarus 171, 336. doi:10.1016/j.icarus.2004.04.020 | auroral arc electrons of a few to about ten keV; Jupiter's main oval tens of keV | from memory | 8 keV and 50 keV are chosen within those ranges (F59). |
 
+## K-e: phase tables per kind of particle (added 25 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.light.mie_scattering`, `sse_atoms::mie` | Bohren, C. F. and Huffman, D. R. 1983, Absorption and Scattering of Light by Small Particles, Wiley. doi:10.1002/9783527618156 | the Mie series: equations 4.53 (aₙ, bₙ), 4.61 and 4.62 (efficiencies, asymmetry), 4.74 (S₁, S₂); appendix A's method (downward logarithmic derivative) | textbook | Written fresh, not copied. Reproduces the book's own example (n 1.55, x 5.213: Q_ext = Q_sca = 3.1054), the Rayleigh limit at x = 0.01, and Q_ext → 2 at x = 2000. |
+| `sse_atoms::mie` term count | Wiscombe, W. J. 1980, Improved Mie scattering algorithms, Applied Optics 19, 1505. doi:10.1364/AO.19.001505 | x + 4 x^⅓ + 2 terms | textbook | As quoted. |
+
+## O4 part 1: forbidden lines in glowing gas (added 25 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.nebular.collisional_excitation` | Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, chapter 3. https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/ ; Storey, P. J., N-level atoms (notes), equations 6, 11, 15, 19. https://pages.astro.umd.edu/~jpha/N-level.pdf | q₂₁ = β Υ/(g₂ √T), q₁₂ by detailed balance, β = h²/((2π mₑ)^3/2 √k) | textbook | β worked from the sheet's h, k and mₑ comes to 8.629e-12 m³ s⁻¹ K^½, the notes' 8.629e-6 in cgs. |
+| base-light `oiii`, `oiii-4959` `nebular` | Storey, P. J., Sochi, T. and Badnell, N. R. 2014, Collision strengths for nebular [O III] optical and infrared lines, MNRAS. https://arxiv.org/abs/1311.6517 | table 5 (1D2 at 20273.27 cm⁻¹; 3P1, 3P2 at 113.18, 306.17); table 6 at log T = 4.0 (Υ 0.24917, 0.75062, 1.26198 to 1D2) | read (table values quoted by a fetch of the arXiv text) | Summed Υ 2.26177 over the 3P term. The 5007:4959 split is taken as 3:1 (the notes say "about three"); Storey and Zeippen 2000 (MNRAS 312, 813) could not be reached from the container: to check (F61). |
+| base-light `sii`, `sii-6731` `nebular` | A&A 694, A133 (2025), table B.5, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32. doi:10.1051/0004-6361/202451865 ; doi:10.1088/0067-0049/188/1/32 | Υ at 10⁴ K 3.83 (2D5/2) and 2.56 (2D3/2) from the printed fits; A 2.019e-4 and 6.84e-4 s⁻¹ | read (table quoted by a fetch) | The pair's ratio runs 1.49 (thin) to 0.48 (dense), against the textbook 1.45 to 0.44. |
+| `sse.nebular.photoionisation_cross_section`, base-light `sii` `balance.fit` | Verner, D. A., Ferland, G. J., Korista, K. T. and Yakovlev, D. G. 1996, ApJ 465, 487, equation 1, table 1 row S II. doi:10.1086/177435 | E₀ 8.787 eV, σ₀ 313.6 Mb, y_a 3.442, P 12.81, y_w 0.7354, y₀ 2.782, y₁ 0.1788, valid to 184.6 eV | read (arXiv astro-ph/9601009, quoted by a fetch) | σ just above threshold about 5 Mb. |
+| `sse.nebular.ion_balance`, base-light `sii` `balance.recombination_m3_s` | Badnell, N. R. et al. 2015, Bootstrapping dielectronic recombination from second-row elements and the Orion Nebula. https://arxiv.org/abs/1503.05905 | table 6, S2+ to S+ at 10⁴ K: dielectronic 2.94e-12 plus radiative 1.54e-12 cm³ s⁻¹ (level average); the sum is ours | read (quoted by a fetch) | As quoted. |
+| `sse.nebular.ion_zone_share`, base-light `photon_takers` | Osterbrock and Ferland 2006, chapter 2 (section 2.4, helium's zones); NIST Atomic Spectra Database ionisation energies (H 13.598434, He 24.587389, S 10.36001, S+ 23.33788, O+ 35.12112, O2+ 54.93554 eV). https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html | photon counting ion by ion, the photons above 24.6 eV taken by helium | textbook; energies from memory of the NIST table, to check | A 40,000 K star's glow gives [O III] 5007/Hβ 2.0 (Orion about 3). |
+
+## VP-L3: the colour of light inside a world's shadow (added 25 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.shadow.refraction_bend`, `sse.shadow.refraction_dilution` | Baum, W. A. and Code, A. D. 1953, A photometric observation of the occultation of σ Arietis by Jupiter, AJ 58, 108. doi:10.1086/106829 | bend θ = ν √(2πr/H) in an exponential atmosphere; spreading 1 / (1 + D θ/H) | textbook (from memory of the paper, to check) | Earth's horizon bend at 550 nm comes to about 1.1° at the ground (about twice the 35′ of one-way horizontal refraction). |
+| `sse.shadow.grazing_column` | Link, F. 1969, Eclipse Phenomena in Astronomy, Springer. doi:10.1007/978-3-642-86775-6 | the column along a grazing ray, n √(2π r H); the eclipse as sunlight bent through the limb | textbook (from memory, to check) | About forty times the vertical column for Earth. |
+
 ## Air in True (track TA, visual polish VP-A)
 
 | Where | Reference | Relied on | Status | Checked |

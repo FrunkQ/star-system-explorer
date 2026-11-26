@@ -9,7 +9,9 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import FindHome from "./FindHome.svelte";
-  import { announcePlace, cellHalo, cellId, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import Nearby from "./Nearby.svelte";
+  import { CLUSTER_CONTROLS } from "./controls.ts";
+  import { DEFAULT_VIEW, viewOptions, announcePlace, cellHalo, cellId, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ min: String(params.min_mass ?? "1e10"), web: params.web !== false }));
@@ -27,6 +29,9 @@
   let busy = $state(false);
   let picked = $state<string | null>(untrack(() => placeHalo ?? (fromPlace ? null : fromSel ? ctx.workspace.selection : null)));
   let gen = 0;
+  // The shared view controls: Chart is the cube-by-cube catalogue; 3D is Galaxies nearby centred on home (GZ5).
+  const shown = $derived(viewOptions(CLUSTER_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const nearbySeen = $derived(shown.seen === "edge" ? "edge" : shown.seen === "above" ? "above" : "tilted");
 
   $effect(() => {
     const i = idx;
@@ -156,7 +161,14 @@
   });
 </script>
 
-<div class="clu" data-cell={cell ? cell.index.join(".") : ""} bind:this={root}>
+<div class="clu" data-cell={cell ? cell.index.join(".") : ""} data-cluster-style={shown.style} bind:this={root}>
+  {#if shown.style === "3d"}
+    <header class="head">
+      <h2>Galaxies nearby</h2>
+      <span class="stamp">grown, not prebaked</span>
+    </header>
+    <Nearby session={ctx.session} seen={nearbySeen} scale={shown.scale === "real" ? "real" : "readable"} hud={shown.hud} onchart={(a) => { ctx.workspace.select(a); root?.dispatchEvent(new CustomEvent("sse:explore", { bubbles: true, detail: { section: "galaxy" } })); }} />
+  {:else}
   <div class="bar">
     <span class="lbl">Cell {idx.join(" · ")}</span>
     <div class="seg" role="group" aria-label="Go to a neighbouring cell">
@@ -252,6 +264,7 @@
         <ul class="model">{#each cell.model as m, i (i)}<li>{m}</li>{/each}</ul>
       </aside>
     </div>
+  {/if}
   {/if}
 </div>
 

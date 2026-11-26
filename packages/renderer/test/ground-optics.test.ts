@@ -49,11 +49,12 @@ test("bare ground takes the measured colour on every world, drawn mature without
   const o = await readGroundOptics(sheet);
   const basalt = SURFACE_MATERIALS.indexOf("basalt");
   const tile = (maturity?: number[]): SurfaceTile => ({ address: "x", key: { face: 0, level: 0, x: 0, y: 0 }, samples: 2, spacing_m: 1, epoch_myr: 0, elevation_dm: [0, 0, 0, 0], material: [basalt, basalt, basalt, basalt], cover: [0, 0, 1, 0], albedo: [300, 300, 300, 300], slope_ddeg: [], surface_age_myr: [], pending: [], hash: "h", ...(maturity ? { maturity } : {}) });
-  const [airy, airless] = withGround([tile(), tile([255, 0, 255, 255])], o);
+  // Whole tiles of one maturity, so the softening over neighbours (natural outlines) leaves each colour as it is.
+  const [airy, airless, young] = withGround([tile(), tile([255, 255, 255, 255]), tile([0, 0, 0, 0])], o);
   // No weathering age from the kernel yet: drawn fully mature (fudge register), never the typed palette.
   assert.deepEqual(sampleColour(airy!, 0), sampleColour(airless!, 0), "no maturity: drawn mature");
   const mature = sampleColour(airless!, 0);
-  const fresh = sampleColour(airless!, 1);
+  const fresh = sampleColour(young!, 1);
   // Mature mare soil is about 6 % reflective: dark grey, a touch warm, nowhere near the palette's 158, 148, 132 beige.
   assert.ok(mature[1] > 55 && mature[1] < 80, `mature ${mature}`);
   assert.ok(mature[0] >= mature[2] && mature[0] - mature[2] < 30, `mature ${mature}`);

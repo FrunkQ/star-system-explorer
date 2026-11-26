@@ -125,6 +125,8 @@ pub struct FormationSettings {
     pub marine_layer: f64,
     /// W7c: cold upwelling off eastern-boundary coasts.
     pub currents: Currents,
+    /// W-synoptic: the day's cloud pattern out of the average cover.
+    pub synoptic: crate::synoptic::Synoptic,
     pub clear_visibility_km: f64,
     pub references: Vec<Reference>,
 }
@@ -654,12 +656,14 @@ pub fn imprint(
                 let bearing = m::atan2(lat - sl, wrap(lon - so));
                 let comma = 0.5 + 0.5 * m::cos(bearing - 0.6 * sl.signum());
                 let k = core * (0.4 + 0.6 * comma);
+                // Its cloud is drawn by its fronts (synoptic.rs); here, the thick deck where they are.
                 let l = &mut cell.layers[1];
-                l.cloud_cover = (l.cloud_cover + k).min(1.0);
-                l.cloud_type = "nimbostratus".into();
-                l.condensate = substance.clone();
-                l.optical_depth = l.optical_depth.max(10.0 * k);
-                cell.precip_mm_day += 8.0 * k * (mean_rain / 2.77).max(0.05);
+                if l.cloud_cover > 0.5 {
+                    l.cloud_type = "nimbostratus".into();
+                    l.condensate = substance.clone();
+                    l.optical_depth = l.optical_depth.max(10.0 * k);
+                }
+                cell.precip_mm_day += 8.0 * k * l.cloud_cover * (mean_rain / 2.77).max(0.05);
                 spin(cell, lat, sl, so, lon, sys.strength * core, c);
             }
             "tropical-cyclone" => {

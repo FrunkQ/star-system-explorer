@@ -133,3 +133,23 @@ fn the_whole_atlas_samples() {
     }
     assert_eq!(s.len() + r["refused"].as_array().unwrap().len(), ids.len());
 }
+
+/// Two calls never share a sample address, so a surface cache keyed by
+/// address cannot hand one call's world to the next (renderer thread, 25 Nov).
+#[test]
+fn each_call_names_its_own_samples() {
+    let mut k = kernel();
+    let atlas = pack("packs/base-atlas/pack.json");
+    let a = send(
+        &mut k,
+        serde_json::json!({"op":"class_sample","packs":[atlas.clone()],"classes":["iron-rich"]}),
+    );
+    let b = send(
+        &mut k,
+        serde_json::json!({"op":"class_sample","packs":[atlas],"classes":["small-body"]}),
+    );
+    assert_ne!(
+        a["samples"][0]["system"], b["samples"][0]["system"],
+        "{a} {b}"
+    );
+}

@@ -2,7 +2,8 @@
 // own control specs so it can never drift from what the app offers. `node tests/ui/view-controls-page.ts --write`
 // rewrites the page; view-controls-page.test.ts fails when it is out of date.
 import { readFileSync, writeFileSync } from "node:fs";
-import { BAND_PICKS, COMPOSITE, COMPOSITE_WORD, FOAM_CONTROLS, VOYAGE_CONTROLS, flatChart, viewOptions, SCALES, SEEN_FROM, SEEN_WORDS, SCALE_WORDS, VIEW_BANDS, VIEW_BAND_WORDS, VIEW_STYLES, VIEW_STYLE_WORDS, type ViewControlsSpec } from "../../packages/ui-contract/src/index.ts";
+import { BAND_PICKS, COMPOSITE, COMPOSITE_WORD, FOAM_CONTROLS, VOYAGE_CONTROLS, viewOptions, SCALES, SEEN_FROM, SEEN_WORDS, SCALE_WORDS, VIEW_BANDS, VIEW_BAND_WORDS, VIEW_STYLES, VIEW_STYLE_WORDS, type ViewControlsSpec } from "../../packages/ui-contract/src/index.ts";
+import { CLUSTER_CONTROLS } from "../../packages/views/cluster-map/src/controls.ts";
 import { BODY_CONTROLS } from "../../packages/views/body/src/controls.ts";
 import { COMPARE_CONTROLS } from "../../packages/views/compare/src/controls.ts";
 import { CUTAWAY_CONTROLS } from "../../packages/views/cutaway/src/controls.ts";
@@ -15,8 +16,7 @@ import { WINDOW_CONTROLS } from "../../packages/views/window/src/controls.ts";
 /** Every screen with view controls, from the largest scale to the smallest. */
 export const SCREENS: { scale: string; screen: string; spec: ViewControlsSpec }[] = [
   { scale: "Cosmic web", screen: "Cosmic web (foam)", spec: FOAM_CONTROLS },
-  // cluster-map/src/index.svelte.ts declares its controls inline; kept in step by the test.
-  { scale: "Galaxies nearby", screen: "Galaxies nearby", spec: flatChart("3D cells come with the galaxy charts' Free view") },
+  { scale: "Galaxies nearby", screen: "Galaxies nearby", spec: CLUSTER_CONTROLS },
   { scale: "Galaxy", screen: "Galaxy chart", spec: GALAXY_CONTROLS },
   { scale: "Local stars", screen: "Sector map", spec: SECTOR_CONTROLS },
   { scale: "Between stars", screen: "Voyages", spec: VOYAGE_CONTROLS },
