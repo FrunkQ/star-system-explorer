@@ -391,6 +391,10 @@
     {
      "port": "ice_density",
      "letter": "ri"
+    },
+    {
+     "port": "photo_lifetime",
+     "letter": "tau"
     }
    ],
    "outputs": [
@@ -399,18 +403,7 @@
      "letter": "L"
     }
    ],
-   "params": [
-    {
-     "param": "photo_rate_1au",
-     "letter": "k",
-     "default": 1.2e-05,
-     "range": [
-      1e-06,
-      0.0001
-     ],
-     "description": "rate at which starlight breaks up a water molecule at 1 AU, per second (Huebner et al. 1992, quiet Sun)"
-    }
-   ],
+   "params": [],
    "constants": {
     "R": "sheet/R_gas",
     "au": "sheet/au"
@@ -420,10 +413,10 @@
     "Huebner, W. F., Keady, J. J. and Lyon, S. P. 1992, Astrophysics and Space Science 195, 1: solar photo rates for planetary atmospheres and atmospheric pollutants; a water molecule at 1 AU is broken up by sunlight about once a day (rate about 1.2e-5 per second under the quiet Sun). doi:10.1007/BF00644558",
     "Watson, K., Murray, B. C. and Brown, H. 1961, Journal of Geophysical Research 66, 3033: the behaviour of volatiles on the lunar surface; open ice sublimes away on the warm Moon and survives only in cold traps. doi:10.1029/JZ066i009p03033"
    ],
-   "shown": "L = p √(M/2πRT) (1 − e^(−t_hop k (au/d)²) + (1+λ)e^(−λ)) t / ρ",
+   "shown": "L = p √(M/2πRT) (1 − e^(−t_hop (au/d)²/τ) + (1+λ)e^(−λ)) t / ρ",
    "equation": {
     "name": "How much open ice an airless world loses",
-    "formula": "flux = p * sqrt(M / (2 * pi * R * T))\nv2 = 2 * R * T / M\nhop = 2 * sqrt(v2) / g\nrate = if d > 0 then k * (au / d) * (au / d) else 0\nlam = ve * ve / v2\nshare = min(1 - exp(-hop * rate) + (1 + lam) * exp(-lam), 1)\nL = if p <= 0 or T <= 0 or g <= 0 or ri <= 0 then 0 else flux * share * max(t, 0) / ri",
+    "formula": "flux = p * sqrt(M / (2 * pi * R * T))\nv2 = 2 * R * T / M\nhop = 2 * sqrt(v2) / g\nrate = if d > 0 and tau > 0 then (au / d) * (au / d) / tau else 0\nlam = ve * ve / v2\nshare = min(1 - exp(-hop * rate) + (1 + lam) * exp(-lam), 1)\nL = if p <= 0 or T <= 0 or g <= 0 or ri <= 0 then 0 else flux * share * max(t, 0) / ri",
     "inputs": {
      "p": {
       "kind": "material.vapour_pressure",
@@ -465,10 +458,10 @@
       "unit": "kg m-3",
       "name": "ice's density"
      },
-     "k": {
-      "kind": "model.photo_rate_1au",
-      "unit": "s-1",
-      "name": "photolysis rate at 1 AU"
+     "tau": {
+      "kind": "material.photo_lifetime_1au",
+      "unit": "s",
+      "name": "how long a water molecule lasts in sunlight at 1 AU (Look up)"
      },
      "R": {
       "kind": "constant.R_gas",
@@ -495,7 +488,7 @@
     },
     "explain": {
      "curious": "Ice left out on an airless world slowly turns straight to vapour. Most of the vapour hops and lands again, but some is broken up by sunlight in flight or flies off into space. Near the Sun the Moon would lose a kilometres-thick ice sheet in a blink of geological time; at Jupiter, where ice is far colder, almost nothing is lost, so its moons keep icy ground.",
-     "science": "Sublimation flux from the Hertz-Knudsen relation with a sticking coefficient of 1 and the vapour pressure from Fray and Schmitt's fits. Molecules move on ballistic hops of about 2v/g with v the most probable speed; per hop a share 1 − e^(−t_hop J) is photolysed (J the photo rate, falling as 1/d²) and a share (1 + λ)e^(−λ) escapes, λ = v_esc²/v² (Jeans). The rest lands again, so the net loss is the flux times that share. Sputtering and cold-trapping are left out."
+     "science": "Sublimation flux from the Hertz-Knudsen relation with a sticking coefficient of 1 and the vapour pressure from Fray and Schmitt's fits. Molecules move on ballistic hops of about 2v/g with v the most probable speed; per hop a share 1 − e^(−t_hop J) is photolysed (J the photo rate, one over the molecule's lifetime in sunlight read from the data sheet, falling as 1/d²) and a share (1 + λ)e^(−λ) escapes, λ = v_esc²/v² (Jeans). The rest lands again, so the net loss is the flux times that share. Sputtering and cold-trapping are left out."
     },
     "examples": [
      {
@@ -507,8 +500,8 @@
       "d": 150000000000.0,
       "t": 1.4e+17,
       "ri": 930.0,
-      "k": 1.2e-05,
-      "L": 94778858196.19621
+      "tau": 83000.0,
+      "L": 95158144587.69698
      },
      {
       "p": 2e-06,
@@ -519,8 +512,8 @@
       "d": 780000000000.0,
       "t": 1.4e+17,
       "ri": 930.0,
-      "k": 1.2e-05,
-      "L": 120.9198908453075
+      "tau": 83000.0,
+      "L": 121.40545275047086
      },
      {
       "p": 1e-12,
@@ -531,8 +524,8 @@
       "d": 780000000000.0,
       "t": 1.4e+17,
       "ri": 930.0,
-      "k": 1.2e-05,
-      "L": 5.723046013160271e-05
+      "tau": 83000.0,
+      "L": 5.746027770385056e-05
      }
     ]
    }

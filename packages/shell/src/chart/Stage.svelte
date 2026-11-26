@@ -29,6 +29,7 @@
     cutBody,
     openKeys,
     extraTools,
+    viewLead,
   }: {
     ws: Workspace;
     desk: Desk;
@@ -56,6 +57,8 @@
     openKeys: () => void;
     /** Tools another section adds after Redo (the Run desk's Bookmarks, PB2b), so the stage imports nothing of theirs. */
     extraTools?: Snippet;
+    /** At the head of the view controls: the Run desk's folded rail (three desks design 3.1). */
+    viewLead?: Snippet;
   } = $props();
 
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
@@ -70,7 +73,7 @@
 
 <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={cardMount ? undefined : ""} data-lens={lensId} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
   {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-  {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH} data-chart-overlay><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
+  {#if (viewSpec && ws.view) || viewLead}<div class="viewbar" bind:clientHeight={viewbarH} data-chart-overlay><div class="viewrow">{@render viewLead?.()}{#if viewSpec && ws.view}<ViewControls spec={viewSpec} choice={ws.view} onchange={setView} />{/if}</div></div>{/if}
   <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
   <nav class="tools" aria-label="Tools" data-chart-overlay>
     {#if partShows("tools", desk, "select")}<ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />{/if}
@@ -149,6 +152,15 @@
     right: 440px;
     z-index: 2;
     pointer-events: none;
+  }
+  .viewrow {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    pointer-events: none;
+  }
+  .viewrow > :global(*) {
+    pointer-events: auto;
   }
   .viewbar > :global(*) {
     pointer-events: auto;

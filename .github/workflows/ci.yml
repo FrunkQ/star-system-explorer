@@ -78,6 +78,12 @@ jobs:
           git fetch --depth=1 origin main
           python3 scripts/test-audit-matter.py
           python3 scripts/audit-matter.py --ledger handover/packages/MP0-typed-copies.txt --base FETCH_HEAD
+      - if: matrix.os == 'ubuntu-latest'
+        name: no new physics side doors (ER ledger, may only shrink)
+        run: |
+          git fetch --depth=1 origin main
+          python3 scripts/test-audit-side-doors.py
+          python3 scripts/audit-side-doors.py --check --base FETCH_HEAD
       - run: cargo run -q -p sse-cli --release -- harness
 
   wasm:
@@ -168,5 +174,7 @@ jobs:
       - run: SSE_SHOTS=ui-screens/manifest node tests/ui/manifest.e2e.mjs
       # The star chooser (PR 615): pick a star for a new system.
       - run: node tests/ui/star-chooser.e2e.mjs --screens ui-screens/star-chooser
+      # The star class gallery and star picker (SC1): every kind live in True, both sizes, a giant's cells, Make a system's picker.
+      - run: SCREENS=ui-screens/star-gallery node tests/ui/star-gallery.e2e.mjs
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }
