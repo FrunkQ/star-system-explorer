@@ -13,7 +13,9 @@ use crate::{Body, SurfaceEnvelope, SurfaceSettings};
 use serde::{Deserialize, Serialize};
 use sse_atoms::ice_ground as ig;
 use sse_core::math as m;
-use sse_core::sheet::{mixture_density, G, M_EARTH, R_EARTH_MEAN, T0C, YR_JULIAN};
+use sse_core::sheet::{
+    mixture_density, photo_lifetime_1au, G, M_EARTH, R_EARTH_MEAN, T0C, YR_JULIAN,
+};
 
 /// Read a world's ice from its density only below this mass, Earth masses:
 /// above it self-compression makes rock look denser than it is at low
@@ -126,7 +128,7 @@ pub fn ice_ground(
         let g = G * mass / (r * r);
         let ve = m::sqrt(2.0 * G * mass / r);
         let age_s = b.age_gyr.max(0.0) * 1.0e9 * YR_JULIAN;
-        lost_m = ig::open_loss_m(p, t, mw, g, ve, d_au, age_s, ri, ig::PHOTO_RATE_1AU);
+        lost_m = ig::open_loss_m(p, t, mw, g, ve, d_au, age_s, ri, photo_lifetime_1au::H2O);
         let keeps = lost_m < shell_m;
         why.push(if keeps {
             format!("at {t:.0} K open ice sublimes so slowly that only about {lost_m:.0} m of its {:.0} km is lost to starlight and to space over its age, so its ground is ice", shell_m / 1000.0)
