@@ -229,6 +229,8 @@ export * from "./approach.ts";
 export * from "./journey.ts";
 export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export { chartFate, fateLine, fatePlan, withFate, FATE_LIMIT_MYR } from "./formation-fate.ts";
+export type { ChartFate, FateMark, FatePlan, FateWorld } from "./formation-fate.ts";
 export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markWords, moveJoin, profileMass, profileSpans, sculptorOf, setDensity, setShare, srgb } from "./profile.ts";
 export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Sculptor, ZoneCause } from "./profile.ts";
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";

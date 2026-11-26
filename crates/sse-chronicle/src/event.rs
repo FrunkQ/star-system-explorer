@@ -6,30 +6,10 @@ use sse_core::{Address, ContentHash};
 use std::collections::BTreeMap;
 use std::fmt;
 
-/// Universe time: signed seconds (plus nanoseconds) from the universe's origin.
-/// Integer, so ordering is exact; 2^63 s is about 290 billion years.
-#[derive(
-    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize, Default,
-)]
-pub struct UniverseTime {
-    pub s: i64,
-    #[serde(default)]
-    pub ns: u32,
-}
-
-impl UniverseTime {
-    pub const ORIGIN: UniverseTime = UniverseTime { s: 0, ns: 0 };
-    pub fn seconds(s: i64) -> Self {
-        UniverseTime { s, ns: 0 }
-    }
-    /// Whole Julian years (365.25 days) from the origin.
-    pub fn years(y: i64) -> Self {
-        UniverseTime {
-            s: y * (sse_core::sheet::YR_JULIAN as i64),
-            ns: 0,
-        }
-    }
-}
+/// Universe time: the one time axis's date type, whole seconds (plus
+/// nanoseconds) from the universe's origin (`sse_core::time`). Integer, so
+/// ordering is exact; 2^63 s is about 292 billion years.
+pub use sse_core::time::Instant as UniverseTime;
 
 /// When an event entered this chronicle. Ordering only; never physics.
 #[derive(

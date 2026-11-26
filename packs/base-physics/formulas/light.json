@@ -1186,6 +1186,125 @@
    }
   },
   {
+   "id": "sse.light.sea_glint",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "wind_speed",
+     "letter": "U"
+    },
+    {
+     "port": "refractive_index",
+     "letter": "n"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "slope_variance",
+     "letter": "s2"
+    },
+    {
+     "port": "normal_reflectance",
+     "letter": "R0"
+    }
+   ],
+   "models": {
+    "a": {
+     "value": 0.003,
+     "grade": "fitted",
+     "source": "Cox and Munk 1954, the clean-surface fit (eq. for σ² = σc² + σu²)"
+    },
+    "b": {
+     "value": 0.00512,
+     "grade": "fitted",
+     "source": "Cox and Munk 1954, the clean-surface fit (eq. for σ² = σc² + σu²)"
+    }
+   },
+   "checks": [
+    {
+     "port": "wind_speed",
+     "min": 0,
+     "finite": true,
+     "says": "wind speed must be zero or more, got {}"
+    },
+    {
+     "port": "refractive_index",
+     "min": 1.0001,
+     "max": 3.0,
+     "says": "a liquid's refractive index must lie between 1 and 3, got {}"
+    }
+   ],
+   "references": [
+    "Cox, C. and Munk, W. 1954, Measurement of the roughness of the sea surface from photographs of the sun's glitter, J. Opt. Soc. Am. 44, 838: the mean square slope of a clean sea, σ² = 0.003 + 5.12×10⁻³ W ± 0.004, W the wind at 12.5 m in m/s, fitted from aerial photographs of the glitter off Hawaii. doi:10.1364/JOSA.44.000838",
+    "Born, M. and Wolf, E. 1999, Principles of Optics, 7th edn, Cambridge University Press, section 1.5.3: at normal incidence a surface reflects ((n − 1)/(n + 1))² of the light, whatever its polarisation"
+   ],
+   "shown": "σ² = 0.003 + 5.12×10⁻³ U,  R₀ = ((n − 1)/(n + 1))²",
+   "equation": {
+    "name": "How wide and bright the sun's glint off a sea is",
+    "formula": "s2 = a + b * U\nr = (n - 1) / (n + 1)\nR0 = r * r",
+    "inputs": {
+     "U": {
+      "kind": "weather.wind_speed_10m",
+      "unit": "m/s",
+      "name": "wind speed over the water",
+      "valid": [
+       0,
+       20
+      ]
+     },
+     "n": {
+      "kind": "light.refractive_index",
+      "unit": "1",
+      "name": "refractive index of the liquid",
+      "valid": [
+       1.0001,
+       3.0
+      ]
+     },
+     "a": {
+      "kind": "model.slope_variance_calm",
+      "unit": "1",
+      "name": "mean square slope of a calm sea"
+     },
+     "b": {
+      "kind": "model.slope_variance_growth",
+      "unit": "s m-1",
+      "name": "growth of the mean square slope with wind"
+     }
+    },
+    "outputs": {
+     "s2": {
+      "kind": "ocean.slope_variance",
+      "unit": "1",
+      "name": "mean square slope of the waves (how far the glint spreads)"
+     },
+     "R0": {
+      "kind": "light.normal_reflectance",
+      "unit": "1",
+      "name": "share of light the liquid reflects straight back"
+     }
+    },
+    "source": {
+     "text": "Cox, C. and Munk, W. 1954, Measurement of the roughness of the sea surface from photographs of the sun's glitter, J. Opt. Soc. Am. 44, 838",
+     "doi": "10.1364/JOSA.44.000838",
+     "where": "the clean-surface slope fit"
+    },
+    "explain": {
+     "curious": "Seen from space, a sea shows the sun as a soft bright patch: each little wave tilts a mirror toward you. More wind, more tilt, so the patch spreads wider and dimmer. A liquid that bends light more strongly reflects more of it.",
+     "science": "Gaussian facet slopes of variance σ² = 0.003 + 5.12×10⁻³ U (Cox and Munk's clean sea, fitted on Earth with the wind at 12.5 m; here read at 10 m and on other liquids as it stands, docs/fudges.md), with Fresnel's normal reflectance from the liquid's index; the renderer draws the facet BRDF from these two numbers."
+    },
+    "examples": [
+     {
+      "U": 7.0,
+      "n": 1.333,
+      "s2": 0.038840000000000006,
+      "R0": 0.020373187841971414
+     }
+    ]
+   }
+  },
+  {
    "id": "sse.light.halo",
    "version": "1.0.0",
    "cost": "trivial",
