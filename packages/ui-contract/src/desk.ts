@@ -47,11 +47,11 @@ export interface DeskDoc {
 
 /**
  * The three shipped desks. The hints are the switch's words today; `writes` and `time` are the accepted design's
- * answers. Today the shell reads `writes` only as Build arms editing ("campaign"); TM3 and TM4 make the other answers
- * true on screen.
+ * answers. The shell reads `writes` as Build arms editing ("campaign"); on Explore ("try") the handles and grips are live
+ * and the first change opens a what-if by itself (`deskTries`, TM4); TM3 makes the time answers true on screen.
  */
 export const SHIPPED_DESKS: readonly DeskDoc[] = [
-  { schema: DESK_SCHEMA, id: "explore", label: "Explore", key: "V", hint: "Look around: nothing changes by accident (V)", line: "Try anything, nothing is kept.", writes: "try", time: "look" },
+  { schema: DESK_SCHEMA, id: "explore", label: "Explore", key: "V", hint: "Look around and try anything: nothing is kept by accident (V)", line: "Try anything, nothing is kept.", writes: "try", time: "look" },
   { schema: DESK_SCHEMA, id: "build", label: "Build", key: "E", hint: "Change things: values edit, bodies drag, undo and redo (E)", line: "What you change is the campaign.", writes: "campaign", time: "set", lens: "building" },
   { schema: DESK_SCHEMA, id: "run", label: "Run", key: "R", hint: "At the table: what players know, their screens and requests (R)", line: "The picture, the place and the clock.", writes: "play", time: "clock", lens: "running" },
 ];
@@ -68,6 +68,19 @@ export function deskDoc(id: Desk): DeskDoc {
 /** Whether a desk's changes go into the campaign (today: whether the chart is armed for editing). */
 export function deskKeeps(id: Desk): boolean {
   return deskDoc(id).writes === "campaign";
+}
+
+/**
+ * Whether a desk's changes are a try (Explore, three desks TM4): its handles and grips are live, and the first change
+ * opens a what-if by itself, so nothing reaches the campaign unless "Keep it" is pressed. Left out, no desk (a player).
+ */
+export function deskTries(id: Desk | undefined): boolean {
+  return !!id && deskDoc(id).writes === "try";
+}
+
+/** Whether things can be changed on a desk at all, kept or tried (Build, Explore); Run changes only the acts of play. */
+export function deskChanges(id: Desk | undefined): boolean {
+  return !!id && deskDoc(id).writes !== "play";
 }
 
 /** Problems with a desk record; empty when it is fine. */

@@ -18,6 +18,7 @@
       "scale": "web",
       "group": "look",
       "label": "Postcards",
+      "desks": ["explore", "build"],
       "order": 9,
       "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
     },
@@ -25,6 +26,7 @@
       "scale": "cluster",
       "group": "look",
       "label": "Postcards",
+      "desks": ["explore", "build"],
       "order": 9,
       "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
     },
@@ -32,6 +34,7 @@
       "scale": "galaxy",
       "group": "look",
       "label": "Postcards",
+      "desks": ["explore", "build"],
       "order": 9,
       "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
     },
@@ -39,6 +42,7 @@
       "scale": "system",
       "group": "look",
       "label": "Postcards",
+      "desks": ["explore", "build"],
       "order": 9,
       "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
     },
@@ -46,6 +50,7 @@
       "scale": "world",
       "group": "look",
       "label": "Postcards",
+      "desks": ["explore", "build"],
       "order": 9,
       "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
     }

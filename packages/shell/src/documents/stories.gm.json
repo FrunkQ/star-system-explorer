@@ -22,6 +22,7 @@
       "scale": "system",
       "group": "find",
       "label": "Stories",
+      "desks": ["explore", "build"],
       "order": 1,
       "hint": "Sift the campaign for what is unusual, and why"
     }

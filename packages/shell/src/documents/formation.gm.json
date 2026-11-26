@@ -1,0 +1,33 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.formation",
+  "label": "How it formed",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.formation",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "understand",
+      "label": "How it formed",
+      "order": 1,
+      "hint": "How this system was made: each world's track from the disc to now",
+      "desks": [
+        "explore",
+        "build"
+      ]
+    }
+  ]
+}

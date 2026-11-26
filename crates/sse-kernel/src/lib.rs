@@ -31,6 +31,9 @@ mod fields;
 mod flights;
 #[cfg(test)]
 mod flights_tests;
+mod formation_record;
+#[cfg(test)]
+mod formation_record_tests;
 mod frame;
 mod frames;
 #[cfg(test)]
@@ -5568,6 +5571,10 @@ impl Kernel {
                     reading,
                 }
             }
+            Request::FormationRecord { system } => {
+                let u = self.universe()?;
+                formation_record::formation_record(&u.chronicle, &u.root, &system)?
+            }
             Request::Systems => {
                 let u = self.universe()?;
                 Response::SystemsListed {
@@ -7424,6 +7431,7 @@ impl Kernel {
                 max_stars,
                 galaxies,
                 stars,
+                satellite_paths,
             } => {
                 let u = self.universe()?;
                 let pins =
@@ -7446,6 +7454,7 @@ impl Kernel {
                             max_stars: max_stars.unwrap_or(20_000) as usize,
                             galaxies: galaxies.unwrap_or(true),
                             stars: stars.unwrap_or(true),
+                            satellite_paths: satellite_paths.unwrap_or(false),
                         },
                     )
                 })?;

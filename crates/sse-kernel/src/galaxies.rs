@@ -140,7 +140,15 @@ pub(crate) struct GalaxyAsk<'a> {
     pub limit_band: &'a Passband,
     pub bands: &'a [&'a Passband],
     pub t_myr: f64,
+    /// GZ6: also every member's path in the host since infall (survivors,
+    /// the torn apart and the merged), for Galaxies nearby's Play and its
+    /// streams. Off by default; the sky does not ask.
+    pub paths: bool,
 }
+
+/// GZ6: one member's path, thinned to one point every `PATH_EVERY` of the
+/// orbit's own `path_gyr` points (0.1 Gyr at pack defaults), plus its last.
+const PATH_EVERY: usize = 5;
 
 fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
@@ -487,12 +495,16 @@ pub(crate) fn satellites_seen(
     let mut out = vec![];
     let (mut drawn, mut merged) = (0u64, 0u64);
     let mut remains: std::collections::BTreeMap<String, u64> = Default::default();
+    let mut paths = vec![];
     for mb in &members {
         drawn += 1;
         let p = &mb.progenitor;
         let g = &mb.galaxy;
         let halo = &mb.halo;
         let fate = &mb.fate;
+        if ask.paths {
+            paths.push(member_path(mb, ask.observer_pc));
+        }
         if fate.merged_gyr.is_some() {
             merged += 1;
             continue;
@@ -560,13 +572,57 @@ pub(crate) fn satellites_seen(
             out.push((mag, v));
         }
     }
-    Ok((
-        out,
-        serde_json::json!({
-            "host_mass_msun": m_host, "r200_kpc": r200_kpc,
-            "subhaloes": drawn, "merged": merged, "remains": remains,
-            "expected": tree.expected, "accreted_share": tree.accreted_psi,
-            "pinned": tree.progenitors.iter().filter(|p| p.pinned).count(),
-        }),
-    ))
+    let mut walk = serde_json::json!({
+        "host_mass_msun": m_host, "r200_kpc": r200_kpc,
+        "subhaloes": drawn, "merged": merged, "remains": remains,
+        "expected": tree.expected, "accreted_share": tree.accreted_psi,
+        "pinned": tree.progenitors.iter().filter(|p| p.pinned).count(),
+    });
+    if ask.paths {
+        let o = ask.observer_pc;
+        walk["centre_kpc"] = serde_json::json!([-o[0] / 1000.0, -o[1] / 1000.0, -o[2] / 1000.0]);
+        walk["paths"] = paths.into();
+    }
+    Ok((out, walk))
+}
+
+/// GZ6: where one member went from infall to now, in kpc from the observer
+/// in the galactic frame (the frame of each galaxy's `dir`), as
+/// `[t_gyr, x, y, z]`; with what became of it and its stars at infall.
+fn member_path(mb: &sse_cosmos::feed::Member, observer_pc: [f64; 3]) -> serde_json::Value {
+    let f = &mb.fate;
+    let o = [
+        observer_pc[0] / 1000.0,
+        observer_pc[1] / 1000.0,
+        observer_pc[2] / 1000.0,
+    ];
+    let at = |t: f64, x: &[f64; 3]| [t, x[0] - o[0], x[1] - o[1], x[2] - o[2]];
+    let mut pts: Vec<[f64; 4]> = f
+        .path
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| i % PATH_EVERY == 0)
+        .map(|(_, (t, x))| at(*t, x))
+        .collect();
+    if pts.last().is_none_or(|l| l[0] < f.t_gyr) {
+        pts.push(at(f.t_gyr, &f.pos_kpc));
+    }
+    let fate = if f.merged_gyr.is_some() {
+        "merged"
+    } else if f.disrupted_gyr.is_some() {
+        "torn apart"
+    } else {
+        "survives"
+    };
+    serde_json::json!({
+        "address": mb.halo.address,
+        "fate": fate,
+        "labels": f.labels,
+        "infall_gyr": mb.progenitor.t_infall_gyr,
+        "merged_gyr": f.merged_gyr,
+        "disrupted_gyr": f.disrupted_gyr,
+        "infall_halo_mass_msun": mb.progenitor.mass_at_infall_msun,
+        "infall_stars_msun": state_at(&mb.galaxy, mb.progenitor.t_infall_gyr).stars,
+        "path": pts,
+    })
 }

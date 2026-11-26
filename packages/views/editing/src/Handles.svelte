@@ -2,13 +2,14 @@
   The handles row (ED1, editing design sections 1 to 3): a world's six true inputs (a star's two) as one short row of
   figures on the body card. Pressing one opens its strip under the row; one strip at a time; closed it takes no room.
   On the Build desk the strip moves the value and letting go is one set_value, one Undo; the card then lists what
-  followed. On Explore the strip opens read-only, as an explanation of where this world sits, with "Try changing it"
-  (ED7), which opens an example what-if where it moves. A handle with a box in the sheet (Orbit, Spin: ED12) opens the
-  box, its own strip on top.
+  followed. On Explore the strip is live as a try (three desks TM4): the first change opens a what-if by itself
+  (`tryFirst` in edit.ts), the stamp and dashed frame appear, and nothing reaches the campaign unless "Keep it" is
+  pressed under the time ruler. Reach it, Could be and the sweep are Build's. A handle with a box in the sheet (Orbit,
+  Spin: ED12) opens the box, its own strip on top.
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, makeupOf, PART_WORDS, type MakeupPart, scaleClass, stripDomain, sweepAsk, sweepMarks, atlasPacks, yearsToSeconds, classNamesIn, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, deskChanges, deskKeeps, deskTries, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, makeupOf, PART_WORDS, type MakeupPart, scaleClass, stripDomain, sweepAsk, sweepMarks, atlasPacks, yearsToSeconds, classNamesIn, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
@@ -17,6 +18,7 @@
   import MakeupBox from "./MakeupBox.svelte";
   import Sheet from "./Sheet.svelte";
   import CouldBe from "./CouldBe.svelte";
+  import StarChooser from "./StarChooser.svelte";
 
   let { ctx, scene, subject }: { ctx: ViewContext; scene: SystemScene; subject: SceneSubject } = $props();
 
@@ -24,11 +26,15 @@
   const depth = $derived(ws.depth ?? "science");
   const on = $derived(handleSubject(subject?.kind ?? ""));
   const handles = $derived(on ? handlesFor(on) : []);
-  // Build moves handles; a what-if moves them on its branch (an example opened from Explore with "Try changing it",
-  // ED7, onboarding section 12), and nothing reaches the main line unless it is kept. Run shows no editing.
+  // Build moves handles and keeps the change; Explore moves them as a try, on a what-if that opens by itself with the
+  // first change (TM4), and nothing reaches the main line unless it is kept. Run shows no editing. The desk's record
+  // answers both (desk.ts), not its name.
   const gm = $derived(ctx.session.seat.authority === "gm");
-  const editable = $derived(gm && ws.desk !== "run" && (ws.desk === "build" || !!ws.branch));
-  const canTry = $derived(gm && ws.desk === "explore" && !ws.branch);
+  const editable = $derived(gm && deskChanges(ws.desk));
+  // Build's own tools on the handles (design section 6): Reach it, Could be, the sweep behind the strip, Type it all in.
+  const keeps = $derived(editable && !!ws.desk && deskKeeps(ws.desk));
+  // On Explore before the first change, the strip says that a change is a try.
+  const trying = $derived(editable && !ws.branch && deskTries(ws.desk));
 
   // The kernel's facts and results for every body of this system, reread after each change.
   let facts = $state.raw<Record<string, Record<string, Json>>>({});
@@ -63,10 +69,6 @@
     return out;
   });
   const mine = $derived(seen[subject?.address ?? ""] ?? {});
-  let tryProblem = $state<string | null>(null);
-  async function tryIt() {
-    tryProblem = await openWhatIf(ctx.session, ws, "EXAMPLE · change anything");
-  }
   // The reading chosen by pressing a unit anywhere (a card's figure, a strip's), per kind and scale class.
   const pick = (h: Handle) => chosenReading(ws.unit_choices, h.part.kind, aboutFor(h, cls));
   const cls = $derived(scaleClass(subject?.kind ?? "", typeof mine["body.mass"] === "number" ? (mine["body.mass"] as number) : undefined));
@@ -133,7 +135,7 @@
     const id = open;
     const sys = scene.system;
     const sweep = ctx.session.sweep?.bind(ctx.session);
-    if (!id || !SWEPT.includes(id) || on !== "world" || !editable || ws.branch || !sys || scene.fixture || !sweep) return;
+    if (!id || !SWEPT.includes(id) || on !== "world" || !keeps || ws.branch || !sys || scene.fixture || !sweep) return;
     const h = handles.find((x) => x.id === id);
     const v = h ? handleValue(h, mine) : null;
     if (!h || v === null || !(v > 0)) return;
@@ -208,7 +210,7 @@
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
-    followed = { handle: label === "Air" ? "air" : label === "Makeup" || label === "Radius" ? "makeup" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
+    followed = { handle: label === "Air" ? "air" : label === "Makeup" || label === "Radius" ? "makeup" : label === "Star" ? "mass" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
     return null;
   }
 
@@ -267,13 +269,14 @@
         <span class="value">{#if built}{built}{:else if fig}{fig.main.text}{#if fig.also}, {fig.also.text}{/if}{:else if waits}soon{:else}not set{/if}</span>
       </button>
     {/each}
-    {#if editable}
+    <!-- Typing every input in from a source is setting a game up: Build's. -->
+    {#if keeps}
       <button type="button" class="handle sheet-open" class:open={open === "sheet"} aria-expanded={open === "sheet"} data-handle="sheet" onclick={() => ((open = open === "sheet" ? null : "sheet"), (followed = null))}>
         <span class="label">Every input</span><span class="value">Type it all in</span>
       </button>
     {/if}
   </div>
-  {#if on === "world" && editable && !ws.branch && scene.system}
+  {#if on === "world" && keeps && !ws.branch && scene.system}
     <CouldBe {ctx} system={scene.system} address={subject.address} facts={mine} results={resultsOf(surfaces, subject.address)} {cls} {depth} label={subject.label} commit={(h, si, how, shown) => commit(h, si, how, shown)} />
   {/if}
   <!-- On a phone the open strip docks across the full width above the time ruler, with the verdict over it (design
@@ -284,23 +287,24 @@
   {:else if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
-      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} swept={sweptFor(h)} {commit} {pause} onclose={() => (open = null)} />
+      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} reading={pick(h)} dots={dotsFor(h.id)} swept={sweptFor(h)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
-      {#if h.id === "makeup"}
+      {#if h.id === "mass" && on === "star"}
+        <StarChooser {ctx} facts={mine} systemFacts={seen[scene.system ?? ""] ?? {}} now_yr={ws.now_yr} {depth} {editable} {trying} commitMix={(edits, display, was, label) => commitMix(edits, display, was, label)} />
+      {:else if h.id === "makeup"}
         <MakeupBox {ctx} {atlas} at_s={yearsToSeconds(ws.now_yr)} handle={h} system={scene.system} address={subject.address} facts={mine} {cls} {depth} {editable} onbranch={!!ws.branch} {commitMix} />
       {:else}
-      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} marks={sweptFor(h)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
+      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} marks={sweptFor(h)} {cls} {depth} {editable} {trying} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
       {#if h.id === "air" && h.on === "world"}
         <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {sol} {commitMix} />
       {/if}
       {/if}
-      {#if h.reach?.length && editable && !ws.branch && scene.system && handleValue(h, mine) !== null}
+      {#if h.reach?.length && keeps && !ws.branch && scene.system && handleValue(h, mine) !== null}
         <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
       {/if}
     {/if}
     {#if sweeping && sweeping.key.endsWith(`|${open}|${handleValue(h, mine)}`)}<p class="sweeping" role="status" data-sweeping>Running {h.names[depth === "curious" ? "curious" : "science"].toLowerCase()} across the strip{sweeping.total ? ` (${sweeping.done} of ${sweeping.total})` : ""}…</p>{/if}
     {#if swept?.why && swept.key.endsWith(`|${open}|${handleValue(h, mine)}`)}<p class="sweeping" role="status" data-sweep-why>The strip's marks could not be worked out: {swept.why}</p>{/if}
-    {#if tryProblem}<p class="try-problem" role="status">{tryProblem}</p>{/if}
   {/if}
   {#if followed}
     <div class="followed" data-followed aria-live="polite">
@@ -397,12 +401,6 @@
     margin: 2px 18px;
     font-size: 11px;
     color: var(--sse-ink-muted);
-  }
-  .try-problem {
-    margin: 0;
-    padding: 4px 18px;
-    font-size: 12px;
-    color: var(--sse-accent-ink);
   }
   .followed {
     padding: 8px 18px 10px;

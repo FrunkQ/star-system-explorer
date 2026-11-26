@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { lookFingerprint } from "../../scripts/class-pictures-look.mjs";
 
 // The app version players must match (V4): package version and commit.
 function appVersion(): string {
@@ -21,7 +22,8 @@ export default defineConfig({
   root: import.meta.dirname,
   base: "./",
   plugins: [svelte()],
-  define: { __SSE_APP__: JSON.stringify(appVersion()) },
+  // __SSE_LOOK__: the look the class gallery's pre-drawn globes must have been drawn with to be shown (V14i part 2).
+  define: { __SSE_APP__: JSON.stringify(appVersion()), __SSE_LOOK__: JSON.stringify(lookFingerprint(`${import.meta.dirname}/../..`)) },
   build: {
     outDir: "dist",
     emptyOutDir: true,
