@@ -10,7 +10,7 @@ Written by the thread "Design the real star catalogue import" (Fable, design onl
 - "we have a set point at 'the stuff people expect to see in a solar system sim'... and see what peeps do when they realise they have added 10000 asteroids and hundreds of trojans and a dozen planet X candidates we keep finding out in the dark. So the 'size' makes sense."
 - "we don't even READ the data we won't use so always have them indexable by size to make it fast."
 
-Read with: `SSE4-night-sky-design.md` section 8 (the real-sky pack, accepted 21 Nov), `SSE4-design-handoff.md` section 10 (real data fetched on demand), `SSE4-galaxy-design.md` section 10 (authored galaxies), `SSE4-grand-zoom-design.md` section 6 (the tie-up of places), `SSE4-conserved-chain-design.md` sections 3, 10 and 11 and `SSE4-conserved-chain-splits.md` sections 4 to 6A, `SSE4-explorers-paid-packs.md` section 8 (Gaia and money).
+Read with: `SSE4-night-sky-design.md` section 8 (the real-sky pack, accepted 21 Nov), `SSE4-design-handoff.md` section 10 (real data fetched on demand), `SSE4-galaxy-design.md` section 10 (authored galaxies), `SSE4-grand-zoom-design.md` section 6 (the tie-up of places), `SSE4-conserved-chain-design.md` sections 3, 10 and 11 and `SSE4-conserved-chain-splits.md` sections 4 to 6A, `SSE4-explorers-paid-packs.md` section 8 (Gaia and money; partly overridden by Alex on 26 Nov, section 12A here).
 
 **Figures.** The paper search is out until 1 Dec 2026 and the cloud cannot reach any catalogue host (section 2.5). Every count, size and licence line marked **[unverified]** is from memory and must be read at its source before a builder relies on it. Package RW1 does that.
 
@@ -189,12 +189,16 @@ Apply writes the claims. Nothing here is a new screen: it is an action with a pr
 
 ### 5.3 Which catalogues
 
-This keeps the accepted list (night sky 8.3) and the ruling that Gaia-derived data lives only in an optional pack. Three ways for data to arrive, one reader for all three.
+This keeps the accepted list of catalogues (night sky 8.3). Three ways for data to arrive, one reader for all three.
+
+**Gaia data may go anywhere (Alex, 26 Nov 17:58 UTC).** "Gaia data can be added to any pack - to any star system - someone can decide to just 'play around Polaris' and never bother with the galaxy view." The first draft of this note said Gaia data lives only in an optional pack. That line came from the old account's memory and from the night sky note's Q3, where it was a cautious recommendation and never Alex's own word; it is dropped. So: any pack, any campaign and any single system may hold Gaia-derived values, and importing a star never requires the real galaxy or the galaxy view. A GM can bring in Polaris and play there. The star still gets a slot, so the galaxy is there if they ever look (section 5.2).
+
+One fact stays on the table for Alex, as a caution and not a rule: ESA licenses Gaia data for non-commercial use with credit (as read by the night sky thread on 21 Nov; not re-read by me). That does not limit free packs, campaigns or the app while it is free. It may matter for a pack sold in the Explorers shop that contains Gaia values, which is question 3. Every Gaia-derived value carries ESA's credit line wherever it goes.
 
 | Way | What | Why |
 |---|---|---|
-| **Shipped in the app** | The Solar System down to the "Expected" stop (section 7). A small set of bright and named stars built only from sources with open terms: the Hipparcos and Yale Bright Star catalogues and the IAU's list of star names **[terms and sizes unverified; about 9,000 stars to the naked-eye limit, a few hundred kilobytes, estimate]** | The real sky works offline on day one, and the app stays Apache-2.0 with no non-commercial data in it |
-| **The free real-sky pack**, fetched once from SSE4's own storage | The complete nearby sample: CNS5 (5,931 objects within 25 pc **[count from the night sky note, checked there 21 Nov]**). Doubles from the Washington Double Star Catalog. Known planets from the NASA Exoplanet Archive. Nearby galaxies and named deep-sky objects. Optionally the Gaia Catalogue of Nearby Stars to 100 pc (331,312 objects) as a second, larger download | Complete where a campaign lives. Carries its licences. Never inside a paid pack (paid packs note, ruled) |
+| **Shipped in the app** | The Solar System down to the "Expected" stop (section 7). A small set of bright and named stars built only from sources with open terms: the Hipparcos and Yale Bright Star catalogues and the IAU's list of star names **[terms and sizes unverified; about 9,000 stars to the naked-eye limit, a few hundred kilobytes, estimate]** | The real sky works offline on day one, in a few hundred kilobytes |
+| **The free real-sky pack**, fetched once from SSE4's own storage | The complete nearby sample: CNS5 (5,931 objects within 25 pc **[count from the night sky note, checked there 21 Nov]**). Doubles from the Washington Double Star Catalog. Known planets from the NASA Exoplanet Archive. Nearby galaxies and named deep-sky objects. Optionally the Gaia Catalogue of Nearby Stars to 100 pc (331,312 objects) as a second, larger download | Complete where a campaign lives. Carries its credits. Kept out of the app only for size |
 | **Live, on request** | Anything further or fainter, through the site Worker to SIMBAD and the Gaia archive, the route V3's importer already uses. Cached by region and version | No limit on reach; nothing downloaded that was not asked for |
 
 Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hundred systems **[about 340 systems and 540 objects, from memory, unverified]**, a download of tens of kilobytes. A 100 pc import is about 330,000 objects and a few megabytes.
@@ -467,7 +471,7 @@ Each has my recommendation. Routine choices went to the coordinator and are not 
 
 1. **Is the real sky the first thing a new user gets?** The start sheet's Solar System door would open the real Milky Way at Earth, today, with "a new universe" as the other door. This reverses the night sky note's "fictional galaxies are the default". *Recommend yes:* it is what your message says, and a newcomer recognises it at once.
 2. **Is a real galaxy in a generated universe acceptable?** Measured out to the Local Group, generated beyond, and labelled so. *Recommend yes.* The alternative is a research project.
-3. **What ships, what is a pack, what is live?** In the app: the Solar System to the Expected stop and about 9,000 bright and named stars from open sources. Free optional pack: the complete nearby sample and the full small-body catalogue. Live: anything further. Gaia-derived data stays out of the app, as you ruled. *Recommend yes.*
+3. **What ships, what is a pack, what is live?** By size alone: in the app, the Solar System to the Expected stop and about 9,000 bright and named stars; as a free download, the complete nearby sample and the full small-body catalogue; live, anything further. Gaia data may be in any of them and in any pack or system (your 17:58 ruling). *Recommend yes.* One thing only you can decide: Gaia's licence is non-commercial, so **may a pack sold in the Explorers shop contain Gaia values, or must it fetch them free at the buyer's end** (the paid packs note's answer)? *Recommend the second for sold packs only,* until someone has read ESA's terms properly.
 4. **Detail as a sixth view control on every view**, beside View style, Seen from, Scale, HUD and Band, remembered per device. *Recommend yes.*
 5. **The default is the Expected stop, and the machine sets a marked ceiling the user may pass with a warning**, not a hard limit. *Recommend yes:* suggest, never refuse.
 6. **"Expected" is a rule, not a list:** everything big enough to be round, plus notables whatever their size (so Phobos, Deimos and Halley's comet show). The same rule gives a generated system its default. *Recommend yes.*
@@ -485,6 +489,7 @@ Not answers to the numbered questions, which are still open. Both are taken as r
 
 - **Reuse the backfill machinery; it is the default.** "we have the mechanism to 'backfill' detail on a probable star system for a star of a particular age/type. So just reuse that machinery."
 - **Block chains.** "These all should be block chains in the physics."
+- **Gaia, 17:58 UTC.** "What ruling? Gaia data can be added to any pack - to any star system - someone can decide to just 'play around Polaris' and never bother with the galaxy view." The "Gaia only in an optional pack" line is withdrawn (section 5.3). Where the night sky note's Q3, the naming note or the paid packs note say otherwise, this wins; only the question of sold packs is left open (question 3).
 
 ---
 
