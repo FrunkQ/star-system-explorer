@@ -505,6 +505,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-catalogue"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "sse-chronicle"
 version = "0.1.0"
 dependencies = [
@@ -519,6 +528,7 @@ name = "sse-cli"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "sse-catalogue",
  "sse-core",
  "sse-import-v3",
 ]
@@ -681,6 +691,7 @@ dependencies = [
  "serde_json",
  "sse-activity",
  "sse-atoms",
+ "sse-catalogue",
  "sse-chronicle",
  "sse-climate",
  "sse-codes",
@@ -699,6 +710,7 @@ dependencies = [
  "sse-nebula",
  "sse-observe",
  "sse-pack",
+ "sse-physics",
  "sse-record",
  "sse-reference",
  "sse-sector-io",
@@ -813,6 +825,20 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-flow",
+]
+
+[[package]]
+name = "sse-physics"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-formula",
+ "sse-pack",
+ "sse-reference",
 ]
 
 [[package]]
