@@ -119,3 +119,14 @@ Abbreviations: P = `packs/base-surface/pack.json`; I = `crates/sse-surface/src/i
 | stain-look.ts STAIN_GRAIN_UM | Wolff et al. 2006, JGR 111, E12S17, doi:10.1029/2006JE002786 | Mars dust effective radius near 1.5 µm | unverified | not read in this pass |
 
 - Trainer, M. G., Pavlov, A. A., DeWitt, H. L., Jimenez, J. L., McKay, C. P., Toon, O. B. and Tolbert, M. A. 2006, PNAS 103, 18035: organic haze on Titan and the early Earth. Haze forms from CH4/CO2 of about 0.1 upward; used for `THOLIN_MIN_CH4_PER_OX`. doi:10.1073/pnas.0608561103 (unverified).
+
+## Ice ground (IG1, `packs/base-physics/formulas/surface.json`, `crates/sse-atoms/src/ice_ground.rs`, `crates/sse-surface/src/ice_ground.rs`)
+
+| Where | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| sse.surface.ice_share_from_density | Showman, A. P. and Malhotra, R. 1999, Science 286, 77, doi:10.1126/science.286.5437.77 | the Galilean moons' mean densities fall outward from Io's rock to Callisto's half ice and half rock, so a small world's density reads as rock and ice mixed by volume | unverified | not read in this pass |
+| sse.surface.open_ice_loss | Watson, K., Murray, B. C. and Brown, H. 1961, JGR 66, 3033, doi:10.1029/JZ066i009p03033 | open ice sublimes away on the warm Moon and survives only in cold traps; loss per ballistic hop | unverified | not read in this pass |
+| sse.surface.open_ice_loss `PHOTO_RATE_1AU` | Huebner, W. F., Keady, J. J. and Lyon, S. P. 1992, Ap&SS 195, 1, doi:10.1007/BF00644558 | a water molecule at 1 AU is broken up by sunlight at about 1.2e-5 per second (quiet Sun), falling as 1/d² | unverified | not read in this pass |
+| sse.surface.open_ice_loss vapour curve | Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053 (on the sheet as fray2009) | water ice's sublimation pressure, read from the sheet through the climate's `p_sat` | verified | see the SB4 and W8 rows in `docs/citations.md` |
+| sse.surface.ice_dust_lag | Spencer, J. R. 1987, Icarus 69, 297, doi:10.1016/0019-1035(87)90107-8 | sublimed ice leaves a dark lag on warm ground | unverified | not read in this pass |
+| sse.surface.ice_dust_lag `LAG_TAU_S` | Moore, J. M. et al. 1999, Icarus 140, 294, doi:10.1006/icar.1999.6132 | a dark lag of rock and dust over Callisto's old ice, bright in fresh craters (the 2.3 Gyr time is fitted to Callisto and Ganymede, see `docs/fudges.md`) | unverified | not read in this pass |

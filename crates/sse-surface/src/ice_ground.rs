@@ -2,9 +2,9 @@
 //! typed makeup, or, for a small world, its mean density read as rock and
 //! ice mixed by volume), the ground is below ice's melting point, and open
 //! ice lasts its age. On an airless world open ice sublimes and part of each
-//! molecule's hops is lost to starlight or to space (Watson, Murray and
-//! Brown 1961), so the warm Moon keeps none while Jupiter's moons keep all of
-//! theirs. Under air the vapour stays in the air and comes down again. The
+//! molecule's hops is lost to starlight or to space
+//! (Watson, Murray and Brown 1961), so the warm Moon keeps none while
+//! Jupiter's moons keep all of theirs. Under air the vapour stays in the air and comes down again. The
 //! sums are the `sse.surface.ice_share_from_density` and
 //! `sse.surface.open_ice_loss` blocks (`sse_atoms::ice_ground`).
 

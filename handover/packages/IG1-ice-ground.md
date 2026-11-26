@@ -31,8 +31,42 @@ Proven core, 25 Nov 2026. Asked for by the detail ladder thread (every icy world
 
 ## Golden
 
-Re-blessed on purpose: the base-physics pack gains three blocks (atom count 150 to 153), so the pack hash lines move, and surface tiles change for icy and airless worlds.
+Re-blessed on purpose: the base-physics pack gains three blocks (atom count 150 to 153 at the time; 176 on main at
+f6b1e531), and surface tiles change for icy and airless worlds. IG1 does not touch the contract's base-physics
+fixture (`tests/fixtures/packs/base-physics.json` is main's as merged), so no pack hash line moves; what moves is the
+surface the kernel computes.
+
+**Blessed on main at f6b1e531** (26 Nov 2026, PRs 591, 600 and 495 in; merge e6c5773d), with
+`SSE_BLESS=1 cargo test --workspace`, which changed nothing beyond the merge itself. Against that main:
+- `tests/golden/contract.jsonl`: four core lines, 155 (`system_resolved` for kestrel sys:40, its surface record) and
+  161, 162, 164 (`surface_surveyed`: ice ground, regolith and ground albedo). Core lane.
+- `tests/golden/contract-reach.txt`: three new block lines (`sse.surface.ice_dust_lag`,
+  `sse.surface.ice_share_from_density`, `sse.surface.open_ice_loss`).
+- `tests/golden/surface-impacts.json`, `tests/golden/surface-regimes.json`: two hashes each (sse-surface goldens).
+- No area golden, no other crate golden.
+
+Earlier the same four lines, three reach lines and two surface goldens were blessed against main at a18de8a7, before
+PR 495; 495 landing moved none of IG1's lines.
+
+PR 594 itself merged at 707c4132 (26 Nov 2026) from another thread's merge commits, with the same golden content;
+this branch adds only the citations, the comment fix and the follow-up rows on top of that main, and moves no golden.
 
 ## Next
 
-Surface age of ice worlds from shell activity; Titan's air; then the crater and basin package (feathered basins with relief, apex-antapex lopsiding on locked worlds, oblique craters, young craters' own dates for rays).
+Left out of this package on purpose (coordinator, 26 Nov 2026); each is a row in `handover/status/proven-core.md`:
+- **IG1b** surface age of ice worlds from shell activity (`shell_activity`), so Europa and Ganymede's exposure age
+  and dark lag come out young.
+- **IG1c** Titan's measured air and temperature in base-sol (1.467 bar, 94 K, Fulchignoni et al. 2005), through
+  `scripts/build-base-sol.py`.
+- **IG1d** Io's sulphur and SO2 frost in the ground albedo: waits on the data sheet thread's sulphur and SO2 frost
+  optics rows (Hapke 1981, Gradie 1980, Moses and Nash 1991).
+
+Then the crater and basin package (feathered basins with relief, apex-antapex lopsiding on locked worlds, oblique
+craters, young craters' own dates for rays).
+
+## Citations
+
+The new papers (Showman and Malhotra 1999, Huebner et al. 1992, Spencer 1987) are on the master list
+(`handover/citations/master.jsonl`, unchecked); Watson, Murray and Brown 1961 and Moore et al. 1999 were already on
+it. All six IG1 references have rows in `docs/citations/surfaces.md` (section "Ice ground"); only Fray and Schmitt
+2009 is verified, the rest are unverified (not read in this pass).
