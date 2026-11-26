@@ -60,6 +60,11 @@ pub struct NavSettings {
     pub torch_fractions: Vec<f64>,
     /// Fixed-point steps for a moving target.
     pub target_steps: u32,
+    /// Coasting courses treat their burns as short kicks; past this share of
+    /// the flight spent burning, that is no longer true and the course is flown
+    /// as a slow spiral instead (RK5).
+    #[serde(default = "impulsive_burn_max")]
+    pub impulsive_burn_max: f64,
     pub radiation: RadiationSettings,
     pub hazards: HazardSettings,
     pub difficulty: DifficultySettings,
@@ -217,8 +222,12 @@ pub struct Ship {
     /// Sustained: can thrust for days (a torch); otherwise burns are short.
     #[serde(default)]
     pub sustained: bool,
-    /// Exhaust velocity, km/s (Isp × g0).
+    /// Exhaust velocity, km/s (Isp × g0). Zero for a sail, which carries no reaction mass.
     pub exhaust_km_s: f64,
+    /// Thrust that falls with sunlight (a sail, a solar-electric drive): `accel_g` is at 1 au from a star like the Sun,
+    /// and NAV scales it by the starlight where the ship is (RK5).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub sunlit: bool,
     /// Mass with full tanks and without propellant, tonnes.
     pub wet_t: f64,
     pub dry_t: f64,
@@ -324,6 +333,9 @@ impl Ship {
             .is_none_or(|r| r.iter().any(|c| c == capability))
     }
 }
+fn impulsive_burn_max() -> f64 {
+    0.1
+}
 fn wind_speed() -> f64 {
     4.0e5
 }
@@ -360,6 +372,10 @@ impl Ship {
     }
     /// Δv with the propellant aboard, m/s (Tsiolkovsky).
     pub fn dv_m_s(&self) -> f64 {
+        // A sail spends no reaction mass: its Δv is limited by time, not tanks.
+        if self.is_sail() {
+            return f64::INFINITY;
+        }
         let m0 = self.dry_t + self.propellant();
         if self.dry_t <= 0.0 || m0 <= self.dry_t {
             return 0.0;
@@ -369,8 +385,23 @@ impl Ship {
     pub fn usable_dv_m_s(&self) -> f64 {
         self.dv_m_s() * (1.0 - self.reserve.clamp(0.0, 1.0))
     }
+    /// A sail: thrust from sunlight and no reaction mass.
+    pub fn is_sail(&self) -> bool {
+        self.sunlit && self.exhaust_km_s <= 0.0
+    }
+    /// Thrust acceleration where the starlight is `flux_sun` times the Sun's at 1 au, m/s².
+    pub fn accel_at(&self, flux_sun: f64) -> f64 {
+        if self.sunlit {
+            self.accel_m_s2() * flux_sun.max(0.0)
+        } else {
+            self.accel_m_s2()
+        }
+    }
     /// Propellant a burn of `dv` uses, tonnes.
     pub fn propellant_for(&self, dv: f64) -> f64 {
+        if self.is_sail() {
+            return 0.0;
+        }
         let m0 = self.dry_t + self.propellant();
         let ve = self.exhaust_km_s * 1000.0;
         if ve <= 0.0 {
@@ -788,5 +819,7 @@ mod links_tests;
 mod mission_tests;
 #[cfg(test)]
 mod power_tests;
+#[cfg(test)]
+mod spiral_tests;
 #[cfg(test)]
 mod tests;

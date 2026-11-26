@@ -78,13 +78,19 @@ fn one() -> f64 {
 /// to turn a cluster mass into a member count.
 pub const MEAN_STAR_MASS: f64 = 0.6;
 
+/// Metal mass fraction from [Fe/H], scaled from Z = 0.02 at [Fe/H] = 0 (the
+/// HPT00 fits' reference). Formation and `describe_star` both use it.
+pub fn z_of_feh(feh: f64) -> f64 {
+    0.02 * m::pow(10.0, feh)
+}
+
 impl Inheritance {
     /// Stage 1 from a system the galaxy suite resolved (G0's `SystemBirth`).
     /// `now_gyr` is the universe time the history is read up to.
     pub fn from_birth(b: &sse_cosmos::SystemBirth, now_gyr: f64) -> Self {
         Inheritance {
             feh: b.feh,
-            z: 0.02 * m::pow(10.0, b.feh),
+            z: z_of_feh(b.feh),
             age_gyr: b.age_gyr(now_gyr),
             born_gyr: b.birth_gyr,
             c_o: b.c_o,
@@ -159,7 +165,7 @@ impl PatchEnvelope {
         let age = pick(1, &self.age_gyr, pins.age_gyr);
         Inheritance {
             feh,
-            z: 0.02 * m::pow(10.0, feh),
+            z: z_of_feh(feh),
             age_gyr: age,
             born_gyr: self.now_gyr - age,
             c_o: pick(2, &self.c_o, pins.c_o),

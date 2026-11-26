@@ -388,7 +388,12 @@ pub fn plan_in_system(
     };
     let mut o = o.clone();
     o.settings.labels_per_system = set.labels_per_place;
-    let v = crate::voyage::search(ship, None, &ps, &resolve(from), &goal, &o, &maker)?;
+    let mut v = crate::voyage::search(ship, None, &ps, &resolve(from), &goal, &o, &maker)?;
+    // Nothing in a system burns jump fuel: every leg leaves the jump tank as it was.
+    let jf = ship.jump.as_ref().map(|j| j.fuel()).unwrap_or(0.0);
+    for l in &mut v.legs {
+        l.jump_fuel_left_t = jf;
+    }
     Ok((v, ps))
 }
 
@@ -512,6 +517,32 @@ mod tests {
                 assert!(v.refuels >= 1);
             }
             Err(e) => assert!(e[0].contains("cannot reach Saturn"), "{e:?}"),
+        }
+    }
+
+    #[test]
+    fn a_jump_ship_keeps_its_jump_fuel_inside_a_system() {
+        let s = settings();
+        let sys = sol();
+        // A torch with the courier's jump drive fitted, so it can fly to Mars on its own drive.
+        let mut ship = s.ships["fusion-torch"].clone();
+        ship.jump = s.ships["jump-courier"].jump.clone();
+        let j = ship.jump.as_mut().expect("the courier has a jump drive");
+        j.fuel_t = Some(0.75 * j.tank_t);
+        let want = 0.75 * j.tank_t;
+        let (v, _) = plan_in_system(
+            &s,
+            &sys,
+            &ship,
+            "Earth",
+            &Goal::To("Mars".into()),
+            sys.t0_s,
+            &opts(Minimise::HomeTime),
+        )
+        .unwrap();
+        assert!(!v.legs.is_empty());
+        for l in &v.legs {
+            assert_eq!(l.jump_fuel_left_t, want, "{}", l.words);
         }
     }
 

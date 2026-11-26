@@ -661,6 +661,16 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
+    /// One star from the life line formation draws (K18, editing design
+    /// section 9): `mass_msun` (0.0124 to 100), `age_yr` from birth and
+    /// optional `feh` ([Fe/H], default 0). Read-only, no system, no events.
+    DescribeStar {
+        mass_msun: f64,
+        age_yr: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        feh: Option<f64>,
+    },
     /// Fog of war from sensors (RK14, Atomic Rockets plan section 17), the
     /// sums: each seat gives `seat`, its instruments (`sensors`, or `fit`
     /// `{tech, hull_length_m}` for the free default set), optionally `own`
@@ -2566,6 +2576,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::DescribeStar { .. } => "describe_star",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ReferenceTiles { .. } => "reference_tiles",
@@ -2798,6 +2809,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_bows",
             Cost::Trivial,
             "per item: one or two formula blocks",
+        ),
+        o(
+            "describe_star",
+            Cost::Trivial,
+            "one star's life line: closed-form fits",
         ),
         o(
             "fog_of_war",
@@ -3503,6 +3519,13 @@ pub enum Response {
     BowsRead {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
+    },
+    /// `describe_star`: `sse_formation::describe::Description` (the phase
+    /// now with teff_k, luminosity_w and radius_m; each phase's ages in
+    /// years; the remnant; the mass walls; notes and sources).
+    StarDescribed {
+        #[ts(type = "unknown")]
+        star: serde_json::Value,
     },
     /// `fog_of_war`: each of `seats` is `{seat, sensors, noticed_to_m?,
     /// marks}` with `sse_sense::fog::Mark`.
