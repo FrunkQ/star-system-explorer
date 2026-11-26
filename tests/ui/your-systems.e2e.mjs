@@ -109,7 +109,16 @@ try {
 
     // Pencil and ink (SV3): on the Build desk each system is drawn by what the table knows of it.
     await gm.getByRole("button", { name: "Build", exact: true }).first().click();
-    await gm.waitForTimeout(800);
+    // The pens are drawn once the table's knowledge is read, which on a loaded runner can take longer than any fixed
+    // pause: wait for every placed system to have one, then check.
+    await gm
+      .waitForFunction(() => {
+        const ys = document.querySelector(".ys");
+        if (!ys) return false;
+        const sys = ys.querySelectorAll("svg a.sys").length;
+        return sys > 0 && ys.querySelectorAll("svg [data-pen]").length === sys;
+      }, null, { timeout: 20000 })
+      .catch(() => {});
     assert.equal(await ys.locator("svg [data-pen]").count(), await ys.locator("svg a.sys").count(), "every placed system has a pen");
     const pensSeen = await ys.locator("[data-placed] b[data-pen], [data-unplaced] b[data-pen]").evaluateAll((bs) => bs.map((b) => b.getAttribute("data-pen")));
     assert.ok(pensSeen.every((p) => ["ink", "heard", "pencil"].includes(p)), pensSeen.join());

@@ -14,7 +14,7 @@
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
   /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
-  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept; flatten?: number };
+  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept; flatten?: number; sea?: SeaGlint };
   const trueAirs = new Map<string, TrueAir>();
   /** Lays finer tiles (VP3 part 2) over the ground under a world's clouds; the new entry, or null when nothing changed. */
   function finerGround(key: string, fine: Parameters<typeof withFiner>[1]): TrueAir | null {
@@ -39,7 +39,7 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readSmallSample, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
-  import { readUmbras, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { readSeaGlint, readUmbras, type GlintReader, type SeaGlint, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -508,7 +508,11 @@
           const shape = await readTrueShape(ctx.session as unknown as ShapeReader, sys, s.address);
           if (typeof shape !== "string") trueSaid.set(key, [...(trueSaid.get(key) ?? []), `${label(s)}: ${shape.said}.`]);
           const flat = typeof shape === "string" ? {} : { flatten: shape.f };
-          if (typeof f !== "string" && (f.clouds || f.air || "flatten" in flat)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}), ...flat });
+          // Its seas' glint, from the kernel (EC2): only a face that shows liquid ground asks.
+          const wet = typeof f !== "string" && !!(f.ground ?? f.tex).faces?.faces.some((x) => !!x && x.liquid.some((v) => v > 0));
+          const sea = wet ? await readSeaGlint(ctx.session as unknown as GlintReader, sys, s.address) : null;
+          const seaOf = sea ? { sea } : {};
+          if (typeof f !== "string" && (f.clouds || f.air || "flatten" in flat || sea)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}), ...flat, ...seaOf });
           // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
           const kept = trueSurfaces.get(key);
           if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));

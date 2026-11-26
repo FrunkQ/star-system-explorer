@@ -113,7 +113,8 @@ struct Orbit {
     a_m: f64,
     e: f64,
     m0: f64,
-    epoch: f64,
+    /// The date of `m0`, on the whole-second axis (TP1: never a double).
+    epoch: UniverseTime,
     /// R3(-node) R1(-inc) R3(-peri), rows x, y, z by perifocal (x, y).
     rot: [[f64; 2]; 3],
     mass: f64,
@@ -227,7 +228,7 @@ fn perifocal(a_m: f64, e: f64, mean: f64, r: &[[f64; 2]; 3]) -> [f64; 3] {
 impl Orbit {
     /// The relative vector at `t` for mean motion `n`.
     fn rel(&self, n: f64, t: i64) -> [f64; 3] {
-        let mean = self.m0 + n * (t as f64 - self.epoch);
+        let mean = self.m0 + UniverseTime::seconds(t).angle_since(self.epoch, n);
         perifocal(self.a_m, self.e, mean, &self.rot)
     }
 }
@@ -556,6 +557,30 @@ fn motion_of(
     Some((Some(Measured::new(series, anchor, mu)), note))
 }
 
+/// The date of a body's dated phase: `orbit.epoch_s` (universe seconds,
+/// whole when it is an integer), else an SSE 3 `orbit.epoch_v3_ms`
+/// (milliseconds), else the universe's origin. Kept as a date, never a double.
+fn epoch_of(row: &BTreeMap<String, Value>) -> Result<UniverseTime, sse_core::time::OutOfRange> {
+    match (row.get("orbit.epoch_s"), row.get("orbit.epoch_v3_ms")) {
+        (Some(Value::Int(s)), _) => i64::try_from(*s).map(UniverseTime::seconds).map_err(|_| {
+            sse_core::time::OutOfRange(format!("{s} seconds is beyond what dates can hold"))
+        }),
+        (Some(Value::Float(x)), _) => UniverseTime::from_seconds_f64(*x),
+        (_, Some(Value::Int(ms))) => {
+            let ms = *ms;
+            let s = i64::try_from(ms.div_euclid(1000)).map_err(|_| {
+                sse_core::time::OutOfRange(format!("{ms} ms is beyond what dates can hold"))
+            })?;
+            Ok(UniverseTime {
+                s,
+                ns: (ms.rem_euclid(1000) * 1_000_000) as u32,
+            })
+        }
+        (_, Some(Value::Float(x))) => UniverseTime::from_seconds_f64(x / 1000.0),
+        _ => Ok(UniverseTime::ORIGIN),
+    }
+}
+
 /// Pass 1: every orbit under `system` read from its facts; the unplaced
 /// come back with what they miss.
 fn read_orbits(facts: &Facts, system: &Address, seed: Option<&Seed>) -> Read {
@@ -638,15 +663,22 @@ fn read_orbits(facts: &Facts, system: &Address, seed: Option<&Seed>) -> Read {
             }
             None => None,
         };
-        let epoch = row
-            .get("orbit.epoch_s")
-            .and_then(num)
-            .or_else(|| {
-                row.get("orbit.epoch_v3_ms")
-                    .and_then(num)
-                    .map(|x| x / 1000.0)
-            })
-            .unwrap_or(0.0);
+        let epoch = match epoch_of(row) {
+            Ok(t) => t,
+            Err(e) => {
+                out.push(Placed {
+                    address: a.to_string(),
+                    placed: false,
+                    parent: Some(h.to_string()),
+                    period_s: None,
+                    phase_source: None,
+                    missing: vec![format!("orbit.epoch_s within range: {e}")],
+                    motion: None,
+                    at: vec![],
+                });
+                continue;
+            }
+        };
         let inc = row.get("orbit.inclination").and_then(num).unwrap_or(0.0);
         let node = row.get("orbit.ascending_node").and_then(num).unwrap_or(0.0);
         let peri = row
@@ -1173,6 +1205,64 @@ mod tests {
                 v2 > lo * 0.97 && v2 < hi * 1.03,
                 "vis-viva between the ends of each chord"
             );
+        }
+    }
+
+    /// TP1: a date at a star's age, or at 13.8 Gyr, still moves a body every
+    /// second. Before TP1 the date became a double first, and a low station
+    /// took 3 distinct places in 64 one-second steps, jumping 424 km.
+    #[test]
+    fn one_second_moves_a_station_at_any_age() {
+        let mut f = earth_sun();
+        let sys: Address = "u:o/sys:0".parse().unwrap();
+        let earth: Address = "u:o/sys:0/body:3".parse().unwrap();
+        let station: Address = "u:o/sys:0/body:3/body:1".parse().unwrap();
+        f.insert(
+            station.clone(),
+            [
+                ("orbit.host".to_string(), Value::Text(earth.to_string())),
+                ("orbit.semi_major_axis".to_string(), Value::Float(6.778e6)),
+                ("orbit.mean_anomaly_at_epoch".to_string(), Value::Float(0.3)),
+                ("body.mass".to_string(), Value::Float(4.2e5)),
+            ]
+            .into(),
+        );
+        let yr = sse_core::time::YEAR_S;
+        let star_age = 4_610_000_000 * yr;
+        let cosmic = 13_800_000_000 * yr;
+        // (date, the epoch of the dated phase): the epoch far back, and the epoch near.
+        for (base, epoch) in [
+            (star_age, None),
+            (cosmic, None),
+            (cosmic, Some(cosmic - 86_400)),
+        ] {
+            let mut g = f.clone();
+            if let Some(ep) = epoch {
+                for a in [&earth, &station] {
+                    g.get_mut(a)
+                        .unwrap()
+                        .insert("orbit.epoch_s".into(), Value::Int(ep.into()));
+                }
+            }
+            let times: Vec<i64> = (0..64).map(|k| base + k).collect();
+            let got = orbits_at(&g, &sys, &times, None);
+            for (who, speed) in [(&station, 7.67e3), (&earth, 2.98e4)] {
+                let p = got.iter().find(|p| p.address == who.to_string()).unwrap();
+                assert!(p.placed, "{p:?}");
+                let mut distinct = 1;
+                for w in p.at.windows(2) {
+                    let d = sub(w[1].r_m, w[0].r_m);
+                    let jump = m::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+                    if jump > 0.0 {
+                        distinct += 1;
+                    }
+                    assert!(
+                        (jump - speed).abs() < 0.02 * speed,
+                        "{who} at {base} s, epoch {epoch:?}: moved {jump:.1} m in one second"
+                    );
+                }
+                assert_eq!(distinct, 64, "{who} at {base} s, epoch {epoch:?}");
+            }
         }
     }
 

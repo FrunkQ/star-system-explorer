@@ -21,8 +21,7 @@ const SOL: &str = "u:home/sys:sol";
 const EARTH: &str = "u:home/sys:sol/body:2";
 const MOON: &str = "u:home/sys:sol/body:2/body:0";
 /// The universe second of J2000.0 in base-sol (`time.j2000_s`).
-const J2000_S: f64 = 63_115_200_000.0;
-const DAY: f64 = 86_400.0;
+const J2000_S: i64 = 63_115_200_000;
 
 type V = [f64; 3];
 /// Sun, Earth and Moon from the system barycentre, and whether all were measured.
@@ -44,10 +43,10 @@ fn unit(a: V) -> V {
 }
 
 fn at_s(jd: f64) -> i64 {
-    (J2000_S + (jd - 2_451_545.0) * DAY).round() as i64
+    crate::motion::at_s(jd, J2000_S)
 }
 fn jd(at_s: i64) -> f64 {
-    2_451_545.0 + (at_s as f64 - J2000_S) / DAY
+    crate::motion::jd(at_s, J2000_S)
 }
 
 struct Sky {

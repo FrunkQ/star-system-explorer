@@ -57,7 +57,9 @@ export interface FormationRequest {
   from_star?: string;
   block?: "modern" | "classic" | "classic-corrected";
   now_gyr?: number;
-  star_pins?: { primary_mass?: number };
+  star_pins?: { primary_mass?: number; count?: number };
+  /** Stage 1's draws held at these values (sse_formation InheritancePins): a star picked from the gallery keeps its age and metals. */
+  inherit_pins?: { feh?: number; age_gyr?: number };
   pins?: { worlds: { label: string; mass_earth: number; a_au: number; e?: number }[]; tries?: number };
 }
 export interface FormationWorld {
