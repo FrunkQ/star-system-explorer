@@ -164,9 +164,29 @@ try {
     await shot(gm, "gz5-nearby-edge-real");
     await vgroup("Scale", "Readable").click();
     await vgroup("Seen from", "Tilted").click();
+    // GZ5 part 2: True, each galaxy a type picture in its own light, ours its real face; Free turns it by dragging.
+    await clu.locator("[data-reach='group']").click();
+    await vgroup("View style", "True").click();
+    await clu.locator("[data-nearby-true]").waitFor({ timeout: 10000 });
+    await gm.waitForFunction(() => document.querySelectorAll(".clu [data-type-picture]").length > 0, null, { timeout: 30000 });
+    const typePictures = await clu.locator("[data-type-picture]").count();
+    await clu.locator("[data-home-face]").waitFor({ timeout: 60000 });
+    await shot(gm, "gz5-nearby-true");
+    await vgroup("Seen from", "Free").click();
+    const map = clu.locator("svg[data-nearby-turn]");
+    assert.equal(await map.getAttribute("data-nearby-turn"), "0 60", "Free starts as Tilted");
+    const box = await map.boundingBox();
+    await gm.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await gm.mouse.down();
+    await gm.mouse.move(box.x + box.width / 2 + 100, box.y + box.height / 2 + 40, { steps: 5 });
+    await gm.mouse.up();
+    const turned = await map.getAttribute("data-nearby-turn");
+    assert.notEqual(turned, "0 60", "dragging turns it");
+    await shot(gm, "gz5-nearby-true-free");
+    await vgroup("Seen from", "Tilted").click();
     await vgroup("View style", "Chart").click();
     await clu.locator("[data-halo-dot]").first().waitFor({ timeout: 30000 });
-    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs, the group's edge at ${edgeMpc} Mpc, ${streamsNow} streams, Play with ${midGhosts} satellites halfway`;
+    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs, the group's edge at ${edgeMpc} Mpc, ${streamsNow} streams, Play with ${midGhosts} satellites halfway, True with ${typePictures} type pictures and our real face, Free turned to ${turned}`;
 
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);

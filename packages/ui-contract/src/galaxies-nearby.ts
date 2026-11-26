@@ -233,27 +233,47 @@ export function withinReach(gs: readonly NearGalaxy[], reach_mpc: number): NearG
   return gs.filter((g) => g.distance_mpc <= reach_mpc).sort((a, b) => b.stellar_mass_msun - a.stellar_mass_msun || (a.address < b.address ? -1 : 1));
 }
 
-/** How the sphere is seen: from above our disc, tilted 60 degrees down, or edge-on along our disc. */
-export type NearbySeen = "above" | "tilted" | "edge";
+/** How the sphere is seen: from above our disc, tilted 60 degrees down, edge-on along our disc, or turned freely. */
+export type NearbySeen = "above" | "tilted" | "edge" | "free";
 const TILT_DEG = 60;
+
+/** A free turn (GZ5 part 2): yaw about our disc's axis and how far the view is tipped from straight above, degrees. */
+export interface NearbyTurn {
+  yaw_deg: number;
+  tilt_deg: number;
+}
+/** Where Free starts: the Tilted view, so pressing Free changes nothing until it is dragged. */
+export const FREE_START: NearbyTurn = { yaw_deg: 0, tilt_deg: TILT_DEG };
+
+/** The turn each fixed view is: Above is no tilt, Tilted 60 degrees, Edge-on 90 (along our disc). */
+export function turnOf(seen: NearbySeen, free: NearbyTurn = FREE_START): NearbyTurn {
+  if (seen === "free") return { yaw_deg: free.yaw_deg, tilt_deg: Math.max(0, Math.min(90, free.tilt_deg)) };
+  return { yaw_deg: 0, tilt_deg: seen === "above" ? 0 : seen === "edge" ? 90 : TILT_DEG };
+}
 
 /**
  * Project a place (Mpc, galactic frame) onto the drawing: `size` across, `reach` Mpc from the middle to the edge.
  * Returns the page point, the foot of its stalk on our disc's plane (the same plane Your systems stands its stalks
- * on) and a depth for drawing order (larger is nearer the viewer).
+ * on) and a depth for drawing order (larger is nearer the viewer). The view is turned by `yaw` about our disc's
+ * axis, then tipped by `tilt` about the page's across line: 0 is straight above, 90 edge-on.
  */
-export function projectNearby(p: readonly [number, number, number], seen: NearbySeen, size: number, reach_mpc: number, pad = 24): { x: number; y: number; fx: number; fy: number; depth: number } {
+export function projectNearby(p: readonly [number, number, number], seen: NearbySeen, size: number, reach_mpc: number, pad = 24, free: NearbyTurn = FREE_START): { x: number; y: number; fx: number; fy: number; depth: number } {
   const k = (size / 2 - pad) / reach_mpc;
   const c = size / 2;
-  const [x, y, z] = p;
-  if (seen === "above") return { x: c + x * k, y: c - y * k, fx: c + x * k, fy: c - y * k, depth: z };
-  if (seen === "edge") return { x: c + x * k, y: c - z * k, fx: c + x * k, fy: c, depth: -y };
-  const t = (TILT_DEG * Math.PI) / 180;
-  const ct = Math.cos(t);
-  const st = Math.sin(t);
-  // Turned about x: the plane's y goes up the page shortened by cos(t); height rises by sin(t).
-  const sy = (v: number, h: number) => v * ct + h * st;
-  return { x: c + x * k, y: c - sy(y, z) * k, fx: c + x * k, fy: c - sy(y, 0) * k, depth: z * ct - y * st };
+  const turn = turnOf(seen, free);
+  const yw = (turn.yaw_deg * Math.PI) / 180;
+  const t = (turn.tilt_deg * Math.PI) / 180;
+  const cy = Math.cos(yw);
+  const sy0 = Math.sin(yw);
+  const x = p[0] * cy - p[1] * sy0;
+  const y = p[0] * sy0 + p[1] * cy;
+  const z = p[2];
+  // Clean values at the fixed views, so Above and Edge-on keep the exact plane they always had.
+  const ct = turn.tilt_deg === 90 ? 0 : Math.cos(t);
+  const st = turn.tilt_deg === 0 ? 0 : Math.sin(t);
+  // Tipped about x: the plane's y goes up the page shortened by cos(t); height rises by sin(t).
+  const up = (v: number, h: number) => v * ct + h * st;
+  return { x: c + x * k, y: c - up(y, z) * k, fx: c + x * k, fy: c - up(y, 0) * k, depth: z * ct - y * st };
 }
 
 /**

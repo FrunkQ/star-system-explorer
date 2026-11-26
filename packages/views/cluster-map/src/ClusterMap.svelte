@@ -31,7 +31,7 @@
   let gen = 0;
   // The shared view controls: Chart is the cube-by-cube catalogue; 3D is Galaxies nearby centred on home (GZ5).
   const shown = $derived(viewOptions(CLUSTER_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
-  const nearbySeen = $derived(shown.seen === "edge" ? "edge" : shown.seen === "above" ? "above" : "tilted");
+  const nearbySeen = $derived(shown.seen === "edge" ? "edge" : shown.seen === "above" ? "above" : shown.seen === "free" ? "free" : "tilted");
 
   $effect(() => {
     const i = idx;
@@ -162,12 +162,12 @@
 </script>
 
 <div class="clu" data-cell={cell ? cell.index.join(".") : ""} data-cluster-style={shown.style} bind:this={root}>
-  {#if shown.style === "3d"}
+  {#if shown.style === "3d" || shown.style === "true"}
     <header class="head">
       <h2>Galaxies nearby</h2>
       <span class="stamp">grown, not prebaked</span>
     </header>
-    <Nearby session={ctx.session} seen={nearbySeen} scale={shown.scale === "real" ? "real" : "readable"} hud={shown.hud} onchart={(a) => { ctx.workspace.select(a); root?.dispatchEvent(new CustomEvent("sse:explore", { bubbles: true, detail: { section: "galaxy" } })); }} />
+    <Nearby session={ctx.session} look={shown.style === "true" ? "true" : "3d"} seen={nearbySeen} scale={shown.scale === "real" ? "real" : "readable"} hud={shown.hud} onchart={(a) => { ctx.workspace.select(a); root?.dispatchEvent(new CustomEvent("sse:explore", { bubbles: true, detail: { section: "galaxy" } })); }} />
   {:else}
   <div class="bar">
     <span class="lbl">Cell {idx.join(" · ")}</span>
