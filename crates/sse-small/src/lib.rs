@@ -24,20 +24,25 @@ pub mod comet;
 pub mod figure;
 mod member;
 pub mod settings;
+pub mod takes;
 
 pub use comet::{activity, ice_shares, onset_au, Activity, Volatile};
 pub use figure::{jacobi_axes, maclaurin_c_over_a, Q_BIFURCATION, Q_JACOBI_END, Q_MACLAURIN_MAX};
 pub use member::{
-    made_field, mass_for_diameter, nearest_cloud, notables, rank_of, resolve, resolve_pinned,
+    designed_field, made_field, makeup_for_density, mass_for_diameter, mass_for_makeup,
+    nearest_cloud, notables, rank_of, relaxed_strength_of, resolve, resolve_pinned, round_km,
     Notable, Pins,
 };
 pub use settings::Settings;
+pub use takes::{takes, Take};
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 #[cfg(test)]
 mod comet_tests;
+#[cfg(test)]
+mod design_tests;
 #[cfg(test)]
 mod tests;
 

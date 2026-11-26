@@ -34,7 +34,7 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, formsHere, roundTo, sayNumber, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, formsHere, roundTo, sayNumber, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, readShapes, type SmallShape, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
@@ -672,9 +672,29 @@
       })(),
     );
   });
+  // RW16a: every scene body below the round size is drawn as its own lump in True, never a sphere: the kernel's
+  // `small_shape` from its address, read once per system after the worlds' surfaces, on every seat.
+  let lumps = $state<{ key: string; map: Map<string, SmallShape> } | null>(null);
+  let lumpsAsking = "";
+  $effect(() => {
+    const sys = scene.system;
+    if (!looksTrue || lumps?.key === sys || lumpsAsking === sys) return;
+    if (!reading || reading.done < reading.of) return;
+    lumpsAsking = sys;
+    const subjects = scene.subjects;
+    untrack(() =>
+      void (async () => {
+        const map = await readShapes(ctx.session, sys, subjects, () => scene.system === sys && looksTrue);
+        lumpsAsking = "";
+        if (scene.system !== sys || !looksTrue) return;
+        lumps = { key: sys, map };
+      })(),
+    );
+  });
   const bodies3d = $derived.by(() => {
     if (dims !== "3d") return [];
-    const out = fromSystemScene(scene, ctx.mark);
+    const shaped = looksTrue && lumps?.key === scene.system ? lumps.map : null;
+    const out = fromSystemScene(scene, ctx.mark).map((b) => (shaped?.get(b.id) ? { ...b, figure: shaped.get(b.id)! } : b));
     const star = out.find((b) => b.parent === null)?.id;
     return looksTrue && star && smalls?.key === scene.system ? [...out, ...smalls.list.map((s) => fromSmallSample(s, star))] : out;
   });

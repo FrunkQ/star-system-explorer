@@ -5,6 +5,7 @@
 import { KM_PER_AU, constant, fact, parentOf, primaryOf, subjectName, type Mark, type PlayerScene, type PlayerSubject, type SceneSubject, type SystemScene } from "../../../ui-contract/src/index.ts";
 import type { FrameNode } from "../../../renderer/src/index.ts";
 import type { SmallSample } from "./small-sample.ts";
+import type { SmallShape } from "../../../ui-contract/src/index.ts";
 
 export interface Body3D {
   id: string;
@@ -28,6 +29,8 @@ export interface Body3D {
   mass_kg?: number;
   /** A belt member the kernel resolved for True (small-sample.ts): drawn in its own shape, with its coma and tails when active. */
   small?: SmallSample;
+  /** RW16a: a scene body below the round size, drawn as its own lump (kernel `small_shape`, ui-contract small-shape.ts). */
+  figure?: SmallShape;
 }
 
 /** A resolved belt member as a body round the star, where its orbit puts it now (True only). */

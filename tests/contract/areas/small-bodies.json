@@ -6,5 +6,11 @@
  {"op": "small_body", "system": "u:small/sys:1", "cloud": "u:small/sys:1/cloud:0", "rank": 40},
  {"op": "small_body", "system": "u:small/sys:1", "member": "u:small/sys:1/cloud:0/obj:0"},
  {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-1", "kind": "contact-binary", "diameter_km": 1.0, "a_au": 1.5},
- {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-2", "kind": "dragon", "diameter_km": 1.0, "a_au": 1.5}
+ {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-2", "kind": "dragon", "diameter_km": 1.0, "a_au": 1.5},
+ {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-3", "kind": "contact-binary", "diameter_km": 2.0, "a_au": 2.5, "makeup": [0.0, 0.7, 0.2, 0.1], "structure": "rubble-pile", "spin_hours": 1.2, "battered": 0.8, "size_ratio": 0.7},
+ {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-4", "kind": "asteroid", "diameter_km": 1500.0, "a_au": 2.5, "pair": "single", "structure": "monolith"},
+ {"op": "make_small_body", "system": "u:small/sys:2", "address": "u:small/sys:2/small:gm-1", "kind": "comet-nucleus", "diameter_km": 5.0, "a_au": 3.0, "e": 0.6},
+ {"op": "small_shape", "system": "u:small/sys:2", "address": "u:small/sys:2/body:phobos", "diameter_km": 22.5, "mass_kg": 1.07e16, "spin_hours": 7.65, "a_au": 1.52},
+ {"op": "small_shape", "system": "u:small/sys:2", "address": "u:small/sys:2/body:dwarf", "diameter_km": 1200.0, "ice": 0.5},
+ {"op": "small_shape", "system": "u:small/sys:2", "address": "u:small/sys:2/body:none"}
 ]

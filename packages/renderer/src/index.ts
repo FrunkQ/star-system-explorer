@@ -148,7 +148,7 @@ export type { GrainShare, IndexTable } from "./sheet-optics.ts";
 export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
 export type { StainFact, StainHue } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
-export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
+export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh, smallBodyShape } from "./small-body.ts";
 export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
 export type { CometActivity } from "./comet.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";

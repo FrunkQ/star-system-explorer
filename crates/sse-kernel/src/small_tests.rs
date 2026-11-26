@@ -119,3 +119,80 @@ fn notables_list_resolves_and_made_bodies_follow_their_pins() {
     );
     assert_eq!(bad["type"], "error");
 }
+
+#[test]
+fn the_designer_pins_reach_the_body_and_say_what_they_take() {
+    let mut k = open();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"make_small_body","system":SYS,"address":format!("{SYS}/small:d1"),"kind":"contact-binary","diameter_km":2.0,"a_au":2.5,"structure":"rubble-pile","spin_hours":1.0,"size_ratio":0.7}),
+    );
+    assert_eq!(r["type"], "small_body_is", "{r}");
+    let b = &r["body"];
+    assert_eq!(b["structure"]["kind"], "rubble-pile");
+    assert_eq!(b["pair"]["kind"], "contact");
+    assert!((b["spin_hours"].as_f64().unwrap() - 1.0).abs() < 1e-9);
+    let takes = b["takes"]
+        .as_array()
+        .expect("an implausible spin says what it takes");
+    assert!(takes.iter().any(|t| t["about"] == "spin"), "{takes:?}");
+    // Bad makeup is a request error, not a refusal of the design.
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op":"make_small_body","system":SYS,"address":format!("{SYS}/small:d2"),"kind":"asteroid","diameter_km":2.0,"a_au":2.5,"makeup":[1.0]}),
+    );
+    assert_eq!(bad["type"], "error", "{bad}");
+}
+
+#[test]
+fn a_body_can_be_designed_where_no_formation_ran() {
+    let mut k = open();
+    let sys = "u:small/sys:2";
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"make_small_body","system":sys,"address":format!("{sys}/small:c1"),"kind":"comet-nucleus","diameter_km":5.0,"a_au":3.0,"e":0.6}),
+    );
+    assert_eq!(r["type"], "small_body_is", "{r}");
+    assert_eq!(r["body"]["made_from"], "designed");
+    assert!(r["body"]["makeup"]["ice"].as_f64().unwrap() > 0.3);
+    assert!(
+        r["body"]["activity"].is_object(),
+        "an icy nucleus says how active it is"
+    );
+}
+
+#[test]
+fn small_shape_gives_any_small_body_its_lump() {
+    let mut k = open();
+    let sys = "u:small/sys:2";
+    let ask = |k: &mut crate::Kernel, a: &str| {
+        send(
+            k,
+            serde_json::json!({"op":"small_shape","system":sys,"address":format!("{sys}/body:{a}"),"diameter_km":22.5,"mass_kg":1.07e16,"spin_hours":7.65}),
+        )
+    };
+    let p = ask(&mut k, "phobos");
+    assert_eq!(p["type"], "small_body_is", "{p}");
+    let b = &p["body"];
+    assert_eq!(b["round"], false);
+    assert_eq!(
+        b["pair"]["kind"], "single",
+        "a known body is never made a pair"
+    );
+    assert!(b["figure"]["relief"].as_f64().unwrap() > 0.01);
+    let ax = b["figure"]["axes_m"].as_array().unwrap();
+    assert!(
+        ax[2].as_f64().unwrap() / ax[0].as_f64().unwrap() < 0.97,
+        "{ax:?}"
+    );
+    // Phobos's density (1,860) reads as part ice, part rock.
+    assert!(b["makeup"]["ice"].as_f64().unwrap() > 0.1);
+    // The same address is the same lump; another is another.
+    assert_eq!(ask(&mut k, "phobos"), p);
+    assert_ne!(ask(&mut k, "deimos")["body"]["figure"], b["figure"]);
+    let big = send(
+        &mut k,
+        serde_json::json!({"op":"small_shape","system":sys,"address":format!("{sys}/body:dwarf"),"diameter_km":1200.0,"ice":0.5}),
+    );
+    assert_eq!(big["body"]["round"], true, "{big}");
+}
