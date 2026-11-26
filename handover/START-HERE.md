@@ -33,9 +33,13 @@ leave the browser.
 - **One builder thread per screen section** (chart room, object selector and menus, Run desk and players' side,
   planet and star editing, ...) so contexts stay small and threads do not collide. `shell/src/` is split into section
   folders for this.
-- **PRs into `main` merge when their checks pass** ("main is entirely yours"). Every merge deploys the live site.
-- **CI workflow or merge-check edits need Alex's own yes.** So do database, storage or user-data changes on the
-  Explorers site (repo `FrunkQ/starsystemx-creator-hub`). The converter (`FrunkQ/starsystem-convert`) merges when green.
+- **PRs into `main` merge when their checks pass** ("main is entirely yours"): an agent merges its own PR once every
+  check is green on the head it checked, never red, and there is no merge queue (26 Nov). Every merge deploys the live site.
+- **CI workflow or merge-check edits need Alex's own yes**, except a thread adding its own test line to `ci.yml`.
+  Agents may add tests, and update a test to follow a design Alex accepted; loosening a limit, a press budget or a
+  check still goes to Alex first (26 Nov). On the Explorers site (repo `FrunkQ/starsystemx-creator-hub`) storage
+  changes no longer need a separate yes ("explorers is ours", 26 Nov); anything that could alter or delete what people
+  have already published there still does. The converter (`FrunkQ/starsystem-convert`) merges when green.
 - **Golden changes by area** (`tests/golden/` hashes change only on purpose, reason in the package log): see the golden lane rule below. PRs in different areas may merge in parallel; within one area, or for the shared core, one at a time.
 - **No temporary files in the repo**: screenshots and working artefacts go to project files
   (`sse4/handover-screens/<PKG>-screens/`), never committed. **No history rewrites** (old screenshots stay in history).
@@ -65,7 +69,7 @@ leave the browser.
 
 ## Standing rulings of 24 Nov 2026 (afternoon and evening)
 
-- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Confirmed as a standing rule on 25 Nov 02:00 UTC (Alex: "in future yes to 'any thread may add its own test line to ci.yml, nothing else'"): a thread may add only its own test line, with no need to ask. Every other CI workflow or merge-check edit still needs Alex's own yes.
+- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Confirmed as a standing rule on 25 Nov 02:00 UTC (Alex: "in future yes to 'any thread may add its own test line to ci.yml, nothing else'"): a thread may add only its own test line, with no need to ask. Every other CI workflow or merge-check edit still needs Alex's own yes. On 26 Nov Alex added: agents may add tests and update a test to follow an accepted design; loosening anything still goes to him.
 - **Frozen physics for the golden** (Alex 18:07 UTC): the shared contract golden may run on a frozen copy of the base-physics pack, with the live pack's loading tested separately. The kernel thread builds this after the barycentre PR.
 - **Golden lane (by area, 25 Nov, the coordinator's call on Alex's "split the golden by area"):** the contract golden is split.
   - **Areas.** New contract cases go in `tests/contract/areas/<area>.json`, never in `tests/contract/requests.json`. Each area file runs on a fresh kernel, starting with its own `load_stack` (`"$pack:base-physics"` and so on) and `open_universe`. Its golden is `tests/golden/areas/<area>.jsonl`. One area per owning thread; create the file if your area has none. Bless with `SSE_BLESS=1 cargo test -p sse-kernel contract`.
@@ -150,6 +154,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/grand-zoom.md` | none yet: proposed as "Build travel between places" (design: "Design the grand zoom") | GZ: a change of place travelled instead of cut (the "way in" beside a bookmark, postcard, Show step or link), the grand zoom from the cosmic web to a site, Galaxies nearby rebuilt as a Local Group view, a Local stars rung, the tie-up of every level to the one above (home as a web galaxy, a star slot for every system), a Motion layer on the HUD. ACCEPTED by Alex 25 Nov 2026 12:45 UTC with his changes in the note's section 14A (the tie-up and the Local Group first, a gazetteer kept with the campaign, the plain Run desk form); GZ is a code only |
 | `status/formation-screen.md` | Build the Formation screen | F10: the Formation screen ("How it formed"), the reading half: the chart, stage strip, time slice and Inherited panel (F10a), the world's story card and "How this was worked out" (F10b); kernel op `formation_record` |
 | `status/three-desks.md` | "Build the three desks" (Opus, opened 26 Nov 2026; design: "Design each display in three modes"). TM1 done 26 Nov, TM2 next | TM: what every display shows on each of the three desks (Explore, Build, Run; Alex's "Explore, Edit, Play"): the frame, the seven levels and every instrument, each with its state today; a desk as three answers (where a change goes, what time can do, how much is on screen). ACCEPTED by Alex 25 Nov 2026 13:30 UTC (yes to all 15; rulings in the note's section 13A; the names stay Explore, Build, Run); TM is a code only |
+| `status/conserved-chain.md` | none yet for the build (design: "Design the conserved budget chain") | CC: one mechanism at every level so mass and the six element groups are carried from the web to a named crater (reservoir, split, stub, flow), looking never changes the universe and only deeds do, local sets with feeders, "What is interesting here". ACCEPTED by Alex 26 Nov 2026 14:52 UTC; the note's section 13 lists what is settled before any build and what holds until the star field changes; CC is a code only |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
 Added after 18:15 UTC: "Verify every cited paper" (`status/citations.md`, PR 471; master citation list, daily Consensus batches), "Build quality tiers and speed probe" (`status/quality-tiers.md`, PR 470), "Build detail ladder and world textures" (`status/detail-ladder.md`, PR 467), "Build aurorae and night lights" (`status/aurora.md`, PR 469). Designs: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20); outside models and the kernel as a module (track OM, PR 484) is banked, not accepted.
