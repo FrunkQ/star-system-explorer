@@ -552,5 +552,207 @@ pub(crate) fn candidates(
             why: "the drive gives no thrust".into(),
         });
     }
+
+    // Coasting courses take their burns as short kicks. A gentle drive cannot:
+    // past the share set in the pack, the burns are most of the flight, and the
+    // course is flown as a slow spiral instead (RK5).
+    let max_share = s.impulsive_burn_max;
+    let mut kept = vec![];
+    for c in out {
+        let coasting = c.kind == "hohmann" || c.kind == "lambert";
+        let burning: f64 = c.burns.iter().map(|b| b.duration_s).sum();
+        let flight = (c.arrive_s - c.depart_s).max(1.0);
+        if coasting && burning > max_share * flight {
+            refused.push(Refused {
+                kind: c.id.clone(),
+                why: format!(
+                    "its burns take {:.0} days of a {:.0}-day flight, so they are not short kicks; flown as a slow spiral instead",
+                    burning / DAY,
+                    flight / DAY
+                ),
+            });
+        } else {
+            kept.push(c);
+        }
+    }
+    let mut out = kept;
+    if let Some(c) = spiral(&c, t0, window, max_share) {
+        out.push(c);
+    }
     Ok((out, refused))
+}
+
+/// Speed of a circular parking orbit about a body, m/s (zero with no body).
+fn parking_speed(s: &NavSettings, b: Option<&NavBody>) -> f64 {
+    match b {
+        Some(b) if b.mass_earth > 0.0 && b.radius_m > 0.0 => {
+            m::sqrt(b.mu() / (b.radius_m * s.parking_radii))
+        }
+        _ => 0.0,
+    }
+}
+
+/// A slow spiral (RK5): months of gentle thrust along the orbit, for a drive
+/// too weak for short burns. Out of the parking orbit, across between the two
+/// circular orbits, and down into the parking orbit at the far end. Each part
+/// costs about the difference of the circular speeds (Edelbaum 1961, coplanar
+/// case; escape from a circular orbit by tangential thrust costs about the
+/// orbit's own speed). Thrust is constant, so the ship speeds up as it burns
+/// off its mass: t = (vₑ/a₀)(1 − e^(−Δv/vₑ)). It leaves when the far world will
+/// be alongside where the spiral ends, searched over the window as the Hohmann
+/// phase is. Offered only when the short-burn courses would not be short.
+fn spiral(c: &Ctx, t0: f64, window: f64, max_share: f64) -> Option<Course> {
+    let (s, sys, req) = (c.s, c.sys, c.req);
+    let (Endpoint::Body(fa), Endpoint::Body(ta)) = (&req.from, c.to) else {
+        return None;
+    };
+    let (f, t) = (sys.body(fa)?, sys.body(ta)?);
+    let ship = &req.ship;
+    let ve = ship.exhaust_km_s * 1000.0;
+    let sail = ship.is_sail();
+    // Thrust where the ship is: a sunlit drive by the starlight at `r` (the Sun's at 1 au is 1).
+    let lum = sys.star_luminosity_lsun.max(0.0);
+    let accel = |r: f64| ship.accel_at(lum * (AU / r) * (AU / r));
+    if ship.accel_m_s2() <= 0.0 || (ve <= 0.0 && !sail) || f.a_au <= 0.0 || t.a_au <= 0.0 {
+        return None;
+    }
+    let mu = sys.mu();
+    let (ra, rb) = (f.a_au * AU, t.a_au * AU);
+    // Only when the textbook transfer's own burns would be long.
+    let (d1, d2) = hohmann_dv(mu, ra, rb);
+    let short = end_burn(s, Some(f), d1) / accel(ra) + end_burn(s, Some(t), d2) / accel(rb);
+    if short <= max_share * hohmann_time(mu, ra, rb) {
+        return None;
+    }
+    let (v1, v2) = (m::sqrt(mu / ra), m::sqrt(mu / rb));
+    let (out_dv, in_dv) = (parking_speed(s, Some(f)), parking_speed(s, Some(t)));
+    let across = (v1 - v2).abs();
+    let dv = out_dv + across + in_dv;
+    // Time to spend Δv from x0 to x1 at distance r: thrust is constant (or follows the starlight), and the ship gets
+    // lighter as it burns, so a = a(r)·e^(x/vₑ) and dt = (vₑ/a(r))(e^(−x0/vₑ) − e^(−x1/vₑ)); a sail loses no mass.
+    let dt = |x0: f64, x1: f64, r: f64| {
+        let ar = accel(r);
+        if sail {
+            (x1 - x0) / ar
+        } else {
+            (ve / ar) * (m::exp(-x0 / ve) - m::exp(-x1 / ve))
+        }
+    };
+    let t_out = dt(0.0, out_dv, ra);
+    // The angle swept on the way across: dθ = (v/r) dt with r = μ/v², stepped in Δv.
+    let steps = 2000u32;
+    let mut theta = 0.0;
+    let mut track: Vec<(f64, f64, f64)> = vec![(0.0, ra, 0.0)];
+    let mut tau = 0.0;
+    for k in 0..steps {
+        let x0 = across * k as f64 / steps as f64;
+        let x1 = across * (k + 1) as f64 / steps as f64;
+        let xm = 0.5 * (x0 + x1);
+        let v = if rb > ra { v1 - xm } else { v1 + xm };
+        let r = mu / (v * v);
+        let step = dt(out_dv + x0, out_dv + x1, r);
+        theta += v / r * step;
+        tau += step;
+        track.push((tau, r, theta));
+    }
+    let t_across = tau;
+    let t_in = dt(out_dv + across, dv, rb);
+    // The far world must be alongside where the spiral ends: search the window.
+    let lon = |r: V3| m::atan2(r[1], r[0]);
+    let n = 720u32;
+    let mut best = (f64::INFINITY, t0);
+    for k in 0..=n {
+        let td = t0 + window * k as f64 / n as f64;
+        let (pa, _) = sys.at(f, td + t_out);
+        let (pb, _) = sys.at(t, td + t_out + t_across);
+        let err = wrap(lon(pb) - lon(pa) - theta).abs();
+        if err < best.0 {
+            best = (err, td);
+        }
+    }
+    let td = best.1;
+    let total = t_out + t_across + t_in;
+    let (pa, _) = sys.at(f, td + t_out);
+    let start = lon(pa);
+    let ns = s.samples.max(2);
+    let samples: Vec<Sample> = (0..ns)
+        .map(|k| {
+            let tau = total * k as f64 / (ns - 1) as f64;
+            let (r, v) = if tau <= t_out {
+                sys.at(f, td + tau)
+            } else if tau >= t_out + t_across {
+                sys.at(t, td + tau)
+            } else {
+                let x = tau - t_out;
+                let i = track.partition_point(|p| p.0 < x).min(track.len() - 1);
+                let (_, rr, th) = track[i];
+                let ang = start + th;
+                let sp = m::sqrt(mu / rr);
+                (
+                    [rr * m::cos(ang), rr * m::sin(ang), 0.0],
+                    [-sp * m::sin(ang), sp * m::cos(ang), 0.0],
+                )
+            };
+            Sample {
+                t: td + tau,
+                tau,
+                r,
+                v,
+            }
+        })
+        .collect();
+    let mut burns = vec![];
+    if out_dv > 0.0 {
+        burns.push(Burn {
+            at_s: 0.0,
+            dv_m_s: out_dv,
+            duration_s: t_out,
+            what: format!("spiral out of orbit about {}", f.name),
+        });
+    }
+    burns.push(Burn {
+        at_s: t_out,
+        dv_m_s: across,
+        duration_s: t_across,
+        what: format!(
+            "spiral {} to {}'s orbit",
+            if rb > ra { "out" } else { "in" },
+            t.name
+        ),
+    });
+    if in_dv > 0.0 {
+        burns.push(Burn {
+            at_s: t_out + t_across,
+            dv_m_s: in_dv,
+            duration_s: t_in,
+            what: format!("spiral down into orbit about {}", t.name),
+        });
+    }
+    let why = vec![
+        format!(
+            "slow spiral at {:.1e} g{}: thrusting the whole way, {:.0} days ({:.0} out of orbit about {}, {:.0} across, {:.0} down to {})",
+            ship.accel_g, if ship.sunlit { " at 1 au, falling with the starlight" } else { "" }, total / DAY, t_out / DAY, f.name, t_across / DAY, t_in / DAY, t.name
+        ),
+        format!(
+            "Δv about the differences of circular speeds (Edelbaum): {:.2} km/s to leave, {:.2} across, {:.2} to arrive",
+            out_dv / 1000.0, across / 1000.0, in_dv / 1000.0
+        ),
+        format!(
+            "leaves {:.0} days into the window so {} is alongside at the end ({:.0}° off); orbits taken as circular and in one plane",
+            (td - t0) / DAY, t.name, best.0.to_degrees()
+        ),
+    ];
+    Some(c.course(
+        "spiral",
+        "spiral",
+        "Slow spiral: thrust all the way",
+        td,
+        td + total,
+        dv,
+        ship.accel_g,
+        burns,
+        samples,
+        why,
+        false,
+    ))
 }
