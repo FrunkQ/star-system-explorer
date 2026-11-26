@@ -29,6 +29,7 @@ pub mod signatures;
 pub mod soil;
 mod suite;
 pub mod traits;
+pub mod world_life;
 
 pub use habitat::{Footprint, Habitat, HabitatGraph, HabitatRule, Link};
 pub use suite::{NoLifeModel, NO_MODEL};
