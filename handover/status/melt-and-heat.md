@@ -20,6 +20,7 @@ Honest state, 26 Nov 2026:
 | Published heat names and mark kinds agreed with the heat-flows screen thread | done 26 Nov (sections 7 and 6.3) |
 | Read the sources at source and correct the sheet rows | from 1 Dec 2026, citations thread (C7) |
 | HF6 the orbit side (host's tide, resonance partners, eccentricity that dies away): its own design | written as a proposal 26 Nov at the coordinator's word: `design/SSE4-tidal-orbits-design.md`, state in `status/tidal-orbits.md` |
+| HF5b hot ground (what glows: design section 7A), added 26 Nov on Alex's question about lava glowing, agreed by the coordinator as a routine kernel addition | designed; build after HF5. The renderer's VP-P1 (true-surface track) waits on it. Its cooling figures are unverified until 1 Dec |
 | HF4d ice shells: a short note from its builder | after HF4c.2 |
 
-Packages (owner: the heat flow thread; states live in `status/heat-flow.md`): HF4b.0 numbers and blocks, HF4b.1 the lid, HF4b.2 melt, HF4c.1 tides read the state, HF4c.2 layers, then HF2, HF5, HF4d. Core golden lane: HF4b.1, HF4b.2, HF4c.1, one turn each.
+Packages (owner: the heat flow thread; states live in `status/heat-flow.md`): HF4b.0 numbers and blocks, HF4b.1 the lid, HF4b.2 melt, HF4c.1 tides read the state, HF4c.2 layers, then HF2, HF5, HF5b, HF4d. Core golden lane: HF4b.1, HF4b.2, HF4c.1, one turn each.

@@ -452,6 +452,51 @@ Readers, and which package moves each:
 
 HF5 is where the calibrated `q_ref` family (0.06, 0.039, 2.5, 0.04, 0.007, 0.05 in `packs/base-surface`) leaves the fudge register: volcanic landforms then follow the lava that was actually erupted. It will move many surface goldens and some of the eleven tests HF2 found; those are tests of calibrated behaviour and are updated to follow this design once it is accepted, with each change listed in the package log. A test that guards a measured fact (Mars's field date, the Moon having lava plains at all) is a limit and stays.
 
+### 7A. Hot ground: what glows (package HF5b)
+
+Added 26 Nov 2026 after acceptance, on Alex's question "would lava worlds and lava in general glow in the renderer", as a routine kernel addition agreed by the coordinator.
+
+**Today.** The renderer adds a world's own light by Planck at one temperature for the whole globe (`packages/renderer/src/hot-glow.ts`). A world hot all over glows. Io and a fresh lava field do not, because their average surface is cold. Drawing hot ground in patches is the renderer's VP-P1, which has had no kernel number to draw from. This block is that number.
+
+**The sum.** Lava that reaches the surface is laid down as flows of thickness `h` (the sheet's flow thickness, the one crater renewal already uses). So fresh surface is made at
+
+```
+area per time   dA/dt = melt_erupted · A / h
+```
+
+A flow's skin cools by radiating, fed from below through a crust that thickens as √t. Balancing the two gives the skin's temperature against its age:
+
+```
+ε σ T_s⁴ = k (T_lava − T_s) / √(π κ t)      so      t(T_s) = [ k (T_lava − T_s) / (ε σ T_s⁴) ]² / (π κ)
+```
+
+The share of the surface hotter than any temperature `T` is then `(dA/dt) · t(T) / A`. The block publishes that as a short table of temperature against share, down to the temperature where a surface stops giving the eye anything (the renderer's `DRAPER_K`, about 800 K). The renderer sums Planck over the table. Nothing is boosted and no colour is typed.
+
+By hand, with k 1.5 W/m/K, κ 7 × 10⁻⁷ m²/s, ε 0.95 and lava at 1,400 K (all from memory, **unverified**, section 15): a skin stays above 800 K for about 13 minutes. For Io at the scratch model's 330 km³ a year erupted, in flows 1 m thick, that is about 8 km² glowing at any moment, two parts in ten million of its surface. So Io shows as a few faint red points on its night side and in Jupiter's shadow, which is what was photographed (from memory, unverified). It is a check, never a target.
+
+**What is published** (per world, at every grid point of the history, and per volcanic province once HF5 places them):
+
+| Field | Meaning |
+|---|---|
+| `hot_ground.lava_k` | the temperature lava arrives at. Until HF8 (what erupts) this is the erupted rock's melting point at the surface from the sheet, a registered stand-in |
+| `hot_ground.table` | pairs of temperature and the share of surface hotter than it, from the sum above |
+| `hot_ground.why` | one sentence from the numbers ("about 8 km² of fresh lava is glowing, from 330 km³ erupted a year") |
+
+**Eruptions come in bursts.** The table is the long-run mean. Single eruptions are a *stream* in the time design's sense: drawn from the seed per province and time bin, at a rate that adds up to `melt_erupted`, each with a place, a size and a date, published through `happenings`. A view at a date then shows a real eruption glowing where it is, and the mean is what a distant or fast view shows. The spread of eruption sizes is a stand-in on the sheet until read at source.
+
+**What it does not cover.**
+
+- A world hot from outside (a lava world close to its star, a locked world with a molten day side) glows from its surface temperature, which comes from climate tile by tile and is VP-P1's other input. This block is only lava brought up from inside.
+- Lava under a sea is not seen; the block publishes the share on dry ground, and the air's own dimming is the renderer's existing air.
+- Cracks in a flow's crust show the hot inside and add to the hottest end of the table. Left out for now and said so in the fudge register; it makes the glow a little too dim, never too bright.
+- An atmosphere cools a skin faster by convection. The block takes the air's density and adds the standard term; with no air it is the sum above.
+
+**Numbers and block.** One block, `sse.melt.hot_ground`, with a worked example (the Io sum above). Sheet rows: the crust's conductivity and diffusivity, the emissivity, flow thickness (existing), the eruption size spread. Fudge rows: `lava_k` until HF8; no cracks; the size spread.
+
+**Red-first tests.** A world that erupts nothing has no hot ground (absolute). The power radiated by the hot ground is never more than `heat_erupted` (absolute: the glow cannot spend more heat than the lava brought). Doubling the eruption rate doubles every share. The stream's eruptions over a long span add up to `melt_erupted` to within its own scatter.
+
+**Who waits on it.** The renderer's VP-P1 (hot ground per tile), owned by the true-surface track, draws from `hot_ground` and from climate's tile temperatures, and waits on this package for the first.
+
 ---
 
 ## 8. Every number, and where it goes
@@ -546,11 +591,12 @@ Each leaves main green. Sizes: S under a day, M one to two days. The heat flow t
 | **HF4c.2** layers | `sse.tides.layered_response`, the uniform-limit test, the seven Love numbers; the march passes its layers | HF4c.1 | core if any tidal world moves; else area | M |
 | **HF2** readers read heat lost | As the heat flow thread planned it, on `heat_lost`, regimes marched with the history | HF4b.2 | surface goldens, core | M |
 | **HF5** volcanism reads lava | The readers of section 7 move from `q_ref` to `melt_erupted` | HF2 | surface goldens (many) | M |
+| **HF5b** hot ground | Section 7A: the block, the published table, the eruption stream; tells the true-surface track when it lands | HF5; TP6 for the eruption stream's marks (the mean table does not wait on it) | surface goldens (worlds that erupt) | S |
 | **HF4d** ice shells | 3.10, from its own short note | HF4c.2 | surface goldens (icy moons) | M |
 | **HF6** the orbit side | Its own design, `SSE4-tidal-orbits-design.md` (packages HF6.1 to HF6.5) | HF4c.1 | | |
 | **HF7** mantle water budget; **HF8** what erupts (magma's head) | Later; each replaces a registered stand-in | HF4b.2 | | |
 
-Order: HF4b.0, HF4b.1, HF4b.2, HF4c.1, then HF2 and HF4c.2 side by side, then HF5, then HF4d.
+Order: HF4b.0, HF4b.1, HF4b.2, HF4c.1, then HF2 and HF4c.2 side by side, then HF5, then HF5b, then HF4d.
 
 **Red-first tests** (each seen to fail with its fix removed):
 
@@ -694,3 +740,4 @@ Written from memory. Each needs reading at source, adding to the master list, an
 | Veeder, G. J. et al. 2012, Icarus 219, 701 | Io's heat output |
 | White, S. M., Crisp, J. A. and Spera, F. J. 2006, G-cubed 7, Q03010 | intruded against erupted |
 | Williams, J. G. et al. 2014, JGR Planets 119, 1546 | the Moon's k2 |
+- For section 7A (hot ground): the cooling of a lava flow's surface by radiation through a growing crust, and the temperatures and areas of Io's hot spots seen in eclipse. To be found and read at source on 1 Dec; the figures in 7A are from memory and **unverified**.
