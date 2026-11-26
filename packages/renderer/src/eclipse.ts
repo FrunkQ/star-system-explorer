@@ -194,19 +194,19 @@ export function umbraLight(r: ShadowLightRead): [number, number, number] | null 
 }
 
 /**
- * Cox and Munk (1954): the slopes of a wind-ruffled sea are spread with a variance σ² = 0.003 + 5.12·10⁻³ W, W the
- * wind (m/s) 12.5 m over the water. The sun's glint from orbit is the share of those facets tipped to mirror it.
+ * The glint's two numbers where the kernel has not answered for a world (fudge register): its answer for water under
+ * a 7 m/s wind (`sse.light.sea_glint`, Cox and Munk 1954), the waves' mean square slope and water's reflectance
+ * straight back. The law itself is the kernel's; the view only draws it.
  */
-export function slopeVariance(wind_m_s: number): number {
-  return 0.003 + 5.12e-3 * Math.max(0, wind_m_s);
-}
+export const GLINT_FALLBACK = { slope_variance: 0.03884, normal_reflectance: 0.0204 } as const;
 
 /**
  * The glint's reflectance (a BRDF, per steradian) for light from `l` seen toward `v` (unit vectors from the sea, `n` its
  * level): F(θ) · p(tan β) / (4 μ₀ μ cos⁴β), p the Gaussian slope density e^(−tan²β/σ²)/(πσ²), β the tilt of the
- * facet that mirrors l into v, F Fresnel's at the liquid's index (Schlick's form, F₀ from the index).
+ * facet that mirrors l into v, F Fresnel's in Schlick's form from F₀, the liquid's reflectance straight back (both σ² and
+ * F₀ are the kernel's, `sse.light.sea_glint`).
  */
-export function glintBrdf(n: readonly number[], l: readonly number[], v: readonly number[], sigma2: number, index = 1.333): number {
+export function glintBrdf(n: readonly number[], l: readonly number[], v: readonly number[], sigma2: number, f0: number = GLINT_FALLBACK.normal_reflectance): number {
   const mu0 = dot(n, l);
   const mu = dot(n, v);
   if (!(mu0 > 0 && mu > 0)) return 0;
@@ -214,7 +214,6 @@ export function glintBrdf(n: readonly number[], l: readonly number[], v: readonl
   const cb = Math.max(1e-6, dot(n, h));
   const tan2 = (1 - cb * cb) / (cb * cb);
   const p = Math.exp(-tan2 / sigma2) / (Math.PI * sigma2);
-  const f0 = ((index - 1) / (index + 1)) ** 2;
   const f = f0 + (1 - f0) * Math.pow(1 - Math.max(0, dot(v, h)), 5);
   return (f * p) / (4 * mu0 * mu * cb * cb * cb * cb);
 }
