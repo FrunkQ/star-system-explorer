@@ -103,7 +103,7 @@
         ]
       },
       "life_support": {
-        "about": "What one person of each kind of being uses a day, by store. A store is matched by aboard.what (oxygen, water, food). Cold sleep uses nothing from the stores (fudge register).",
+        "about": "What one person of each kind of being uses a day, by store. A store is matched by aboard.what (oxygen, water, food). The stores are read out under two headings, air and supplies, each as days left: a heading lasts as long as the first of its stores to run out. Cold sleep uses nothing from the stores (fudge register).",
         "rates": {
           "human": {
             "oxygen_kg_day": 0.82,
@@ -114,6 +114,10 @@
             "src": "nasa-bvad-2018",
             "check": "unverified"
           }
+        },
+        "headings": {
+          "air": ["oxygen"],
+          "supplies": ["water", "food"]
         },
         "store_words": {
           "oxygen": ["oxygen", "o2", "lox"],
