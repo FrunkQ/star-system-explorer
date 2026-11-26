@@ -108,6 +108,8 @@ const MARK: Record<string, (n: string) => string> = {
   engulfed: (n) => `${n} swallowed`,
   planetary_nebula: () => "sheds its outer layers",
   supernova: () => "explodes",
+  // Any other change of phase (a Wolf-Rayet star, a neutron star, a black hole): the time model says what it becomes.
+  phase: () => "",
 };
 
 /** The look-ahead's answer read onto the chart's tracks. */
@@ -142,7 +144,7 @@ export function chartFate(c: FormationChart, plan: Extract<FatePlan, { kind: "ah
     if (!f) continue;
     const ids = e.subjects.filter((a) => byAddr.has(a)).map((a) => byAddr.get(a)!.id);
     const who = e.subjects.filter((a) => byAddr.has(a)).map(label).join(", ");
-    marks.push({ t: e.age_myr, kind: e.kind, words: f(who), why: upper(e.why), ids });
+    marks.push({ t: e.age_myr, kind: e.kind, words: f(who) || e.why.replace(/^the star is now an? /, "becomes a "), why: upper(e.why), ids });
   }
   const star = snaps.map((s) => ({ t: s.age_myr, r_au: s.star.radius_rsun * RSUN_AU, phase: s.star.phase, l: s.star.luminosity, m: s.star.mass }));
   const lost = worlds.filter((w) => w.engulfed !== undefined);
@@ -152,8 +154,9 @@ export function chartFate(c: FormationChart, plan: Extract<FatePlan, { kind: "ah
   const peak = Math.max(0, ...star.map((s) => s.r_au));
   const text = [
     `Hydrogen runs out in the star's core at ${chartTime(ms_end)}.`,
-    giant !== null ? `It swells into a red giant, reaching out to ${sayNumber(peak, 2)} AU at its largest,` : "It swells,",
-    lost.length ? `swallowing ${lost.length === worlds.length ? "every world" : andList(lost.map((w) => w.label))}.` : "but reaches none of its worlds.",
+    // A star may skip a span (a red dwarf has no giant phase): say only what it does.
+    giant !== null || peak > 0.01 ? `It swells${giant !== null ? " into a giant" : ""}, reaching out to ${sayNumber(peak, 2)} AU at its largest,` : "It never swells into a giant,",
+    lost.length ? `swallowing ${lost.length === worlds.length ? "every world" : andList(lost.map((w) => w.label))}.` : "and reaches none of its worlds.",
     `It sheds ${sayNumber(Math.round((1 - m1 / m0) * 100), 2)}% of its mass and leaves a ${plan.remnant} by ${chartTime(end)}.`,
     kept.length ? `With less to hold them, the orbits that are left widen by about ${sayNumber(m0 / m1, 2)} times. Little happens after that: the remnant cools and fades.` : "Nothing is left in orbit. The remnant cools and fades.",
   ].join(" ");

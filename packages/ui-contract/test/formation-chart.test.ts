@@ -164,6 +164,12 @@ test("the star's end: a Sun-like star swells, swallows its near worlds, widens t
     }
     assert.ok(!/NaN|undefined/.test(JSON.stringify(f)), f.text);
 
+    // A star that skips a span, or changes into a phase the chart has no words of its own for, still reads.
+    const odd = chartFate(c, plan, { ...la.result, events: [...la.result.events.filter((e) => e.kind !== "red_giant"), { ...la.result.events[0]!, kind: "phase", why: "the star is now a Wolf-Rayet star" }] });
+    assert.equal(odd.giant, null);
+    assert.ok(odd.marks.some((m) => m.words === "becomes a Wolf-Rayet star"));
+    assert.doesNotMatch(odd.text, /into a giant|NaN|undefined/);
+
     // The chart runs on to the end; swallowed tracks stop there; the story says so.
     const g = withFate(c, f);
     assert.ok(g.t_bottom >= f.until && g.t_bottom >= c.t_bottom);
