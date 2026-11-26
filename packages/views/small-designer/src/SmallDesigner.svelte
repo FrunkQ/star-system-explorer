@@ -8,7 +8,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { constant, say, sayNumber, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { smallBodyMesh, trueTurn } from "../../../renderer/src/index.ts";
+  import { smallBodyColour, smallBodyMesh, trueTurn } from "../../../renderer/src/index.ts";
   import { DEFAULT_DESIGN, KINDS, MAKEUPS, designAsk, logPos, logVal, type Design } from "./design.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
@@ -79,7 +79,7 @@
       const m = smallBodyMesh(figure, key);
       let far = 1;
       for (let i = 0; i < m.positions.length; i += 3) far = Math.max(far, Math.hypot(m.positions[i]!, m.positions[i + 1]!, m.positions[i + 2]!));
-      void trueTurn({ key, star: false, colour: "#888", radius_m: (b.diameter_km * 1000) / 2, figure }, { size: TURN.size, frames: TURN.frames, tilt_rad: 0.35, passes: 2, fill: 0.45 / far }).then((t) => {
+      void trueTurn({ key, star: false, colour: smallBodyColour(figure), radius_m: (b.diameter_km * 1000) / 2, figure }, { size: TURN.size, frames: TURN.frames, tilt_rad: 0.35, passes: 2, fill: 0.45 / far }).then((t) => {
         if (n !== drawFor) return;
         drawing = false;
         if (!t || !t.lit) return void (noGpu = !t);
@@ -337,7 +337,7 @@
     width: 100%;
     max-width: 280px;
     aspect-ratio: 1;
-    background: #000;
+    background: var(--sse-ground-raised);
     border-radius: 6px;
   }
   figcaption {
