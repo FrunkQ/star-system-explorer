@@ -38,3 +38,20 @@ numbers to where they belong. Values are kept as they were unless a part below s
 - **Golden:** no number changes. The nebulae golden and three core contract lines (two `light_read`, one
   `nebulae_read`) change in their reference text only (each now the sheet source's text and note, with its own DOI
   or link, where the old text had mangled the S II DOI into a URL), and `light_read` lines gain `sheet`.
+
+## SN3: life on a world of the chart (L3, PR 626)
+
+- Fudge rows L3-sketches (every Earth-scaled supply in `life_from_world`), L3-dose, L3-grades and L3-vents in
+  `docs/fudges.md`.
+- Rock conductivity from the sheet: `crust-rock.thermal_conductivity` 2.5 W/m/K (Turcotte and Schubert 2014,
+  unverified; the figure the pack's note already gave). The pack's `warming_at_depth_k_per_w_m2` 2000 becomes
+  `warming_depth_m` 5000, and the life suite divides by the sheet's conductivity: the same 2000 K per W/m².
+- Graded: the sea's vent iron as 1/(1 + O2/1e-5) (the air box's own blend, F4), and reducing air as
+  x^4/(x^4 + 0.1^4) in the H2 share, with methane alone weighing lr_ch4^(1-s) x lr_nothing^s. Half points are the
+  old thresholds; the steepness 4 is authored. Values move only near the old edges (Earth's air keeps about 5e-5 of
+  the Archean vent iron, which the tests do not feel).
+- **Not graded: vents.** Grading them cut Earth's vent hydrogen by about a tenth, because the interior gives Earth
+  0.039 W/m² against the measured 0.09. That moved Earth's oxygen rise 80 Myr later (4205 against 4125 Myr) and its
+  land life to 4555 Myr, after the timeline's last point, so `catalogued_earth_grows_land_life_and_its_own_oxygen`
+  failed. The cause is the low heat flow, so the switch stays (fudge L3-vents) and the test was not changed.
+- Goldens: none move.

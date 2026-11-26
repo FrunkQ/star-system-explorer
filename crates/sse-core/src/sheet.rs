@@ -976,6 +976,12 @@ pub mod mixture_yield_strength {
     pub const INCONEL_718: f64 = 1034200000.0;
 }
 
+/// Thermal conductivity, W/m/K, by mixture (the sheet's mixtures).
+pub mod mixture_thermal_conductivity {
+    /// crust-rock (turcotte2014).
+    pub const CRUST_ROCK: f64 = 2.5;
+}
+
 /// Each unit's factor to SI, by unit id (the sheet's units table).
 pub mod unit {
     /// one.

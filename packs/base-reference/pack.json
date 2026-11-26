@@ -15956,6 +15956,13 @@
       "unit": "kg m-3",
       "src": "turcotte2014",
       "check": "unverified"
+     },
+     "thermal_conductivity": {
+      "v": 2.5,
+      "unit": "W m-1 K-1",
+      "src": "turcotte2014",
+      "check": "unverified",
+      "note": "typical of the continental crust's granites and gneisses near the surface (about 2 to 3); read by the life suite's deep-crust warming"
      }
     },
     {
