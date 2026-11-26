@@ -49,6 +49,10 @@ type Split = Vec<(Node, u64)>;
 pub enum Layer {
     Disc,
     Remains,
+    /// The bulge's stars (Local Arm package): its own counts and keys, its
+    /// density from `GalaxyEnvelope::bulge_pc3`, its births from the galaxy's
+    /// bulge ledger.
+    Bulge,
 }
 
 /// A walk through the tree in one frame, remembering expected numbers and
@@ -142,6 +146,11 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         Self::of(stars, frame, Layer::Remains)
     }
 
+    /// The walk over the bulge's stars.
+    pub fn bulge(stars: &'s Stars<'a>, frame: i64) -> Self {
+        Self::of(stars, frame, Layer::Bulge)
+    }
+
     pub fn of(stars: &'s Stars<'a>, frame: i64, layer: Layer) -> Self {
         TreeWalk {
             stars,
@@ -210,7 +219,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 (n.1[1] as f64 + 0.5) * c,
                 (n.1[2] as f64 + 0.5) * c,
             ];
-            st.remains_density_at(g, t0) * c * c * c
+            self.density_at(g, t0) * c * c * c
         } else {
             let size = span as f64 * c;
             let t0 = self.frame as f64 * st.params.frame_myr;
@@ -244,6 +253,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         match self.layer {
             Layer::Disc => self.stars.density_at(g, t0),
             Layer::Remains => self.stars.remains_density_at(g, t0),
+            Layer::Bulge => self.stars.bulge_density_at(g, t0),
         }
     }
 
@@ -254,6 +264,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         match self.layer {
             Layer::Disc => st.birth_cdf_at(m::hypot(g[0], g[1]) / 1000.0, t_now),
             Layer::Remains => st.remains_cdf_at(g, self.frame as f64 * st.params.frame_myr),
+            Layer::Bulge => st.bulge_cdf(t_now),
         }
     }
 
@@ -275,10 +286,12 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
     /// The class shares with each class's corner of mass and age.
     pub fn class_mix(&self, root: [i64; 3]) -> ClassMix {
         // The disc's mix depends on the block's radius only, so blocks
-        // stacked in height share one; the remains' on its centre.
+        // stacked in height share one; the remains' on its centre; the
+        // bulge's is one mix everywhere.
         let column = match self.layer {
             Layer::Disc => [root[0], root[1], 0],
             Layer::Remains => root,
+            Layer::Bulge => [0, 0, 0],
         };
         if let Some(v) = self.shares.borrow().get(&column) {
             return v.clone();
@@ -341,7 +354,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         // The remains' ages are the same in every walk of a frame, so their
         // grid is kept with the galaxy's remains between walks.
         let grid = self.class_grid.get_or_init(|| match self.layer {
-            Layer::Disc => make(),
+            Layer::Disc | Layer::Bulge => make(),
             Layer::Remains => st.env.remains.class_grid(oldest, t_now, make),
         });
         let classes = p.class_edges_lsun.len() + 1;
@@ -397,6 +410,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
             Stream::new(&match self.layer {
                 Layer::Disc => format!("cosmos.stars.tree.v{}", self.stars.params.key_version),
                 Layer::Remains => "cosmos.remains.tree.v1".to_string(),
+                Layer::Bulge => "cosmos.bulge.tree.v1".to_string(),
             })
             .map_err(|e| e.to_string())?,
         ))
@@ -542,7 +556,16 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         let addr = st.cell_address(cell)?;
         let t0 = frame as f64 * p.frame_myr;
         let t_now = t0 / 1000.0;
-        let (cdf, acc) = st.birth_cdf(cell, t_now);
+        let (cdf, acc) = if self.layer == Layer::Bulge {
+            st.bulge_cdf(t_now)
+        } else {
+            st.birth_cdf(cell, t_now)
+        };
+        let (stream, bulge) = if self.layer == Layer::Bulge {
+            ("cosmos.bulge.c".to_string(), true)
+        } else {
+            ("cosmos.stars.c".to_string(), false)
+        };
         let classes = p.class_edges_lsun.len() + 1;
         let mix = self.class_mix(self.node_of(cell, 0).1);
         let mut out = vec![];
@@ -557,8 +580,12 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
             let d = Draws::new(
                 st.seed,
                 addr.clone(),
-                Stream::new(&format!("cosmos.stars.c{c}.v{}", p.key_version))
-                    .map_err(|e| e.to_string())?,
+                Stream::new(&if bulge {
+                    format!("{stream}{c}.v1")
+                } else {
+                    format!("{stream}{c}.v{}", p.key_version)
+                })
+                .map_err(|e| e.to_string())?,
             );
             // Search only the corner of mass and age where the class lives.
             let fu = if mix.u_floor[c] < 1.0 {
@@ -595,7 +622,11 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                     (b.0, b.1)
                 });
                 let slot = j * classes as u64 + c as u64;
-                out.push(st.complete(&d, &i, &addr, cell, frame, slot, mass, birth)?);
+                out.push(if bulge {
+                    st.complete_bulge(&d, &i, &addr, cell, frame, slot, mass, birth)?
+                } else {
+                    st.complete(&d, &i, &addr, cell, frame, slot, mass, birth)?
+                });
             }
         }
         out.sort_by_key(|s| s.slot);

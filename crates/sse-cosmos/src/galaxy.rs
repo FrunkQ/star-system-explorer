@@ -214,6 +214,100 @@ pub struct Galaxy {
     /// the matter ledger reads it, the wire does not carry it.
     #[serde(default, skip_serializing)]
     pub ejected_now: f64,
+    /// The bulge's ledger (Local Arm package), at each history point
+    /// (universe time Gyr, solar masses in the steps since the last point):
+    /// the stars the galaxy formed in place, the stars that joined the bulge
+    /// from elsewhere (disc stars a merger moved, and what fell in), and the
+    /// stars a merger's burst formed in the bulge. Joiners take the ages of
+    /// the stars born so far (`bulge_births_at`).
+    #[serde(default, skip_serializing)]
+    pub born_hist: Vec<(f64, f64)>,
+    #[serde(default, skip_serializing)]
+    pub bulge_joins: Vec<(f64, f64)>,
+    #[serde(default, skip_serializing)]
+    pub bulge_bursts: Vec<(f64, f64)>,
+    /// The steps in which a merger moved disc stars into the bulge:
+    /// (universe time Gyr at the step's start, share of the disc's stars
+    /// moved). The rings take the same share out of every ring's stars, so
+    /// each star is counted once, in the disc or in the bulge.
+    #[serde(default, skip_serializing)]
+    pub disc_moves: Vec<(f64, f64)>,
+    /// The bulge's size rule (DM4's `StructureParams`): half-light radius
+    /// b M^a kpc, Hernquist scale that times `hernquist_scale`, as
+    /// [b, a, hernquist_scale], so its scale at any time follows its mass then.
+    #[serde(default, skip_serializing)]
+    pub bulge_size: [f64; 3],
+}
+
+impl Galaxy {
+    /// The bulge's Hernquist scale at a time, kpc (0 with no bulge).
+    pub fn bulge_a_kpc(&self, t_gyr: f64) -> f64 {
+        let mass = self.bulge_at(t_gyr);
+        let [b, a, h] = self.bulge_size;
+        if mass <= 0.0 {
+            return 0.0;
+        }
+        b * m::pow(mass.max(1.0), a) * h
+    }
+
+    /// The bulge's stars by birth as they stood at `t_gyr`: (birth time Gyr,
+    /// solar masses). What joined by then is spread over the stars born
+    /// before it joined, in proportion; a burst's stars are born at the
+    /// burst. Read only from what had happened by `t_gyr`.
+    pub fn bulge_births_at(&self, t_gyr: f64) -> Vec<(f64, f64)> {
+        let born: Vec<(f64, f64)> = self
+            .born_hist
+            .iter()
+            .filter(|e| e.0 <= t_gyr)
+            .copied()
+            .collect();
+        let mut out: Vec<(f64, f64)> = born.iter().map(|e| (e.0, 0.0)).collect();
+        let mut so_far = 0.0;
+        let mut b = 0;
+        for (tj, mj) in self.bulge_joins.iter().filter(|e| e.0 <= t_gyr) {
+            while b < born.len() && born[b].0 <= *tj {
+                so_far += born[b].1;
+                b += 1;
+            }
+            if so_far <= 0.0 {
+                continue;
+            }
+            for k in 0..b {
+                out[k].1 += mj * born[k].1 / so_far;
+            }
+        }
+        for (tb, mb) in self.bulge_bursts.iter().filter(|e| e.0 <= t_gyr) {
+            match out.iter_mut().find(|e| e.0 >= *tb) {
+                Some(e) => e.1 += mb,
+                None => out.push((*tb, *mb)),
+            }
+        }
+        out
+    }
+
+    /// The virial circular speed at a time (km/s), from the history.
+    pub fn v_c_at(&self, t_gyr: f64) -> f64 {
+        self.history
+            .iter()
+            .rev()
+            .find(|s| s.t_gyr <= t_gyr)
+            .or(self.history.first())
+            .map_or(self.now.v_c, |s| s.v_c)
+    }
+
+    /// The bulge's stars at a time (solar masses), between history points.
+    pub fn bulge_at(&self, t_gyr: f64) -> f64 {
+        let h = &self.history;
+        match h.iter().position(|s| s.t_gyr >= t_gyr) {
+            None => self.now.bulge,
+            Some(0) => h.first().map_or(0.0, |s| s.bulge),
+            Some(i) => {
+                let (a, b) = (&h[i - 1], &h[i]);
+                let w = (t_gyr - a.t_gyr) / (b.t_gyr - a.t_gyr).max(1.0e-12);
+                a.bulge + w * (b.bulge - a.bulge)
+            }
+        }
+    }
 }
 
 /// a(t) on the galaxy's grid, by stepping the cosmology's time integral in log a.
@@ -421,6 +515,11 @@ pub fn evolve_feeding(
         )
     };
     let mut state = None;
+    // The bulge's ledger: in-situ births per step (solar masses kept in
+    // stars), the part of each now in the bulge, and the disc's kept share.
+    let (mut born_hist, mut bulge_joins, mut bulge_bursts) = (vec![], vec![], vec![]);
+    let (mut born_bin, mut join_bin, mut burst_bin) = (0.0f64, 0.0f64, 0.0f64);
+    let mut disc_moves = vec![];
     for k in 0..n {
         let t = t0 + dt * f64::from(k);
         let a = a_of_t(&table, t);
@@ -473,6 +572,10 @@ pub fn evolve_feeding(
         ejected_metals += zg * eta * formed;
         gas = new_gas;
         stars += (1.0 - p.return_fraction) * formed;
+        born_bin += (1.0 - p.return_fraction) * formed;
+        let disc_before = (stars - bulge).max(0.0);
+        let bulge_before = bulge;
+        let mut burst_born = 0.0;
         if !quiet(t) {
             bh += p.black_hole_steady * formed;
         }
@@ -522,6 +625,7 @@ pub fn evolve_feeding(
             let born = (1.0 - p.return_fraction) * burst;
             stars += born;
             bulge += born;
+            burst_born += born;
             let feed = p.black_hole_feed * burst;
             if !quiet(tm) {
                 bh += feed;
@@ -549,6 +653,17 @@ pub fn evolve_feeding(
             }
         }
         bulge = bulge.min(stars);
+        // What joined the bulge this step: a merger's burst, born now, and
+        // the rest (moved disc stars, and the stars of what fell in: fudge
+        // register "galaxy.rs bulge births").
+        let disc_after = (stars - bulge).max(0.0);
+        if disc_before > 0.0 && disc_after < disc_before {
+            disc_moves.push((t, 1.0 - disc_after / disc_before));
+        }
+        let gained = (bulge - bulge_before).max(0.0);
+        let now_born = burst_born.min(gained);
+        burst_bin += now_born;
+        join_bin += gained - now_born;
         let quenched = stars > 0.0 && sfr_gyr / 1.0e9 < p.quenched_ssfr * stars;
         inflow_steps.push(inflow + fed_inflow);
         returned_steps.push(back);
@@ -569,6 +684,10 @@ pub fn evolve_feeding(
         };
         if k % p.history_every == 0 || k + 1 == n {
             history.push(st.clone());
+            born_hist.push((t, born_bin));
+            bulge_joins.push((t, join_bin));
+            bulge_bursts.push((t, burst_bin));
+            (born_bin, join_bin, burst_bin) = (0.0, 0.0, 0.0);
         }
         state = Some(st);
     }
@@ -584,29 +703,22 @@ pub fn evolve_feeding(
     let rotation = crate::structure::curve_table(&structure);
     // Efstathiou, Lake and Negroponte 1982: v_max / sqrt(G M_d / R_d) below about 1.1 is bar-unstable.
     let barred = bar_unstable(p, &rotation, &now_state);
-    // When the bar formed: the earliest history point from which the disc
-    // has been bar-unstable ever since (bars, once formed, are long-lived
-    // and are not destroyed by the disc's own gas, so the run back stops at
-    // the first stable point). The rings sweep the bar's gas from then on.
-    let bar_from_gyr = if barred {
-        let mut from = now_state.t_gyr;
-        for st in history.iter().rev() {
-            let s = crate::structure::Structure::new(
-                c,
-                &p.structure,
-                &|z| halo.mass_at(z),
-                st,
-                1.0 / (1.0 + st.z),
-            );
-            if !bar_unstable(p, &crate::structure::curve_table(&s), st) {
-                break;
-            }
-            from = st.t_gyr;
+    // When the bar formed: the first history point at which the disc was
+    // bar-unstable (bars, once formed, are long-lived, so the rings sweep
+    // from then on). Read forward, so an edit never moves an earlier bar.
+    let bar_from_gyr = history.iter().find_map(|st| {
+        if st.stars <= 1.0e9 {
+            return None;
         }
-        Some(from)
-    } else {
-        None
-    };
+        let s = crate::structure::Structure::new(
+            c,
+            &p.structure,
+            &|z| halo.mass_at(z),
+            st,
+            1.0 / (1.0 + st.z),
+        );
+        bar_unstable(p, &crate::structure::curve_table(&s), st).then_some(st.t_gyr)
+    });
     let morphology = classify(&now_state, barred);
     Galaxy {
         halo: halo.address.clone(),
@@ -623,6 +735,15 @@ pub fn evolve_feeding(
         rotation,
         assembled: feeding.map(crate::feed::Feeding::finish),
         ejected_now: ejected,
+        born_hist,
+        bulge_joins,
+        bulge_bursts,
+        disc_moves,
+        bulge_size: [
+            p.structure.bulge_size_b_kpc,
+            p.structure.bulge_size_a,
+            p.structure.hernquist_scale,
+        ],
     }
 }
 

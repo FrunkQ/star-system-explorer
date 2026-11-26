@@ -24,9 +24,21 @@ impl Stars<'_> {
     /// at time `t_myr`. Points with no light (unborn, remnants too faint to
     /// matter, black holes) keep their weight but have zero luminosity.
     pub fn light_points(&self, r_kpc: f64, t_myr: f64) -> Vec<LightPoint> {
+        let (cdf, acc) = self.birth_cdf_at(r_kpc, t_myr / 1000.0);
+        self.light_points_of(&cdf, acc, t_myr)
+    }
+
+    /// The quadrature points of the bulge's stars at `t_myr` (its births
+    /// are one history everywhere).
+    pub fn bulge_light_points(&self, t_myr: f64) -> Vec<LightPoint> {
+        let (cdf, acc) = self.bulge_cdf(t_myr / 1000.0);
+        self.light_points_of(&cdf, acc, t_myr)
+    }
+
+    /// The quadrature points of stars with these births (cumulative, Gyr).
+    fn light_points_of(&self, cdf: &[(f64, f64)], acc: f64, t_myr: f64) -> Vec<LightPoint> {
         let p = &self.params;
         let t_now = t_myr / 1000.0;
-        let (cdf, acc) = self.birth_cdf_at(r_kpc, t_now);
         let born_by = |t: f64| -> f64 {
             if acc <= 0.0 {
                 return 0.0;
@@ -41,7 +53,7 @@ impl Stars<'_> {
             };
             (v / acc).clamp(0.0, 1.0)
         };
-        let oldest = (t_now - self.env.disc.t_start_gyr).max(1e-3);
+        let oldest = (t_now - cdf.first().map_or(self.env.disc.t_start_gyr, |c| c.0)).max(1e-3);
         let na = 48;
         let edges: Vec<f64> = (0..=na)
             .map(|k| {

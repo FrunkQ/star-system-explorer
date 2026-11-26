@@ -151,6 +151,10 @@ impl Stars<'_> {
         if self.params.key_version >= 2 && self.has_remains() {
             walks.push(crate::star_tree::TreeWalk::remains(self, frame));
         }
+        // The bulge's stars, with theirs.
+        if self.params.key_version >= 2 && self.has_bulge() {
+            walks.push(crate::star_tree::TreeWalk::bulge(self, frame));
+        }
         let centre = self.to_grid(observer, frame as f64 * self.params.frame_myr);
         let mut out = vec![];
         let mut per = vec![];

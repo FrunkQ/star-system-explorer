@@ -230,6 +230,31 @@ pub struct StarSystem {
     /// GH4: a star of the stellar halo, born in a galaxy this one tore apart.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub born_in: Option<BornIn>,
+    /// A star of the bulge (Local Arm package), drawn by the bulge's own
+    /// count tree; its key is `f<frame>b<slot>`.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub in_bulge: bool,
+}
+
+/// Which of a galaxy's populations a drawn star belongs to: each has its own
+/// count tree, keys and slots in a cell.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Kind {
+    Disc,
+    Halo,
+    Bulge,
+}
+
+impl StarSystem {
+    pub fn kind(&self) -> Kind {
+        if self.born_in.is_some() {
+            Kind::Halo
+        } else if self.in_bulge {
+            Kind::Bulge
+        } else {
+            Kind::Disc
+        }
+    }
 }
 
 /// Where a halo star was born (GH4): the galaxy it came from, and what is
@@ -534,6 +559,73 @@ impl<'a> Stars<'a> {
     /// GH4: the remains' systems per pc³ at a point of the grid.
     pub(crate) fn remains_density_at(&self, g: [f64; 3], t0: f64) -> f64 {
         self.remains_weights_at(g, t0).iter().map(|w| w.1).sum()
+    }
+
+    /// Whether this galaxy has a bulge to draw.
+    pub(crate) fn has_bulge(&self) -> bool {
+        self.env.galaxy.now.bulge > 0.0 && self.env.galaxy.bulge_size[0] > 0.0
+    }
+
+    /// The bulge's systems per pc³ at a point of the grid (pc) at `t0` (Myr).
+    pub(crate) fn bulge_density_at(&self, g: [f64; 3], t0: f64) -> f64 {
+        let [x, y, z] = self.from_grid(g, t0);
+        self.env.bulge_pc3(Place {
+            r_kpc: m::hypot(x, y) / 1000.0,
+            phi: m::atan2(y, x),
+            z_pc: z,
+            t_gyr: t0 / 1000.0,
+        }) / self.env.params.mean_star_msun
+    }
+
+    /// The bulge's cumulative births as it stood at `t_now_gyr`
+    /// (`Galaxy::bulge_births_at`).
+    pub(crate) fn bulge_cdf(&self, t_now_gyr: f64) -> (Vec<(f64, f64)>, f64) {
+        let mut cdf = vec![(
+            self.env.disc.t_start_gyr.min(self.env.galaxy.t_start_gyr),
+            0.0,
+        )];
+        let mut acc = 0.0;
+        for (t, b) in &self.env.galaxy.bulge_births_at(t_now_gyr) {
+            acc += b;
+            cdf.push((*t, acc));
+        }
+        (cdf, acc)
+    }
+
+    /// A bulge star: everything but its mass and birth, as a disc star's
+    /// (its gas at its radius when it was born, an orbit through where it is:
+    /// fudge register "stars.rs bulge orbits"), with the bulge's key.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn complete_bulge(
+        &self,
+        d: &Draws,
+        i: &dyn Fn(u64) -> u64,
+        addr: &Address,
+        cell: [i64; 3],
+        frame: i64,
+        k: u64,
+        mass: f64,
+        birth: f64,
+    ) -> Result<StarSystem, String> {
+        let mut s = self.complete(d, i, addr, cell, frame, k, mass, birth)?;
+        s.address = addr
+            .child_key("sys", &format!("f{frame}b{k}"))
+            .map_err(|e| format!("{e:?}"))?;
+        s.in_bulge = true;
+        Ok(s)
+    }
+
+    /// The bulge's stars of a cell.
+    pub(crate) fn draw_bulge(
+        &self,
+        cell: [i64; 3],
+        frame: i64,
+        class: Option<usize>,
+    ) -> Result<Vec<StarSystem>, String> {
+        if self.params.key_version < 2 || !self.has_bulge() {
+            return Ok(vec![]);
+        }
+        crate::star_tree::TreeWalk::bulge(self, frame).draw(cell, class)
     }
 
     /// GH4: the earliest birth any component holds (every remains history
@@ -871,6 +963,7 @@ impl<'a> Stars<'a> {
             },
             pinned: false,
             born_in: None,
+            in_bulge: false,
         })
     }
 
@@ -885,7 +978,8 @@ impl<'a> Stars<'a> {
     ) -> Result<Vec<StarSystem>, String> {
         let fill = self.draw_all(cell, frame)?;
         let rem = self.draw_remains(cell, frame, None)?;
-        Ok(self.with_pins(cell, frame, pins, fill, rem))
+        let bul = self.draw_bulge(cell, frame, None)?;
+        Ok(self.with_pins(cell, frame, pins, fill, rem, bul))
     }
 
     /// Several cells in one frame, each exactly as `cell` gives it. The
@@ -901,6 +995,8 @@ impl<'a> Stars<'a> {
             (self.params.key_version >= 2).then(|| crate::star_tree::TreeWalk::new(self, frame));
         let rwalk = (self.params.key_version >= 2 && self.has_remains())
             .then(|| crate::star_tree::TreeWalk::remains(self, frame));
+        let bwalk = (self.params.key_version >= 2 && self.has_bulge())
+            .then(|| crate::star_tree::TreeWalk::bulge(self, frame));
         cells
             .iter()
             .map(|&c| {
@@ -912,7 +1008,11 @@ impl<'a> Stars<'a> {
                     Some(w) => w.draw(c, None)?,
                     None => vec![],
                 };
-                Ok(self.with_pins(c, frame, pins, fill, rem))
+                let bul = match &bwalk {
+                    Some(w) => w.draw(c, None)?,
+                    None => vec![],
+                };
+                Ok(self.with_pins(c, frame, pins, fill, rem, bul))
             })
             .collect()
     }
@@ -924,6 +1024,7 @@ impl<'a> Stars<'a> {
         pins: &[StarSystem],
         mut fill: Vec<StarSystem>,
         mut remains: Vec<StarSystem>,
+        mut bulge: Vec<StarSystem>,
     ) -> Vec<StarSystem> {
         let t0 = frame as f64 * self.params.frame_myr;
         let here: Vec<&StarSystem> = pins
@@ -932,23 +1033,28 @@ impl<'a> Stars<'a> {
             .collect();
         // Pins drawn from this cell and frame keep their slot; a disc pin
         // that moved here takes a disc star's place, a halo pin a halo
-        // star's.
-        let own = |halo: bool| -> Vec<u64> {
+        // star's, a bulge pin a bulge star's.
+        let own = |kind: Kind| -> Vec<u64> {
             here.iter()
-                .filter(|s| s.cell == cell && s.frame == frame && s.born_in.is_some() == halo)
+                .filter(|s| s.cell == cell && s.frame == frame && s.kind() == kind)
                 .map(|s| s.slot)
                 .collect()
         };
-        for (list, halo) in [(&mut fill, false), (&mut remains, true)] {
-            let mine = own(halo);
+        for (list, kind) in [
+            (&mut fill, Kind::Disc),
+            (&mut remains, Kind::Halo),
+            (&mut bulge, Kind::Bulge),
+        ] {
+            let mine = own(kind);
             list.retain(|s| !mine.contains(&s.slot));
-            let of_kind = here.iter().filter(|s| s.born_in.is_some() == halo).count();
+            let of_kind = here.iter().filter(|s| s.kind() == kind).count();
             let keep = list.len().saturating_sub(of_kind - mine.len());
             list.truncate(keep);
         }
         let mut out: Vec<StarSystem> = here.into_iter().cloned().collect();
         out.extend(fill);
         out.extend(remains);
+        out.extend(bulge);
         out.sort_by(|a, b| a.address.cmp(&b.address));
         out
     }
@@ -968,10 +1074,20 @@ impl<'a> Stars<'a> {
         }
         let n: Vec<i64> = key.split('_').filter_map(|x| x.parse().ok()).collect();
         let halo = sys.contains('h');
+        let in_bulge = sys.contains('b');
+        let sep = if halo {
+            'h'
+        } else if in_bulge {
+            'b'
+        } else {
+            'k'
+        };
         let (f, k) = sys
             .strip_prefix('f')
-            .and_then(|x| x.split_once(if halo { 'h' } else { 'k' }))
-            .ok_or_else(|| format!("{text}: system key is f<frame>k<slot> or f<frame>h<slot>"))?;
+            .and_then(|x| x.split_once(sep))
+            .ok_or_else(|| {
+                format!("{text}: system key is f<frame>k<slot>, f<frame>h<slot> or f<frame>b<slot>")
+            })?;
         let (frame, slot): (i64, u64) = match (f.parse(), k.parse()) {
             (Ok(f), Ok(k)) => (f, k),
             _ => return Err(format!("{text}: system key is f<frame>k<slot>")),
@@ -983,6 +1099,9 @@ impl<'a> Stars<'a> {
         let all = if halo {
             let classes = self.params.class_edges_lsun.len() as u64 + 1;
             self.draw_remains(cell, frame, Some((slot % classes) as usize))?
+        } else if in_bulge {
+            let classes = self.params.class_edges_lsun.len() as u64 + 1;
+            self.draw_bulge(cell, frame, Some((slot % classes) as usize))?
         } else if self.params.key_version >= 2 {
             // The slot names its class (count tree slots interleave them).
             let classes = self.params.class_edges_lsun.len() as u64 + 1;
@@ -1016,6 +1135,8 @@ impl<'a> Stars<'a> {
             address: s.address.clone(),
             population: if s.born_in.is_some() {
                 "stellar halo".into()
+            } else if s.in_bulge {
+                "bulge".into()
             } else if s.birth_gyr < 3.0 {
                 "thick disc".into()
             } else {

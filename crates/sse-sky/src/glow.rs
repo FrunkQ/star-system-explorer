@@ -227,6 +227,8 @@ pub fn glow(
     let classes = radii.len();
     let ax = sky_axes(observer_pc);
     let mixes: RefCell<BTreeMap<i64, Mix>> = RefCell::new(BTreeMap::new());
+    // The bulge's stars: one light mix for the whole bulge.
+    let bulge_mix = mix_of(&st.bulge_light_points(t_myr), classes, bands, limit, pc_m);
     let lim_ext = ccm_ratio(limit.effective_m, 3.1);
     let band_ext: Vec<f64> = bands
         .iter()
@@ -264,7 +266,8 @@ pub fn glow(
             // disc's light mix at that radius: fudge F49).
             let dens = st.env.systems_pc3(place)
                 + st.env.remains_pc3(place) / st.env.params.mean_star_msun;
-            if dens <= 0.0 {
+            let dens_bulge = st.env.bulge_pc3(place) / st.env.params.mean_star_msun;
+            if dens <= 0.0 && dens_bulge <= 0.0 {
                 continue;
             }
             let bin = m::round(place.r_kpc / set.mix_bin_kpc) as i64;
@@ -275,15 +278,20 @@ pub fn glow(
             });
             // Faintest absolute magnitude still drawn at this distance.
             let m_star = limit_mag - 5.0 * m::log10(s / 10.0) - a_mid * lim_ext;
-            for (c, cl) in mix.classes.iter().enumerate() {
-                let from = if s > radii[c] {
-                    0
-                } else {
-                    cl.abs_mag.partition_point(|x| *x <= m_star)
-                };
-                for (b, acc) in sum.iter_mut().enumerate() {
-                    let tau = a_mid * band_ext[b] / MAG_PER_TAU;
-                    *acc += dens * ds * cl.faint[b][from] * m::exp(-tau);
+            for (n, mx) in [(dens, &*mix), (dens_bulge, &bulge_mix)] {
+                if n <= 0.0 {
+                    continue;
+                }
+                for (c, cl) in mx.classes.iter().enumerate() {
+                    let from = if s > radii[c] {
+                        0
+                    } else {
+                        cl.abs_mag.partition_point(|x| *x <= m_star)
+                    };
+                    for (b, acc) in sum.iter_mut().enumerate() {
+                        let tau = a_mid * band_ext[b] / MAG_PER_TAU;
+                        *acc += n * ds * cl.faint[b][from] * m::exp(-tau);
+                    }
                 }
             }
         }

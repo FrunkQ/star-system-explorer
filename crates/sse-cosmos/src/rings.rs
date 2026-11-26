@@ -368,6 +368,18 @@ pub fn evolve_clocked(
             })
             .collect();
         let wsum: f64 = wts.iter().sum();
+        // Mergers in this step moved a share of the disc's stars into the
+        // bulge (`Galaxy::disc_moves`): the same share leaves every ring.
+        let (ta, tb) = (
+            gal.t_start_gyr + dt * k as f64,
+            gal.t_start_gyr + dt * (k + 1) as f64,
+        );
+        let keep_disc: f64 = gal
+            .disc_moves
+            .iter()
+            .filter(|(t, _)| *t >= ta && *t < tb)
+            .map(|(_, f)| 1.0 - f)
+            .product();
         for i in 0..nr {
             let add = if wsum > 0.0 {
                 inflow * wts[i] / wsum
@@ -445,7 +457,7 @@ pub fn evolve_clocked(
                 }
             };
             feh_hist[i].push(ab(FE));
-            stars_so_far[i] += (1.0 - p.return_fraction) * sf;
+            stars_so_far[i] = stars_so_far[i] * keep_disc + (1.0 - p.return_fraction) * sf;
             states[i].push(RingState {
                 gas: gas[i],
                 stars: stars_so_far[i],

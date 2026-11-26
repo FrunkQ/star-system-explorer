@@ -293,6 +293,9 @@ pub struct Local {
     /// GH4: the part of `stars_pc3` in the remains of torn-apart galaxies.
     #[serde(default, skip_serializing_if = "is_zero")]
     pub remains_pc3: f64,
+    /// The part of `stars_pc3` in the bulge.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub bulge_pc3: f64,
     /// Gas abundances, [X/H] in dex.
     pub feh: f64,
     pub alpha_fe: f64,
@@ -575,6 +578,22 @@ impl GalaxyEnvelope<'_> {
         stars / e.mean_star_msun
     }
 
+    /// The bulge's stars at a place, solar masses per pc³: a Hernquist
+    /// sphere, rho = M a / (2 pi r (r + a)^3) (Hernquist 1990), with the mass
+    /// the galaxy's bulge held then and DM4's size rule for that mass (the
+    /// rotation curve's own bulge, so the light and the gravity agree). Round, not barred
+    /// (fudge register "envelope.rs bulge").
+    pub fn bulge_pc3(&self, p: Place) -> f64 {
+        let a = self.galaxy.bulge_a_kpc(p.t_gyr) * 1000.0;
+        let mass = self.galaxy.bulge_at(p.t_gyr);
+        if a <= 0.0 || mass <= 0.0 {
+            return 0.0;
+        }
+        let rr = p.r_kpc * 1000.0;
+        let r = m::sqrt(rr * rr + p.z_pc * p.z_pc).max(1.0);
+        mass * a / (2.0 * m::PI * r * (r + a) * (r + a) * (r + a))
+    }
+
     /// GH4: the remains of what this galaxy tore apart at a place: each
     /// component's stars per pc³ (M☉), in component order, zeros left out.
     pub fn remains_at(&self, p: Place) -> Vec<(usize, f64)> {
@@ -634,6 +653,20 @@ impl GalaxyEnvelope<'_> {
         let encounters = n * m::PI * e.encounter_pc * e.encounter_pc * v_pc_myr;
         // GH4: the remains here. Their stars barely turn with the disc, so
         // they meet a disc star at about the circular speed.
+        // The bulge's stars are hot: they meet a disc star at about the
+        // galaxy's circular speed then (its history's, so nothing later reaches back).
+        let bulge = self.bulge_pc3(p);
+        let (stars, n, encounters) = if bulge > 0.0 {
+            let v = self.galaxy.v_c_at(p.t_gyr) * 1.022_712;
+            let nb = bulge / e.mean_star_msun;
+            (
+                stars + bulge,
+                n + nb,
+                encounters + nb * m::PI * e.encounter_pc * e.encounter_pc * v,
+            )
+        } else {
+            (stars, n, encounters)
+        };
         let remains = self.remains_pc3(p);
         let (stars, n, encounters) = if remains > 0.0 {
             let v_halo = self.circular(p.r_kpc).0 * 1.022_712;
@@ -664,6 +697,7 @@ impl GalaxyEnvelope<'_> {
             stars_pc3: stars,
             systems_pc3: n,
             remains_pc3: remains,
+            bulge_pc3: bulge,
             feh: s.feh,
             alpha_fe: s.alpha_h - s.feh,
             c_o: 0.55 * m::pow(10.0, s.cn_h - s.alpha_h),
