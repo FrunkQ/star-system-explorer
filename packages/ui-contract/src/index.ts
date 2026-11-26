@@ -218,3 +218,5 @@ export { atlasPacks, classNamesIn, sweepAsk, sweepMarks } from "./sweep.ts";
 export { MAKEUP_FIELD, MAKEUP_PARTS, makeupEdits, makeupKinds, makeupOf, PART_WORDS, retradeMakeup } from "./makeup.ts";
 export type { MakeupKind, MakeupPart } from "./makeup.ts";
 export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";
+export * from "./approach.ts";
+export * from "./journey.ts";
