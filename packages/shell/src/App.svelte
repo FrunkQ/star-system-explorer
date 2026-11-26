@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { YEAR_SECONDS, followTime, orbitBodies, periodsFrom, phasesFrom, stoppedAt, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -783,10 +783,12 @@
   // to each host). Views draw from the scene, so the phases go onto it and the chart, 3D view and sound move together.
   // A fixture scene sends its own elements, with its drawn phases as their places at the campaign's start.
   let phases = $state<Map<string, number> | null>(null);
+  // The clock time those phases are for and each body's period, so the pictures run the bodies on between answers (CLK1).
+  let motion = $state<{ at_s: number; periods: Map<string, number> } | null>(null);
   // Play asks ten times a second: one call at a time, and only the latest time waits.
   let orbitsFor = "";
   let orbitsBusy = false;
-  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; epoch: bigint; key: string } | null = null;
+  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; at_s: number; epoch: bigint; key: string } | null = null;
   function pumpOrbits() {
     if (orbitsBusy || !orbitsWant) return;
     const w = orbitsWant;
@@ -794,7 +796,7 @@
     orbitsBusy = true;
     w.s.orbitsAt(w.sc.system, [w.at], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) phases = phasesFrom(r.bodies);
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (motion = { at_s: w.at_s, periods: periodsFrom(r.bodies) }));
       pumpOrbits();
     });
   }
@@ -805,8 +807,8 @@
     const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null));
-    orbitsWant = { s, sc, at, epoch, key };
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (motion = null));
+    orbitsWant = { s, sc, at, at_s: (ws.now_yr - (ws.campaign_epoch_yr ?? base.now_yr)) * YEAR_SECONDS, epoch, key };
     pumpOrbits();
   });
   // A pack's calendar (kernel calendar), read again whenever the pack stack changes.
@@ -816,7 +818,7 @@
     if (!s) return;
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
-  const timed = $derived(withPhases(scene, phases));
+  const timed = $derived(withPhases(scene, phases, motion));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
   let layerLabels = $state.raw<Map<string, string>>(new Map());
   $effect(() => {
@@ -871,6 +873,13 @@
   $effect(() => {
     const yr = ws.campaign_now_yr ?? ws.now_yr;
     if (share?.state.link) share.setClock(yr);
+  });
+  // The picture's clock (CLK1) follows the time in view however it was moved (a step, a bookmark, a save opened, a
+  // campaign shifted to another system's present); play and the Run desk's clock set its rate.
+  $effect(() => {
+    const yr = ws.now_yr;
+    const epoch = ws.campaign_epoch_yr ?? base.now_yr;
+    untrack(() => (ws.clock = followTime(ws.clock ?? stoppedAt(yr, epoch), yr, epoch, performance.now())));
   });
   // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
   // so stepping and playing through days does not call the kernel's derivations at every frame.

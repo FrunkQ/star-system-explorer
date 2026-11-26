@@ -1,0 +1,74 @@
+# CLK1: everything that moves on screen moves on the campaign's clock
+
+Status: done 26 Nov 2026, thread "Run all animation off the clock". Asked by Alex (26 Nov, 19:19 UTC, looking at the
+star gallery and the belts in the system view): "I feel we should be running those at the speed of the clock... so
+advancing time fast animates a sun, planets whizz round and asteroids/belts circle at their correct speeds."
+
+## What drove each motion before (the inventory)
+
+| Where | What moved | Driven by before | Now |
+|---|---|---|---|
+| System True (`System3D.svelte`) | the star's spin, spots, cells, flares, ejections | its own clock, six hours a second from page time (`STAR_SECONDS_PER_SECOND`), whatever the ruler did | the campaign's clock |
+| System True | belt members (Kepler shear, inner edge laps the outer) | their own clock, thirty days a second (`BELT_SECONDS_PER_SECOND`) | the campaign's clock |
+| System 3D and True | worlds round their orbits | the kernel's `orbits_at` phase, ten answers a second while playing (so they jumped) | the same phases, run on smoothly between answers at each body's own period |
+| Size comparison globes (`Lineup3D.svelte`, the Body globe path) | spin, a giant's bands and storms, a star's face | page time: Same pace (40 s a turn) or "True pace" (the quickest 40 s a turn, rest in proportion), star six hours a second | Same pace kept as a labelled aid; "True pace" became **On the clock** (real days on the campaign's clock); the star's face on the clock |
+| Land (`Surface.svelte`) | sea waves | page time (real time, but never stopping and never speeding up) | the campaign's clock (wrapped to a day for the GPU's floats) |
+| Land | the sun's hour | already the world's clock at the time in view | unchanged |
+| Star gallery (PR 641, not on main yet) | cells, spin, flares | its own clock per star, said in its caption | not touched here (see below) |
+| Interface motion: camera glides, the ruler's glide, Cosmic web's slow yaw, Galaxies nearby and Formation replays, the players' table drift (`PlayerChart` animate, `PlayerOrbit` ship) | presentation | page time | unchanged: they are the interface or a replay of their own timeline, not the world; the players' drift is in the fudge register already |
+
+## How it works
+
+- **One clock** (`packages/ui-contract/src/picture-clock.ts`): `PictureClock { epoch_yr, at_s, wall_ms, rate }` on the
+  workspace (`ws.clock`). Time is counted in **seconds since the campaign's epoch**, not years: a year near a star's
+  age only resolves about 30 s in a 64-bit float, which would make real-time motion stutter. `rate` is clock seconds
+  per real second; 0 is stopped.
+- **Who sets it.** The ruler's Play calls `onrate` with its step a second (and 0 on Pause); the workspace's `setRate`
+  re-anchors without a jump. An App effect makes the clock follow `now_yr` however it moves (steps, drags, bookmarks,
+  saves). While running, a ruler tick that agrees with the clock keeps the anchor (`followTime`), so the picture is
+  not knocked about by the ruler's ten-a-second rounding. The Run desk's clock (PR 648, TM3a) should call
+  `ws.setRate` the same way once it is on main.
+- **The ruler's play was also fixed**: it added each frame's step to a year near a star's age, losing up to half of
+  it to rounding at an hour a second. It now works the time out afresh each frame from where play started.
+- **Rates come from the physics**, never the clock: the star's `rotation_period_s`, cell lifetimes and flare times from
+  the kernel's activity; belts at √(GM/a³); worlds at the period from `orbits_at` (`periodsFrom`, carried on the scene's
+  `orbit.period_s` and `orbit.at_s`); globes at their own day; waves at their own period.
+- **Stopped means still.** With the clock stopped nothing in a world moves, and the system view's note says so and how
+  to start it. The size comparison's Same pace is the one view that turns while stopped, as an explicit, labelled aid
+  ("an aid for comparing, not their real speeds"); press On the clock for the real thing.
+- **Faster than the pictures** (`tooFast`, under two pictures a cycle): drawn where it truly is at each picture (never
+  slowed to look smooth), and the note names it: "Phobos goes round faster than the screen can show, so it is drawn
+  where it truly is at each picture and may seem to jump or run backwards." The star's cells instead blur toward their
+  average as a picture stands for more of their lives (`granuleBlur`, already there), like a long exposure. Places
+  are drawn up to thirty pictures a second; the star's face (drawn on the CPU) ten.
+- Fudge register rows: True star clock (rewritten), granuleBlur (reason), Belts in True (clock), Turning globes
+  (paces), and three new: Orbits run on between the kernel's answers, Motion faster than the pictures, The sea's
+  clock wraps each day.
+
+## The star gallery (PR 641)
+
+The gallery shows stars outside any campaign and outside time (a reference page, each star at a chosen age), so it has
+no campaign clock to follow. Its own per-star clock is said in its caption, which is the "explicit, labelled choice"
+the coordinator asked for. Recommendation for Alex: keep it, and once 641 is on main let its caption show the rate it
+runs at in the same words (`rateWords`). Not changed here, to stay out of an open PR.
+
+## Not done (follow-ups)
+
+- Flares are read for the campaign's first year (`readLiveStar`'s window): later dates show a star with no flares.
+  The window should be read again as the clock leaves it.
+- A time exposure for motions faster than the pictures (each fast body drawn as the arc it sweeps in one picture).
+- The flat chart and the players' screens still move at the kernel's ten answers a second.
+- The ruler has no real-time step (its smallest is an hour a second); the Run desk's clock (PR 648) has real time.
+- The star's time is its age plus clock seconds in one float (about 30 s resolution near 4.6 Gyr): fine for spin and
+  flares, but at real time the Sun's ten-minute cells step in 30 s jumps. Passing the cells the clock seconds alone
+  would fix it (star-now.ts, which PR 641 also edits).
+
+## Checks
+
+- `packages/ui-contract/test/picture-clock.test.ts`: stopped is still; real time resolves half a second near a
+  star's age; changing the rate never jumps; ticks keep the anchor and a jump moves it; orbits run on at their mean
+  motion; a motion faster than the pictures is named; the rate in words.
+- `tests/ui/system3d.e2e.mjs`: the star stands still while the clock is stopped and the note says so; Play turns it
+  and the note says "a day a second".
+- `tests/ui/compare.e2e.mjs`: the pace button is On the clock, and with the clock stopped it says the globes stand still.
+- `npm run ui:check` clean; `npm run ui:test`.

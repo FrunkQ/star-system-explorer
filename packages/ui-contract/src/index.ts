@@ -228,3 +228,4 @@ export * from "./approach.ts";
 export * from "./journey.ts";
 export { STAR_KINDS, spectralLetter, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export * from "./picture-clock.ts";

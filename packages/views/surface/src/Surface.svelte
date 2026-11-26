@@ -21,7 +21,7 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { clockAt, constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, readGroundOptics, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
@@ -283,6 +283,8 @@
   // Lava tube openings near the site (TRUE6): the kernel's cave survey, its fallen roofs cut into the walk patch.
   let openings = $state<CaveOpening[]>([]);
   const NEAR_HALF = 6000;
+  // The sea's clock wraps once a day of clock time (CLK1; see the sea in `frame`).
+  const SEA_WRAP_S = constant("day");
   const DETAIL_HALF = 2000;
   const FAR_HALF = 120000;
   const WALK_HALF = DETAIL_HALF - 100;
@@ -747,7 +749,14 @@
       }
       // What the picture depends on: while it is the same, the view rests and sharpens; any change draws it moving.
       const r = look === "true" ? run : null;
-      const key = r ? [look, w, h, ...eye.map((x) => Math.round(x * 1e3)), ...fwd.map((x) => Math.round(x * 1e5)), ...sun.map((x) => Math.round(x * 1e5)), seaNow ? now : 0, landerSet, siteStars?.key ?? "", lamps].join("|") : "";
+      // The sea's waves on the picture's clock (CLK1): real time when the clock runs at real time, faster as it runs
+      // faster, still when it is stopped. A players' screen with no clock of its own keeps the page's time. Wrapped to a
+      // day (the drawing counts in 32-bit floats, which would lose the fraction of a second after a few months of
+      // clock time): the waves jump once a day of clock time (fudge register, "The sea's clock wraps each day").
+      const clk = watching ? null : (ctx?.workspace.clock ?? null);
+      const seaT = clk ? clockAt(clk, now) : now / 1000;
+      const seaTime = seaT - Math.floor(seaT / SEA_WRAP_S) * SEA_WRAP_S;
+      const key = r ? [look, w, h, ...eye.map((x) => Math.round(x * 1e3)), ...fwd.map((x) => Math.round(x * 1e5)), ...sun.map((x) => Math.round(x * 1e5)), seaNow ? seaTime : 0, landerSet, siteStars?.key ?? "", lamps].join("|") : "";
       const still = r !== null && key === heldKey;
       heldKey = key;
       const step = still ? r!.rest.next(now) : null;
@@ -778,7 +787,7 @@
         ground: tok("--sse-ground"),
         ink: tok("--sse-ink"),
         contour_m: contourFor(eye[2] - siteZ),
-        ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000, ...(seaOptics ? { optics: seaOptics.optics } : {}) } } : {}),
+        ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: seaTime, ...(seaOptics ? { optics: seaOptics.optics } : {}) } } : {}),
       });
       if (r) {
         const work = performance.now() - t0;

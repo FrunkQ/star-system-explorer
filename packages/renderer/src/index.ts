@@ -20,7 +20,7 @@ export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround
 // TA6: a world flattened by its spin (Darwin-Radau flow), true-shape.ts.
 export { flattenScale, readTrueShape, SHAPE_FLOW, type ShapeReader, type TrueShape } from "./true-shape.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
-export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
+export { BELT_DUST, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
 export type { RingBand, RingProfile } from "./rings.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
@@ -57,7 +57,7 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
 export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
-export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
+export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
 export { CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";

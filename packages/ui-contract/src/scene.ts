@@ -44,7 +44,12 @@ export interface SceneSubject {
   /** One-line description, e.g. "III · temperate ocean world". */
   subtitle?: string;
   parent?: string;
-  orbit?: { a_au: number; phase_deg: number };
+  /**
+   * Its orbit: distance and phase at the time in view. `period_s` and `at_s` (clock seconds since the campaign's
+   * epoch that the phase is for, picture-clock.ts) come with the kernel's `orbits_at`, so a view can run the body on
+   * between answers at its own mean motion (CLK1).
+   */
+  orbit?: { a_au: number; phase_deg: number; period_s?: number; at_s?: number };
   /** Radial extent of a belt or zone, in AU. */
   band_au?: [number, number];
   /**

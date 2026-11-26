@@ -185,12 +185,6 @@ export function drawLiveStar(out: { width: number; data: Uint8ClampedArray }, s:
   drawStar(out, { teff_k: s.teff, spots, lon_deg: turnAt(s, t), lat_deg, light, corona_h: coronaScaleHeight(s.mass, s.radius), flares: flaresAt(s, spots, t, span).map(({ lat_deg, lon_deg, strength }) => ({ lat_deg, lon_deg, strength })), granules }, disc);
 }
 
-/**
- * How fast the True view's star runs: six hours of the star's time each second on the screen, stated beside the
- * view. At that rate a Sun-like star turns once in under two minutes, so its spots are seen going round, and a flare
- * shows for a moment; the universe clock is not moved.
- */
-export const STAR_SECONDS_PER_SECOND = constant("day") / 4;
 
 /**
  * Differential rotation (VP-S4): a star's surface turns faster at its equator than near its poles. The Sun's rate is
