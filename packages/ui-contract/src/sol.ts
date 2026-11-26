@@ -87,9 +87,9 @@ export function toSI(x: SolValue, what = "a value"): number {
 
 /**
  * Units the kernel holds a fact in as it is, though they are not SI: surface water in Earth oceans, and a gas named by
- * its substance id on the master data sheet (text).
+ * its substance id on the master data sheet (text), and a motion model named by its table id (text, RW17).
  */
-const KERNEL_UNITS: ReadonlySet<string> = new Set(["earth_oceans", "substance"]);
+const KERNEL_UNITS: ReadonlySet<string> = new Set(["earth_oceans", "substance", "model"]);
 function factValue(x: SolValue, what: string): Json {
   return KERNEL_UNITS.has(x.unit) ? x.v : toSI(x, what);
 }

@@ -70,6 +70,12 @@
         "unit": "deg",
         "src": "hipparcos1997",
         "note": "J2000 ecliptic equinox (longitude zero) in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "time.j2000_s": {
+        "v": 63115200000,
+        "unit": "s",
+        "src": "sse-sol-clock",
+        "note": "the universe second of J2000.0 (2000 January 1, 12:00 TT): the date the motion tables count from"
        }
       }
      },
@@ -142,6 +148,12 @@
         "src": "margot2012",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.mer",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.mer.json)"
        }
       }
      },
@@ -266,6 +278,12 @@
         "src": "margot2021",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.ven",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.ven.json)"
        }
       }
      },
@@ -409,6 +427,12 @@
         "src": "yoder1995",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.emb",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.emb.json)"
        }
       }
      },
@@ -475,6 +499,12 @@
         "src": "konopliv1998",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "elpmpp02.moon",
+        "unit": "model",
+        "src": "chapront-francou2003",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/elpmpp02.moon.json)"
        }
       },
       "note": "semi-major axis about Earth"
@@ -614,6 +644,12 @@
         "src": "konopliv2011",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.mar",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.mar.json)"
        }
       }
      },
@@ -702,6 +738,12 @@
         "unit": "1",
         "src": "nssdca-jupiter",
         "note": "by volume, at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.jup",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.jup.json)"
        }
       },
       "note": "rotation in System III (1965.0)"
@@ -785,6 +827,12 @@
         "unit": "1",
         "src": "nssdca-saturn",
         "note": "by volume, at the 1 bar level; HD (110 ppm) and ethane (7 ppm) left out"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.sat",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.sat.json)"
        }
       },
       "note": "rotation in Saturnian System III"
@@ -862,6 +910,12 @@
         "unit": "1",
         "src": "nssdca-uranus",
         "note": "by volume, at the 1 bar level; HD (148 ppm) left out"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.ura",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.ura.json)"
        }
       },
       "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
@@ -939,6 +993,12 @@
         "unit": "1",
         "src": "nssdca-neptune",
         "note": "by volume, at the 1 bar level; HD (192 ppm) and ethane (1.5 ppm) left out"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.nep",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.nep.json)"
        }
       },
       "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
@@ -2132,6 +2192,18 @@
     ],
     "sources": [
      {
+      "id": "bretagnon-francou1988",
+      "text": "Bretagnon, P. and Francou, G. 1988, A&A 202, 309: Planetary theories in rectangular and spherical variables. VSOP 87 solutions (VizieR VI/81)",
+      "status": "verified",
+      "url": "https://ui.adsabs.harvard.edu/abs/1988A&A...202..309B"
+     },
+     {
+      "id": "chapront-francou2003",
+      "text": "Chapront, J. and Francou, G. 2003, A&A 404, 735: The lunar theory ELP revisited. Introduction of new planetary perturbations (ELP/MPP02)",
+      "status": "verified",
+      "doi": "10.1051/0004-6361:20030529"
+     },
+     {
       "id": "charette-smith2010",
       "text": "Charette, M. A. and Smith, W. H. F. 2010, Oceanography 23(2), 112: The volume of Earth's ocean (1.335e9 km3, the size of one Earth ocean as the kernel counts it; Earth holds 1 by definition)",
       "status": "unverified",
@@ -2346,6 +2418,12 @@
       "text": "Russell, C. T. et al. 2016, Science 353, 1008: Dawn arrives at Ceres, exploration of a small, volatile-rich world (mean radius 469.7 km, mass 9.384e20 kg, obliquity 4°)",
       "status": "verified",
       "doi": "10.1126/science.aaf4219"
+     },
+     {
+      "id": "sse-sol-clock",
+      "text": "SSE4's Sol clock: universe seconds on TT, J2000.0 at 63,115,200,000 s, as the Sol today pack's calendar counts them (store-packs/sol-today)",
+      "status": "verified",
+      "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/store-packs/sol-today/pack.json"
      },
      {
       "id": "staehler2021",

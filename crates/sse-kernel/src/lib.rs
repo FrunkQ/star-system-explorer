@@ -27,6 +27,8 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+#[cfg(test)]
+mod eclipse_tests;
 mod fields;
 mod flights;
 #[cfg(test)]
@@ -52,6 +54,7 @@ mod life;
 mod life_tests;
 #[cfg(test)]
 mod matter_tests;
+pub mod motion;
 mod names;
 #[cfg(test)]
 mod names_tests;
