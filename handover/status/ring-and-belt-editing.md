@@ -16,7 +16,7 @@ Nothing is built. RB is a code only, never shown in the product.
 | RB0 the note in `handover/design/`, this file, the row in START-HERE | done, 26 Nov | this thread |
 | RB1 kernel: a ring or belt's inputs as authored fields read by `ring_structure`; `branch`; size ladder and thickness; own golden area | queued, needs the ring structure job merged | the ring structure thread, or kernel |
 | RB2 the row and boxes: handle sheet rows for "ring or belt" (Where, How much, Made of, Grains, Stir), walls, typing | queued, needs RB1 | planet and star editing |
-| RB3 the Profile part (an amount along a line), read-only first, then joins and heights that keep the sum | queued, needs RB1 | planet and star editing |
+| RB3 the Profile part (an amount along a line), read-only first, then joins and heights that keep the sum | RB3a done 26 Nov against a fixture (part, model, grammar check; log `packages/RB3.md`); RB3b (mounting and writing) needs RB1 | thread "Build the ring profile editor" for RB3a; planet and star editing |
 | RB4 "Others like this", Kinds, the Add hoop and edge grips on the chart | queued, needs RB2, RB3 | planet and star editing, chart room |
 | RB5 the books: "How much" offers a moon to break up first (Alex, 26 Nov), then other sources, then "from nowhere" with the overdraft line; Break up and Gather | queued, needs RB1 | kernel |
 | RB6 sculptors: authored zones against moons, Reach it adding the moon, "Could be" records; planets sculpting belts | queued, needs RB3, RB5 | small bodies, editing |

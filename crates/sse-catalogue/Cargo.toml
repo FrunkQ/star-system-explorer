@@ -1,0 +1,12 @@
+[package]
+name = "sse-catalogue"
+description = "SSE4 catalogue format sse.catalogue/1 and its reader: measured lists stored biggest first, read by size without touching what lies below the cut (RW3)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true

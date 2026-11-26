@@ -24,7 +24,7 @@ export function sheetRows(handles: readonly Handle[], depth: Depth): SheetRow[] 
   const name = (h: Handle) => (depth === "curious" ? h.names.curious : h.names.science);
   const add = (h: Handle) => out.push({ id: h.id, handle: h, label: name(h), aliases: [h.names.curious, h.names.science, h.part.field, h.id].map((x) => x.toLowerCase()) });
   for (const h of handles) {
-    if (h.part.scale === "bar") continue;
+    if (h.part.scale === "bar" || h.part.scale === "profile") continue;
     add(h);
     for (const p of h.box?.parts ?? []) if (!p.part.as) add(partHandle(h, p));
   }
