@@ -305,6 +305,8 @@ export interface ViewSession {
   /** XO18: the Hazard map's reading (kernel `hazard_map`): a measured Solar System body by `fixture` and `body`, or
    * handed `asks`; along `line` ("equator" or "poles"); with `ship`, or the stated stock ship. Read only. */
   hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }>;
+  /** XO2 to XO4: light near a mass (kernel `read_light_paths`): per body the bender, sizes, feed and the disc as its viewer sees it; `table` adds the bend table (fetch it once, keyed by its hash). */
+  readLightPaths(ask: { fixture?: string; bodies?: Json[]; table?: boolean }): Promise<{ ok: true; paths: Json[]; bend_table?: Json } | { ok: false; code: string; message: string }>;
   /** SV2: who knows a thing, or one fact on it (kernel `known_to`): per audience its landmark, rung and exceptions. GM only. */
   knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }>;
   /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
@@ -938,6 +940,13 @@ export class Session implements ViewSession {
   async hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "hazard_map", ...ask } as Json);
     return r.type === "hazard_maps" ? { ok: true, maps: (r as unknown as { maps: Json[] }).maps } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readLightPaths(ask: { fixture?: string; bodies?: Json[]; table?: boolean }): Promise<{ ok: true; paths: Json[]; bend_table?: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_light_paths", ...ask } as Json);
+    if (r.type !== "light_paths_read") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const got = r as unknown as { paths: Json[]; bend_table?: Json };
+    return { ok: true, paths: got.paths, ...(got.bend_table ? { bend_table: got.bend_table } : {}) };
   }
 
   async knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }> {
