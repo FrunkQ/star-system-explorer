@@ -8,12 +8,36 @@
   GZ6: a third reach, our own satellites, each on the orbit the kernel followed it along since it fell in; Play runs
   them from the first infall to the campaign's date (dwarfs falling in, stripped, torn into streams, or reaching our
   centre); torn-apart satellites are drawn as faint streams along their own paths under HUD. Read only, GM only.
+  GZ5 part 2: True draws each galaxy in its own light against black, a type picture made by rule from its facts
+  (renderer galaxy-types.ts) once it is a few pixels across, a glowing point below that, and our own galaxy as its
+  real face from the kernel's galaxy chart. Free turns the sphere by dragging.
+  GZ6 part 3: the biggest three neighbours in the reach have their real charts read in the background, and in True
+  each swaps its type picture for its real face as the read finishes ("Histories read: 2 of 3"). Under HUD, the web's
+  threads through the neighbourhood lie on our disc's plane, from the kernel's web slice through home.
 -->
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { NEARBY_REACHES, firstInfall, groupEdge, pathAt, satelliteStateWords, streamArc, boundPairs, meetWords, cellHalo, galaxyDistanceWords, galaxyColour, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, sci, withinReach, type HaloCell, type NearGalaxy, type NearbyRead, type NearbyReach, type NearbySeen, type SatellitePath, type ViewSession } from "../../../ui-contract/src/index.ts";
+  import { galaxyFace, glowPicture, SPACE_CSS } from "../../../renderer/src/index.ts";
+  import { galaxyTypePicture } from "../../../renderer/src/galaxy-types.ts";
+  import { FREE_START, NEARBY_REACHES, biggestNeighbours, foamCells, turnOf, firstInfall, groupEdge, pathAt, satelliteStateWords, streamArc, boundPairs, meetWords, cellHalo, galaxyDistanceWords, galaxyColour, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, sci, withinReach, type HaloCell, type NearGalaxy, type NearbyRead, type NearbyReach, type NearbySeen, type NearbyTurn, type SatellitePath, type GalaxyChart, type ViewSession } from "../../../ui-contract/src/index.ts";
 
-  let { session, seen, scale, hud, onchart }: { session: ViewSession; seen: NearbySeen; scale: "real" | "readable"; hud: boolean; onchart: (address: string) => void } = $props();
+  let { session, seen, scale, hud, look = "3d", onchart }: { session: ViewSession; seen: NearbySeen; scale: "real" | "readable"; hud: boolean; look?: "3d" | "true"; onchart: (address: string) => void } = $props();
+
+  // Free (GZ5 part 2): the turn the viewer has dragged to, starting from Tilted.
+  let free = $state<NearbyTurn>({ ...FREE_START });
+  const turn = $derived(turnOf(seen, free));
+  const cosTilt = $derived(Math.cos((turn.tilt_deg * Math.PI) / 180));
+  let drag: { x: number; y: number; at: NearbyTurn } | null = null;
+  const down = (e: PointerEvent) => {
+    if (seen !== "free") return;
+    drag = { x: e.clientX, y: e.clientY, at: { ...free } };
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+  };
+  const moveDrag = (e: PointerEvent) => {
+    if (!drag) return;
+    free = { yaw_deg: drag.at.yaw_deg + (e.clientX - drag.x) * 0.4, tilt_deg: Math.max(0, Math.min(90, drag.at.tilt_deg + (e.clientY - drag.y) * 0.3)) };
+  };
+  const up = () => (drag = null);
 
   let read = $state<NearbyRead | null>(null);
   let failed = $state<string | null>(null);
@@ -36,6 +60,7 @@
   });
 
   const S = 560;
+  const proj = (p: readonly [number, number, number]) => projectNearby(p, seen, S, R, 24, free);
   const R = $derived(NEARBY_REACHES.find((x) => x.id === reach)!.mpc);
   const factor = $derived(readableFactor(R));
   const inReach = $derived(read ? withinReach(read.galaxies, R) : []);
@@ -44,7 +69,7 @@
   const marks = $derived(
     inReach
       .filter((g) => playT === null || !g.satellite)
-      .map((g) => ({ g, ...projectNearby(nearbyAt(g), seen, S, R), r: nearbyRadius(g, S, R, scale, factor), colour: galaxyColour(g.b_v) }))
+      .map((g) => ({ g, ...proj(nearbyAt(g)), r: nearbyRadius(g, S, R, scale, factor), colour: galaxyColour(g.b_v) }))
       .sort((a, b) => a.depth - b.depth || (a.g.address < b.g.address ? -1 : 1)),
   );
   // Names under HUD: the biggest first, skipping any that would sit on a name already placed.
@@ -66,7 +91,7 @@
   // so a thousand stalks do not hide the galaxies.
   const stalked = (g: NearGalaxy) => R <= 2 || g.stellar_mass_msun >= 1e10 || g.address === picked;
   // Our galaxy's centre (the observer sits about 8 kpc out in its disc; that shows only at the satellites' reach).
-  const centre = $derived(projectNearby(read?.centre_mpc ?? [0, 0, 0], seen, S, R));
+  const centre = $derived(proj(read?.centre_mpc ?? [0, 0, 0]));
   const pxPerMpc = $derived((S / 2 - 24) / R);
   const bar = $derived(nearbyScaleBar(S, R));
   // Bound pairs (HUD): the cells holding the galaxies on view, read once each from the kernel's halo_cell, whose
@@ -136,7 +161,7 @@
             const at = pathAt(p, playT!);
             const torn = p.disrupted_gyr !== null && playT! >= p.disrupted_gyr;
             if (!at || torn) return null;
-            return { p, ...projectNearby(at, seen, S, R), r: Math.max(1.4, Math.min(5, 0.9 * Math.log10(Math.max(1, p.infall_stars_msun)) - 4.6)) };
+            return { p, ...proj(at), r: Math.max(1.4, Math.min(5, 0.9 * Math.log10(Math.max(1, p.infall_stars_msun)) - 4.6)) };
           })
           .filter((x): x is NonNullable<typeof x> => !!x),
   );
@@ -145,7 +170,7 @@
       ? shownPaths
           .map((p) => ({ p, arc: streamArc(p, tShown) }))
           .filter((x): x is { p: SatellitePath; arc: [number, number, number][] } => !!x.arc)
-          .map(({ p, arc }) => ({ p, d: arc.map((q, i) => { const m = projectNearby(q, seen, S, R); return `${i ? "L" : "M"}${px(m.x)} ${px(m.y)}`; }).join(" ") }))
+          .map(({ p, arc }) => ({ p, d: arc.map((q, i) => { const m = proj(q); return `${i ? "L" : "M"}${px(m.x)} ${px(m.y)}`; }).join(" ") }))
       : [],
   );
   const pathOf = (a: string | null) => (a && read ? (read.paths.find((p) => p.address === a) ?? null) : null);
@@ -153,7 +178,7 @@
     const p = pathOf(picked);
     if (!p || R > 2) return null;
     const pts = p.t.map((t, i) => [t, p.at[i]!] as const).filter(([t]) => t <= tShown);
-    return pts.length >= 2 ? pts.map(([, q], i) => { const m = projectNearby(q, seen, S, R); return `${i ? "L" : "M"}${px(m.x)} ${px(m.y)}`; }).join(" ") : null;
+    return pts.length >= 2 ? pts.map(([, q], i) => { const m = proj(q); return `${i ? "L" : "M"}${px(m.x)} ${px(m.y)}`; }).join(" ") : null;
   });
   const playCounts = $derived.by(() => {
     let inn = 0;
@@ -182,6 +207,91 @@
     const sat = /\/prog:([^/]+)$/.exec(a);
     return sat ? `Satellite ${sat[1]}` : (a.split("/").at(-1) ?? a);
   };
+  // True: a type picture per galaxy, made once (a few ms each) and kept as an image; our galaxy's real face.
+  const isTrue = $derived(look === "true");
+  const pictures = new Map<string, string>();
+  function pictureOf(g: NearGalaxy): string {
+    let u = pictures.get(g.address);
+    if (u) return u;
+    const pic = galaxyTypePicture(g, 48);
+    u = toUrl(pic.rgba, pic.width);
+    pictures.set(g.address, u);
+    return u;
+  }
+  function toUrl(rgba: Uint8ClampedArray, w: number): string {
+    const cv = document.createElement("canvas");
+    cv.width = w;
+    cv.height = w;
+    const c = cv.getContext("2d");
+    if (!c) return "";
+    const img = c.createImageData(w, w);
+    img.data.set(rgba);
+    c.putImageData(img, 0, 0);
+    return cv.toDataURL();
+  }
+  // Brightness on the page by the galaxy's own absolute magnitude (fudge GZ-F14): a giant at full light, a faint dwarf dimmer, never gone.
+  const lightOf = (g: NearGalaxy) => (g.abs_v === null ? 0.7 : Math.max(0.55, Math.min(1, 0.55 + (-g.abs_v - 12) / 12)));
+  // A real face from a galaxy's own chart (the same picture Galaxy 3D's True draws), with its bulge as a glow.
+  type Face = { url: string; outer_kpc: number; bulge: { url: string; scale_kpc: number } | null };
+  const faceOf = (c: GalaxyChart): Face => {
+    const f = galaxyFace(c, c.at_gyr, "visible", 160);
+    return { url: toUrl(f.data, f.width), outer_kpc: f.outer_kpc, bulge: f.bulge.level > 0 ? { url: toUrl(glowPicture(64, f.bulge.rgb, f.bulge.level), 64), scale_kpc: f.bulge.scale_kpc } : null };
+  };
+  let homeFace = $state<Face | null>(null);
+  $effect(() => {
+    if (!isTrue || homeFace) return;
+    const s = session;
+    void s.galaxyChart({}).then((r) => {
+      if (r.ok) homeFace = faceOf(r.chart);
+    });
+  });
+  const kpcPx = $derived((pxPerMpc / 1000) * (scale === "readable" ? factor : 1));
+  const homeW = $derived(homeFace ? 2 * homeFace.outer_kpc * kpcPx : 0);
+  // GZ6 part 3: the biggest neighbours' real charts, read one at a time in the background and kept.
+  const wanted = $derived(read ? biggestNeighbours(read.galaxies, R) : []);
+  let faces = $state<Record<string, Face | "failed">>({});
+  let fgen = 0;
+  $effect(() => {
+    const todo = wanted.filter((g) => !untrack(() => faces)[g.address] && cellHalo(g.address));
+    if (!todo.length) return;
+    const gen = ++fgen;
+    void (async () => {
+      for (const g of todo) {
+        const c = cellHalo(g.address)!;
+        const r = await session.galaxyChart({ cell: c.cell, halo: c.halo });
+        if (gen !== fgen) return;
+        faces = { ...faces, [g.address]: r.ok ? faceOf(r.chart) : "failed" };
+      }
+    })();
+  });
+  const faceFor = (a: string): Face | null => {
+    const f = faces[a];
+    return f && f !== "failed" ? f : null;
+  };
+  const facesRead = $derived(wanted.filter((g) => faceFor(g.address)).length);
+  // Under HUD: the web's threads on our disc's plane, from a web slice through home (the web's axes are the
+  // galactic frame's, F37), one read per reach.
+  let threads = $state<Record<string, string>>({});
+  $effect(() => {
+    const at = read?.home_mpc;
+    const key = String(R);
+    if (!hud || R < 1 || !at || untrack(() => threads)[key]) return;
+    void session.webSlice({ centre: at, extent_mpc: 2 * R, n: 64 }).then((r) => {
+      if (!r.ok) return;
+      const sl = r.web.slice;
+      const img = new Uint8ClampedArray(sl.n * sl.n * 4);
+      for (const c of foamCells(sl)) {
+        const p = ((sl.n - 1 - c.j) * sl.n + c.i) * 4;
+        // Only the threads and knots (over the mean density), and only inside the reach's circle on the plane.
+        const inside = Math.hypot(c.i + 0.5 - sl.n / 2, c.j + 0.5 - sl.n / 2) <= sl.n / 2;
+        const a = inside ? Math.round(255 * 0.8 * Math.pow(Math.max(0, (c.shade - 0.4) / 0.6), 1.3)) : 0;
+        img[p] = img[p + 1] = img[p + 2] = 235;
+        img[p + 3] = a;
+      }
+      threads = { ...threads, [key]: toUrl(img, sl.n) };
+    });
+  });
+  const planeT = $derived(`translate(${px(centre.x)} ${px(centre.fy)}) scale(1 ${Math.max(0.001, cosTilt)}) rotate(${px(-turn.yaw_deg)})`);
   const choose = (g: NearGalaxy) => (picked = picked === g.address ? null : g.address);
 </script>
 
@@ -194,6 +304,9 @@
     </div>
     <span class="chip" data-nearby-scale={scale}>{scale === "readable" ? `galaxies drawn ${factor} times size` : "true sizes: most are points of light"}</span>
     <span class="chip">as it is at the campaign's date, shapes as seen from home</span>
+    {#if isTrue}<span class="chip" data-true-chip>True: each galaxy a picture made by rule from its type, size, tilt, colour and star formation{homeFace ? "; ours its real face from the galaxy chart" : ""}; visible light only</span>{/if}
+    {#if seen === "free"}<span class="chip">drag the map to turn it</span>{/if}
+    {#if read && wanted.length}<span class="chip" data-histories-read={facesRead}>Histories read: {facesRead} of {wanted.length}{isTrue ? "" : " (their real faces show in True)"}</span>{/if}
   </div>
   {#if read && R <= 2 && t0 !== null}
     <div class="bar play" data-nearby-play={playT === null ? "now" : String(Math.round(playT * 100) / 100)}>
@@ -210,12 +323,14 @@
   {:else}
     <div class="split">
       <figure class="map">
-        <svg viewBox="0 0 {S} {S}" role="img" aria-label="Galaxies within {R} megaparsecs of home, {seen === 'above' ? 'seen from above our disc' : seen === 'edge' ? 'seen edge-on along our disc' : 'seen tilted'}" onpointerleave={() => (hover = null)}>
-          <rect class="ground" x="0" y="0" width={S} height={S} />
-          {#if seen === "edge"}
-            <line class="plane" x1="24" y1={S / 2} x2={S - 24} y2={S / 2} />
-          {:else}
-            <ellipse class="plane" cx={S / 2} cy={centre.fy} rx={S / 2 - 24} ry={seen === "above" ? S / 2 - 24 : (S / 2 - 24) * 0.5} />
+        <svg viewBox="0 0 {S} {S}" role="img" aria-label="Galaxies within {R} megaparsecs of home, {seen === 'above' ? 'seen from above our disc' : seen === 'edge' ? 'seen edge-on along our disc' : seen === 'free' ? 'turned freely: drag to turn' : 'seen tilted'}{isTrue ? ', each in its own light' : ''}" onpointerleave={() => (hover = null)} onpointerdown={down} onpointermove={moveDrag} onpointerup={up} onpointercancel={up} class:turning={seen === "free"} data-nearby-turn={seen === "free" ? `${Math.round(turn.yaw_deg)} ${Math.round(turn.tilt_deg)}` : ""}>
+          <rect class="ground" x="0" y="0" width={S} height={S} style:fill={isTrue ? SPACE_CSS : undefined} data-nearby-true={isTrue ? "" : undefined} />
+          {#if !isTrue || hud}
+            {#if turn.tilt_deg >= 89.5}
+              <line class="plane" x1="24" y1={S / 2} x2={S - 24} y2={S / 2} />
+            {:else}
+              <ellipse class="plane" cx={S / 2} cy={centre.fy} rx={S / 2 - 24} ry={(S / 2 - 24) * cosTilt} />
+            {/if}
           {/if}
           {#if hud && home}
             {#each marks as m (m.g.address)}
@@ -231,6 +346,10 @@
               {#if a && b}<line class="pair" x1={a.x} y1={a.y} x2={b.x} y2={b.y} data-bound-pair={p.a + " " + p.b}><title>{nameOf(p.a)} and {nameOf(p.b)}: {meetWords(p.approach_gyr)}</title></line>{/if}
             {/each}
           {/if}
+          {#if hud && threads[String(R)]}
+            {@const w = 2 * R * pxPerMpc}
+            <image href={threads[String(R)]} x={-w / 2} y={-w / 2} width={w} height={w} transform={planeT} opacity={isTrue ? 0.5 : 0.35} preserveAspectRatio="none" style="image-rendering: auto" data-web-threads />
+          {/if}
           {#if hud && edge && R > 0.5}
             <circle class="edge" cx={centre.x} cy={centre.y} r={edge.radius_mpc * pxPerMpc} data-group-edge={Math.round(edge.radius_mpc * 1000) / 1000}><title>The edge of our group: inside, gravity has stopped the expansion ({sci(edge.mass_msun)} suns within {Math.round(edge.radius_mpc * 100) / 100} Mpc)</title></circle>
           {/if}
@@ -242,10 +361,15 @@
             <circle class="ghost" class:falling={gh.p.fate === "merged"} cx={gh.x} cy={gh.y} r={gh.r} data-ghost={gh.p.address}><title>{nameOf(gh.p.address)}: {satelliteStateWords(gh.p, tShown)}</title></circle>
           {/each}
           {#each marks as m (m.g.address)}
-            {#if seen !== "above" && stalked(m.g) && Math.abs(m.y - m.fy) > 1}<line class="stalk" x1={m.fx} y1={m.fy} x2={m.x} y2={m.y} />{/if}
+            {#if (!isTrue || hud) && turn.tilt_deg > 0.5 && stalked(m.g) && Math.abs(m.y - m.fy) > 1}<line class="stalk" x1={m.fx} y1={m.fy} x2={m.x} y2={m.y} />{/if}
           {/each}
           <!-- Our own galaxy at the middle: a disc in our own plane. -->
-          <ellipse class="us" cx={centre.x} cy={centre.y} rx={Math.max(2.5, 0.015 * pxPerMpc * (scale === "readable" ? factor : 1))} ry={Math.max(1.2, 0.015 * pxPerMpc * (scale === "readable" ? factor : 1) * (seen === "above" ? 1 : seen === "edge" ? 0.12 : 0.5))} data-home-galaxy />
+          {#if isTrue && homeFace && homeW > 4}
+            <image href={homeFace.url} x={-homeW / 2} y={-homeW / 2} width={homeW} height={homeW} transform="translate({centre.x} {centre.y}) scale(1 {Math.max(0.06, cosTilt)}) rotate({-turn.yaw_deg})" style="mix-blend-mode: screen" data-home-galaxy data-home-face />
+            {#if homeFace.bulge}{@const bw = 8 * homeFace.bulge.scale_kpc * kpcPx}<image href={homeFace.bulge.url} x={centre.x - bw / 2} y={centre.y - bw / 2} width={bw} height={bw} style="mix-blend-mode: screen" />{/if}
+          {:else}
+            <ellipse class="us" class:glow={isTrue} cx={centre.x} cy={centre.y} rx={Math.max(2.5, 0.015 * pxPerMpc * (scale === "readable" ? factor : 1))} ry={Math.max(1.2, 0.015 * pxPerMpc * (scale === "readable" ? factor : 1) * Math.max(0.12, cosTilt))} data-home-galaxy />
+          {/if}
           {#each marks as m (m.g.address)}
             <g
               class="gal"
@@ -259,7 +383,16 @@
               data-galaxy={m.g.address}
               data-morphology={m.g.morphology}
             >
-              {#if m.r > 2.5}
+              {#if isTrue && faceFor(m.g.address) && m.r > 2}
+                {@const f = faceFor(m.g.address)!}
+                {@const fw = 2 * f.outer_kpc * kpcPx}
+                <image href={f.url} x={-fw / 2} y={-fw / 2} width={fw} height={fw} transform="translate({m.x} {m.y}) rotate({-m.g.position_angle_deg}) scale({Math.max(0.06, m.g.axis_ratio)} 1)" style="mix-blend-mode: screen" data-real-face={m.g.address} />
+                {#if f.bulge}{@const bw = 8 * f.bulge.scale_kpc * kpcPx}<image href={f.bulge.url} x={m.x - bw / 2} y={m.y - bw / 2} width={bw} height={bw} style="mix-blend-mode: screen" />{/if}
+              {:else if isTrue && m.r > 2}
+                <image href={pictureOf(m.g)} x={m.x - 4 * m.r} y={m.y - 4 * m.r} width={8 * m.r} height={8 * m.r} opacity={lightOf(m.g)} style="mix-blend-mode: screen" data-type-picture />
+              {:else if isTrue}
+                <circle cx={m.x} cy={m.y} r={Math.max(3, 2.5 * m.r + 1)} fill={m.colour} opacity={0.22 * lightOf(m.g)} /><circle cx={m.x} cy={m.y} r={Math.max(1.1, m.r)} fill={m.colour} opacity={lightOf(m.g)} data-galaxy-light />
+              {:else if m.r > 2.5}
                 <ellipse cx={m.x} cy={m.y} rx={m.r} ry={Math.max(1, m.r * m.g.axis_ratio)} transform="rotate({-m.g.position_angle_deg} {m.x} {m.y})" fill={m.colour} />
               {:else}
                 <circle cx={m.x} cy={m.y} r={m.r + 0.6} fill={m.colour} />
@@ -296,6 +429,7 @@
               <dt>Bound to</dt><dd data-card-bound>{nameOf(p.a === one.address ? p.b : p.a)}, {Math.round(p.distance_mpc * 100) / 100} Mpc away: they {meetWords(p.approach_gyr)}</dd>
             {/if}
             {#if one.orbit_words.length}<dt>Its orbit</dt><dd>{one.orbit_words.join(", ")}</dd>{/if}
+            {#if wanted.some((g) => g.address === one!.address)}<dt>History</dt><dd data-card-history>{faceFor(one.address) ? "read: drawn in True as its real face" : faces[one.address] === "failed" ? "could not be read" : "being read in the background"}</dd>{/if}
             {#if pathOf(one.address)}<dt>Fell in</dt><dd data-card-infall>{gyrWords(pathOf(one.address)!.infall_gyr)}</dd>{/if}
           </dl>
           {#if cellHalo(one.address)}
@@ -424,6 +558,14 @@
   }
   .us {
     fill: var(--sse-accent);
+  }
+  .us.glow {
+    fill: color-mix(in srgb, var(--sse-ground) 90%, var(--sse-accent));
+    opacity: 0.85;
+  }
+  svg.turning {
+    cursor: grab;
+    touch-action: none;
   }
   .gal {
     cursor: pointer;
