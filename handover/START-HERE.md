@@ -177,7 +177,11 @@ Each track keeps to its own crates and folders. Integration points are listed at
 https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
 Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
 production branch: switch to `main` in Cloudflare (was `claude/project-thread-h9y77o`); other branches get preview versions.
-There is no deploy workflow in GitHub Actions: `ci.yml` only tests (and never cancels runs on `main`). Cloudflare
+There is no deploy workflow in GitHub Actions: `ci.yml` only tests. Main checks only its latest head: a run on `main`
+is never cancelled once started, but GitHub keeps one waiting run per concurrency group and drops the older waiting one
+when a newer push arrives (13 of 17 `main` runs on 26 Nov were dropped this way; the comment in `ci.yml` saying runs on
+`main` are never cancelled is wrong on this point). Left as it is on purpose (coordinator, 26 Nov 22:11 UTC): checking
+every merged head would add about a dozen full runs a day to a queue that is already the bottleneck. Cloudflare
 builds every merge to `main` (4 to 10 minutes each). When merges come faster than that, a waiting build can show as
 Skipped, but the next build on `main` contains it, so the site catches up. Alex checked on 25 Nov 01:36 UTC and found
 every build Ready; nothing needs changing in Cloudflare and no GitHub deploy workflow is wanted.
