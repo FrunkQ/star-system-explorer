@@ -190,6 +190,10 @@ pub struct Atlas {
     regime_layer: Option<Box<crate::regimes::RegimeSurface>>,
     layers: Option<Box<crate::cover::Layers>>,
     weathering: Option<crate::weathering::Weathering>,
+    /// IG1: the bare ground is ice (the world keeps open ice).
+    ice_ground: bool,
+    /// IG1: no air to speak of, so worn-down debris is regolith, not sediment.
+    airless: bool,
 }
 
 /// S4's craters, plains and shields on an atlas.
@@ -394,6 +398,8 @@ impl Atlas {
             regime_layer: None,
             layers: None,
             weathering: None,
+            ice_ground: false,
+            airless: false,
         }
     }
 
@@ -517,6 +523,26 @@ impl Atlas {
         field: crate::impacts::CraterField,
     ) -> Self {
         self.impacts = Some(Box::new(ImpactLayer { features, field }));
+        self
+    }
+
+    /// IG1: an ice world's bare ground, basin fill and debris are ice; an
+    /// airless world's worn-down debris is regolith.
+    pub fn with_ice_ground(
+        mut self,
+        ice: Option<&crate::ice_ground::IceGround>,
+        airless: bool,
+    ) -> Self {
+        self.ice_ground = ice.is_some_and(|x| x.ice);
+        self.airless = airless;
+        if self.ice_ground {
+            self.material_land = 3;
+        }
+        if let Some(ps) = self.plates.as_mut() {
+            if self.ice_ground && ps.land_material.is_some() {
+                ps.land_material = Some(3);
+            }
+        }
         self
     }
 
@@ -1186,6 +1212,10 @@ impl Atlas {
                 let (mat, cov) = match (style, plate_cell) {
                     (_, Some((ps, pc))) => (
                         match (ps.land_material, &ps.flow) {
+                            // Debris laid down: ice on an ice world,
+                            // regolith where no air or water sorted it.
+                            (_, Some(f)) if f[pc].2 && self.ice_ground => 3u8,
+                            (_, Some(f)) if f[pc].2 && self.airless => 2u8,
                             (_, Some(f)) if f[pc].2 => 4u8,
                             (Some(mat), _) if !liquid => mat,
                             _ if ps.continental[pc] => 1u8,
@@ -1219,7 +1249,8 @@ impl Atlas {
                 };
                 let a = match feats.plains_at(dirs[c], self.radius_m / 1000.0) {
                     Some(t) if !liquid => {
-                        mat_override = Some(0);
+                        // Lava plains; an ice world's floods are refrozen ice.
+                        mat_override = Some(if self.ice_ground { 3 } else { 0 });
                         a.min((self.epoch_myr as f64 - t).max(0.0))
                     }
                     _ => a,
@@ -1258,6 +1289,21 @@ impl Atlas {
                     }
                 }
                 let mut al = p.albedo;
+                // IG1: bare airless ground and ice ground reflect as their
+                // material does (the data sheet's optics), not the regime's
+                // one number.
+                let mat_now = MATERIALS[*material.last().expect("pushed") as usize];
+                if COVERS[*cover.last().expect("pushed") as usize] == "none"
+                    && (self.airless || mat_now == "ice")
+                {
+                    let go = crate::ice_ground::ground_optics();
+                    match mat_now {
+                        "basalt" => al = go.basalt,
+                        "regolith" => al = go.regolith,
+                        "ice" => al = go.ice,
+                        _ => {}
+                    }
+                }
                 if let (Some(ly), Some(t)) = (&self.layers, &tl) {
                     let mat = *material.last().expect("pushed");
                     let cov = cover.last_mut().expect("pushed");
@@ -1269,23 +1315,31 @@ impl Atlas {
                     structure.push(sl.structure);
                     colour.push(sl.colour);
                 }
+                // The time bare ground has lain open: the younger of its
+                // surface age and the youngest crater whose ejecta cover it.
+                let open_myr = || {
+                    feats
+                        .youngest_crater_at(dirs[c], rk)
+                        .map(|t| (self.epoch_myr as f64 - t).max(0.0))
+                        .map_or(*age.last().expect("pushed") as f64, |x| {
+                            x.min(*age.last().expect("pushed") as f64)
+                        })
+                };
+                let bare_now = COVERS[*cover.last().expect("pushed") as usize] == "none";
+                let ice_now = MATERIALS[*material.last().expect("pushed") as usize] == "ice";
+                if bare_now && ice_now && self.airless {
+                    // IG1: old open ice gathers a dark lag of dust and rock.
+                    let go = crate::ice_ground::ground_optics();
+                    let d = sse_atoms::ice_ground::lag_share(
+                        open_myr() * 1.0e6 * sse_core::sheet::YR_JULIAN,
+                        sse_atoms::ice_ground::LAG_TAU_S,
+                    );
+                    al = sse_atoms::ice_ground::lagged_reflectance(al, go.dust, d);
+                }
                 if let Some(wx) = &self.weathering {
-                    // SW1: bare ground matures with the time it has lain
-                    // open, the younger of its surface age and the youngest
-                    // crater whose ejecta cover it.
-                    let bare = COVERS[*cover.last().expect("pushed") as usize] == "none"
-                        && MATERIALS[*material.last().expect("pushed") as usize] != "ice";
-                    let mt = if bare {
-                        let open = feats
-                            .youngest_crater_at(dirs[c], rk)
-                            .map(|t| (self.epoch_myr as f64 - t).max(0.0))
-                            .map_or(*age.last().expect("pushed") as f64, |x| {
-                                x.min(*age.last().expect("pushed") as f64)
-                            });
-                        wx.maturity(open)
-                    } else {
-                        0.0
-                    };
+                    // SW1: bare ground matures with the time it has lain open.
+                    let bare = bare_now && !ice_now;
+                    let mt = if bare { wx.maturity(open_myr()) } else { 0.0 };
                     let f = wx.factors(mt);
                     al *= f[1];
                     if let Some(cl) = colour.last_mut() {

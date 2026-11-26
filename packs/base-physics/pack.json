@@ -1983,6 +1983,20 @@
         "range": null
       },
       {
+        "description": "share of a world's mass that is ice",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.ice_share",
+        "range": null
+      },
+      {
         "description": "spin angular rate before tidal despinning",
         "dim": [
           0,
@@ -4898,6 +4912,76 @@
         "range": null
       },
       {
+        "description": "density of ice at low pressure",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.ice_density",
+        "range": null
+      },
+      {
+        "description": "mass of one mole of a substance",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "material.molar_mass",
+        "range": null
+      },
+      {
+        "description": "share of light a material's ground sends back, against a white Lambertian surface",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.reflectance",
+        "range": null
+      },
+      {
+        "description": "density of rock at low pressure",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.rock_density",
+        "range": null
+      },
+      {
+        "description": "pressure of a substance's own vapour over its solid or liquid at a temperature",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.vapour_pressure",
+        "range": null
+      },
+      {
         "description": "molar mass of carbon",
         "dim": [
           0,
@@ -5640,6 +5724,20 @@
           0
         ],
         "id": "orbit.stability_verdict",
+        "range": null
+      },
+      {
+        "description": "distance from the star (a moon's is its planet's)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.star_distance",
         "range": null
       },
       {
@@ -7310,6 +7408,48 @@
           0
         ],
         "id": "surface.exposure_age",
+        "range": null
+      },
+      {
+        "description": "share of light the ground sends back",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.ground_reflectance",
+        "range": null
+      },
+      {
+        "description": "depth of open ice an airless world loses over its age",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.ice_lost",
+        "range": null
+      },
+      {
+        "description": "share of icy ground under a dark lag of dust and rock",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.lag_share",
         "range": null
       },
       {
