@@ -132,6 +132,7 @@ export { baumbach, CORONA_DECADES, CORONA_REFERENCES, coronaShape, cycleActivity
 export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
+export { trueStill, type TrueStill } from "./true-still.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
 // Hot things glow in Visible and plumes above the limb (third audit R10 to R12, track TRUE).
 export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";

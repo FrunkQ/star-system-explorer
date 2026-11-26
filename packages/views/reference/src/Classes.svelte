@@ -13,6 +13,7 @@
   import { tick, untrack } from "svelte";
   import { classBandWords, className, classTree, classesOnStack, findClass, findClasses, needsWords, stackPacks, type AtlasClass, type ClassAtlas, type Depth, type PackDoc, type SymbologyHost, type ViewSession, type Workspace } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, Mark, Stamp } from "../../../chart-grammar/src/index.ts";
+  import { drawClassPictures, pictureOf } from "./class-picture.svelte.ts";
 
   let { session, workspace, depth, symbology, offer = [], pick = null }: { session: ViewSession; workspace: Workspace; depth: Depth; symbology?: SymbologyHost; offer?: readonly string[]; pick?: string | null } = $props();
   const full = $derived(depth !== "curious");
@@ -93,6 +94,18 @@
   // Class looks are bound to planets (a small body on a chart is drawn by the same tables), so every tile asks as one.
   const markOf = (c: AtlasClass) => marker?.mark({ kind: "planet", classes: [c.id], tags: [] }) ?? null;
 
+  // Pictures (V14i): a class opened is drawn from a sample world the kernel makes for it (a world's tiles are heavy, so
+  // only on opening), and its tile then shows it too; the chart mark stands until then, and wherever none can be drawn
+  // (a player's seat, a giant).
+  const pictureAtlas = $derived(shownAtlas?.pack ?? "");
+  const pictureExtra = $derived(trying ? offered.filter((p) => p.id === shownAtlas?.pack) : []);
+  $effect(() => {
+    const c = open?.id;
+    const a = pictureAtlas;
+    const extra = pictureExtra;
+    if (a && c) untrack(() => drawClassPictures(session, a, [c], extra));
+  });
+
   const editable = $derived(workspace.mode === "edit" && session.seat.authority === "gm");
   let note = $state<string | null>(null);
   let adding = $state(false);
@@ -172,11 +185,12 @@
       <ul class="tiles" aria-label="Classes in {scheme.id}">
         {#each tree.base as n (n.cls.id)}
           {@const m = markOf(n.cls)}
+          {@const pic = pictureOf(pictureAtlas, n.cls.id)}
           <li class:under={n.depth > 0} style:--depth={n.depth}>
             <button type="button" class="tile" aria-pressed={openId === n.cls.id} data-class={n.cls.id} onclick={(e) => show(n.cls, e.currentTarget)}>
               <svg class="icon" width="84" height="40" viewBox="0 0 84 40" aria-hidden="true">
                 <!-- The mark centred, with room on its right for its class code (up to three letters). -->
-                {#if m}<Mark mark={{ ...m, size: Math.max(9, Math.min(14, m.size * 1.4)) }} cx={42} cy={20} prefix="cl" />{:else}<circle cx="42" cy="20" r="11" fill="none" stroke="currentColor" />{/if}
+                {#if pic?.state === "drawn"}<image href={pic.url} x="22" y="0" width="40" height="40" data-tile-picture />{:else if m}<Mark mark={{ ...m, size: Math.max(9, Math.min(14, m.size * 1.4)) }} cx={42} cy={20} prefix="cl" />{:else}<circle cx="42" cy="20" r="11" fill="none" stroke="currentColor" />{/if}
               </svg>
               <span class="tname">{className(n.cls)}</span>
               {#if n.depth > 0 && parentOf(n.cls)}<span class="muted small">a kind of {parentOf(n.cls)!.names.plain}</span>{/if}
@@ -202,6 +216,7 @@
     {@const kids = kidsOf(open)}
     {@const ins = open.examples.filter((e) => e.in)}
     {@const outs = open.examples.filter((e) => !e.in)}
+    {@const pic = pictureOf(pictureAtlas, open.id)}
     <section class="card" aria-labelledby="class-title" data-class-card={open.id} tabindex="-1" bind:this={detail}>
       <div class="head">
         <svg class="icon big" width="84" height="64" viewBox="0 0 84 64" aria-hidden="true">
@@ -243,7 +258,15 @@
         <h3>Kinds of {open.names.plain}</h3>
         <ul class="mods">{#each kids as k (k.id)}<li><button type="button" class="chip" data-kid={k.id} onclick={(e) => show(k, e.currentTarget)}>{className(k)}</button></li>{/each}</ul>
       {/if}
-      <p class="muted small picture" data-picture="pending">Its picture, drawn from a sample world of this class, comes when the simulation picks one for each class.</p>
+      {#if pic?.state === "drawn"}
+        <figure class="picture" data-picture="drawn"><img src={pic.url} alt="A sample world of the class {open.names.plain}" width="192" height="192" /><figcaption class="muted small">{pic.caption}</figcaption></figure>
+      {:else if pic?.state === "drawing"}
+        <p class="muted small picture" data-picture="drawing">Drawing a sample world of this class…</p>
+      {:else if pic?.state === "none"}
+        <p class="muted small picture" data-picture="none">No picture: {pic.why}.</p>
+      {:else}
+        <p class="muted small picture" data-picture="pending">Its picture is drawn from a sample world of this class on the game master's seat.</p>
+      {/if}
       {#if engine}<p class="muted small"><code>{open.id}</code> · scheme <code>{open.scheme}</code> · from {open.pack}</p>{/if}
     </section>
   {/if}
@@ -492,6 +515,18 @@
   }
   .picture {
     margin-top: 14px;
+  }
+  figure.picture {
+    margin: 14px 0 0;
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+  }
+  figure.picture img {
+    width: 192px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 50%;
   }
   .btn {
     height: auto;
