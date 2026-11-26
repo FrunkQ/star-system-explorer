@@ -3,7 +3,8 @@
 // Grow "first light" and add it to the campaign, then open "How it formed" for it: the chart draws a track for every
 // body, the condensation lines, the gas disc and the upheaval; the Inherited panel has its rows. A stage button moves
 // the time slice and the time ruler with it; the slice's handle takes the arrow keys. Pressing a world's track selects
-// it. Kestrel Reach (written fact by fact) says it has no formation history and how to get one. Reading the history
+// it, and its story shows (where its material came from, its events, how sure); a lost body has a story too. "Watch
+// it form" plays the replay over the page. "How this was worked out" says what each part rests on. Kestrel Reach (written fact by fact) says it has no formation history and how to get one. Reading the history
 // never changes the state hash.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -67,7 +68,22 @@ try {
     for (const key of ["star", "metals", "c_o", "disc", "gas", "cluster", "al26", "seed"]) assert.equal(await gm.locator(`[data-inherited='${key}']`).count(), 1, `inherited ${key}`);
     assert.match(await gm.locator("[data-inherited='seed']").innerText(), /first light/);
     assert.match(await gm.locator("[data-slice-words]").innerText(), /stage 9/, "the slice starts at now, in stage 9");
+    // F10b: the story card opens on the heaviest world, with its material bar and its story; How this was worked out.
+    const story = gm.locator("[data-story]");
+    await story.waitFor();
+    assert.equal(await gm.locator("[data-material] span").count() > 0, true, "a material bar");
+    assert.ok((await gm.locator("[data-story-line]").count()) >= 2, "its story in lines");
+    assert.match(await story.innerText(), /now at/);
+    await gm.locator("[data-how-panel] summary").click();
+    assert.equal(await gm.locator("[data-how]:visible").count(), 5, "how this was worked out, a press away, five rows");
+    assert.equal(await gm.locator("[data-how='not yet']").count(), 1, "passing stars are honestly not yet");
     await shot(gm, `formation-now-${name}`);
+    // Watch it form: the replay of the same record, over the page; Escape closes it.
+    await gm.locator("[data-watch-form]").click();
+    await gm.locator(".replay").waitFor();
+    assert.equal(await gm.locator(".replay").getAttribute("data-replay-stage"), "1");
+    await gm.keyboard.press("Escape");
+    await gm.locator(".replay").waitFor({ state: "detached" });
 
     // A stage moves the slice and the ruler with it.
     const sliceAt = async () => Number(await gm.locator("[data-slice]").getAttribute("data-slice"));
@@ -85,10 +101,18 @@ try {
     await gm.locator("[data-slice-handle]").focus();
     await gm.keyboard.press("ArrowDown");
     await gm.waitForFunction((t) => Number(document.querySelector("[data-slice]")?.getAttribute("data-slice")) > t * 1.2, at6);
-    // A lasting world's track is a button: Enter on it selects the world.
+    // A lasting world's track is a button: Enter on it selects the world and its story shows.
+    const firstWorld = await gm.locator("[data-track-end='lasts']").first().getAttribute("data-track");
     await gm.locator("[data-track-end='lasts'] .hit").first().focus();
     await gm.keyboard.press("Enter");
-    await gm.waitForSelector("[data-track].selected", { timeout: 5000 });
+    await gm.waitForSelector(`[data-track='${firstWorld}'].selected`, { timeout: 5000 });
+    assert.equal(await gm.locator("[data-story]").getAttribute("data-story"), firstWorld, "the pressed world's story");
+    // A body lost on the way has a story too.
+    const lost = await gm.locator("[data-track-end='merged']").first().getAttribute("data-track");
+    await gm.locator(`[data-track='${lost}'] .hit`).dispatchEvent("click");
+    await gm.waitForFunction((id) => document.querySelector("[data-story]")?.getAttribute("data-story") === id, lost);
+    assert.match(await gm.locator("[data-story]").innerText(), /merge/i);
+    await shot(gm, `formation-story-${name}`);
 
     // Phone width: the chart first, then the panel; nothing spills sideways.
     await gm.setViewportSize({ width: 390, height: 844 });

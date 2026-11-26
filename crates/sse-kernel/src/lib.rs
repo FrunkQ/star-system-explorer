@@ -47,6 +47,9 @@ mod inventory;
 mod known;
 #[cfg(test)]
 mod known_tests;
+mod life;
+#[cfg(test)]
+mod life_tests;
 #[cfg(test)]
 mod matter_tests;
 mod names;
@@ -4844,10 +4847,21 @@ impl Kernel {
                 };
                 Response::SurfaceSurveyed { survey }
             }
-            Request::LifeView { body, fixture } => {
-                let (source, view) = adopt::life_view(body.as_deref(), fixture.as_deref())?;
-                Response::LifeViewed { source, view }
-            }
+            Request::LifeView { body, fixture } => match (body, fixture) {
+                (Some(b), None) => {
+                    let (source, view, held) = self.body_life(&b)?;
+                    Response::LifeViewed { source, view, held }
+                }
+                (None, Some(f)) => {
+                    let (source, view) = adopt::life_view(&f)?;
+                    Response::LifeViewed {
+                        source,
+                        view,
+                        held: vec![],
+                    }
+                }
+                _ => return Err(err("bad_request", "give a fixture or a body")),
+            },
             Request::ExportChronicle => {
                 let u = self.universe()?;
                 let events: Vec<serde_json::Value> = u

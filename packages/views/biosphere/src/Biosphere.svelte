@@ -4,8 +4,9 @@
   catastrophes and origins as ticks), the food web by feeding level, the
   guilds in words, traits, what a scan would show at each tier, the dials the
   story leans on, and story hooks. Every reason is told in three lenses.
-  The kernel builds a biosphere for its example worlds today; for a body on
-  the chart it says when it has none yet, and the view shows an example,
+  A world picked on the chart is read from its own climate, air, water, ice
+  and heat (kernel L3), with what the kernel held at today's value listed
+  under it. With no world picked, or when asked, an example world is shown,
   labelled as one.
 -->
 <script lang="ts">
@@ -29,27 +30,33 @@
   const ws = $derived(ctx.workspace);
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection && s.kind !== "star"));
   let example = $state(LIFE_EXAMPLES.some((e) => e.fixture === first.example) ? String(first.example) : "earth");
-  // "body": the selected world, when the kernel has its biosphere; otherwise an example.
+  // "body": the selected world, read from its own conditions; otherwise an example.
   let source = $state<{ kind: "body"; address: string; label: string } | { kind: "example"; fixture: string } | null>(null);
   let view = $state<LifeView | null>(null);
   let bodyNote = $state<string | null>(null);
+  // What the kernel held at today's value, or left out, for a world of the chart.
+  let held = $state<string[]>([]);
+  // The world the GM chose an example over (picking another world reads that one).
+  let askedOver = $state<string | null>(null);
   let failed = $state<string | null>(null);
   let gen = 0;
   $effect(() => {
     const sub = subject;
     const ex = example;
+    const own = sub !== undefined && askedOver !== sub.address;
     const g = ++gen;
     failed = null;
     (async () => {
-      if (sub) {
+      if (sub && own) {
         const r = await ctx.session.lifeView({ body: sub.address });
         if (g !== gen) return;
         if (r.ok) {
-          ((source = { kind: "body", address: sub.address, label: sub.label }), (view = r.view), (bodyNote = null));
+          ((source = { kind: "body", address: sub.address, label: sub.label }), (view = r.view), (held = r.held ?? []), (bodyNote = null));
           return;
         }
-        bodyNote = `The kernel has no biosphere for ${sub.label} yet (worlds on the chart get one when systems carry habitat graphs). Showing an example world.`;
+        bodyNote = r.code === "no_habitats" ? `The kernel has no biosphere for ${sub.label} yet: its facts on the chart are not enough to resolve its surface (it needs a star, a mass and an orbit). Showing an example world.` : `Could not read ${sub.label}'s life (${r.message}). Showing an example world.`;
       } else bodyNote = null;
+      held = [];
       const r = await ctx.session.lifeView({ fixture: ex });
       if (g !== gen) return;
       if (!r.ok) return void ((failed = r.message), (view = null));
@@ -136,11 +143,12 @@
   <div class="pick">
     <label>
       Example world
-      <select aria-label="Example world" bind:value={example}>
+      <select aria-label="Example world" bind:value={example} onchange={() => (askedOver = subject?.address ?? null)}>
         {#each LIFE_EXAMPLES as e (e.fixture)}<option value={e.fixture}>{e.label}</option>{/each}
       </select>
     </label>
-    {#if bodyNote}<p class="note" data-body-note>{bodyNote}</p>{:else if !subject}<p class="note">Pick a world on the chart to ask for its biosphere; until then an example world is shown.</p>{/if}
+    {#if subject && askedOver === subject.address}<button type="button" class="own" data-own-world onclick={() => (askedOver = null)}>Back to {subject.label}</button>{/if}
+    {#if bodyNote}<p class="note" data-body-note>{bodyNote}</p>{:else if !subject}<p class="note">Pick a world on the chart to read its own life; until then an example world is shown.</p>{/if}
   </div>
 
   {#if failed}
@@ -155,6 +163,12 @@
       {view.signatures.summary ? `${view.signatures.summary[0]!.toUpperCase()}${view.signatures.summary.slice(1)}.` : view.signatures.alive ? "Alive." : view.signatures.ever_alive ? "Life began here and ended." : "Life never began here."}
       {#if shows}It shows {shows}.{/if}
     </p>
+    {#if source?.kind === "body" && held.length}
+      <details class="held" data-held>
+        <summary>What this reading holds fixed</summary>
+        <ul>{#each held as h, i (i)}<li>{h[0]!.toUpperCase()}{h.slice(1)}.</li>{/each}</ul>
+      </details>
+    {/if}
 
     <div class="lenses" role="group" aria-label="Tell reasons as">
       {#each LENSES as l (l.id)}<button type="button" class:on={lens === l.id} aria-pressed={lens === l.id} onclick={() => (lens = l.id)}>{l.label}</button>{/each}
@@ -319,6 +333,24 @@
   }
   .hint {
     font-size: 12px;
+  }
+  .own {
+    font: inherit;
+    padding: 2px 10px;
+    border: 1px solid var(--sse-ink);
+    background: transparent;
+    color: var(--sse-ink);
+  }
+  .held {
+    color: var(--sse-ink-muted);
+    font-size: 12px;
+  }
+  .held summary {
+    cursor: pointer;
+  }
+  .held ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
   }
   .head {
     display: flex;
