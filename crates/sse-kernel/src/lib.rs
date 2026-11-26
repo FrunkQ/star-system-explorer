@@ -35,6 +35,8 @@ mod frame;
 mod frames;
 #[cfg(test)]
 mod from_star_tests;
+#[cfg(test)]
+mod cc1_measure;
 mod galaxies;
 mod glow;
 #[cfg(test)]
