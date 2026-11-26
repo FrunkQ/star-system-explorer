@@ -9,7 +9,7 @@ It builds on, and does not replace: the night sky note's section 8 and stage Y8 
 
 Nothing is built. RW is a code only, never shown in the product.
 
-**Alex's steers, 26 Nov 17:53 UTC (rulings, note 12A):** reuse the existing backfill machinery for a probable system round a real star, on by default (V3's `infillSystem`; in SSE4, formation `from_star` with F9 pins); every sum this track adds is a block chain in the physics, not importer code. Gaia data may be added to any pack and any star system (17:58 UTC); the old "Gaia only in an optional pack" line is withdrawn, and only sold packs remain a question (note question 3).
+**Alex's steers, 26 Nov 17:53 UTC (rulings, note 12A):** reuse the existing backfill machinery for a probable system round a real star, on by default (V3's `infillSystem`; in SSE4, formation `from_star` with F9 pins); every sum this track adds is a block chain in the physics, not importer code. Gaia data may be added to any pack and any star system (17:58 UTC); the old "Gaia only in an optional pack" line is withdrawn, and a pack holding downloaded catalogue data may be used and given away but never sold (18:00 UTC; the shop refuses a price and says why).
 
 **Order.** The system half (RW3 to RW7, RW9, RW10) is inside a system and can start once accepted. The star half (RW11 to RW14) waits for GZ13 and CC6.
 
