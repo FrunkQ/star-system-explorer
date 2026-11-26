@@ -116,9 +116,12 @@ fn a_map_position_keeps_the_maps_layout() {
     let xa = send(&mut k, json!({"op": "star_slot", "system": sa}))["slot"]["xyz_pc"].clone();
     let xb = send(&mut k, json!({"op": "star_slot", "system": sb}))["slot"]["xyz_pc"].clone();
     let d: f64 = (0..3)
-        .map(|i| (xa[i].as_f64().unwrap() - xb[i].as_f64().unwrap()).powi(2))
-        .sum::<f64>()
-        .sqrt();
+        .map(|i| {
+            let x = xa[i].as_f64().unwrap() - xb[i].as_f64().unwrap();
+            x * x
+        })
+        .sum::<f64>();
+    let d = sse_core::math::sqrt(d);
     // 3000 px at 10 px per ly = 300 ly = 92 pc, to within a cell or two.
     assert!((d - 92.0).abs() < 30.0, "{d}");
 }
