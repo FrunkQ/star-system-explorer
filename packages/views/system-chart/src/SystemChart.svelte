@@ -39,7 +39,7 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readSmallSample, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
-  import { readUmbras, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { loadSystemAurorae, type AuroraPlan, type AuroraSystemReader, readUmbras, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -672,6 +672,25 @@
       })(),
     );
   });
+  // Aurorae in True: each world's plan read once per system (renderer true-aurora.ts: one field read, then the air of
+  // each world that has an aurora; a few requests, so not held back for the surfaces), GM seat only, so system True
+  // draws the shells the Body globe and Land draw.
+  let aurorae = $state.raw<{ key: string; map: Map<string, { plan: AuroraPlan; radius_m: number }> } | null>(null);
+  let auroraeAsking = "";
+  $effect(() => {
+    const sys = scene.system;
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || aurorae?.key === sys || auroraeAsking === sys) return;
+    const worlds = untrack(() => bodies3d).filter((b) => b.parent !== null && !b.small).map((b) => ({ address: b.id, label: b.name, radius_m: b.radius_m ?? 0 }));
+    auroraeAsking = sys;
+    untrack(() =>
+      void (async () => {
+        const map = await loadSystemAurorae(ctx.session as unknown as AuroraSystemReader, sys, worlds, () => scene.system === sys && looksTrue);
+        auroraeAsking = "";
+        if (scene.system !== sys || !looksTrue) return;
+        aurorae = { key: sys, map };
+      })(),
+    );
+  });
   const bodies3d = $derived.by(() => {
     if (dims !== "3d") return [];
     const out = fromSystemScene(scene, ctx.mark);
@@ -749,7 +768,7 @@
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined} data-true-read={reading ? `${reading.done}/${reading.of}` : undefined}>
   {#if dims === "3d"}
     {#snippet in3d(band: string, base: boolean)}
-      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {umbras} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} />
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {umbras} {plumes} aurorae={aurorae?.key === scene.system ? aurorae.map : undefined} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} />
     {/snippet}
     {#if viewed.composite}
       <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->

@@ -151,6 +151,7 @@ export type { StainFact, StainHue } from "./stain-look.ts";
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
 export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
 export type { CometActivity } from "./comet.ts";
+export { loadSystemAurorae, type AuroraSystemReader } from "./true-aurora.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
