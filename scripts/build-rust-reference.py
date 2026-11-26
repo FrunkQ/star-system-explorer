@@ -113,6 +113,14 @@ def build():
             out.append(f"    /// {sid} ({v.get('src', '')}).")
             out.append(f"    pub const {ident(sid)}: f64 = {lit(v['v'])};")
         out.append("}")
+    # How long sunlight lets each gas last at 1 au (the sheet's `photochemistry.lifetime_1au`).
+    out += ["", "/// Lifetime of a gas molecule in a quiet Sun's light at 1 au, s, by substance", "/// (the sheet's `photochemistry.lifetime_1au`; it scales as the distance squared).", "pub mod photo_lifetime_1au {"]
+    for sub in ref["substances"]:
+        v = (sub.get("photochemistry") or {}).get("lifetime_1au")
+        if isinstance(v, dict) and isinstance(v.get("v"), (int, float)):
+            out.append(f"    /// {sub['id']} ({v.get('src', '')}).")
+            out.append(f"    pub const {ident(sub['id'])}: f64 = {lit(v['v'])};")
+    out.append("}")
     # The conductivity fit of the solid (k = a / T and the like): its coefficients.
     out += ["", "/// Thermal conductivity fits of the solid, by substance (the sheet's `thermal.conductivity_solid`):", "/// the coefficients, in the order the fit names them.", "pub mod conductivity_solid {"]
     for sub in ref["substances"]:
