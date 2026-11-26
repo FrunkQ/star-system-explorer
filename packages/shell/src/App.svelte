@@ -1882,7 +1882,7 @@
             <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
           {:else}
             {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
-            <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
+            <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} canKeep={deskDoc(desk).writes !== "try"} onbuild={() => chooseDesk("build")} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
           {/if}
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
         </span>{/if}
