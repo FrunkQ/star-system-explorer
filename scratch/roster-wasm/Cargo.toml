@@ -1,0 +1,22 @@
+# SCRATCH, NOT FOR MERGING: times the roster prototype as wasm under Node,
+# as a stand-in for a browser tab.
+[package]
+name = "roster-wasm"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+roster-proto = { path = "../roster-proto" }
+sse-core = { path = "../../crates/sse-core" }
+sse-formation = { path = "../../crates/sse-formation" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

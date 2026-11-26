@@ -1,0 +1,16 @@
+import { readFileSync } from 'node:fs';
+const bytes = readFileSync(process.argv[2]);
+const { instance } = await WebAssembly.instantiate(bytes, {});
+const e = instance.exports;
+const t = (label, f) => { const a = performance.now(); const r = f(); const ms = performance.now() - a; console.log(`${label}: ${ms.toFixed(2)} ms (result ${r})`); return ms; };
+const nx = Number(process.argv[3] || 100000);
+t(`setup (formation + reservoirs), n_exact ${nx}`, () => e.setup(nx));
+t('plans for every band', () => e.plans());
+const f = t('20,000 forward reads in the largest comet band', () => e.forward(20000));
+console.log(`  = ${(f * 1000 / 20000).toFixed(2)} us each`);
+t('listed craters on every solid world', () => e.lists());
+const b = t('2,000 crater ids back to impactors', () => e.backward(2000));
+console.log(`  = ${(b * 1000 / 2000).toFixed(2)} us each`);
+t('one class books (debris core) at the present', () => e.books());
+console.log(`wasm memory: ${(e.memory.buffer.byteLength / 1048576).toFixed(1)} MB`);
+console.log(`listed-crater digest: ${BigInt.asUintN(64, e.digest()).toString(16)}`);

@@ -1,0 +1,23 @@
+# SCRATCH PROTOTYPE, NOT FOR MERGING (conserved chain, section 13 item 5).
+# Its own workspace, so the main workspace, its checks and its goldens never see it.
+[package]
+name = "roster-proto"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+sse-core = { path = "../../crates/sse-core" }
+sse-formation = { path = "../../crates/sse-formation" }
+sse-small = { path = "../../crates/sse-small" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ciborium = "0.2.2"
+
+[profile.dev]
+opt-level = 2
+
+[profile.release]
+opt-level = 3
