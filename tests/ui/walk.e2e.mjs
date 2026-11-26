@@ -67,7 +67,21 @@ async function walk(browser, vp) {
     assert.ok(n <= most, `${vp}: "${name}" took ${n} presses, at most ${most}`);
     await shot(name.replace(/\W+/g, "-"));
   }
-  const tap = (loc) => (phone ? loc.tap() : loc.click());
+  // A press waits for its target to hold still first: pressed while the layout is still moving, the browser driver
+  // finds something else under the point, cancels that press and presses again, and the counter sees both (CI, 26 Nov:
+  // "change a world" took 3 on a loaded runner). Waiting changes no budget; it only stops one press counting twice.
+  const still = async (loc) => {
+    await loc.waitFor();
+    let was = "";
+    for (let same = 0, i = 0; same < 3 && i < 100; i++) {
+      const b = await loc.boundingBox();
+      const now = b ? [b.x, b.y, b.width, b.height].map(Math.round).join(",") : "";
+      same = now && now === was ? same + 1 : 0;
+      was = now;
+      await page.waitForTimeout(50);
+    }
+  };
+  const tap = async (loc) => (await still(loc), phone ? loc.tap() : loc.click());
   const rail = (id) => page.locator(`.rail [data-go="${id}"]`).first();
   const card = (name) => page.locator(`section[aria-label='${name}']`);
   const field = (name, label) => card(name).locator(".field").filter({ hasText: new RegExp(`^${label}`, "i") });
