@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 176,
+        n, 177,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -392,6 +392,31 @@ fn io_tidal_heating() {
         &[M_JUP, 1.8216e6, 4.217e8, 0.0041],
     )[0];
     close(p, 0.93e14, 0.2, "Io heating");
+}
+
+#[test]
+fn maxwell_response_limits() {
+    // HF4a: a uniform Maxwell body. Stiff and cold, it is elastic, k2 =
+    // 3/2 / (1 + 19μ/2ρgR) with no lag; runny, it is a fluid, k2 = 3/2
+    // with no lag; between, Im k2 peaks at ωη/μ = 1/(1 + A) at
+    // (3/2) A / (2 (1 + A)). Io: μ 6.5e10 Pa, ρ 3530, g 1.796, R 1821.6 km.
+    let (mu, rho, g, r, w) = (6.5e10, 3530.0, 1.796, 1.8216e6, 4.11e-5);
+    let a = 19.0 * mu / (2.0 * rho * g * r);
+    let at = |eta: f64| run("sse.tides.maxwell_response", &[mu, eta, rho, g, r, w]);
+    let stiff = at(1e30);
+    close(stiff[1], 1.5 / (1.0 + a), 1e-6, "elastic Re k2");
+    assert!(stiff[0] < 1e-9, "elastic Im k2 {}", stiff[0]);
+    let runny = at(1e3);
+    close(runny[1], 1.5, 1e-6, "fluid Re k2");
+    assert!(runny[0] < 1e-9, "fluid Im k2 {}", runny[0]);
+    let peak = at(mu / (w * (1.0 + a)));
+    close(peak[0], 0.75 * a / (1.0 + a), 1e-9, "peak Im k2");
+    // Io's solid k2 is about 0.03 (absolute, not a ratio).
+    assert!(
+        stiff[1] > 0.02 && stiff[1] < 0.04,
+        "Io elastic k2 {}",
+        stiff[1]
+    );
 }
 
 #[test]

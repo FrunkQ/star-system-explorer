@@ -9,8 +9,11 @@ Why the track exists: three threads on 26 Nov found worlds too cold inside (Io a
 | Package | State | Log |
 |---|---|---|
 | HF1 lid worlds vent at their solidus: under a stagnant lid the mantle can be no hotter than the dry peridotite solidus (Hirschmann 2000) at its lid's base, the lid as thick as the rock that conducts what the mantle loses; melting carries the rest out as volcanism and the history counts it in the surface loss | in review | packages/HF1.md |
+| HF4a one tidal response block `sse.tides.maxwell_response`: a world's Im k2 and Re k2 from its rigidity, viscosity, density, gravity, radius and tidal frequency (homogeneous Maxwell body); nothing reads it yet; shared with the small-moon shape thread | in review (with HF1, PR 660) | packages/HF4a.md |
+| HF4b melt in the thermal history: young lids as cooling half-spaces, melt fraction above the solidus, melt-weakened rigidity and viscosity, lid volcanism as the melt that leaves | next | |
+| HF4c tides read each world's own response: `sse.tides.eccentricity_heating` takes Im k2 from HF4a fed by HF4b's state; the classifier's own copy (k2 0.3, Q 100) goes | after HF4b | |
 | HF2 every world reads the heat it loses: regimes, life's vents, plumes, stains and plates read the thermal history's surface loss (made plus the world's own cooling), the history and the regimes marching forward together | next | |
-| HF3 each world's own tidal response: Im(k2) from the world's interior instead of one k2/Q for all; Io, Enceladus and Europa as checks, not special cases | after HF2 | |
+| HF3 folded into HF4a and HF4c (26 Nov: Io's heat needs melt, so tides cannot be fixed before HF4b) | folded | |
 
 ## The chain of calibrated fudges under lid worlds (found 26 Nov, before HF2's lid half)
 
@@ -23,3 +26,14 @@ Making every world read the heat it loses (HF2) works for Earth (20 TW made, 35 
 5. **Mars's field date rests on 1 and 2.** With young lids cooling as half-spaces (tried, not committed), Mars's mantle cools to about 1,600 K by 0.5 Gyr, its core-mantle flux collapses (lower mantle viscosity read at the upper mantle's temperature times 100), and its field dies 4.5 Gyr ago, outside the 3.6 to 4.1 Gyr ago that `core_tests` guards. Chase to cause; do not move the range.
 
 Order agreed with the coordinator (26 Nov): HF3 (tides), then the lid worlds properly (one mechanism: young lids, melt, volcanism from vented melt), then HF2 lands on top. No second heat number in the meantime.
+
+## What was tried before the melt design (26 Nov, fixtures in `sse-surface/src/scenario.rs`)
+
+1. **Surfaces reading heat lost (HF2, not committed).** Earth 20 TW made, 35 TW lost (about 46 measured, unverified). The Moon, Mars and the icy moons store their early heat: 0.013 to 0.018 W/m² lost against 0.05 to 0.08 made, failing 11 surface tests.
+2. **Young lid as a cooling half-space (not committed).** q = max(steady stagnant-lid flux, k ΔT / √(πκt)). Early Mars loses 24 TW at t = 0; its mantle falls to 1,625 K by 0.5 Gyr, then warms back to 2,150 K as it dries. Its core-mantle flux collapses (lower-mantle viscosity read at the upper mantle's temperature × 100), so its field dies at 0.02 Gyr, outside the guarded 3.6 to 4.1 Gyr ago. The Moon's field dies at 0.7 Gyr.
+3. **Io as a homogeneous Maxwell body** (μ 6.5e10 Pa, ρ 3,530, g 1.796, R 1,821.6 km, n 4.11e-5).
+   - A = 19μ/2ρgR ≈ 53. Elastic k2 is 0.028. Peak Im k2 is 0.74, at η ≈ 2.7e13 Pa s.
+   - At HF1's solidus temperature (about 1,980 K), η ≈ 1e19 to 1e21, so Im k2 ≈ 3e-6.
+   - Lainey's 0.015 (from memory) needs η ≈ 3e11 at μ 6.5e10. With μ softened to 1e9 it needs η ≈ 1e15, giving about 0.009.
+4. **Heating balancing convection** (Fischer and Spohn style, Ra_c 1,000, whole-mantle ΔT) overshoots: Io 22 W/m², Europa 1.4. Enceladus and the Moon have no hot equilibrium (peak heat 1.4 and 0.019 W/m²).
+5. **Orbital equilibrium** (Meyer and Wisdom 2007 for Enceladus: about 1.1 GW × 18,000 / Q_Saturn) explains the measured Io and Enceladus heat. It needs the host's Q and the resonance partner, which the kernel does not hold. If an honest Io needs them, log it; never stand a constant in for them.
