@@ -214,9 +214,23 @@ Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hund
 
 **Versions.** Each catalogue's version is pinned in the campaign, as the handoff ruled. Moving to a newer release is a deliberate act with a "what changed" list.
 
+### 5.3A Detail expansion packs (Alex, 26 Nov 18:03 UTC)
+
+The table in 5.3 stands with its middle row renamed and moved: what is not shipped is not a special "real-sky pack" on a service of its own. It is a set of ordinary **detail expansion packs on the Explorers store**, free, each one a catalogue in size order with its credits, loaded from the Packs screen like any other pack. Alex: "bulky and irrelevant to most but useful to some. Like atomic rockets."
+
+| Where | What | Shown by default |
+|---|---|---|
+| In the app | The Solar System to the Expected stop; about 9,000 bright and named stars | The Expected stop; about 100 stars (the star level's default stop, to be set by RW2) |
+| Detail expansion packs on the store | Nearby stars complete to 25 pc; nearby stars to 100 pc; the Solar System's small bodies, cut into packs by size step so nobody downloads a million rocks to see ten thousand; doubles; known planets | Nothing until loaded; then whatever the Detail control is set to |
+| Live, from the import action | A region round a chosen star that no loaded pack covers | The imported region |
+
+The Detail control is what ties them together: its slider shows stops that need a pack as "get this pack" marks, so going past what is installed offers the download instead of showing nothing. A pack that is loaded simply lengthens the ranked lists.
+
+The live route stays, because "a star and 20 light years" must work for someone who has loaded nothing (my reading; Alex spoke of the bulk, not of the importer).
+
 ### 5.4 The data service
 
-A storage bucket (Cloudflare R2) behind new Worker routes, `/cat/*`, serving catalogue files and caching live queries. Files are immutable and named by catalogue and version. Each is in size order with a small index, so a device asks for a byte range and stops (section 3.1). Star files are also cut by region (HEALPix cells by distance shell, the grid `sse-sky` already has), so a 20 light year import reads one small tile.
+After Alex's 18:03 ruling the catalogue files are store packs, so their bytes sit wherever the Explorers store keeps packs. What this section still needs is that those files can be read by byte range (section 3.1) and that live queries have a cache. Whether Explorers' storage can serve a 25 MB pack in ranges is not known to me; RW8 finds out first. If it cannot, the fallback is what the first draft proposed: a storage bucket (Cloudflare R2) behind new Worker routes, `/cat/*`, serving catalogue files and caching live queries. Files are immutable and named by catalogue and version. Each is in size order with a small index, so a device asks for a byte range and stops (section 3.1). Star files are also cut by region (HEALPix cells by distance shell, the grid `sse-sky` already has), so a 20 light year import reads one small tile.
 
 Build scripts live in the repo and run on Alex's PC, because the cloud cannot reach the sources (section 2.5). Creating the bucket is Alex's to do in Cloudflare (question 8).
 
@@ -455,7 +469,7 @@ Each is sized for one agent. "Now" means nothing blocks it. The star half waits 
 | **RW5** | The Detail control: `ViewControls.detail`, stops as data, the ceiling from the probe, per-device memory, the always-shown rule, the readout in the level's own measure. System level first | RW2, RW4 | chart room, with quality tiers |
 | **RW6** | Drawing a crowd: columns to the GPU, orbits in the shader, a press resolves one member, on the system chart, System 3D and True; the phone and text paths. Retires the four-member stand-in (SB-sample) | RW4, RW5 | small bodies, with the renderer |
 | **RW7** | The Solar System catalogue: build scripts (run on Alex's PC) for every moon, minor planet and comet into size-ordered files; estimated sizes graded; base-sol gains full orbits at a date, belt masses by group and the Expected stop; the notable flags | RW1, RW3 | data sheet |
-| **RW8** | The data service: the storage bucket, Worker routes `/cat/*` with byte ranges, immutable versioned files, the live-query cache, the offline edge | question 8 | kernel hand-offs or the Explorers thread |
+| **RW8** | Detail expansion packs on the Explorers store (5.3A): the pack kind, the shelf, byte-range reads of a large pack (test the store first; a bucket only if it fails), versioned files, the live-query cache, the offline edge, "get this pack" marks on the Detail control | question 8 | kernel hand-offs or the Explorers thread |
 | **RW9** | Filters as chips over population columns: group, makeup, orbit, hazard, known, visited, interesting | RW5 | navigation (find by tag) |
 | **RW10** | The census: op `census`, the "Against the Solar System" card, the thousand-seed report and the gap list | RW4, RW7 | proven core |
 | **RW11** | Claims in the star field: a pin from outside with measured mass, place and velocity; best-fit slot in the count tree; thinning by completeness; the block overdraft rule; the three tests. Core golden | GZ13, CC6, RW3 | kernel (core lane) |
@@ -483,7 +497,7 @@ Each has my recommendation. Routine choices went to the coordinator and are not 
 5. **The default is the Expected stop, and the machine sets a marked ceiling the user may pass with a warning**, not a hard limit. *Recommend yes:* suggest, never refuse.
 6. **"Expected" is a rule, not a list:** everything big enough to be round, plus notables whatever their size (so Phobos, Deimos and Halley's comet show). The same rule gives a generated system its default. *Recommend yes.*
 7. **Estimated sizes take part in the slider**, marked as estimates on the card. Otherwise nine in ten known asteroids could never be shown by size. *Recommend yes.*
-8. **A Cloudflare storage bucket for catalogue files**, which you would create (a few minutes; I will write the steps), with the build scripts run on your PC because the cloud cannot reach the catalogue sites. *Recommend yes.* Nothing else can serve 45 MB in ranges.
+8. **Where the pack bytes sit.** After your 18:03 answer the catalogues are store packs. If the Explorers store can serve a large pack in byte ranges, nothing new is needed. If it cannot, a Cloudflare storage bucket that you would create. Either way the build scripts run on your PC, because the cloud cannot reach the catalogue sites. *Recommend: let RW8 test the store first, and ask you for a bucket only if it fails.*
 9. **"Known by a date" as a filter**, so a campaign in 1900 shows players only what had been found. *Recommend yes, as part of RW9, not before.*
 10. **Hypothetical bodies** (the Planet Nine candidates) as a switch in the pack, off by default and tagged hypothetical. *Recommend yes.*
 11. **The Solar System as yardstick, never as target:** the comparison finds missing processes, and no generator number is tuned to match it. The "Against the Solar System" card is shown to the GM on the Explore desk. *Recommend yes.*
@@ -498,6 +512,8 @@ Not answers to the numbered questions, which are still open. Both are taken as r
 - **Block chains.** "These all should be block chains in the physics."
 - **Gaia, 17:58 UTC.** "What ruling? Gaia data can be added to any pack - to any star system - someone can decide to just 'play around Polaris' and never bother with the galaxy view." The "Gaia only in an optional pack" line is withdrawn (section 5.3). Where the night sky note's Q3, the naming note or the paid packs note say otherwise, this wins; and sold packs are settled by the next line.
 - **Selling, 18:00 UTC.** "just easier to ban selling packs with downloaded data. say 'you can use this' - you can give it away but you cannot 'sell it' as it contains..." A pack holding downloaded catalogue data is free only; the shop refuses a price and says why (section 5.3). This applies to every downloaded catalogue, not only Gaia. 18:00:35: "and we can refuse at store level because of that".
+- **Question 1, 18:03 UTC: "2 doors in".** Read as: the start sheet has two doors, the real sky at Earth today and a new universe. (My reading; which is marked "Start here" was not said, and stays the real sky as recommended until he says otherwise.)
+- **Question 3, 18:03 UTC.** "we have the 9000 in by default showing about 100 by default. I think importing the rest from the store makes sense - bulky and irrelevant to most but useful to some. Like atomic rockets... these are just detail expansion packs." So: the 9,000 bright and named stars ship in the app; the Detail control's default stop at the star level shows about 100 of them; everything bulkier (the complete nearby sample, the deep star sets, the full small-body catalogue) is a **detail expansion pack** on the Explorers store, free, fetched by those who want it, on the same shelf and by the same route as the Atomic Rockets pack. Section 5.3A.
 - **Credits, 18:01 UTC.** "make sure the actual credits are shipped in packs as clear readable and show at initial import." Section 5.3.
 
 ---
