@@ -18,7 +18,7 @@ const SOL: &str = "u:home/sys:sol";
 /// The base-sol bodies at the start sheet's addresses (Sun star:0, bodies
 /// body:N in sheet order, moons under their host), values as the pack has
 /// them, plus `extra` facts by body id.
-fn open_sol(extra: &[(&str, &str, serde_json::Value)]) -> crate::Kernel {
+pub(crate) fn open_sol(extra: &[(&str, &str, serde_json::Value)]) -> crate::Kernel {
     open_sol_with(&[], extra)
 }
 
