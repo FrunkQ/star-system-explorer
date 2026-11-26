@@ -7,6 +7,7 @@ Design: `handover/design/SSE4-three-modes-design.md` question 3 and sections 3.1
 - **One mechanism, in `edit.ts`:** `commitEdit` and `commitFields` call `tryFirst` first. On a desk whose record says `writes: "try"` (Explore; `deskTries` in desk.ts), with no what-if open and a GM seat, it opens one by itself (label `TRY_LABEL`, "Trying it") and the change goes there. The stamp and dashed frame, Compare, Keep it and Throw away are the ones the ruler already had. `keepWhatIf` sends the kept edits through the inner `sendEdit`, so keeping on Explore does not open a fresh what-if.
 - **The handles row** (`views/editing`): editable is now `deskChanges(desk)` (Explore and Build, never Run). The "Try changing it" button and "Change it on the Build desk" are gone (Alex's yes to question 3 replaces them). Before the first change the strip says "A try: it opens a what-if, and nothing is kept unless you press Keep it." Build's own tools stay on Build (`deskKeeps`): Reach it, Could be, the sweep marks, Type it all in.
 - **Desk names:** Handles.svelte no longer tests the desk by name (desk-test ledger 3 to 0).
+- The handle sheet says it: every handle's `desks` is now Explore and Build (it said Build only; nothing filters on it yet).
 - Desk record hint for Explore: "Look around and try anything: nothing is kept by accident (V)".
 
 ## Checks
