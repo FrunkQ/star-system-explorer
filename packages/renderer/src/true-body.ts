@@ -56,8 +56,8 @@ export interface TrueBody {
   moons?: readonly RingMoon[];
   /** How much its spin flattens it (true-shape.ts `readTrueShape`, TA6). */
   flatten?: number;
-  /** Its seas' surface wind (m/s) and the liquid's refractive index, for the sun's glint, when the view has them. */
-  sea?: { wind_m_s?: number; index?: number };
+  /** Its seas' glint, as the kernel works it out (weather op `glint`: slope variance and reflectance), when read. */
+  sea?: { slope_variance?: number; normal_reflectance?: number };
 }
 
 /** The GPU fields of a body's True face. */
@@ -130,7 +130,7 @@ export function trueLook(b: TrueBody): TrueLook {
     else out.surface = { key: b.key, texture: b.surface };
   }
   // Liquid ground glints in its star's light (gpu-shade.ts): drawn on the face pictures, which carry where it is wet.
-  if (!b.star && b.surface && hasLiquid(b.surface)) out.glint = { ...(b.sea?.wind_m_s !== undefined ? { wind_m_s: b.sea.wind_m_s } : {}), ...(b.sea?.index !== undefined ? { index: b.sea.index } : {}) };
+  if (!b.star && b.surface && hasLiquid(b.surface)) out.glint = { ...(b.sea?.slope_variance !== undefined ? { slope_variance: b.sea.slope_variance } : {}), ...(b.sea?.normal_reflectance !== undefined ? { normal_reflectance: b.sea.normal_reflectance } : {}) };
   if (!b.star && b.flatten && b.flatten > 0) ((out.flatten = b.flatten), (out.pole = b.pole));
   if (!b.star && b.clouds) out.clouds = { key: `${b.key}|clouds`, texture: b.clouds };
   if (!b.star && b.air) {

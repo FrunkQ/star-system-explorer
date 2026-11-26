@@ -4660,6 +4660,20 @@
         "range": null
       },
       {
+        "description": "share of light a surface reflects straight back at normal incidence",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.normal_reflectance",
+        "range": null
+      },
+      {
         "description": "target area an ion offers a photon that can strip it",
         "dim": [
           2,
@@ -5357,6 +5371,20 @@
           0
         ],
         "id": "ocean.significant_wave_height",
+        "range": null
+      },
+      {
+        "description": "mean square slope of the waves on a sea, which sets how far the sun's glint spreads",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ocean.slope_variance",
         "range": null
       },
       {
