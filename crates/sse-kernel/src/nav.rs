@@ -10,6 +10,7 @@ use sse_chronicle::Chronicle;
 use sse_core::cbor::Value;
 use sse_core::quantity::consts::{JULIAN_YEAR, L_SUN, R_EARTH, R_SUN, STEFAN_BOLTZMANN};
 use sse_core::{math as m, Address};
+use sse_flow::Atom;
 use sse_formation::pipeline::SystemRun;
 use sse_nav::{Belt, NavBody, NavSettings, NavSystem, RouteRequest, Ship};
 use std::collections::BTreeMap;
@@ -369,6 +370,58 @@ pub(crate) fn books(l: &sse_nav::power::Ledger, s: &Ship, flux: f64) -> serde_js
         "why": l.why,
     })
 }
+
+/// The radiator panels a ship's heat needs at each temperature it leaves at,
+/// each sized by the `sse.ship.radiator_area` block (RK3) with its working.
+pub(crate) fn radiators(
+    l: &sse_nav::power::Ledger,
+    rule: &serde_json::Value,
+) -> Result<serde_json::Value, Response> {
+    let e = rule
+        .get("emissivity")
+        .and_then(serde_json::Value::as_f64)
+        .ok_or_else(|| bad("radiator.emissivity: a number between 0 and 1"))?;
+    let faces = if rule
+        .get("two_sided")
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(true)
+    {
+        2.0
+    } else {
+        1.0
+    };
+    let block = sse_atoms::formulas::loaded()
+        .iter()
+        .find(|a| a.decl().id == RADIATOR_BLOCK)
+        .ok_or_else(|| err("eval", format!("{RADIATOR_BLOCK} is not loaded")))?;
+    let d = block.decl();
+    let params: Vec<f64> = d.params.iter().map(|p| p.default).collect();
+    let mut out = vec![];
+    // Hottest first: the smallest panels.
+    for (k, q) in l.heat_by_k.iter().rev() {
+        let inputs = [*q, *k as f64, e, faces];
+        let a = block
+            .eval(&inputs, &params)
+            .map_err(|x| err("eval", format!("{RADIATOR_BLOCK}: {}", x.0)))?;
+        let ports: serde_json::Map<String, serde_json::Value> = d
+            .inputs
+            .iter()
+            .zip(inputs)
+            .map(|(p, v)| (p.name.clone(), v.into()))
+            .collect();
+        out.push(serde_json::json!({
+            "reject_k": k,
+            "heat_w": q,
+            "area_m2": a.first().copied().unwrap_or(f64::NAN),
+            "block": RADIATOR_BLOCK,
+            "inputs": ports,
+        }));
+    }
+    Ok(out.into())
+}
+
+/// The block that sizes radiator panels.
+pub(crate) const RADIATOR_BLOCK: &str = "sse.ship.radiator_area";
 
 pub(crate) struct Ask<'a> {
     pub source: Source<'a>,

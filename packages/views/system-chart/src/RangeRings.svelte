@@ -8,6 +8,9 @@
 <script lang="ts">
   import { ringPoints, type RangeRing } from "../../../ui-contract/src/index.ts";
 
+  // Path coordinates to a tenth of a pixel (a drawing, not a figure anyone reads).
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+
   let { rings, centre_m, project, label = "" }: {
     rings: readonly RangeRing[];
     /** Where the weapon is, in metres from the chart's centre (orbital plane x, y). */

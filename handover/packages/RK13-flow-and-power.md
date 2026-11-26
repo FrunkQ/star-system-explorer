@@ -17,11 +17,10 @@ first), 19 (broken books as a dashed band from "Nowhere"). Kernel side was RK9 p
   radiator area per temperature (hot, warm, cool; `A = W / (faces x e x sigma T^4)` with the base-ships pack's radiator
   rule and the sheet's `sigma_SB`), how visible (watts given off, and the flux a million km away against `S_sun`).
 - **Session `shipPower`** (kernel `ship_power`) on `Session` and `ViewSession`.
-- **Which radiator**: the kernel's heat rows name the part but not its temperature, so `heatTemperatures` reads each
+- **Which radiator**: each heat row from the kernel carries its `reject_k` (added with RK3, golden lane), the part's
+  own temperature or the kernel's default. `heatTemperatures` stays as the fallback for older answers: it reads each
   part's `reject_k` from the ship record that was asked about, and a part with none goes to the one temperature in
-  `heat_by_k` no stated part explains (the kernel's default). If that cannot be told, the heat ends at "Radiators".
-  Kernel change left for the golden lane: a `reject_k` on heat rows (the contract golden holds a `ship_power` answer,
-  response 361, so it changes that hash); then `heatTemperatures` becomes a fallback.
+  `heat_by_k` no stated part explains. If that cannot be told, the heat ends at "Radiators".
 - **Mount**: one "Power" button and panel on the Ships and stations card (`views/constructs/src/Constructs.svelte`),
   agreed with "Build ship manifest and crew roster". Shown for any construct with a ship record, every seat.
 

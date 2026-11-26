@@ -1,0 +1,445 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.ship",
+ "about": "Ship sizing (RK3, Atomic Rockets plan section 5): the closed forms the ship designer sizes parts with, as named Equations. Thrust power, tanks and holds, crew room, the drive's waste heat and the radiators that shed it. The figures they read (stowage, room per person, waste share, radiator rule) are base-ships pack data.",
+ "atoms": [
+  {
+   "id": "sse.ship.jet_power",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "thrust",
+     "letter": "F"
+    },
+    {
+     "port": "exhaust_speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "jet_power",
+     "letter": "P"
+    }
+   ],
+   "checks": [
+    {
+     "port": "thrust",
+     "min": 0,
+     "finite": true,
+     "says": "thrust must be zero or more, got {}"
+    },
+    {
+     "port": "exhaust_speed",
+     "min": 0,
+     "finite": true,
+     "says": "exhaust speed must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Sutton, G. P. and Biblarz, O. 2017, Rocket Propulsion Elements, 9th edn, Wiley, section 2.3 (jet power is half the mass flow times the exhaust speed squared, so half the thrust times the exhaust speed). https://www.wiley.com/en-us/Rocket+Propulsion+Elements%2C+9th+Edition-p-9781118753651"
+   ],
+   "shown": "P = ½ F v_e",
+   "equation": {
+    "name": "How much power a drive's exhaust carries",
+    "formula": "P = F * v / 2",
+    "inputs": {
+     "F": {
+      "kind": "ship.thrust",
+      "unit": "N",
+      "name": "thrust"
+     },
+     "v": {
+      "kind": "ship.exhaust_speed",
+      "unit": "m s-1",
+      "name": "exhaust speed"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "ship.jet_power",
+      "unit": "W",
+      "name": "power in the jet"
+     }
+    },
+    "source": {
+     "text": "Sutton and Biblarz 2017, Rocket Propulsion Elements",
+     "url": "https://www.wiley.com/en-us/Rocket+Propulsion+Elements%2C+9th+Edition-p-9781118753651",
+     "where": "section 2.3"
+    },
+    "explain": {
+     "curious": "A fast exhaust is expensive: the same push with twice the exhaust speed carries twice the power. That is why ion engines push so gently and torch drives need so much.",
+     "science": "Kinetic power of the exhaust stream: half the mass flow times v_e squared, and with F = mdot v_e that is F v_e / 2. Every power ledger checks a drive against it."
+    },
+    "examples": [
+     {
+      "F": 530.0,
+      "v": 20000.0,
+      "P": 5300000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.ship.stowed_volume",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "stowed_mass",
+     "letter": "m"
+    },
+    {
+     "port": "packed_density",
+     "letter": "rho"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "stowed_volume",
+     "letter": "V"
+    }
+   ],
+   "checks": [
+    {
+     "port": "stowed_mass",
+     "min": 0,
+     "finite": true,
+     "says": "mass must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "packed_density",
+     "says": "packed density"
+    }
+   ],
+   "references": [
+    "Halliday, D., Resnick, R. and Walker, J. 2013, Fundamentals of Physics, 10th edn, Wiley. chapter 14: density is mass over volume. https://www.wiley.com/en-us/Fundamentals+of+Physics%2C+10th+Edition-p-9781118230718"
+   ],
+   "shown": "V = m / ρ",
+   "equation": {
+    "name": "How much room a load takes",
+    "formula": "V = m / rho",
+    "inputs": {
+     "m": {
+      "kind": "ship.stowed_mass",
+      "unit": "kg",
+      "name": "mass of propellant or cargo"
+     },
+     "rho": {
+      "kind": "ship.packed_density",
+      "unit": "kg m-3",
+      "name": "how densely it packs (a liquid's density, or cargo's stowage)"
+     }
+    },
+    "outputs": {
+     "V": {
+      "kind": "ship.stowed_volume",
+      "unit": "m3",
+      "name": "room it takes"
+     }
+    },
+    "source": {
+     "text": "Halliday, D., Resnick, R. and Walker, J. 2013, Fundamentals of Physics, 10th edn, Wiley",
+     "url": "https://www.wiley.com/en-us/Fundamentals+of+Physics%2C+10th+Edition-p-9781118230718",
+     "where": "chapter 14"
+    },
+    "explain": {
+     "curious": "Hydrogen is so light that a tank of it is huge: a tonne of liquid hydrogen fills fourteen cubic metres, a tonne of water one.",
+     "science": "Volume of tanks and holds from the mass carried and its density: a propellant's liquid density from the data sheet, or the stowage factor of packed cargo."
+    },
+    "examples": [
+     {
+      "m": 1000.0,
+      "rho": 70.85,
+      "V": 14.114326040931546
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.ship.crew_volume",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "crew",
+     "letter": "n"
+    },
+    {
+     "port": "habitable_per_person",
+     "letter": "h"
+    },
+    {
+     "port": "net_to_gross",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "crew_volume",
+     "letter": "V"
+    }
+   ],
+   "checks": [
+    {
+     "port": "crew",
+     "min": 0,
+     "finite": true,
+     "says": "crew must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "net_to_gross",
+     "says": "net to gross"
+    }
+   ],
+   "references": [
+    "NASA-STD-3001 Volume 2, Revision B (2022), section 8.6 and Appendix F (net habitable volume per crew member). https://www.nasa.gov/reference/standard-3001/"
+   ],
+   "shown": "V = n h / g",
+   "equation": {
+    "name": "How much pressurised room a crew needs",
+    "formula": "V = n * h / g",
+    "inputs": {
+     "n": {
+      "kind": "ship.crew",
+      "unit": "1",
+      "name": "people aboard"
+     },
+     "h": {
+      "kind": "ship.habitable_per_person",
+      "unit": "m3",
+      "name": "net habitable room each needs"
+     },
+     "g": {
+      "kind": "ship.net_to_gross",
+      "unit": "1",
+      "name": "share of a pressurised module left free once equipment and stowage are in",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "V": {
+      "kind": "ship.crew_volume",
+      "unit": "m3",
+      "name": "pressurised room"
+     }
+    },
+    "source": {
+     "text": "NASA-STD-3001 Volume 2, Revision B",
+     "url": "https://www.nasa.gov/reference/standard-3001/",
+     "where": "section 8.6 and Appendix F"
+    },
+    "explain": {
+     "curious": "People need room to stay sane on long trips, and a module is only half free space once the kit is in.",
+     "science": "Pressurised volume from crew count, net habitable volume per person for the mission length, and the net-to-gross ratio of a module."
+    },
+    "examples": [
+     {
+      "n": 4.0,
+      "h": 25.0,
+      "g": 0.5,
+      "V": 200.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.ship.waste_heat",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "jet_power",
+     "letter": "P"
+    },
+    {
+     "port": "waste_per_jet",
+     "letter": "w"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "waste_heat",
+     "letter": "Q"
+    }
+   ],
+   "checks": [
+    {
+     "port": "waste_per_jet",
+     "min": 0,
+     "finite": true,
+     "says": "waste per jet must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Sutton, G. P. and Biblarz, O. 2017, Rocket Propulsion Elements, 9th edn, Wiley, section 2.3 (jet power is half the mass flow times the exhaust speed squared, so half the thrust times the exhaust speed). https://www.wiley.com/en-us/Rocket+Propulsion+Elements%2C+9th+Edition-p-9781118753651"
+   ],
+   "shown": "Q = w P",
+   "equation": {
+    "name": "How much heat a drive leaves on the ship",
+    "formula": "Q = P * w",
+    "inputs": {
+     "P": {
+      "kind": "ship.jet_power",
+      "unit": "W",
+      "name": "power in the jet"
+     },
+     "w": {
+      "kind": "ship.waste_per_jet",
+      "unit": "1",
+      "name": "watts of heat left aboard for each watt in the jet"
+     }
+    },
+    "outputs": {
+     "Q": {
+      "kind": "ship.waste_heat",
+      "unit": "W",
+      "name": "heat to shed"
+     }
+    },
+    "source": {
+     "text": "Sutton and Biblarz 2017, Rocket Propulsion Elements",
+     "url": "https://www.wiley.com/en-us/Rocket+Propulsion+Elements%2C+9th+Edition-p-9781118753651",
+     "where": "section 2.3"
+    },
+    "explain": {
+     "curious": "Any drive that is not perfectly efficient leaves heat behind, and in space the only way to lose it is to glow it away.",
+     "science": "Heat left aboard per watt of jet power: none for a chemical rocket (it leaves with the exhaust), large for reactor-driven and electric drives. The share is the drive family's figure in the base-ships pack."
+    },
+    "examples": [
+     {
+      "P": 5300000.0,
+      "w": 0.5,
+      "Q": 2650000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.ship.radiator_area",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "waste_heat",
+     "letter": "Q"
+    },
+    {
+     "port": "radiator_temperature",
+     "letter": "T"
+    },
+    {
+     "port": "emissivity",
+     "letter": "e"
+    },
+    {
+     "port": "faces",
+     "letter": "n"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "radiator_area",
+     "letter": "A"
+    }
+   ],
+   "constants": {
+    "sigma": "constants/sigma_SB"
+   },
+   "checks": [
+    {
+     "port": "waste_heat",
+     "min": 0,
+     "finite": true,
+     "says": "waste heat must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radiator_temperature",
+     "says": "radiator temperature"
+    },
+    {
+     "port": "emissivity",
+     "says": "emissivity"
+    },
+    {
+     "port": "faces",
+     "says": "faces"
+    }
+   ],
+   "references": [
+    "Gilmore, D. G. (ed.) 2002, Spacecraft Thermal Control Handbook, Volume I, 2nd edn, The Aerospace Press, chapter 6 (radiators: heat rejected per face is emissivity times sigma T^4). doi:10.2514/4.989117"
+   ],
+   "shown": "A = Q / (n ε σ T⁴)",
+   "equation": {
+    "name": "How big the radiators must be",
+    "formula": "A = Q / (n * e * sigma * T ^ 4)",
+    "inputs": {
+     "Q": {
+      "kind": "ship.waste_heat",
+      "unit": "W",
+      "name": "heat to shed"
+     },
+     "T": {
+      "kind": "ship.radiator_temperature",
+      "unit": "K",
+      "name": "radiator temperature"
+     },
+     "e": {
+      "kind": "ship.emissivity",
+      "unit": "1",
+      "name": "emissivity of the panel",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "n": {
+      "kind": "ship.radiating_faces",
+      "unit": "1",
+      "name": "faces that see space (2 for a flat panel)"
+     },
+     "sigma": {
+      "kind": "constant.sigma_SB",
+      "unit": "W m-2 K-4",
+      "name": "Stefan-Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "A": {
+      "kind": "ship.radiator_area",
+      "unit": "m2",
+      "name": "panel area (one face)"
+     }
+    },
+    "source": {
+     "text": "Gilmore 2002, Spacecraft Thermal Control Handbook, Volume I",
+     "doi": "10.2514/4.989117",
+     "where": "chapter 6"
+    },
+    "explain": {
+     "curious": "Radiators grow fast as they cool: halve their temperature and they must be sixteen times bigger. Hot radiators are small; cool ones are vast.",
+     "science": "Panel area to reject the waste heat by thermal radiation alone, both faces radiating to cold space; sunlight and view factors are left out."
+    },
+    "examples": [
+     {
+      "Q": 1000000.0,
+      "T": 600.0,
+      "e": 0.9,
+      "n": 2.0,
+      "A": 75.59807844690611
+     }
+    ]
+   }
+  }
+ ]
+}

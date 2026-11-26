@@ -251,7 +251,7 @@ export interface ViewSession {
   /** Effect at range (RK12, kernel `effect_at_range`): each ask's reading and the distances where it changes. */
   effectAtRange(asks: import("./range-rings.ts").RangeAsk[]): Promise<{ ok: true; effects: import("./range-rings.ts").RangeEffect[] } | { ok: false; code: string; message: string }>;
   /** A ship's power books (RK9 kernel `ship_power`), for the Power card (RK13). */
-  shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }>;
+  shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint; radiator?: import("./power.ts").RadiatorRule }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }>;
   planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }>;
   /** The stacked packs' templates for ships, stations, sites and the like (kernel `templates`, J7). Read only. */
   templates?(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }>;
@@ -992,7 +992,7 @@ export class Session implements ViewSession {
   }
 
   /** A ship's power books (RK9 kernel `ship_power`): what it makes, what takes it, where it ends up. A ship is an id or a record; `flux_w_m2` is the starlight where it is. */
-  async shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }> {
+  async shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint; radiator?: import("./power.ts").RadiatorRule }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "ship_power", ...ask } as unknown as Json);
     return r.type === "ship_power_is" ? { ok: true, power: (r as unknown as { power: import("./power.ts").PowerBooks }).power } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }

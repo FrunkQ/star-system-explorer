@@ -151,6 +151,9 @@ pub struct Flow {
     pub amount_w: f64,
     /// "electric", "heat", "jet" or "fuel".
     pub kind: String,
+    /// For heat: the temperature it is rejected at, K (the part's own, else the default).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reject_k: Option<u32>,
 }
 
 /// An engine's share of the ledger.
@@ -216,11 +219,12 @@ pub fn source_w(s: &PowerSource, c: Conditions) -> f64 {
     }
 }
 
-fn heat(map: &mut BTreeMap<u32, f64>, k: Option<f64>, w: f64) {
+fn heat(map: &mut BTreeMap<u32, f64>, k: Option<f64>, w: f64) -> Option<u32> {
+    let key = k.unwrap_or(DEFAULT_REJECT_K).round().max(0.0) as u32;
     if w > 0.0 {
-        *map.entry(k.unwrap_or(DEFAULT_REJECT_K).round().max(0.0) as u32)
-            .or_insert(0.0) += w;
+        *map.entry(key).or_insert(0.0) += w;
     }
+    Some(key)
 }
 
 /// Resolve an engine reference against the pack's engines.
@@ -262,16 +266,18 @@ pub fn ledger(
             to: "electric".into(),
             amount_w: w,
             kind: "electric".into(),
+            reject_k: None,
         });
         if let Some(t) = s.thermal_w {
             // The plant's own loss, scaled with its output like the electricity.
             let th = t * w / s.electric_w.max(1e-12);
-            heat(&mut heat_by_k, s.reject_k, th);
+            let reject_k = heat(&mut heat_by_k, s.reject_k, th);
             flows.push(Flow {
                 from: name,
                 to: "radiators".into(),
                 amount_w: th,
                 kind: "heat".into(),
+                reject_k,
             });
         }
         match &s.law {
@@ -297,13 +303,15 @@ pub fn ledger(
             to: l.name.clone(),
             amount_w: got,
             kind: "electric".into(),
+            reject_k: None,
         });
-        heat(&mut heat_by_k, l.reject_k, got);
+        let reject_k = heat(&mut heat_by_k, l.reject_k, got);
         flows.push(Flow {
             from: l.name.clone(),
             to: "radiators".into(),
             amount_w: got,
             kind: "heat".into(),
+            reject_k,
         });
     }
     // Electric engines share the rest.
@@ -359,6 +367,7 @@ pub fn ledger(
                 to: name.clone(),
                 amount_w: got_w,
                 kind: "electric".into(),
+                reject_k: None,
             });
         }
         if d.energy_from == EnergyFrom::Fuel {
@@ -367,6 +376,7 @@ pub fn ledger(
                 to: name.clone(),
                 amount_w: jet_w / d.eff(),
                 kind: "fuel".into(),
+                reject_k: None,
             });
         }
         if short_w > 0.0 {
@@ -375,6 +385,7 @@ pub fn ledger(
                 to: name.clone(),
                 amount_w: short_w,
                 kind: "electric".into(),
+                reject_k: None,
             });
             why.push(format!(
                 "{name}: its jet carries {:.2} MW but it is given {:.2} MW{}, so {:.2} MW comes from nowhere",
@@ -389,18 +400,20 @@ pub fn ledger(
             to: "jet".into(),
             amount_w: jet_w,
             kind: "jet".into(),
+            reject_k: None,
         });
         let loss = match d.energy_from {
             EnergyFrom::Electric => (got_w - (jet_w - short_w)).max(0.0),
             _ => jet_w * (1.0 / d.eff() - 1.0),
         };
-        heat(&mut heat_by_k, d.reject_k, loss);
+        let reject_k = heat(&mut heat_by_k, d.reject_k, loss);
         if loss > 0.0 {
             flows.push(Flow {
                 from: name.clone(),
                 to: "radiators".into(),
                 amount_w: loss,
                 kind: "heat".into(),
+                reject_k,
             });
         }
         if share < 1.0 && d.energy_from == EnergyFrom::Electric {
