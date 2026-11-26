@@ -73,18 +73,24 @@ export async function readLife(session: Reader, mass_msun: number, feh?: number,
     const stage: LifeStage = { phase: p.phase, label: p.label, from_yr: p.from_yr, to_yr: p.to_yr, frames: [] };
     const notYet = NOT_DRAWN[p.phase];
     if (notYet) stage.why = notYet;
-    for (const age_yr of stageAges(p.from_yr, p.to_yr)) {
-      const r = await describe(mass_msun, age_yr, feh);
-      if (!r.ok) return r.message;
-      const now = r.star.now;
-      let live: LiveStar | null = null;
-      let clock = 1;
-      if (!notYet && now.teff_k > 0 && now.radius_m > 0 && now.mass_kg > 0) {
-        const s = await readSurface(session, address, now, age_yr);
-        if (typeof s !== "string") ((live = s.live), (clock = s.clock));
-      }
-      stage.frames.push({ age_yr, now, live, clock });
-    }
+    // A stage's ages asked at once, so they queue at the kernel together rather than one at a time.
+    const frames = await Promise.all(
+      stageAges(p.from_yr, p.to_yr).map(async (age_yr): Promise<LifeFrame | string> => {
+        const r = await describe(mass_msun, age_yr, feh);
+        if (!r.ok) return r.message;
+        const now = r.star.now;
+        let live: LiveStar | null = null;
+        let clock = 1;
+        if (!notYet && now.teff_k > 0 && now.radius_m > 0 && now.mass_kg > 0) {
+          const s = await readSurface(session, address, now, age_yr);
+          if (typeof s !== "string") ((live = s.live), (clock = s.clock));
+        }
+        return { age_yr, now, live, clock };
+      }),
+    );
+    const failed = frames.find((f): f is string => typeof f === "string");
+    if (failed) return failed;
+    stage.frames = frames as LifeFrame[];
     stages.push(stage);
     onstage?.(stage, i);
   }

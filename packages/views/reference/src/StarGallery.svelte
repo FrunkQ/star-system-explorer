@@ -72,29 +72,24 @@
   const pageNow = $derived(Math.min(pageAt, pages - 1));
   const paged = $derived(shown.slice(pageNow * pageSize, (pageNow + 1) * pageSize));
 
-  // Each tile's star, read once (the life line, then its activity), the page's in order.
+  // Each tile's star, read once (the life line, then its activity). The page's are all asked at once, so they queue at
+  // the kernel together rather than one at a time behind whatever else the screen asks of it; each tile shows as its
+  // star comes back.
   let read = $state(new Map<string, GalleryStar | string>());
-  let reading = false;
+  const asked = new Set<string>();
   $effect(() => {
     const want = paged.filter((t) => !untrack(() => read.has(t.id)));
     if (!want.length) return;
-    untrack(() => void readAll(want));
+    untrack(() => readAll(want));
   });
-  async function readAll(want: readonly StarTile[]) {
-    if (reading) return;
-    reading = true;
-    try {
-      for (const t of want) {
-        if (read.has(t.id)) continue;
-        const g = await readGalleryStar(session, t).catch((e: Error) => e.message);
-        read = new Map(read).set(t.id, g);
-      }
-    } finally {
-      reading = false;
+  function readAll(want: readonly StarTile[]) {
+    for (const t of want) {
+      if (asked.has(t.id) || read.has(t.id)) continue;
+      asked.add(t.id);
+      void readGalleryStar(session, t)
+        .catch((e: Error) => e.message)
+        .then((g) => (read = new Map(read).set(t.id, g)));
     }
-    // Asked for more while reading (a page turned): read those too.
-    const more = paged.filter((t) => !read.has(t.id));
-    if (more.length) void readAll(more);
   }
   const starOf = (id: string): GalleryStar | null => {
     const g = read.get(id);
@@ -140,6 +135,7 @@
     ro.observe(h);
     let raf = 0;
     const t0 = performance.now();
+    let drawn = "";
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       if (!gpu || document.hidden) return;
@@ -156,8 +152,14 @@
       }
       const w = Math.max(1, Math.round(at.width));
       const hh = Math.max(1, Math.round(at.height));
+      // Drawn again only when something shows a change: the faces move on ten times a second, or the page moved. A
+      // frame of the whole page drawn every refresh starves the page on a device that draws in software.
+      const t_s = (now - t0) / 1000;
+      const sig = `${calm ? 0 : Math.floor(t_s * 10)}|${w}x${hh}@${dpr}|${stars.map((s) => `${s.key}:${Math.round(s.x)},${Math.round(s.y)},${s.r}`).join(";")}`;
+      if (sig === drawn) return;
+      drawn = sig;
       if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(hh * dpr)) ((cv.width = Math.round(w * dpr)), (cv.height = Math.round(hh * dpr)));
-      drawStage(gpu, { width: w, height: hh, dpr, ground: "black", t_s: (now - t0) / 1000, calm, stars });
+      drawStage(gpu, { width: w, height: hh, dpr, ground: "black", t_s, calm, stars });
       if (stars.length !== drawnCount) drawnCount = stars.length;
     };
     raf = requestAnimationFrame(frame);

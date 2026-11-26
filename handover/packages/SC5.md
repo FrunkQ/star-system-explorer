@@ -44,3 +44,13 @@ can have it animating between them on that page... and have earth at 1au to show
   white dwarf, the giant's tip at its own size, all three scales, a 20 M☉ life ending in a neutron star marked not
   drawn, play.
 - Screenshots: project files `sse4/handover-screens/SC1-screens/` (`life-*`).
+
+## The gallery starved a software-drawn browser (CI, 26 Nov)
+- PR 665's first CI run timed out waiting for the gallery's 17 stars to be read (60 s). Measured in headless
+  Chromium (software GL): 27 to 37 s to read them with the page drawn, **0.5 s with WebGL turned off**; each kernel call
+  took about 100 ms from post to answer while the kernel itself spent under 1 ms. Drawing the whole page of stars on
+  every screen refresh (and the life view while still reading) held the browser.
+- Now: the gallery redraws only when a face's tenth-of-a-second tick or the layout changes; faces move on within a
+  CPU budget per drawing (`FACE_BUDGET_MS`, the longest unchanged first); a page's stars and a stage's ages are asked
+  of the kernel all at once; the life view draws only on change and plays once the whole life is read. Reading the
+  17 stars now takes 3 to 10 s in the same browser, the life 7 to 10 s.

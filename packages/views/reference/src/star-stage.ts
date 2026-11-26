@@ -16,6 +16,11 @@ export interface StageStar {
   clock: number;
 }
 
+/** CPU time per drawing for moving faces on, milliseconds (a page is drawn ten times a second: about a sixth of the time). */
+export const FACE_BUDGET_MS = 16;
+/** The tick each star's face was last drawn at, by key. */
+const shownTick = new Map<string, number>();
+
 /** A lit body beside the stars (Earth on its orbit in one star's life), over the canvas as the stars are. */
 export interface StageBody {
   key: string;
@@ -40,11 +45,19 @@ export function drawStage(gpu: Gpu, o: { width: number; height: number; dpr: num
   const back = 2 * Math.max(10, ...o.stars.map((s) => s.r)) + 10;
   const at = (x: number, y: number): Vec3 => [x - o.width / 2, o.height / 2 - y, -back];
   const items: GpuItem[] = [];
-  // A face drawn every tenth of a second of the screen's time, each at its own star's clock.
+  // A face drawn every tenth of a second of the screen's time, each at its own star's clock. Faces are drawn on the
+  // CPU, so a page of stars moves on within a budget each frame, the longest unchanged first; the rest keep their last
+  // face until their turn (otherwise a full page starves the page's own work, the kernel's answers among it).
   const tick = Math.floor(o.t_s * 10) / 10;
-  for (const s of o.stars) {
+  const start = performance.now();
+  if (shownTick.size > 256) shownTick.clear();
+  const order = [...o.stars].sort((a, b) => (shownTick.get(a.key) ?? -1) - (shownTick.get(b.key) ?? -1));
+  for (const s of order) {
     const px = 2 * s.r * o.dpr;
-    const face = liveFace(s.key, s.live, { t: s.live.age_s + tick * s.clock, clock: s.clock, span: s.clock / 10, calm: o.calm, px: Math.max(16, px) }).face;
+    const had = shownTick.get(s.key);
+    const at_tick = had === undefined || (had !== tick && performance.now() - start < FACE_BUDGET_MS) ? tick : had;
+    shownTick.set(s.key, at_tick);
+    const face = liveFace(s.key, s.live, { t: s.live.age_s + at_tick * s.clock, clock: s.clock, span: s.clock / 10, calm: o.calm, px: Math.max(16, px) }).face;
     const c = at(s.x, s.y);
     items.push({ id: s.key, rel: c, radius: s.r, ...trueLook({ key: s.key, star: true, colour: thermalColour(s.live.teff), radius_m: s.live.radius, face, pole: [0, 1, 0] }) });
   }

@@ -53,13 +53,15 @@
       stagesSoFar = [];
       problem = null;
       play = 0;
+      playing = false;
     });
     void readLife(session, m, undefined, (s, i) => {
       if (ask === readFor) stagesSoFar = [...stagesSoFar.slice(0, i), s];
     }).then((l) => {
       if (ask !== readFor) return;
       if (typeof l === "string") problem = l;
-      else life = l;
+      // Plays once the whole life is read (drawing it while still reading would only slow the reading).
+      else ((life = l), (playing = !calm));
     });
   });
   const stages = $derived(life?.stages ?? stagesSoFar);
@@ -68,7 +70,7 @@
   const STAGE_ON_SCREEN_S = 4;
   const calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   let play = $state(0);
-  let playing = $state(!calm);
+  let playing = $state(false);
   const at = $derived(stages.length ? frameAt({ stages }, play) : null);
   const stage = $derived(at ? stages[at.stage]! : null);
   const frame = $derived(at && stage ? stage.frames[at.frame]! : null);
@@ -121,6 +123,7 @@
     let raf = 0;
     const t0 = performance.now();
     let last = t0;
+    let drawn = "";
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
       const dt = (now - last) / 1000;
@@ -136,6 +139,11 @@
       const dpr = Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1);
       const w = sceneW;
       const h = SCENE_H;
+      // Drawn again only when something shows a change: playing, the face's tenth-of-a-second tick, the scale or size.
+      const t_s = (now - t0) / 1000;
+      const sig = `${playing ? play : ""}|${calm ? 0 : Math.floor(t_s * 10)}|${play}|${scale}|${w}x${h}@${dpr}|${frame?.age_yr ?? ""}`;
+      if (sig === drawn) return;
+      drawn = sig;
       if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) ((cv.width = Math.round(w * dpr)), (cv.height = Math.round(h * dpr)));
       const cx = w / 2;
       const cy = h / 2;
@@ -150,7 +158,7 @@
         height: h,
         dpr,
         ground: "black",
-        t_s: (now - t0) / 1000,
+        t_s,
         calm,
         stars: f?.live ? [{ key: "star-life", live: f.live, x: cx, y: cy, r, clock: f.clock }] : [],
         // Earth: a dot on its orbit, hidden by the star once the star is larger than its orbit.
