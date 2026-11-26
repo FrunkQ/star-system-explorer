@@ -217,7 +217,8 @@ export function approachFrom(raw: unknown): Approach | null {
 // seconds), ends.
 const LINK_KEYS = ["from", "stops", "go_on", "hud", "words", "style", "pace", "ends"] as const;
 
-const num = (x: number) => String(+x.toFixed(3));
+// Link text, not a figure for people: rounded to a thousandth of a second.
+const num = (x: number) => String(Math.round(x * 1000) / 1000);
 
 /** A way in as link settings, without the leading "?" or "&"; "" when nothing is set. */
 export function approachQuery(a: Approach): string {

@@ -1,0 +1,280 @@
+{
+ "schema": "sse.gz0-timings/1",
+ "made_on": "2026-11-26",
+ "machine": {
+  "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "cores": 4
+ },
+ "runs": 2,
+ "packs": [
+  "packs/base-physics/pack.json",
+  "packs/base-time/pack.json",
+  "packs/base-reference/pack.json",
+  "packs/base-manifest/pack.json"
+ ],
+ "universe": {
+  "op": "open_universe",
+  "id": "gz0",
+  "seed": "gz0 timings"
+ },
+ "runners": [
+  {
+   "runner": "Node v22.23.5",
+   "results": [
+    {
+     "id": "web-cube-48-100",
+     "rung": "web",
+     "what": "Web cube, 48³ over 100 Mpc",
+     "cold_ms": 2834.8862069999996,
+     "warm_ms": 2443.0288050000004,
+     "setup_ms": 32.566115999999965,
+     "reply_kb": 11126
+    },
+    {
+     "id": "web-galaxies-48-100",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 48³ over 100 Mpc",
+     "cold_ms": 2926.164684000003,
+     "warm_ms": 2887.902461999998,
+     "setup_ms": 29.46579699999893,
+     "reply_kb": 2528
+    },
+    {
+     "id": "web-galaxies-48-200",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 48³ over 200 Mpc (the view's default)",
+     "cold_ms": 6922.632495999998,
+     "warm_ms": 6934.377301,
+     "setup_ms": 30.98666900000535,
+     "reply_kb": 3339
+    },
+    {
+     "id": "web-galaxies-32-100",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 32³ over 100 Mpc (the basic tier's)",
+     "cold_ms": 2981.9371320000064,
+     "warm_ms": 2778.315389000003,
+     "setup_ms": 28.483538000000408,
+     "reply_kb": 2528
+    },
+    {
+     "id": "halo-cell",
+     "rung": "cluster",
+     "what": "One 8 Mpc halo cell (Galaxies nearby today)",
+     "cold_ms": 253.42712500000198,
+     "warm_ms": 263.73918600000616,
+     "setup_ms": 28.659424000004947,
+     "reply_kb": 15
+    },
+    {
+     "id": "neighbourhood",
+     "rung": "cluster",
+     "what": "The neighbourhood's galaxies and home's satellites (galaxies_seen and satellites_seen, through the sky)",
+     "cold_ms": 8671.750780999995,
+     "warm_ms": 8544.58438500001,
+     "setup_ms": 30.65970700001344,
+     "reply_kb": 1865
+    },
+    {
+     "id": "home-chart",
+     "rung": "galaxy",
+     "what": "The home galaxy's chart",
+     "cold_ms": 247.8068490000005,
+     "warm_ms": 256.93499700000393,
+     "setup_ms": 29.6004840000096,
+     "reply_kb": 471
+    },
+    {
+     "id": "neighbour-chart",
+     "rung": "cluster",
+     "what": "One neighbour's full chart (the biggest other halo in the home cell)",
+     "cold_ms": 312.9234240000078,
+     "warm_ms": 307.1591769999941,
+     "setup_ms": 30.211251999993692,
+     "reply_kb": 396
+    },
+    {
+     "id": "star-cell",
+     "rung": "stars",
+     "what": "The home star cell (10 pc)",
+     "cold_ms": 226.30348600000434,
+     "warm_ms": 226.08666000000085,
+     "setup_ms": 31.136045999999624,
+     "reply_kb": 44
+    }
+   ]
+  },
+  {
+   "runner": "Chromium 158.0.8127.36",
+   "results": [
+    {
+     "id": "web-cube-48-100",
+     "rung": "web",
+     "what": "Web cube, 48³ over 100 Mpc",
+     "cold_ms": 2176.0999999998603,
+     "warm_ms": 2188.8000000000466,
+     "setup_ms": 31.9000000001397,
+     "reply_kb": 11126
+    },
+    {
+     "id": "web-galaxies-48-100",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 48³ over 100 Mpc",
+     "cold_ms": 2718.100000000093,
+     "warm_ms": 2803.3000000000466,
+     "setup_ms": 34.800000000046566,
+     "reply_kb": 2528
+    },
+    {
+     "id": "web-galaxies-48-200",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 48³ over 200 Mpc (the view's default)",
+     "cold_ms": 6320.800000000047,
+     "warm_ms": 6605.300000000047,
+     "setup_ms": 26.399999999906868,
+     "reply_kb": 3339
+    },
+    {
+     "id": "web-galaxies-32-100",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 32³ over 100 Mpc (the basic tier's)",
+     "cold_ms": 2629.3000000000466,
+     "warm_ms": 2550.7000000001863,
+     "setup_ms": 26.200000000186265,
+     "reply_kb": 2528
+    },
+    {
+     "id": "halo-cell",
+     "rung": "cluster",
+     "what": "One 8 Mpc halo cell (Galaxies nearby today)",
+     "cold_ms": 236.80000000004657,
+     "warm_ms": 237,
+     "setup_ms": 26.800000000046566,
+     "reply_kb": 15
+    },
+    {
+     "id": "neighbourhood",
+     "rung": "cluster",
+     "what": "The neighbourhood's galaxies and home's satellites (galaxies_seen and satellites_seen, through the sky)",
+     "cold_ms": 8680.800000000047,
+     "warm_ms": 8606.800000000047,
+     "setup_ms": 28.5,
+     "reply_kb": 1865
+    },
+    {
+     "id": "home-chart",
+     "rung": "galaxy",
+     "what": "The home galaxy's chart",
+     "cold_ms": 270,
+     "warm_ms": 258.69999999995343,
+     "setup_ms": 30.699999999953434,
+     "reply_kb": 471
+    },
+    {
+     "id": "neighbour-chart",
+     "rung": "cluster",
+     "what": "One neighbour's full chart (the biggest other halo in the home cell)",
+     "cold_ms": 395.69999999995343,
+     "warm_ms": 359,
+     "setup_ms": 30.600000000093132,
+     "reply_kb": 396
+    },
+    {
+     "id": "star-cell",
+     "rung": "stars",
+     "what": "The home star cell (10 pc)",
+     "cold_ms": 296.69999999995343,
+     "warm_ms": 201.10000000009313,
+     "setup_ms": 41.800000000046566,
+     "reply_kb": 44
+    }
+   ]
+  },
+  {
+   "runner": "Chromium 158.0.8127.36, CPU slowed 4×",
+   "results": [
+    {
+     "id": "web-cube-48-100",
+     "rung": "web",
+     "what": "Web cube, 48³ over 100 Mpc",
+     "cold_ms": 9628.899999999907,
+     "warm_ms": 9893.699999999953,
+     "setup_ms": 223.60000000009313,
+     "reply_kb": 11126
+    },
+    {
+     "id": "web-galaxies-48-100",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 48³ over 100 Mpc",
+     "cold_ms": 12923.700000000186,
+     "warm_ms": 12489.399999999907,
+     "setup_ms": 138.10000000009313,
+     "reply_kb": 2528
+    },
+    {
+     "id": "web-galaxies-48-200",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 48³ over 200 Mpc (the view's default)",
+     "cold_ms": 28206.799999999814,
+     "warm_ms": 28364.09999999986,
+     "setup_ms": 118,
+     "reply_kb": 3339
+    },
+    {
+     "id": "web-galaxies-32-100",
+     "rung": "web",
+     "what": "Web cube with its galaxies, 32³ over 100 Mpc (the basic tier's)",
+     "cold_ms": 12269.199999999953,
+     "warm_ms": 12109.700000000186,
+     "setup_ms": 124.10000000009313,
+     "reply_kb": 2528
+    },
+    {
+     "id": "halo-cell",
+     "rung": "cluster",
+     "what": "One 8 Mpc halo cell (Galaxies nearby today)",
+     "cold_ms": 1131.6999999999534,
+     "warm_ms": 1125.1999999999534,
+     "setup_ms": 123.4000000001397,
+     "reply_kb": 15
+    },
+    {
+     "id": "neighbourhood",
+     "rung": "cluster",
+     "what": "The neighbourhood's galaxies and home's satellites (galaxies_seen and satellites_seen, through the sky)",
+     "cold_ms": 37488.19999999995,
+     "warm_ms": 37558.39999999991,
+     "setup_ms": 132.80000000004657,
+     "reply_kb": 1865
+    },
+    {
+     "id": "home-chart",
+     "rung": "galaxy",
+     "what": "The home galaxy's chart",
+     "cold_ms": 995.0999999998603,
+     "warm_ms": 1009.8999999999069,
+     "setup_ms": 125.80000000004657,
+     "reply_kb": 471
+    },
+    {
+     "id": "neighbour-chart",
+     "rung": "cluster",
+     "what": "One neighbour's full chart (the biggest other halo in the home cell)",
+     "cold_ms": 1501.3000000000466,
+     "warm_ms": 1314.2999999998137,
+     "setup_ms": 141.60000000009313,
+     "reply_kb": 396
+    },
+    {
+     "id": "star-cell",
+     "rung": "stars",
+     "what": "The home star cell (10 pc)",
+     "cold_ms": 851.1999999999534,
+     "warm_ms": 942.3000000000466,
+     "setup_ms": 142,
+     "reply_kb": 44
+    }
+   ]
+  }
+ ]
+}
