@@ -1,6 +1,6 @@
 # SSE4: one time pipeline for every scale (track TP)
 
-Status: **PROPOSED, 26 Nov 2026. Not yet accepted by Alex.** Audit and design only; nothing here is built. The eight questions of section 12 are open, each with a recommendation. TP is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 26 Nov 2026 23:27 UTC** ("i agree with all": the eight questions of section 12), with his four rulings in section 12A, which win where they differ from the text (they change question 3: time is not capped; and question 4: galaxies run to the end of time too). Audit and design only; nothing here is built. TP is a code only, never shown in the product.
 
 Alex's ask, in his words (26 Nov 2026, 19:33 UTC): "I think one of the cleverest things you're doing here is managing all of our different time scales harmoniously together. So we can have galaxies working on their scale, solar systems working on their scale, stars working on their scale, and be able to know when to slow things down in the simulation and speed things up again. I think if that hasn't been thought through properly, we need to have a smooth pipeline where all that's managed together. Otherwise, we may end up tying ourselves in knots. It's one of those architecture points we need to make sure is solid as so much is going to lean on it. but that may be in place already".
 
@@ -158,7 +158,15 @@ Then:
 - The cosmos reads `T` as Gyr by dividing. The convention in `dated` goes.
 - A pack with its own time scale (Sol today's logs, a real catalogue) states one anchor ("my second X is the system's reference date") and the kernel maps it. Pack data is not rewritten.
 
-**Range.** Whole seconds reach 292 billion years. Dated events beyond that are refused with a plain sentence and the conversion is checked, never wrapped. Reading a life line at a great age still works, because an age is a difference, not a date. Whether dated time should go further is question 3.
+**The origin, to the second (ruling 12A.1).** The Big Bang is defined, not measured: `time.present_s` is exactly 435,494,880,000,000,000 (13.8 billion Julian years of 31,557,600 s), stated once in the cosmology pack as a whole number, and for a universe whose home is the real Sol that second is J2000.0 TT. So the real present has an exact universe second, "now is now", and nothing else may type the number. The cosmology's own derived age (about 13.79 Gyr from the Planck rows) differs from the stated 13.8 by its uncertainty; the stated number is the definition and the difference is a fudge register row.
+
+**Range: fine time, then deep time (ruling 12A.2).** Time is not capped. Whole seconds reach 292 billion years; that is the **fine range**, and everything in sections 5 to 9 runs on it. Past it the universe is close to static, so dates change to a slower system, **deep time**: a date in years held as one double (good to 1 part in 9e15: about 6 days at 1e14 years, coarser later in step with how slowly anything then changes; it reaches 1e308 years, past the last black hole).
+
+- One ordering runs across both: every fine date is before every deep date. A date is fine wherever fine reaches; the change-over is one checked conversion, never a wrap.
+- Deep time is the one place a date is a double, and it is allowed because nothing out there moves in seconds. A deep date is never turned back into seconds.
+- Lines read at a deep date as they do now (an age is a difference). Streams give rates and counts there, not single events, unless the event is big enough to rank (a star's last flicker, a merger of remnants, a black hole's end). Marches keep their tables on the subject's own grid as before.
+- `happenings` (section 8) answers across the change-over, so "the next thing that happens" is always askable, to the end of time.
+- The exact form (a double of years, or integer ticks on a ladder) is the TP9 builder's to settle with a test that orders, round-trips and never wraps. The rule above is what must hold.
 
 ---
 
@@ -319,9 +327,10 @@ Sizes: S under a day, M one to two days, L more. Golden notes are expectations; 
 | **TP4** | The process declaration and the pace ladder: shape, `tau`, anchor per time-dependent block, as pack data; op `pace_ladder`; a check that a time-dependent op without a declaration fails (ledger that only shrinks) | TP1 | area `time` | M |
 | **TP5** | Marches made path-free: the epoch stepper's grid from the star alone; full orbit state at each grid point; checkpoints; `aged_event` at the exact date; the dead `orbit.a` fields removed. The two-legs test, seen red first | TP1 | core (look-ahead lines), one slot | M |
 | **TP6** | `happenings`: lines (phase changes, eclipses, periapses), streams (flares, close passes, supernovae), kept look-aheads, voyages and rule ticks behind one op, with ranks from the sifter and the summarised form | TP4 | area `time` | L |
-| **TP7** | Pacing: Free, Catch and Stop at on the ruler and the Run desk clock; natural paces by name; "what you passed" on a jump; the pace ladder strip. Mock-up to Alex first | TP3, TP6; with TM3b | none | M |
+| **TP7** | Pacing: Free, Catch and Stop at on the ruler and the Run desk clock; natural paces by name; "what you passed" on a jump; the pace ladder strip; the ruler's break and the dated marks after it, with "next change" (ruling 12A.3). Mock-up to Alex first | TP3, TP6; with TM3b; the marks after the break need TP9 | none | M |
 | **TP8** | Follow, jump or window as one kernel rule: mass loss by rate (the supernova and the fast nebula as jumps), the general window over a named set, the coordinator used for windows with a suite | TP5 | core, one slot | L |
-| **TP9** | Honest ends: checked range in every conversion; the galaxy and web past the present labelled and in the fudge register (or built, question 4) | TP1 | none | S |
+| **TP10** | Every scale's future (ruling 12A.4, section 12B): the galaxy's rings and merger trees run forward past the present; the web's horizon; late streams (brown dwarf collisions, white dwarf mergers, stripping, evaporation) at cited rates; black hole ends. A design of its own first | TP9; cosmos and galaxy owners | core (galaxy lines), slots as its design says | L |
+| **TP9** | Time to the end (ruling 12A.2): checked conversions everywhere; deep time past the fine range with one ordering across both; look-aheads and `happenings` that cross the change-over; the far eras of `epochs.rs` as dated marks on the axis; until TP10 lands, the galaxy and web past the present labelled and in the fudge register | TP1; the marks part needs TP6 | core if `UniverseTime`'s stored form changes, one slot | M |
 
 Order: TP1 first and alone (it protects PR 649's eclipses). Then TP2 and TP4 side by side. TP3 and TP5 next. TP6, then TP7 and TP8.
 
@@ -336,7 +345,7 @@ Order: TP1 first and alone (it protects PR 649's eclipses). Then TP2 and TP4 sid
 
 ---
 
-## 12. Open questions for Alex
+## 12. The questions, as asked (all answered yes, 26 Nov 2026 23:27 UTC; question 3 changed by 12A.2)
 
 1. **Is the one axis right: whole seconds from the Big Bang, with a star's age, calendar dates and J2000 all read through named anchors?** It was accepted in principle on 21 Nov ("one clock"). *Recommend yes.*
 2. **Where does the real Solar System sit on that axis?** *Recommend: J2000.0 is the universe's present (`time.present_s`, 13.8 Gyr after the origin) for a universe whose home is the real Sol, so "today" is 26.9 years after it.* Sol's pack data keeps its own numbers and is mapped by the one anchor. Existing saves of the Sol door would move; you have said existing universes can be thrown away.
@@ -346,6 +355,46 @@ Order: TP1 first and alone (it protects PR 649's eclipses). Then TP2 and TP4 sid
 6. **When play is too fast to see something, is a tick and a count enough, or should the picture show a trace (a flash where the flare was)?** *Recommend tick and count now; traces per kind later as renderer work, each still drawn from a real mark.*
 7. **Track code TP and one owner thread for TP1 to TP3 (kernel), with TP7 going to the chart room and three desks threads?** *Recommend yes*; routine, the coordinator may decide.
 8. **May TP5 and TP8 change the Solar System's look-ahead figures?** Making the stepper path-free and the nebula a jump where it is one will move some dates and final orbits in the core golden. That is fixing the cause. *Recommend yes, one core slot each, reasons in the package logs.*
+
+### 12A. Alex's rulings, 26 Nov 2026 23:27 UTC
+
+"i agree with all". Then, in his words:
+
+1. **The Big Bang to the second.** "we really are going to have to define the time of the big bang to the second, so now is now!" So the origin is a stated whole number of seconds before J2000.0, in one place (section 4).
+2. **Time is not capped.** "Why would we not let the time go to infinity (apart from the bitwise limit)... Also late universe is effectively static and when we run out of 64bit seconds from big bang... we can adopt a slower time system to end of time." This replaces my recommendation on question 3 (refuse past 292 billion years): fine time, then deep time (section 4).
+3. **The mechanism need not always show.** "Having the mechanism does not need to mean we always surface it. slowly dying suns are just the "..." at the end of the time slider - we actually have a log scale or just a "break" and jump to teh next intersteing event or measurable change... so late events are more timestampes AFTER the slider."
+4. **Everything runs to the end, galaxies too** (23:28 UTC). "everything shgoudl try and run to "end of time" in teh way above... after we "run out of 64 bit time" we still have "slow time" as events - even galaxies", and "inc galaxies". This replaces my recommendation on question 4 (hold galaxies at the present and label it): every scale has a future on the axis, as lines where it changes smoothly and as dated marks where it changes rarely. Section 12B says what that future holds.
+
+How ruling 3 reads on the ruler (my reading, to be shown as a mock-up in TP7 before it is built):
+
+- The ruler covers the stretch where things visibly change, as it does now, and ends in a **break** ("…"). It does not stretch to make room for trillions of quiet years.
+- After the break come the **late marks**, as dated stamps in order, each named with its why: the oceans gone, the star's last phase, the white dwarf's colours, its going dark, and whatever `happenings` ranks beyond. They are places to go, not a scale to drag along.
+- **"Next change"** steps to the next mark or measurable change from wherever the clock is. It is the Stop at pace of section 9, and it works on both sides of the break.
+- Nothing about deep time is shown unless a mark lives there.
+
+### 12B. What still happens late, and who owns it
+
+Alex asked whether anything interesting still forms after whole seconds run out (292 billion years). Yes: less, and more rarely, which is why it suits marks and not a scale. The outline below follows Adams and Laughlin 1997 (Rev. Mod. Phys. 69, 337), already the source of `sse-cosmos/src/epochs.rs`. **Every figure here is from memory and unverified: Consensus is out until 1 Dec 2026.** They are orders of magnitude, each to be a cited, editable pack number when built.
+
+| When (years after the origin) | What | Scale that owns it |
+|---|---|---|
+| in fine time, a few 1e9 to 1e10 ahead | the home group's big galaxies merge into one; the last strong burst of star formation | galaxy (merger trees, already drawn) |
+| about 1e11, near the end of fine time | everything outside the home group has left the horizon: the sky beyond is empty | cosmic web |
+| 1e11 to 1e12 | gas runs down; star formation falls to a trickle | galaxy (the ring model run forward) |
+| up to about 1e13 | the smallest red dwarfs are still shining; the last of them brighten and go blue before fading to helium white dwarfs | star (life line) |
+| about 1e14 | the last ordinary stars go out | galaxy and star |
+| after that, rarely | two brown dwarfs collide and light a new small star, a handful shining in the whole galaxy at once; two white dwarfs merge and one explodes | galaxy (a stream at a rate) |
+| about 1e15 | passing remnants have stripped most planets from their stars | system (the close-pass stream) |
+| 1e19 to 1e20 | the galaxy boils away: most remnants are thrown out, the rest sink to the central black hole | galaxy |
+| 1e34 and later, if the pack says protons decay | white dwarfs and planets slowly dissolve | matter (pack switch, as now) |
+| 1e67 to 1e100 | black holes evaporate, the largest last, each ending in a flash | exotic objects |
+
+What it means for the build:
+
+- **Each scale's lines and streams must be defined past the present**, not clamped at it: the galaxy's rings run forward as a march on their own grid (section 6), the merger trees' remaining infalls play out, and the event streams (`events.rs`) keep their bins with rates that fall as the stars die.
+- **Late things are streams at tiny rates plus a few ranked marks**, which is exactly what deep time is for (section 4).
+- The far eras in `epochs.rs` stop being a separate list and become marks on the one axis (TP9).
+- This is package **TP10** (section 11): a short design of its own first, by a Fable thread with the cosmos and galaxy owners, because it adds physics; then built in parts.
 
 ---
 

@@ -30,6 +30,7 @@
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
   import BodyMag from "./BodyMag.svelte";
+  import BodyHeat from "./BodyHeat.svelte";
   import { decksKept, isDecks, loadDecks, loadSurface, surfaceKept, type Decks, type Surface } from "./surface.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -741,6 +742,10 @@
     <div class="cut">
       <Cutaway {ctx} {scene} {params} />
     </div>
+  {/if}
+  {#if params.heat !== false && subject && subject.kind !== "star"}
+    <!-- Energy flow (track HF's screen): the world's heat books over its life, from its core history, in the Power card's grammar. -->
+    <BodyHeat session={ctx.session} system={scene.system} address={subject.address} label={subject.label} depth={ws.depth ?? "science"} />
   {/if}
 </div>
 
