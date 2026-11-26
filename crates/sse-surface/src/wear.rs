@@ -42,11 +42,13 @@ pub struct WearSettings {
     pub glacial_factor: f64,
     /// A world wet only in the past rains at least this warm while wet, K.
     pub wet_floor_k: f64,
-    /// The grid's cells are kilometres across, so slopes relax at an
-    /// effective rate this many times the ground's own creep (creep.rs): the
-    /// unresolved hillslopes, slides and infill of each cell. Set so wet
-    /// ground under 1 bar gives the 10 m²/yr the wear was calibrated with;
-    /// airless ground relaxes about 10,000 times slower (docs/fudges.md).
+    /// WORKAROUND (docs/fudges.md, `grid_factor`): slopes relax at this many
+    /// times the ground's own creep (creep.rs), standing in for the
+    /// hillslopes, slides and small channels inside a cell tens of km across.
+    /// 200 keeps wet ground under 1 bar at the 10 m²/yr the wear was
+    /// calibrated with; airless ground relaxes about 10,000 times slower. To
+    /// improve: a sub-grid hillslope model, or a rate that scales with cell
+    /// size fitted to relief spectra; no derivation from cell size was found.
     pub grid_factor: f64,
     pub river_area_cells: f64,
     /// Dunes where Lancaster's mobility (W9 `sse.wind.saltation`) is at least this.

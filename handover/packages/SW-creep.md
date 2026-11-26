@@ -26,9 +26,14 @@ relaxes about 10,000 times slower.
 Test `a_dry_airless_world_keeps_its_relief`: Vesta's cell-scale roughness 0.97 kept over 4 Gyr (absolute
 limit 0.9; the old single rate left 0.02, red). `creep_rates_come_from_the_sheet`.
 
-Without the grid factor (the ground's own rate alone) the wear's sediment cover and Mars's valleys
-vanished (three behaviour tests red): the coarse grid needs an effective rate, so the factor stays until a
-scale-dependent rate from relief spectra replaces it (fudge row).
+The grid factor is a workaround, not a derivation (Alex, 26 Nov: do it right if possible; otherwise a simple
+workaround, a fudge and a note to improve). Tried first: the ground's own rate alone, and the wear's sediment
+cover and Mars's wet-era valleys vanished (three behaviour tests red), so the coarse grid needs an effective
+rate. Looked for one from cell size: a cell relaxing on its hillslopes' own time gives (cell / hillslope
+length)² ≈ 10⁶ on Earth, far too fast, because the grid's stream power already carries the channelled share
+and the remainder is not modelled. So one factor stays, in the fudge register with what is wrong, why 200,
+and what would replace it (a sub-grid hillslope model, or a rate scaling with cell size fitted to relief
+spectra), with the same note beside the code.
 
 ### Goldens moved on purpose
 
