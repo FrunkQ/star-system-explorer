@@ -144,6 +144,118 @@ WATER_ICE = [
 ]
 
 
+# ---- MP36 (26 Nov 2026): sulphur and sulphuric acid, read in Claude's built-in browser on the owner's PC.
+
+SOURCES["usgs-splib05a-sulfur"] = ("Clark, R. N., Swayze, G. A., Wise, R., Livo, K. E., Hoefen, T. M., Kokaly, R. F. and Sutley, S. J. 2003, USGS Digital Spectral Library splib05a, U.S. Geological Survey Open File Report 03-395: Sulfur GDS94 Reagent (reagent-grade sulfur, 100.0 wt% S by XRF, EM, ICP and wet chemistry; XRD an excellent match to JCPDS 8-247, orthorhombic alpha sulfur), Beckman spectrometer, absolute reflectance (AREF), 0.2 to 3.0 micron, copy of splib04a record 4655; read from ASCII/M/sulfur_gds94.6449.asc on 26 Nov 2026. The same sample is in splib07a (Kokaly et al. 2017, doi 10.5066/F7RR1WDJ), which was not reachable", "10.3133/ofr03395", "https://pubs.usgs.gov/of/2003/ofr-03-395/DESCRIPT/M/sulfur_gds94.html", "unverified")
+
+# Sulfur GDS94 (splib05a): micron, absolute reflectance, as printed in the file (a subset of its 480 rows, no
+# interpolation). The edge from 400 to 500 nm is what makes sulphur yellow.
+SULFUR = [
+    (0.301100, 0.043083), (0.349100, 0.039812), (0.375600, 0.035516), (0.399100, 0.038383), (0.411100, 0.052676),
+    (0.421800, 0.082898), (0.430800, 0.129409), (0.439800, 0.199652), (0.448800, 0.293738), (0.459300, 0.419398),
+    (0.469300, 0.521653), (0.479300, 0.596548), (0.489300, 0.660415), (0.499300, 0.706290), (0.519300, 0.747353),
+    (0.549300, 0.782221), (0.599300, 0.813806), (0.649700, 0.826077), (0.700200, 0.830333), (0.801500, 0.831607),
+    (0.904000, 0.822905), (1.000000, 0.811604), (1.498500, 0.790156), (2.005000, 0.790152), (2.496000, 0.806615),
+]
+
+SOURCES["palmer-williams1975"] = ("Palmer, K. F. and Williams, D. 1975, Applied Optics 14, 208-219: optical constants of sulfuric acid; application to the clouds of Venus? Real and imaginary indices of 25 to 95.6 wt% H2SO4 at 300 K, 400 to 27800 cm-1. Read on 26 Nov 2026 from two copies that agree: the Aerosol Refractive Index Archive files H2SO4_75%_300K_R_Palmer_1975.ri and H2SO4_84.5%_300K_R_Palmer_1975.ri (k printed NaN where not measured), and HITRAN's palmer_williams_h2so4.dat (k printed 0.00E+00 there)", "10.1364/AO.14.000208", "https://eodg.atm.ox.ac.uk/ARIA/data?Acids/Sulphuric/", "unverified")
+
+# Palmer and Williams 1975 at 300 K: cm-1, n, k for 75 wt% and for 84.5 wt%, as printed in the ARIA files, every
+# row from 4000 cm-1 (2.5 micron) up to the last with a measured k.
+H2SO4_75 = [
+    (4000, 1.344, 0.00376), (4100, 1.352, 0.00297), (4200, 1.358, 0.00241), (4300, 1.362, 0.00209), (4400, 1.367, 0.00186),
+    (4500, 1.37, 0.00167), (4600, 1.374, 0.00154), (4700, 1.377, 0.00143), (4800, 1.38, 0.00135), (4900, 1.382, 0.0013),
+    (5000, 1.384, 0.00126), (5100, 1.386, 0.00124), (5200, 1.388, 0.00111), (5300, 1.389, 0.000796), (5400, 1.391, 0.000595),
+    (5500, 1.392, 0.000537), (5600, 1.393, 0.000486), (5700, 1.394, 0.000424), (5800, 1.396, 0.000361), (5900, 1.397, 0.000314),
+    (6000, 1.398, 0.000272), (6100, 1.398, 0.000234), (6200, 1.399, 0.000202), (6300, 1.4, 0.000176), (6400, 1.402, 0.000155),
+    (6500, 1.403, 0.000138), (6600, 1.403, 0.000125), (6700, 1.404, 0.000117), (6800, 1.405, 0.00011), (6900, 1.406, 0.000102),
+    (7000, 1.406, 8.78e-05), (7100, 1.407, 6.16e-05), (7200, 1.408, 3.89e-05), (7300, 1.409, 2.59e-05), (7400, 1.41, 1.98e-05),
+    (7500, 1.41, 1.59e-05), (7600, 1.411, 1.27e-05), (7700, 1.411, 1.05e-05), (7800, 1.412, 8.93e-06), (7900, 1.413, 7.75e-06),
+    (8000, 1.413, 6.94e-06), (8200, 1.415, 5.63e-06), (8400, 1.416, 4.95e-06), (8600, 1.416, 4.05e-06), (8800, 1.417, 2.46e-06),
+    (9000, 1.418, 1.84e-06), (9200, 1.419, 1.6e-06), (9400, 1.42, 1.5e-06), (9600, 1.421, 1.48e-06), (9800, 1.421, 1.52e-06),
+    (10000, 1.422, 1.53e-06), (10200, 1.422, 1.41e-06), (10400, 1.423, 1.03e-06), (10600, 1.423, 6.05e-07), (10800, 1.424, 3.62e-07),
+    (11000, 1.424, 2.84e-07), (11200, 1.425, 2.33e-07), (11400, 1.425, 2.02e-07), (11600, 1.425, 1.83e-07), (11800, 1.426, 1.58e-07),
+    (12000, 1.426, 1.24e-07), (12200, 1.427, 9.98e-08), (12400, 1.427, 8.79e-08), (12600, 1.427, 8.46e-08), (12800, 1.427, 8.39e-08),
+    (13000, 1.427, 8.2e-08), (13200, 1.427, 7.84e-08), (13400, 1.427, 6.83e-08), (13600, 1.427, 4.8e-08), (13800, 1.427, 3.58e-08),
+    (14000, 1.427, 2.79e-08), (14250, 1.428, 2.07e-08),
+]
+H2SO4_845 = [
+    (4000, 1.358, 0.00338), (4100, 1.363, 0.00279), (4200, 1.368, 0.00243), (4300, 1.374, 0.00213), (4400, 1.378, 0.00194),
+    (4500, 1.382, 0.00169), (4600, 1.384, 0.00156), (4700, 1.388, 0.00144), (4800, 1.39, 0.00134), (4900, 1.392, 0.00128),
+    (5000, 1.392, 0.00119), (5100, 1.394, 0.0011), (5200, 1.396, 0.000961), (5300, 1.397, 0.000758), (5400, 1.398, 0.000626),
+    (5500, 1.399, 0.000566), (5600, 1.4, 0.000499), (5700, 1.401, 0.000444), (5800, 1.402, 0.000376), (5900, 1.403, 0.000321),
+    (6000, 1.404, 0.000276), (6100, 1.404, 0.000232), (6200, 1.405, 0.000195), (6300, 1.406, 0.000167), (6400, 1.407, 0.000141),
+    (6500, 1.408, 0.000122), (6600, 1.409, 0.000109), (6700, 1.41, 9.41e-05), (6800, 1.41, 8.13e-05), (6900, 1.411, 6.95e-05),
+    (7000, 1.411, 5.62e-05), (7100, 1.412, 3.8e-05), (7200, 1.413, 2.61e-05), (7300, 1.413, 2.01e-05), (7400, 1.414, 1.53e-05),
+    (7500, 1.415, 1.36e-05), (7600, 1.416, 1.12e-05), (7700, 1.416, 9.5e-06), (7800, 1.416, 8.06e-06), (7900, 1.417, 6.88e-06),
+    (8000, 1.418, 6.0e-06), (8200, 1.419, 4.72e-06), (8400, 1.42, 3.85e-06), (8600, 1.422, 3.01e-06), (8800, 1.422, 2.17e-06),
+    (9000, 1.423, 1.77e-06), (9200, 1.424, 1.6e-06), (9400, 1.425, 1.52e-06), (9600, 1.425, 1.46e-06), (9800, 1.426, 1.37e-06),
+    (10000, 1.427, 1.19e-06), (10200, 1.427, 9.67e-07), (10400, 1.428, 7.51e-07), (10600, 1.428, 4.97e-07), (10800, 1.429, 3.49e-07),
+    (11000, 1.429, 2.73e-07), (11200, 1.43, 2.15e-07), (11400, 1.43, 1.7e-07), (11600, 1.431, 1.48e-07), (11800, 1.432, 1.29e-07),
+    (12000, 1.432, 1.07e-07), (12200, 1.432, 8.94e-08), (12400, 1.432, 7.51e-08), (12600, 1.433, 6.57e-08), (12800, 1.433, 6.09e-08),
+    (13000, 1.434, 4.9e-08), (13200, 1.434, 3.92e-08), (13400, 1.434, 3.09e-08), (13600, 1.435, 2.34e-08), (13800, 1.435, 1.73e-08),
+    (14000, 1.435, 1.14e-08),
+]
+# Real index only, where the paper gives no k (the acid is clear there): cm-1, n at 75 %, n at 84.5 %.
+H2SO4_N_VISIBLE = [(14250, 1.428, 1.436), (18000, 1.431, 1.438), (22250, 1.432, 1.442), (24500, 1.438, 1.448), (27800, 1.452, 1.463)]
+
+
+def _nm(wavn):
+    return round(1.0e7 / wavn, 1)
+
+
+def sulphur_rows(mixtures):
+    """MP36: alpha sulphur's measured reflectance and Venus cloud acid's n and k."""
+    U = "unverified"
+    out = []
+    lam = [round(um * 1000.0, 1) for um, _ in SULFUR]
+    r = [v for _, v in SULFUR]
+    assert lam == sorted(lam) and all(0.0 < x < 1.0 for x in r)
+    # Yellow: dark in the violet, bright past 500 nm, with the edge between.
+    at = dict(zip(lam, r))
+    assert at[399.1] < 0.05 and at[549.3] > 0.75 and at[448.8] < 0.5 * at[549.3]
+    assert all(m["id"] != "sulfur" for m in mixtures)
+    out.append({
+        "id": "sulfur", "names": {"physics": "orthorhombic alpha sulphur (S8)", "plain": "yellow sulphur", "story": "brimstone"},
+        "recipe": {}, "by": "mass",
+        "note": "the stable yellow form of sulphur at room temperature; volcanic sulphur on Io and on hot dry worlds starts as this (other forms, made hot or quenched, are orange to red and are not on the sheet yet)",
+        "optical": {"reflectance": {
+            "kind": "table", "lambda_nm": lam, "r": r,
+            "quantity": "absolute reflectance", "at_k": 293.0,
+            "src": "usgs-splib05a-sulfur", "check": U,
+            "note": "laboratory spectrum of reagent-grade sulphur powder (USGS sample Sulfur GDS94); grain size and viewing geometry not printed; room temperature, about 293 K (the library's lab, not stated in the file); interpolate linearly, hold the ends",
+        }},
+    })
+    for mid, rows, col, wt in (("sulfuric-acid-75", H2SO4_75, 1, 75.0), ("sulfuric-acid-84p5", H2SO4_845, 2, 84.5)):
+        lam = [_nm(w) for w, _, _ in reversed(rows)]
+        n = [x for _, x, _ in reversed(rows)]
+        k = [x for _, _, x in reversed(rows)]
+        assert lam == sorted(lam) and len(set(lam)) == len(lam) and all(x > 0.0 for x in k)
+        # Clear in the red, absorbing towards 2.5 micron (the O-H band edge).
+        assert k[-1] > 1.0e4 * k[0] and all(1.3 < x < 1.5 for x in n)
+        vis = [(_nm(r0[0]), r0[col]) for r0 in reversed(H2SO4_N_VISIBLE)]
+        assert all(m["id"] != mid for m in mixtures)
+        out.append({
+            "id": mid,
+            "names": {"physics": "sulphuric acid, %g wt%% H2SO4 in water" % wt, "plain": "sulphuric acid droplets", "story": "acid cloud"},
+            "recipe": {}, "by": "mass",
+            "note": "the stuff of Venus's clouds (75 to 85 wt% acid); clear and colourless in the visible, so the clouds look pale yellow-white only because of what else they hold",
+            "optical": {
+                "refractive_index": {
+                    "kind": "table", "lambda_nm": lam, "n": n, "k": k,
+                    "src": "palmer-williams1975", "check": U, "at_k": 300.0,
+                    "note": "bulk liquid at 300 K, 700 to 2500 nm, every row with a measured k; the paper gives no k shorter than about 700 nm (the acid is transparent there); alpha = 4 pi k / lambda",
+                },
+                "n_visible": {
+                    "kind": "table", "lambda_nm": [x for x, _ in vis], "n": [x for _, x in vis],
+                    "src": "palmer-williams1975", "check": U, "at_k": 300.0,
+                    "note": "real index only, 360 to 702 nm, where the paper prints no k",
+                },
+            },
+        })
+    return out
+
+
 def apply_ices(substances, val):
     """Visible real index of the Pluto and Triton ices, on the substance rows."""
     by_id = {s["id"]: s for s in substances}

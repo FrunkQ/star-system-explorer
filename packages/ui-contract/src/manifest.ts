@@ -128,19 +128,25 @@ export interface LifeSupportRate {
 export interface LifeSupportPack {
   rates: Record<string, LifeSupportRate>;
   store_words: Record<string, string[]>;
+  /** The headings the stores are read out under, in order, each naming its stores (base pack: air and supplies). */
+  headings?: Record<string, string[]>;
   sources?: Record<string, string>;
 }
 export const STORES = ["oxygen", "water", "food"] as const;
 export type Store = (typeof STORES)[number];
+/** Used when no pack on the stack gives headings: one heading per store, so nothing is hidden. */
+const STORE_HEADINGS: Record<string, string[]> = { oxygen: ["oxygen"], water: ["water"], food: ["food"] };
 
 /** Read a pack's `provides.other.life_support`, top of the stack winning per kind of being. */
 export function lifeSupportFrom(packs: readonly Json[]): LifeSupportPack {
-  const out: LifeSupportPack = { rates: {}, store_words: {}, sources: {} };
+  const out: LifeSupportPack = { rates: {}, store_words: {}, headings: {}, sources: {} };
   for (const p of packs) {
     const ls = (p as { provides?: { other?: { life_support?: Partial<LifeSupportPack> } } })?.provides?.other?.life_support;
     if (!ls) continue;
     Object.assign(out.rates, ls.rates ?? {});
     Object.assign(out.store_words, ls.store_words ?? {});
+    // A pack that gives headings replaces the ones below it whole: two packs' headings mixed could list a store twice.
+    if (ls.headings && Object.keys(ls.headings).length) out.headings = { ...ls.headings };
     Object.assign(out.sources!, ls.sources ?? {});
   }
   return out;
@@ -170,8 +176,20 @@ export interface StoreDays {
   /** Days left; null when nobody aboard uses it at a known rate. */
   days: number | null;
 }
+/** One heading of the readout (air, supplies): its stores, and how long it lasts. */
+export interface HeadingDays {
+  heading: string;
+  stores: Store[];
+  kg: number;
+  /** Days until the first of its stores runs out; null when nobody aboard uses any of them at a known rate. */
+  days: number | null;
+  /** The store that runs out first under this heading, when it has more than one store in use. */
+  first?: Store;
+}
 export interface LifeSupport {
   stores: StoreDays[];
+  /** The stores grouped under the pack's headings (air, supplies), in the pack's order. */
+  headings: HeadingDays[];
   /** The store that runs out first, and when. */
   first?: { store: Store; days: number };
   /** People drawing on the stores, and those whose kind of being has no rates (named by kind). */
@@ -217,8 +235,23 @@ export function lifeSupport(people: readonly AboardEntry[], cargo: readonly Aboa
   }
   const stores = STORES.map((s) => ({ store: s, kg: kg[s], use_kg_day: use[s], days: use[s] > 0 ? kg[s] / use[s] : null }));
   const timed = stores.filter((s) => s.days !== null).sort((a, b) => a.days! - b.days!);
+  const given = { ...(ls.headings && Object.keys(ls.headings).length ? ls.headings : STORE_HEADINGS) };
+  // A store no heading names keeps a heading of its own, so grouping never hides one.
+  for (const s of STORES) if (!Object.values(given).some((n) => n.includes(s))) given[s] = [s];
+  const headings: HeadingDays[] = Object.entries(given).map(([heading, names]) => {
+    const own = stores.filter((s) => names.includes(s.store));
+    const out = own.filter((s) => s.days !== null).sort((a, b) => a.days! - b.days!);
+    return {
+      heading,
+      stores: own.map((s) => s.store),
+      kg: own.reduce((t, s) => t + s.kg, 0),
+      days: out.length ? out[0]!.days : null,
+      ...(out.length > 1 ? { first: out[0]!.store } : {}),
+    };
+  });
   return {
     stores,
+    headings,
     ...(timed.length ? { first: { store: timed[0]!.store, days: timed[0]!.days! } } : {}),
     drawing,
     unrated: [...unrated].map(([being, count]) => ({ being, count })).sort((a, b) => (a.being < b.being ? -1 : 1)),

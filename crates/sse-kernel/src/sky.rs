@@ -30,6 +30,8 @@ pub(crate) struct Ask<'a> {
     pub galaxies: bool,
     /// The stars (false: galaxies only).
     pub stars: bool,
+    /// GZ6: home's satellites' paths since infall (Galaxies nearby's Play).
+    pub satellite_paths: bool,
 }
 
 fn unit(v: [f64; 3]) -> [f64; 3] {
@@ -324,6 +326,7 @@ pub(crate) fn sky_from_here(
                 limit_band,
                 bands: &bands,
                 t_myr: t,
+                paths: ask.satellite_paths,
             },
         )?;
         (g.into_iter().map(|g| g.1).collect::<Vec<_>>(), w)

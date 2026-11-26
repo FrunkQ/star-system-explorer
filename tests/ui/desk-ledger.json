@@ -1,11 +1,10 @@
 {
  "about": "Desk tested by name per file (tests/ui/desk-ledger.test.ts); say it with desks and shows() instead. Goes down, never up.",
- "total": 30,
+ "total": 27,
  "files": {
   "packages/views/body-card/src/BodyCard.svelte": 3,
   "packages/views/body/src/Body.svelte": 2,
   "packages/views/constructs/src/Constructs.svelte": 3,
-  "packages/views/editing/src/Handles.svelte": 3,
   "packages/views/galaxy-chart/src/YourSystems.svelte": 2,
   "packages/views/manifest/src/Aboard.svelte": 2,
   "packages/views/symbols/src/Symbols.svelte": 2,
