@@ -478,9 +478,9 @@ impl Haloes<'_> {
     /// Each halo's nearest more massive halo within the search radius, with a two-body sketch.
     fn link_neighbours(&self, haloes: &mut [Halo]) {
         let r = self.params.neighbour_mpc;
-        // G in Mpc (km/s)^2 per solar mass, from the sheet's GM_sun and parsec.
+        // G in Mpc (km/s)^2 per solar mass, from GM_sun in force and the parsec.
         let mpc_m = sse_core::sheet::PC * 1.0e6;
-        let g_mpc = sse_core::sheet::GM_SUN / mpc_m / 1.0e6;
+        let g_mpc = gm_sun() / mpc_m / 1.0e6;
         let h0 = self.cosmo.p.h0;
         let snapshot: Vec<(String, f64, [f64; 3])> = haloes
             .iter()
@@ -587,4 +587,17 @@ pub fn half_mass_z(h: &Halo) -> f64 {
         }
     }
     0.5 * (lo + hi)
+}
+
+/// GM_sun in force, m3 s-2: the stack's data sheet inside a kernel call, so an
+/// edit reaches the halo links; the shipped sheet outside one (tests, tools).
+fn gm_sun() -> f64 {
+    static BASE: std::sync::OnceLock<f64> = std::sync::OnceLock::new();
+    sse_physics::constant("GM_sun").unwrap_or_else(|| {
+        *BASE.get_or_init(|| {
+            sse_reference::Reference::base()
+                .constant("GM_sun")
+                .expect("GM_sun on the shipped sheet")
+        })
+    })
 }

@@ -79,3 +79,12 @@ numbers to where they belong. Values are kept as they were unless a part below s
   its Mpc in km (3.0857e19), from `GM_SUN` and `PC`; `ui-contract` galaxies-nearby.ts's G in Mpc^3 per solar mass
   per Gyr^2, from `GM_sun`, `pc` and `yr_julian` (it moves by 2e-6 of itself, the old km/s-to-Mpc/Gyr factor's
   rounding). **Golden:** `tests/golden/haloes.json`'s digest moves (the neighbours' fall times in their last digits).
+
+### Through the physics in force (after ER1)
+
+ER1's side-door ledger landed while SN2 to SN5 were open, and two of their new sheet reads were side doors. Both now
+read the physics in force, so an edit to the stack's sheet reaches them; outside a kernel call (tests, tools) they
+read the shipped sheet, cached once. Values are bit for bit the same, so no golden moves from this.
+- `sse-life` world_life.rs `rock_conductivity()`: the `mixtures` row `crust-rock`'s `thermal_conductivity`.
+- `sse-cosmos` haloes.rs `gm_sun()`: `sse_physics::constant("GM_sun")` (the parsec stays a unit read).
+Both crates gain `sse-physics` as a dependency. The side-door ledger is unchanged.

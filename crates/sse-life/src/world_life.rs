@@ -450,7 +450,7 @@ pub fn stack(
             ("temperature_min_k", t_s),
             (
                 "temperature_max_k",
-                t_s + q * p.warming_depth_m / sheet::mixture_thermal_conductivity::CRUST_ROCK,
+                t_s + q * p.warming_depth_m / rock_conductivity(),
             ),
             ("pressure_pa", p_pa),
             ("radiation_dose_msv_yr", 0.0),
@@ -672,4 +672,25 @@ pub fn life(
         view,
         held,
     })
+}
+
+/// The crust-rock thermal conductivity in force, W m-1 K-1 (the data sheet's
+/// `mixtures` row `crust-rock`): the stack's sheet inside a kernel call, so an
+/// edit reaches the deep-crust warming; the shipped sheet outside one.
+fn rock_conductivity() -> f64 {
+    fn read(r: &sse_reference::Reference) -> Option<f64> {
+        r.row("mixtures", "crust-rock")?
+            .get("thermal_conductivity")?
+            .get("v")?
+            .as_f64()
+    }
+    static BASE: std::sync::OnceLock<f64> = std::sync::OnceLock::new();
+    sse_physics::now()
+        .and_then(|p| read(p.sheet()))
+        .unwrap_or_else(|| {
+            *BASE.get_or_init(|| {
+                read(&sse_reference::Reference::base())
+                    .expect("crust-rock conductivity on the shipped sheet")
+            })
+        })
 }
