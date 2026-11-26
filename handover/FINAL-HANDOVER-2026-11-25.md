@@ -12,7 +12,7 @@ Checks are as read at 22:50 UTC. "Green" means every CI job passed or was skippe
 |---|---|---|---|---|
 | 589 | claude/project-thread-ftsszw | Natural outlines and smooth tile edges (VP3, detail ladder) | green at df402ff; one more commit (Land map in measured colour) re-running at 45c55d3 | merge when green |
 | 588 | claude/project-thread-r28d1d | Light track: Mie scattering, forbidden lines, line colours, light in a world's shadow | **ui job red** | fix the ui failure, then merge |
-| 585 | claude/project-thread-iyae31 | W-synoptic: a day's clouds instead of the season's average (climate) | green, but core golden lines move | merge main, re-bless, merge in the core slot |
+| 585 | claude/project-thread-iyae31 | W-synoptic: a day's clouds instead of the season's average (climate) | **merged** 26 Nov (eb4ad5c0) | renderer: raise AIR_N in `true-air.ts` from 24 to 48 for worlds with ground (64 at close-up), checking the cost on the speed probe; re-shoot Earth beside the Blue Marble |
 | 584 | claude/project-thread-uz7sb8 | Editing: the Makeup box, class marks on the Mass strip | **merged** 22:49 (02a0e8a6) | done |
 | 581 | claude/project-thread-z535je | GZ5 parts 1 and 1b: Galaxies nearby in 3D | no check runs on head | merge main into it so CI runs |
 | 580 | claude/project-thread-rn77dw | PC6 part 1: postcard sets, base set's first cards, the script | **merged** 22:49 (02a6dcdf) | done |
@@ -39,11 +39,11 @@ take its state from its branch, its PR above and its `handover/status/` file.
 - **Planet and star editing (ED)**: branch uz7sb8, PR 584, green.
   - Doing: PRs 542 to 574 merged (sheet and CSV, Could be, figures ledger down to 202, sweep behind the Orbit and Mass strips). 584 adds the Makeup box and class marks, and the sweep now reads at the campaign's now.
   - Left: 584 merged. Then ED9 part 2: the cutaway wedge (needs kernel K9 layers per step), dragging the bar's joins, and heat and redox strips. Then ED2 part 2b: pencil figures from sweep steps, and Reach it and Could be on the sweep.
-  - Next: ED8 part 2b (K7, K8), ED10 part 2 (K14), ED11, the star chooser after K18 describe_star, and ED0b, the Solar System test.
+  - Next: ED6 part 2, the star chooser, is unblocked: K18 describe_star merged in PR 592 (1c354fa0), though `status/editing.md` still says it waits on K18. Then ED8 part 2b (K7, K8), ED10 part 2 (K14), ED11, and ED0b, the Solar System test.
   - Gotcha: kernel ops that edit a scratch branch (sweep, expects) must pass at_s = the campaign's now. Otherwise a main-line edit at now, an Undo included, hides the swept value.
 - **Photoreal renderer**: branch l1e9pw at 19511767, no open PR. PRs 567 (MATCH1 notes) and 577 (LIT1) merged.
   - Doing: V14i class gallery pictures from the kernel's class_sample world in True (`renderer/src/true-still.ts`, `views/reference/src/class-picture.svelte.ts`, session classSample, a Node test and a reference e2e). WIP commit, works locally.
-  - Left: rebase on main once the kernel's per-branch sample names PR lands, check a small body with no radius is still skipped, and open the PR. Then the MATCH1 re-shoot (after 572, 573, 417), full face and side-lit, labelled by tier and device, on Alex's GPU if he agrees.
+  - Left: the kernel fix it waited on is on main (PR 592, 23:54 UTC). Merge main into the branch, run reference.e2e, and open the PR. Samples with no radius stay skipped until kernel K3. Then the MATCH1 re-shoot (after 572, 573, 417), full face and side-lit, labelled by tier and device, on Alex's GPU if he agrees.
   - Next: `status/renderer.md` Next items 2 to 8 (PC2 part 3 stills, VP2 Exposure in other views, nebula lines, lander lamps). After W-synoptic lands, raise AIR_N to 48 or 64 for worlds with ground.
 - **Shared climate and weather (W)**: branch iyae31, PR 585, green at 462e52a9.
   - Doing: W-synoptic. Earth's clouds become weather systems: fronts, comma heads and dry slots, mid-level decks, trade cumulus, whole-cloud optical depths. It changes two core contract.jsonl lines (weather_read: the Titan field and the Earth report), so it waits for a core golden slot.
@@ -59,11 +59,11 @@ take its state from its branch, its PR above and its `handover/status/` file.
   - Next: TRUE4 part 2 per-tile stains; VP-P1, P2, P4 (wait on VP1, VP6, K-e); heat and plumes in Lineup3D; Gallery checks on Sol. See `status/true-surface.md`.
 - **Surface time-lapse**: branch 7g5v90 at 31c34ad, no PR. PRs 436, 476, 579, 583 merged.
   - Doing: R6d, natural outlines in the time-lapse (`drawnCellOf` in `renderer/src/timelapse.ts`, using the shared naturalDirection). ui:test 1003/1003 locally.
-  - Left: the branch contains PR 589 merged locally, so 589 must reach main first. Then merge main, check `sse4/handover-screens/R6d-screens/`, and open the PR.
+  - Left: none. R6d merged as PR 593 (26 Nov, 3446d53).
   - Next: the globe's sea per climate band once W-sea2 to W-sea4 kernel numbers land (agree with the renderer). Parked by Alex: air and oceans that evolve through the frames.
 - **Kernel hand-offs (Local Arm; galaxy arm fix and atmosphere advice)**: branch bvlyq1, WIP commit b3530b1f, no PR.
   - Doing: the home galaxy's arms from measured positions (Reid et al. 2019), Local Arm included, as one measured-arms list in `packs/base-cosmology`, plus chart arm_names. ATMOS check: the hydrogen_per_carbon ratio was upside down (fixed), and the escape constant is credited to Hunten and Strobel 1974.
-  - Left: `the_glow_follows_the_galaxy_and_its_dust` fails its centre-over-anticentre dust check (V 0.96, Ks 1.03; it wants Ks > V + 0.5). Tune the arm run-on or the Sun's arm boost, or revisit the check. Then re-bless, check.sh, UI checks, and open the PR.
+  - Left (branch now f76116ce): the centre-over-anticentre glow check is fixed. The next check fails: the midplane lane is deeper in Ks (0.86) than in V (0.43), because the arms' young stars fill the V midplane. It needs a physics look at the young-star scale height and the dust under the arms, not tuning. The core slot was released. Then re-bless, check.sh, UI checks, and open the PR.
   - Next: core lane (galaxy chart, sky and glow lines move). Log `packages/GH-local-arm.md`, status `status/kernel-handoffs.md`.
 - **Kernel resolve and rules**: branch dzkz4p at 08283765, no PR. PRs 468, 536, 546 merged.
   - Doing: two pushed commits, full local checks green. K18 describe_star (the editing star chooser); a fix for grown systems coming out 13,783 Gyr old (the galaxy's now in Myr read as Gyr, which caused the wasm out-of-memory); `systems` at any depth; class_sample addresses carrying branch and class (the renderer waits on this). GZ0 kernel checks: no campaign system gets a site event history today, and a halo's two places are a median 7.2 Mpc apart. Logs `packages/K18-describe-star.md`, `packages/GZ0-kernel-checks.md`.

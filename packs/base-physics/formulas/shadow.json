@@ -1,0 +1,283 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.shadow",
+ "about": "Light inside a world's shadow (VP-L3): starlight bent through the limb of its air, reddened along the grazing path and spread out by the bending.",
+ "atoms": [
+  {
+   "id": "sse.shadow.grazing_column",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "number_density",
+     "letter": "n"
+    },
+    {
+     "port": "scale_height",
+     "letter": "H"
+    },
+    {
+     "port": "radius",
+     "letter": "r"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "column",
+     "letter": "N"
+    }
+   ],
+   "checks": [
+    {
+     "port": "number_density",
+     "min": 0,
+     "finite": true,
+     "says": "number density must be zero or more, got {}"
+    },
+    {
+     "port": "scale_height",
+     "min": 0,
+     "finite": true,
+     "says": "scale height must be above zero, got {}"
+    },
+    {
+     "port": "radius",
+     "min": 0,
+     "finite": true,
+     "says": "radius must be above zero, got {}"
+    }
+   ],
+   "references": [
+    "Link, F. 1969, Eclipse Phenomena in Astronomy, Springer: the light in a planet's shadow is sunlight bent through its limb, reddened along the grazing path; the column along a grazing ray in an exponential atmosphere is n √(2π r H). doi:10.1007/978-3-642-86775-6"
+   ],
+   "shown": "N = n √(2π r H)",
+   "equation": {
+    "name": "How much air a ray grazing the limb goes through",
+    "formula": "N = n * sqrt(2 * pi * r * H)",
+    "inputs": {
+     "n": {
+      "kind": "atmosphere.number_density",
+      "unit": "m-3",
+      "name": "molecules per cubic metre at the ray's lowest point"
+     },
+     "H": {
+      "kind": "atmosphere.scale_height",
+      "unit": "m",
+      "name": "height over which the air thins by e"
+     },
+     "r": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "distance from the centre to the ray's lowest point"
+     }
+    },
+    "outputs": {
+     "N": {
+      "kind": "atmosphere.grazing_column",
+      "unit": "m-2",
+      "name": "molecules per square metre along the whole grazing ray"
+     }
+    },
+    "source": {
+     "text": "Link, F. 1969, Eclipse Phenomena in Astronomy",
+     "doi": "10.1007/978-3-642-86775-6",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "Light skimming the edge of a world's air crosses far more of it than light coming straight down: about forty times more on Earth. That long path is why sunsets, and eclipses, are red.",
+     "science": "Column along a chord of an isothermal exponential atmosphere through its tangent point, to first order in H/r."
+    },
+    "examples": [
+     {
+      "n": 2.5e+25,
+      "H": 8000.0,
+      "r": 6400000.0,
+      "N": 1.417963080724413e+31
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.shadow.refraction_bend",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "refractivity",
+     "letter": "nu"
+    },
+    {
+     "port": "scale_height",
+     "letter": "H"
+    },
+    {
+     "port": "radius",
+     "letter": "r"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "bend",
+     "letter": "theta"
+    }
+   ],
+   "checks": [
+    {
+     "port": "refractivity",
+     "min": 0,
+     "finite": true,
+     "says": "refractivity must be zero or more, got {}"
+    },
+    {
+     "port": "scale_height",
+     "min": 0,
+     "finite": true,
+     "says": "scale height must be above zero, got {}"
+    }
+   ],
+   "references": [
+    "Baum, W. A. and Code, A. D. 1953, A photometric observation of the occultation of sigma Arietis by Jupiter, AJ 58, 108: in an exponential atmosphere of scale height H a ray grazing at radius r is bent by θ = ν √(2πr/H), ν the refractivity at its lowest point, and the light behind is spread out by the factor 1 / (1 + D θ/H) at distance D. doi:10.1086/106829"
+   ],
+   "shown": "θ = ν √(2π r / H)",
+   "equation": {
+    "name": "How far a world's air bends light skimming its limb",
+    "formula": "theta = nu * sqrt(2 * pi * r / H)",
+    "inputs": {
+     "nu": {
+      "kind": "gas.refractivity",
+      "unit": "1",
+      "name": "n − 1 of the air at the ray's lowest point"
+     },
+     "H": {
+      "kind": "atmosphere.scale_height",
+      "unit": "m",
+      "name": "height over which the air thins by e"
+     },
+     "r": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "distance from the centre to the ray's lowest point"
+     }
+    },
+    "outputs": {
+     "theta": {
+      "kind": "light.bend_angle",
+      "unit": "1",
+      "name": "total angle the ray is turned through, radians"
+     }
+    },
+    "source": {
+     "text": "Baum, W. A. and Code, A. D. 1953, AJ 58, 108",
+     "doi": "10.1086/106829",
+     "where": "section 2"
+    },
+    "explain": {
+     "curious": "Air bends light that skims a world's edge, a little over a degree for Earth. That is enough to throw sunset-red light into Earth's shadow and light up an eclipsed Moon.",
+     "science": "Refraction angle for a ray through an isothermal exponential atmosphere, ν √(2πr/H) to first order."
+    },
+    "examples": [
+     {
+      "nu": 0.00029,
+      "H": 8000.0,
+      "r": 6400000.0,
+      "theta": 0.020560464670503983
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.shadow.refraction_dilution",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "bend",
+     "letter": "theta"
+    },
+    {
+     "port": "scale_height",
+     "letter": "H"
+    },
+    {
+     "port": "distance",
+     "letter": "D"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "dilution",
+     "letter": "phi"
+    }
+   ],
+   "checks": [
+    {
+     "port": "bend",
+     "min": 0,
+     "finite": true,
+     "says": "bend must be zero or more, got {}"
+    },
+    {
+     "port": "scale_height",
+     "min": 0,
+     "finite": true,
+     "says": "scale height must be above zero, got {}"
+    },
+    {
+     "port": "distance",
+     "min": 0,
+     "finite": true,
+     "says": "distance must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Baum, W. A. and Code, A. D. 1953, A photometric observation of the occultation of sigma Arietis by Jupiter, AJ 58, 108: in an exponential atmosphere of scale height H a ray grazing at radius r is bent by θ = ν √(2πr/H), ν the refractivity at its lowest point, and the light behind is spread out by the factor 1 / (1 + D θ/H) at distance D. doi:10.1086/106829"
+   ],
+   "shown": "φ = 1 / (1 + D θ / H)",
+   "equation": {
+    "name": "How thinly the bent light is spread out behind the world",
+    "formula": "phi = 1 / (1 + D * theta / H)",
+    "inputs": {
+     "theta": {
+      "kind": "light.bend_angle",
+      "unit": "1",
+      "name": "angle the ray is turned through, radians"
+     },
+     "H": {
+      "kind": "atmosphere.scale_height",
+      "unit": "m",
+      "name": "height over which the air thins by e"
+     },
+     "D": {
+      "kind": "shadow.distance",
+      "unit": "m",
+      "name": "distance behind the world"
+     }
+    },
+    "outputs": {
+     "phi": {
+      "kind": "light.refraction_dilution",
+      "unit": "1",
+      "name": "share of the light's brightness left after the bending spreads it out"
+     }
+    },
+    "source": {
+     "text": "Baum, W. A. and Code, A. D. 1953, AJ 58, 108",
+     "doi": "10.1086/106829",
+     "where": "section 2"
+    },
+    "explain": {
+     "curious": "Deeper air bends light more, so neighbouring rays fan apart and the bent light is spread thin. That is why an eclipsed Moon is dim as well as red.",
+     "science": "Refractive defocusing: rays from heights h and h + dh separate by D dθ, so the flux falls by 1/(1 + D θ/H)."
+    },
+    "examples": [
+     {
+      "theta": 0.020560464670503983,
+      "H": 8000.0,
+      "D": 400000000.0,
+      "phi": 0.000971795356431582
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,46 +1,12 @@
 use super::*;
 
-const SOL: &str = include_str!("../../../packs/base-sol/pack.json");
-
 fn sheet() -> Sheet {
     Sheet::base()
 }
 
-/// A body of the Solar System from base-sol, with its belts from the
-/// `read_field` fixture.
 fn sol(id: &str) -> (Body, Option<Belts>) {
-    let s = sheet();
-    let v: serde_json::Value = serde_json::from_str(SOL).unwrap();
-    let b = v["provides"]["other"]["sol"]["bodies"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|b| b["id"] == id)
-        .unwrap();
-    let val = |k: &str| b["values"][k]["v"].as_f64();
-    let set = sse_field::Settings {
-        electron: Some(sse_field::Electron {
-            mass_kg: s.constant("m_e").unwrap(),
-            charge_c: s.constant("e").unwrap(),
-            eps0: s.constant("eps0").unwrap(),
-        }),
-        ..sse_field::Settings::default()
-    };
-    let fields = sse_field::solar_system(&set, s.constant("m_p").unwrap()).unwrap();
-    let f = fields
-        .iter()
-        .find(|f| f.read.address == format!("sol/{id}"));
-    (
-        Body {
-            address: format!("sol/{id}"),
-            mass_kg: val("body.mass").unwrap(),
-            radius_m: val("body.radius").unwrap(),
-            luminosity_w: val("star.luminosity").unwrap_or(0.0),
-            air_top_m: None,
-            bubble_m: f.map(|f| f.read.obstacle.standoff_m),
-        },
-        f.and_then(|f| f.read.belts.clone()),
-    )
+    let a = solar_system_ask(id, None, Line::Equator, &sheet()).unwrap();
+    (a.body, a.belts)
 }
 
 fn read(id: &str, ship: Option<Ship>, line: Line) -> HazardMap {
@@ -289,4 +255,39 @@ fn the_same_every_time() {
     let a = serde_json::to_string(&read("jupiter", None, Line::Poles)).unwrap();
     let b = serde_json::to_string(&read("jupiter", None, Line::Poles)).unwrap();
     assert_eq!(a, b);
+}
+
+#[test]
+fn clocks_at_park_and_dive() {
+    // XO20: the clock rate at the marks, the time lost on a pass and the push
+    // to hover, from the gravity blocks. Earth: rg = GM/c² ≈ 4.4 mm.
+    let map = read("earth", None, Line::Equator);
+    let c = sheet().constant("c").unwrap();
+    let gm = sheet().constant("G").unwrap() * sol("earth").0.mass_kg;
+    let rg = gm / (c * c);
+    let park = map.park.as_ref().unwrap();
+    let want = (1.0 - 3.0 * rg / park.distance_m).sqrt();
+    assert!(
+        (park.clock_rate - want).abs() < 1e-14,
+        "{} {want}",
+        park.clock_rate
+    );
+    // A hover needs a touch more than gravity.
+    let g = gm / (park.distance_m * park.distance_m);
+    assert!(park.hover_m_s2 > g && park.hover_m_s2 < g * (1.0 + 1e-8));
+    assert!(
+        park.says.contains("a day against one far away"),
+        "{}",
+        park.says
+    );
+    let dive = map.dive.as_ref().unwrap();
+    assert!((dive.clock_rate - (1.0 - 2.0 * rg / dive.distance_m)).abs() < 1e-14);
+    // Lost over a pass: positive, and less than 2rg/q times the pass's span.
+    let pass = map.pass.as_ref().unwrap();
+    assert!(
+        pass.clock_lost_s > 0.0 && pass.clock_lost_s < 1e-3,
+        "{}",
+        pass.clock_lost_s
+    );
+    assert!(dive.says.contains("behind a far one"), "{}", dive.says);
 }

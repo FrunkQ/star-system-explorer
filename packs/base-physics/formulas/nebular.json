@@ -1,0 +1,497 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.nebular",
+ "about": "Forbidden lines in glowing gas (O4 part 1): how often electrons excite an ion's slow-to-shine level, and how far into the nebula each ion's zone reaches.",
+ "atoms": [
+  {
+   "id": "sse.nebular.collisional_excitation",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "electron_temperature",
+     "letter": "T"
+    },
+    {
+     "port": "wavelength",
+     "letter": "lam"
+    },
+    {
+     "port": "collision_strength",
+     "letter": "Y"
+    },
+    {
+     "port": "lower_weight",
+     "letter": "g1"
+    },
+    {
+     "port": "upper_weight",
+     "letter": "g2"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "excitation_rate",
+     "letter": "q12"
+    },
+    {
+     "port": "deexcitation_rate",
+     "letter": "q21"
+    }
+   ],
+   "constants": {
+    "h": "sheet/h",
+    "k": "sheet/k_B",
+    "me": "sheet/m_e",
+    "c": "sheet/c"
+   },
+   "checks": [
+    {
+     "port": "electron_temperature",
+     "min": 0,
+     "finite": true,
+     "says": "electron temperature must be above zero, got {}"
+    },
+    {
+     "port": "wavelength",
+     "min": 0,
+     "finite": true,
+     "says": "wavelength must be above zero, got {}"
+    },
+    {
+     "port": "collision_strength",
+     "min": 0,
+     "finite": true,
+     "says": "collision strength must be zero or more, got {}"
+    },
+    {
+     "port": "lower_weight",
+     "min": 1,
+     "finite": true,
+     "says": "a level's statistical weight is 1 or more, got {}"
+    },
+    {
+     "port": "upper_weight",
+     "min": 1,
+     "finite": true,
+     "says": "a level's statistical weight is 1 or more, got {}"
+    }
+   ],
+   "references": [
+    "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books, chapter 3: forbidden lines excited by electron collisions, q12 = (h²/((2π m_e)^3/2 (kT)^1/2)) (Υ/g1) e^(-hν/kT) and q21 = q12 (g1/g2) e^(hν/kT). https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/",
+    "Storey, P. J., N-level atoms (lecture notes, University College London), equations 6, 11 and 15: q21 = β Υ21 / (g2 √T) with β = (2πħ⁴/k m_e³)^½ = 8.629e-6 in cgs units, and q12 = (g2/g1) q21 e^(-E12/kT). https://pages.astro.umd.edu/~jpha/N-level.pdf"
+   ],
+   "shown": "q₁₂ = β/√T · Υ/g₁ · e^(−hc/λkT),  q₂₁ = β/√T · Υ/g₂,  β = h²/((2π mₑ)^3/2 √k)",
+   "equation": {
+    "name": "How often electrons knock an ion into the state that gives a forbidden line",
+    "formula": "m = 2 * pi * me\nbeta = h * h / sqrt(m * m * m * k * T)\nq21 = beta * Y / g2\nq12 = beta * Y / g1 * exp(-h * c / (lam * k * T))",
+    "inputs": {
+     "T": {
+      "kind": "nebula.electron_temperature",
+      "unit": "K",
+      "name": "temperature of the free electrons in the glowing gas"
+     },
+     "lam": {
+      "kind": "light.wavelength",
+      "unit": "m",
+      "name": "the line's wavelength, which sets the energy each knock must give"
+     },
+     "Y": {
+      "kind": "light.collision_strength",
+      "unit": "1",
+      "name": "how readily an electron knock makes the jump, averaged over the electrons' speeds (effective collision strength)"
+     },
+     "g1": {
+      "kind": "light.lower_level_weight",
+      "unit": "1",
+      "name": "statistical weight of the lower level or term"
+     },
+     "g2": {
+      "kind": "light.upper_level_weight",
+      "unit": "1",
+      "name": "statistical weight of the upper level"
+     },
+     "h": {
+      "kind": "constant.h",
+      "unit": "J s",
+      "name": "Planck constant"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     },
+     "me": {
+      "kind": "constant.m_e",
+      "unit": "kg",
+      "name": "electron mass"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m s-1",
+      "name": "speed of light"
+     }
+    },
+    "outputs": {
+     "q12": {
+      "kind": "light.excitation_rate_coefficient",
+      "unit": "m3 s-1",
+      "name": "knocks up into the upper level, per ion per electron per cubic metre per second"
+     },
+     "q21": {
+      "kind": "light.deexcitation_rate_coefficient",
+      "unit": "m3 s-1",
+      "name": "knocks back down without light, per ion per electron per cubic metre per second"
+     }
+    },
+    "source": {
+     "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei",
+     "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/",
+     "where": "chapter 3"
+    },
+    "explain": {
+     "curious": "In a glowing nebula, fast electrons bump into oxygen and sulphur ions and lift them into states that can only shed their energy as light very slowly. On Earth a collision would steal it first; in a nebula's thin gas the light gets out, which is where the green of oxygen and the red of sulphur come from.",
+     "science": "Collisional excitation rate coefficient from a Maxwellian electron gas, with the thermally averaged collision strength; de-excitation by detailed balance."
+    },
+    "examples": [
+     {
+      "T": 10000.0,
+      "lam": 5.00684e-07,
+      "Y": 2.26177,
+      "g1": 9.0,
+      "g2": 5.0,
+      "q12": 1.225108621448936e-15,
+      "q21": 3.90342245853705e-14
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.nebular.ion_zone_share",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "photons_able",
+     "letter": "Qe"
+    },
+    {
+     "port": "photons_taken",
+     "letter": "Qa"
+    },
+    {
+     "port": "taker_share",
+     "letter": "a"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "zone_share",
+     "letter": "f"
+    }
+   ],
+   "checks": [
+    {
+     "port": "photons_able",
+     "min": 0,
+     "finite": true,
+     "says": "photon rate must be zero or more, got {}"
+    },
+    {
+     "port": "photons_taken",
+     "min": 0,
+     "finite": true,
+     "says": "photon rate must be zero or more, got {}"
+    },
+    {
+     "port": "taker_share",
+     "min": 0,
+     "finite": true,
+     "says": "atoms per hydrogen atom must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, chapter 2: each ion's zone is set by the photons able to make it, counted against the photons the nebula takes up (the Strömgren argument applied ion by ion). https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+   ],
+   "shown": "f = min(1, Q(>E) / (a · Q_taken))",
+   "equation": {
+    "name": "How much of the glowing gas a star's harder light reaches",
+    "formula": "f = if Qa <= 0 or a <= 0 then 0 else min(1, Qe / (a * Qa))",
+    "inputs": {
+     "Qe": {
+      "kind": "nebula.photons_above_threshold",
+      "unit": "s-1",
+      "name": "photons a second hard enough to make (or strip) this ion"
+     },
+     "Qa": {
+      "kind": "nebula.photons_taken",
+      "unit": "s-1",
+      "name": "ionising photons a second the nebula takes up (its recombinations)"
+     },
+     "a": {
+      "kind": "nebula.taker_share",
+      "unit": "1",
+      "name": "atoms per hydrogen atom of the gas that takes these photons (1 for hydrogen, about a tenth for helium)"
+     }
+    },
+    "outputs": {
+     "f": {
+      "kind": "nebula.zone_share",
+      "unit": "1",
+      "name": "share of the glowing gas, nearest the star first, that those photons keep in this state"
+     }
+    },
+    "source": {
+     "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei",
+     "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "Only a hot star's hardest light can strip oxygen twice, and that light is used up close in. So doubly ionised oxygen glows in the middle and sulphur, which needs less, glows near the edge: the reason nebula pictures have teal hearts and red rims.",
+     "science": "Photon counting: an ion's zone is the share of the ionised volume that the photons above its threshold can keep ionised. They are taken up by the gas whose edge lies just below them (hydrogen, or helium above 24.6 eV), which balances them with its own recombinations, so the zone scales as Q(>E) / (a Q_H)."
+    },
+    "examples": [
+     {
+      "Qe": 2e+45,
+      "Qa": 1e+47,
+      "a": 0.1,
+      "f": 0.2
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.nebular.photoionisation_cross_section",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "photon_energy",
+     "letter": "E"
+    },
+    {
+     "port": "fit_energy",
+     "letter": "E0"
+    },
+    {
+     "port": "fit_cross_section",
+     "letter": "s0"
+    },
+    {
+     "port": "fit_ya",
+     "letter": "ya"
+    },
+    {
+     "port": "fit_power",
+     "letter": "P"
+    },
+    {
+     "port": "fit_yw",
+     "letter": "yw"
+    },
+    {
+     "port": "fit_y0",
+     "letter": "y0"
+    },
+    {
+     "port": "fit_y1",
+     "letter": "y1"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "cross_section",
+     "letter": "sigma"
+    }
+   ],
+   "checks": [
+    {
+     "port": "photon_energy",
+     "min": 0,
+     "finite": true,
+     "says": "photon energy must be above zero, got {}"
+    },
+    {
+     "port": "fit_energy",
+     "min": 0,
+     "finite": true,
+     "says": "the fit's energy scale must be above zero, got {}"
+    }
+   ],
+   "references": [
+    "Verner, D. A., Ferland, G. J., Korista, K. T. and Yakovlev, D. G. 1996, Atomic data for astrophysics. II. New analytic fits for photoionization cross sections of atoms and ions, ApJ 465, 487, equation 1 and table 1. doi:10.1086/177435"
+   ],
+   "shown": "σ(E) = σ₀ [(y−1)² + y_w²] y^(P/2 − 11/2) (1 + √(y/y_a))^(−P),  y = √((E/E₀ − y₀)² + y₁²)",
+   "equation": {
+    "name": "How readily a photon of this energy strips an ion",
+    "formula": "x = E / E0\ny = sqrt((x - y0) * (x - y0) + y1 * y1)\nF = ((y - 1) * (y - 1) + yw * yw) * y ^ (P / 2 - 11/2) * (1 + sqrt(y / ya)) ^ (-P)\nsigma = s0 * F",
+    "inputs": {
+     "E": {
+      "kind": "light.photon_energy",
+      "unit": "eV",
+      "name": "energy of the photon"
+     },
+     "E0": {
+      "kind": "light.fit_energy",
+      "unit": "eV",
+      "name": "the fit's energy scale for this ion"
+     },
+     "s0": {
+      "kind": "light.fit_cross_section",
+      "unit": "m2",
+      "name": "the fit's cross-section scale for this ion"
+     },
+     "ya": {
+      "kind": "light.fit_ya",
+      "unit": "1",
+      "name": "the fit's shape number y_a"
+     },
+     "P": {
+      "kind": "light.fit_power",
+      "unit": "1",
+      "name": "the fit's power P"
+     },
+     "yw": {
+      "kind": "light.fit_yw",
+      "unit": "1",
+      "name": "the fit's shape number y_w"
+     },
+     "y0": {
+      "kind": "light.fit_y0",
+      "unit": "1",
+      "name": "the fit's shape number y_0"
+     },
+     "y1": {
+      "kind": "light.fit_y1",
+      "unit": "1",
+      "name": "the fit's shape number y_1"
+     }
+    },
+    "outputs": {
+     "sigma": {
+      "kind": "light.photoionisation_cross_section",
+      "unit": "m2",
+      "name": "the target area each ion offers a photon of this energy"
+     }
+    },
+    "source": {
+     "text": "Verner, D. A. et al. 1996, ApJ 465, 487",
+     "doi": "10.1086/177435",
+     "where": "equation 1, table 1"
+    },
+    "explain": {
+     "curious": "An ion can only be stripped by a photon with enough energy, and it is easiest to hit just above that threshold. Harder photons slip past more often.",
+     "science": "Analytic fit to Opacity Project and Hartree-Dirac-Slater photoionisation cross-sections of the outer shell, valid from threshold to the next inner-shell edge."
+    },
+    "examples": [
+     {
+      "E": 3.7651150899e-18,
+      "E0": 1.4078326082958e-18,
+      "s0": 3.136e-20,
+      "ya": 3.442,
+      "P": 12.81,
+      "yw": 0.7354,
+      "y0": 2.782,
+      "y1": 0.1788,
+      "sigma": 5.2842529065096455e-22
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.nebular.ion_balance",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "photoionisation_rate",
+     "letter": "G"
+    },
+    {
+     "port": "recombination_coefficient",
+     "letter": "al"
+    },
+    {
+     "port": "electron_density",
+     "letter": "ne"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "lower_share",
+     "letter": "x"
+    }
+   ],
+   "checks": [
+    {
+     "port": "photoionisation_rate",
+     "min": 0,
+     "finite": true,
+     "says": "photoionisation rate must be zero or more, got {}"
+    },
+    {
+     "port": "recombination_coefficient",
+     "min": 0,
+     "finite": true,
+     "says": "recombination coefficient must be zero or more, got {}"
+    },
+    {
+     "port": "electron_density",
+     "min": 0,
+     "finite": true,
+     "says": "electron density must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, chapter 2: each ion's zone is set by the photons able to make it, counted against the photons the nebula takes up (the Strömgren argument applied ion by ion). https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/",
+    "Badnell, N. R., Ferland, G. J., Gorczyca, T. W., Nikolić, D. and Wagle, G. A. 2015, Bootstrapping dielectronic recombination from second-row elements and the Orion Nebula, arXiv:1503.05905: S2+ to S+ at 10,000 K, dielectronic 2.94e-12 and radiative 1.54e-12 cm3 s-1 (table 6, level average). https://arxiv.org/abs/1503.05905"
+   ],
+   "shown": "x = 1 / (1 + Γ / (α nₑ))",
+   "equation": {
+    "name": "How an element splits between two ions where light strips and electrons rejoin",
+    "formula": "x = if al * ne <= 0 then 0 else 1 / (1 + G / (al * ne))",
+    "inputs": {
+     "G": {
+      "kind": "nebula.photoionisation_rate",
+      "unit": "s-1",
+      "name": "how often each ion of the lower kind is stripped by the starlight here"
+     },
+     "al": {
+      "kind": "nebula.recombination_coefficient",
+      "unit": "m3 s-1",
+      "name": "how readily the upper ion catches an electron back"
+     },
+     "ne": {
+      "kind": "nebula.electron_density",
+      "unit": "m-3",
+      "name": "free electrons per cubic metre"
+     }
+    },
+    "outputs": {
+     "x": {
+      "kind": "nebula.lower_ion_share",
+      "unit": "1",
+      "name": "share of the element left as the lower ion"
+     }
+    },
+    "source": {
+     "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei",
+     "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "Starlight keeps stripping sulphur while electrons keep putting it back together. Close to the star the light wins; out near the edge, where the light is spread thin, the electrons win and once-ionised sulphur glows red.",
+     "science": "Ionisation equilibrium between adjacent stages: n(X+) Γ = n(X++) α nₑ."
+    },
+    "examples": [
+     {
+      "G": 1e-08,
+      "al": 4.48e-18,
+      "ne": 1000000000.0,
+      "x": 0.30939226519337015
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.hazard",
+  "label": "Hazard map",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.hazard",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "world",
+      "group": "travel",
+      "label": "Hazard map",
+      "order": 3,
+      "hint": "How close a ship can go round this body, and which danger stops it"
+    },
+    {
+      "scale": "system",
+      "group": "travel",
+      "label": "Hazard map",
+      "order": 4,
+      "hint": "How close a ship can go round the star or a picked world, and which danger stops it"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ Track MC. Owner thread "Build ship manifest and crew roster". Alex, 24 Nov 17:54
   - Designs, pictures and long text are only "changed".
   - A cleared fact reads "cleared".
   - An event without changes keeps the old "Facts edited".
-- `editWords` is exported for any other log (a body's, later).
+- `factEditWords` (constructs.ts) can word any other log's edits (a body's, later).
 - `MANIFEST_WORDS` names the picture fields: Pictures, Opens on, Design.
 - The Ships and stations card asks for changes when it loads the Log.
 

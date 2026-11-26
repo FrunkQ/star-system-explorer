@@ -52,6 +52,14 @@ pub const FILES: &[(&str, &str)] = &[
         include_str!("../../../packs/base-physics/formulas/nebula.json"),
     ),
     (
+        "shadow",
+        include_str!("../../../packs/base-physics/formulas/shadow.json"),
+    ),
+    (
+        "nebular",
+        include_str!("../../../packs/base-physics/formulas/nebular.json"),
+    ),
+    (
         "heat",
         include_str!("../../../packs/base-physics/formulas/heat.json"),
     ),
@@ -94,6 +102,10 @@ pub const FILES: &[(&str, &str)] = &[
     (
         "belts",
         include_str!("../../../packs/base-physics/formulas/belts.json"),
+    ),
+    (
+        "gravity",
+        include_str!("../../../packs/base-physics/formulas/gravity.json"),
     ),
     (
         "gas",

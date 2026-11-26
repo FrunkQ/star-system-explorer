@@ -3996,6 +3996,10 @@ impl Kernel {
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::ReadBows { items } => systems::read_bows(items)?,
+            Request::ReadScattering { items } => systems::read_scattering(items)?,
+            Request::ReadShadowLight { items } => {
+                systems::read_shadow_light(items, &self.observe.reference)?
+            }
             Request::DescribeStar {
                 mass_msun,
                 age_yr,
@@ -4010,6 +4014,20 @@ impl Kernel {
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }
+            Request::HazardMap {
+                asks,
+                fixture,
+                body,
+                ship,
+                line,
+            } => systems::hazard_map(
+                asks,
+                fixture.as_deref(),
+                body.as_deref(),
+                ship,
+                line.as_deref(),
+                &self.observe.reference,
+            )?,
             Request::Detect {
                 targets,
                 sensors,

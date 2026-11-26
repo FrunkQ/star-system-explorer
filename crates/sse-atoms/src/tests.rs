@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 153,
+        n, 171,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1377,6 +1377,58 @@ fn redox_blocks_match_the_stage_8_sums() {
     let red = rx::outgassed_mix(-3.0, 1.0, 1.0, 1.0e7, &rx::OUTGAS);
     assert!(ox[1] > ox[0] && ox[3] > ox[2], "{ox:?}");
     assert!(red[0] > red[1] && red[2] > red[3], "{red:?}");
+}
+
+/// K-e: the Mie series against Bohren and Huffman's own worked example
+/// (n = 1.55, x = 5.213: Q_ext = Q_sca = 3.1054), the Rayleigh limit for
+/// small spheres, the extinction paradox (Q_ext → 2) for big ones, a phase
+/// function whose mean over the sphere is 1 and whose mean cosine is g, and
+/// water's primary bow showing as a bump near 138° in a big drop.
+#[test]
+fn mie_scattering_matches_the_textbook() {
+    use crate::mie::mie;
+    let o = mie(5.213, 1.55, 0.0, &[]).unwrap();
+    assert!((o.q_ext - 3.1054).abs() < 2e-3, "{}", o.q_ext);
+    assert!((o.q_sca - o.q_ext).abs() < 1e-9);
+    let x = 0.01;
+    let s = mie(x, 1.5, 0.0, &[]).unwrap();
+    let r = (1.5f64 * 1.5 - 1.0) / (1.5 * 1.5 + 2.0);
+    let rayleigh = 8.0 / 3.0 * x * x * x * x * r * r;
+    assert!(
+        (s.q_sca / rayleigh - 1.0).abs() < 1e-3,
+        "{} {rayleigh}",
+        s.q_sca
+    );
+    assert!(s.g.abs() < 1e-3);
+    let big = mie(2000.0, 1.33, 1e-4, &[]).unwrap();
+    assert!((big.q_ext - 2.0).abs() < 0.02, "{}", big.q_ext);
+    // Normalisation and asymmetry from a fine table.
+    let n = 3601;
+    let angles: Vec<f64> = (0..n).map(|i| m::PI * i as f64 / (n - 1) as f64).collect();
+    let t = mie(5.213, 1.55, 0.0, &angles).unwrap();
+    let (mut norm, mut mean_cos) = (0.0, 0.0);
+    for i in 0..n - 1 {
+        let (a, b) = (angles[i], angles[i + 1]);
+        let w = 0.5 * (m::sin(a) * t.phase[i] + m::sin(b) * t.phase[i + 1]) * (b - a);
+        norm += w;
+        mean_cos += 0.5 * (m::cos(a) + m::cos(b)) * w;
+    }
+    assert!((norm / 2.0 - 1.0).abs() < 1e-3, "{norm}");
+    assert!(
+        (mean_cos / 2.0 - t.g).abs() < 2e-3,
+        "{} {}",
+        mean_cos / 2.0,
+        t.g
+    );
+    // A 100 µm water drop in green light: the bow's bump near 138°.
+    let deg: Vec<f64> = (120..=160).map(|d| d as f64 * m::PI / 180.0).collect();
+    let w = mie(2.0 * m::PI * 1e-4 / 5.5e-7, 1.333, 0.0, &deg).unwrap();
+    let peak = (0..deg.len())
+        .max_by(|&a, &b| w.phase[a].total_cmp(&w.phase[b]))
+        .unwrap()
+        + 120;
+    assert!((136..=141).contains(&peak), "{peak}");
+    assert!(mie(3e4, 1.33, 0.0, &[]).unwrap_err().contains("geometric"));
 }
 
 #[test]

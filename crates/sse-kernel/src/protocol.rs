@@ -654,10 +654,28 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
-    /// Rainbows and halos (VP-L4): each of `items` is `{id, n, kind}` with
+    /// Rainbows and halos (VP-L4): each of `items` is `{id, n | substance
+    /// (+ wavelength_m), kind}` with
     /// `kind` "drop" (rain of a liquid of refractive index `n`: its bows)
     /// or "crystal" (ice-like crystals: their 22° and 46° style halos).
     ReadBows {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// Phase tables per kind of particle (K-e): each of `items` is
+    /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
+    /// | substance (+ phase), medium_n?, spread?, angles_deg?}`, worked by
+    /// Mie theory.
+    ReadScattering {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// The colour of light inside a world's shadow (VP-L3): each of `items`
+    /// is `sse_light::shadow::ShadowAsk` `{id, air {address, gases
+    /// [{gas, fraction}], surface_pressure_pa, surface_temperature_k,
+    /// gravity_m_s2}, radius_m, distance_m, star {teff_k, radius_m,
+    /// distance_m}}`: starlight bent through the limb into the shadow.
+    ReadShadowLight {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
@@ -704,6 +722,33 @@ pub enum Request {
     EffectAtRange {
         #[ts(type = "unknown[]")]
         asks: Vec<serde_json::Value>,
+    },
+    /// The Hazard map's reading (exotic objects design 3.8, XO18): how close
+    /// a ship can go round a dangerous body, along a stated line ("equator",
+    /// the magnetic equator's plane, or "poles"). Rows in three tones (heat,
+    /// trapped belts, air, climbing out), safe bands, the Park and Dive
+    /// marks with the hazard that set each, the totals for a pass, the
+    /// belts' dose beside each moon, fixed marks. Each of `asks` is
+    /// `sse_hazard::Ask` (body, its belts from `read_field`, ship, line);
+    /// or `fixture: "solar-system"` with `body` ("jupiter" or "sol/jupiter")
+    /// reads a measured Solar System body. With no ship, the stated stock
+    /// ship stands in.
+    HazardMap {
+        #[serde(default)]
+        #[ts(type = "unknown[]")]
+        asks: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        ship: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        line: Option<String>,
     },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
@@ -2576,6 +2621,9 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::HazardMap { .. } => "hazard_map",
+            Request::ReadScattering { .. } => "read_scattering",
+            Request::ReadShadowLight { .. } => "read_shadow_light",
             Request::DescribeStar { .. } => "describe_star",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
@@ -2811,6 +2859,16 @@ pub fn ops() -> Vec<OpInfo> {
             "per item: one or two formula blocks",
         ),
         o(
+            "read_scattering",
+            Cost::Light,
+            "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
+        ),
+        o(
+            "read_shadow_light",
+            Cost::Light,
+            "per item: up to 128 grazing heights, each a gas passage on the eye's wavelengths",
+        ),
+        o(
             "describe_star",
             Cost::Trivial,
             "one star's life line: closed-form fits",
@@ -2829,6 +2887,11 @@ pub fn ops() -> Vec<OpInfo> {
             "effect_at_range",
             Cost::Light,
             "per ask: a few formula blocks, and four bisections of about eighty steps for the rings",
+        ),
+        o(
+            "hazard_map",
+            Cost::Light,
+            "per ask: a 400-point line of a few blocks each, and up to 400 passes of 2000 steps for the Dive",
         ),
         o(
             "read_spectrum",
@@ -3520,6 +3583,16 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
+    /// `read_scattering`: each of `items` is `sse_light::scatter::Scattering`.
+    ScatteringRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// `read_shadow_light`: each of `items` is `sse_light::shadow::ShadowLight`.
+    ShadowLightRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
     /// `describe_star`: `sse_formation::describe::Description` (the phase
     /// now with teff_k, luminosity_w and radius_m; each phase's ages in
     /// years; the remnant; the mass walls; notes and sources).
@@ -3543,6 +3616,11 @@ pub enum Response {
     EffectsAtRange {
         #[ts(type = "unknown[]")]
         effects: Vec<serde_json::Value>,
+    },
+    /// `hazard_map`: each of `maps` is `sse_hazard::HazardMap`.
+    HazardMaps {
+        #[ts(type = "unknown[]")]
+        maps: Vec<serde_json::Value>,
     },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {

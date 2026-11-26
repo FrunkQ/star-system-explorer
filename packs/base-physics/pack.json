@@ -1535,6 +1535,20 @@
         "range": null
       },
       {
+        "description": "molecules per square metre along a ray grazing a world's limb",
+        "dim": [
+          -2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.grazing_column",
+        "range": null
+      },
+      {
         "description": "grey infrared optical depth of the atmosphere",
         "dim": [
           0,
@@ -1798,6 +1812,20 @@
           0
         ],
         "id": "belts.equatorial_field",
+        "range": null
+      },
+      {
+        "description": "share of a belt's equatorial dose left at a magnetic latitude along its field line",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.latitude_share",
         "range": null
       },
       {
@@ -3481,6 +3509,188 @@
         "range": null
       },
       {
+        "description": "angle a light ray is turned by a mass, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.bend_angle",
+        "range": null
+      },
+      {
+        "description": "rate of a clock held still near a mass, against a far clock",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.clock_rate_hovering",
+        "range": null
+      },
+      {
+        "description": "rate of a clock on a circular orbit near a mass, against a far clock",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.clock_rate_orbiting",
+        "range": null
+      },
+      {
+        "description": "distance from a mass's centre (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.distance",
+        "range": null
+      },
+      {
+        "description": "angular radius of the Einstein ring of a lens, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.einstein_angle",
+        "range": null
+      },
+      {
+        "description": "GM/c², the length every strong-gravity distance scales with (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.gravitational_radius",
+        "range": null
+      },
+      {
+        "description": "radius of a black hole's surface of no return (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.horizon_radius",
+        "range": null
+      },
+      {
+        "description": "distance at which a light ray would pass a mass if space were flat (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.impact_parameter",
+        "range": null
+      },
+      {
+        "description": "innermost stable circular orbit round a compact mass, a disc's inner edge (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.last_stable_orbit_radius",
+        "range": null
+      },
+      {
+        "description": "radius at which light circles a compact mass (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.photon_orbit_radius",
+        "range": null
+      },
+      {
+        "description": "angular radius of a black hole's shadow as a viewer sees it, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.shadow_angle",
+        "range": null
+      },
+      {
+        "description": "a black hole's spin a = Jc/GM², 0 to 1; signed where the direction of an orbit or ray matters",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.spin",
+        "range": null
+      },
+      {
+        "description": "difference in pull per metre along the line to a mass (s-2)",
+        "dim": [
+          0,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gravity.tide_per_metre",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,
@@ -4170,6 +4380,34 @@
         "range": null
       },
       {
+        "description": "the imaginary part of the refractive index: how strongly the material soaks up light inside it",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.absorption_index",
+        "range": null
+      },
+      {
+        "description": "angle through which an air turns a ray of light",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.bend_angle",
+        "range": null
+      },
+      {
         "description": "radius of a rainbow round the point opposite the sun, as an angle",
         "dim": [
           0,
@@ -4195,6 +4433,146 @@
           0
         ],
         "id": "light.brightness_share",
+        "range": null
+      },
+      {
+        "description": "how readily an electron's knock lifts an ion to a level, averaged over the electrons' speeds",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.collision_strength",
+        "range": null
+      },
+      {
+        "description": "rate at which electron knocks bring ions down without light, per ion per electron density",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.deexcitation_rate_coefficient",
+        "range": null
+      },
+      {
+        "description": "rate at which electron knocks lift ions to a level, per ion per electron density",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.excitation_rate_coefficient",
+        "range": null
+      },
+      {
+        "description": "cross-section scale of a fit to an ion's photoionisation cross-section",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.fit_cross_section",
+        "range": null
+      },
+      {
+        "description": "energy scale of a fit to an ion's photoionisation cross-section",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.fit_energy",
+        "range": null
+      },
+      {
+        "description": "power P of a fit to an ion's photoionisation cross-section (Verner et al. 1996)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.fit_power",
+        "range": null
+      },
+      {
+        "description": "shape number y_0 of a fit to an ion's photoionisation cross-section (Verner et al. 1996)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.fit_y0",
+        "range": null
+      },
+      {
+        "description": "shape number y_1 of a fit to an ion's photoionisation cross-section (Verner et al. 1996)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.fit_y1",
+        "range": null
+      },
+      {
+        "description": "shape number y_a of a fit to an ion's photoionisation cross-section (Verner et al. 1996)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.fit_ya",
+        "range": null
+      },
+      {
+        "description": "shape number y_w of a fit to an ion's photoionisation cross-section (Verner et al. 1996)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.fit_yw",
         "range": null
       },
       {
@@ -4254,6 +4632,20 @@
         "range": null
       },
       {
+        "description": "statistical weight of the lower level or term of a line",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.lower_level_weight",
+        "range": null
+      },
+      {
         "description": "Minnaert's k: how a lit surface's brightness falls toward its edge (1 is matt)",
         "dim": [
           0,
@@ -4265,6 +4657,34 @@
           0
         ],
         "id": "light.minnaert_k",
+        "range": null
+      },
+      {
+        "description": "target area an ion offers a photon that can strip it",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.photoionisation_cross_section",
+        "range": null
+      },
+      {
+        "description": "energy of one photon",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.photon_energy",
         "range": null
       },
       {
@@ -4324,6 +4744,20 @@
         "range": null
       },
       {
+        "description": "share of light's brightness left after refraction spreads the rays apart",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.refraction_dilution",
+        "range": null
+      },
+      {
         "description": "how strongly a liquid or crystal bends light",
         "dim": [
           0,
@@ -4377,6 +4811,20 @@
           0
         ],
         "id": "light.surviving_share",
+        "range": null
+      },
+      {
+        "description": "statistical weight of the upper level of a line",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.upper_level_weight",
         "range": null
       },
       {
@@ -4604,6 +5052,34 @@
         "range": null
       },
       {
+        "description": "free electrons per cubic metre in a nebula's glowing gas",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.electron_density",
+        "range": null
+      },
+      {
+        "description": "temperature of the free electrons in a nebula's glowing gas",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "nebula.electron_temperature",
+        "range": null
+      },
+      {
         "description": "speed at which a nebula's shell expands",
         "dim": [
           1,
@@ -4646,6 +5122,76 @@
         "range": null
       },
       {
+        "description": "share of an element left as the lower of two ions",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.lower_ion_share",
+        "range": null
+      },
+      {
+        "description": "how often each ion is stripped by the starlight where it is",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.photoionisation_rate",
+        "range": null
+      },
+      {
+        "description": "photons a second from the lighting stars hard enough to make or strip an ion",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.photons_above_threshold",
+        "range": null
+      },
+      {
+        "description": "ionising photons a second a nebula takes up, balancing its recombinations",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.photons_taken",
+        "range": null
+      },
+      {
+        "description": "rate coefficient for an ion catching an electron back",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.recombination_coefficient",
+        "range": null
+      },
+      {
         "description": "hydrogen recombinations per second in a nebula",
         "dim": [
           0,
@@ -4671,6 +5217,76 @@
           0
         ],
         "id": "nebula.shell_radius",
+        "range": null
+      },
+      {
+        "description": "atoms per hydrogen atom of the gas that takes up a range of ionising photons",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.taker_share",
+        "range": null
+      },
+      {
+        "description": "share of a nebula's glowing gas, nearest the star first, that a kind of ion fills",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.zone_share",
+        "range": null
+      },
+      {
+        "description": "distance of a viewer from a body's centre (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "observer.distance",
+        "range": null
+      },
+      {
+        "description": "distance from a viewer to a bending mass (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "observer.lens_distance",
+        "range": null
+      },
+      {
+        "description": "distance from a viewer to the light behind a bending mass (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "observer.source_distance",
         "range": null
       },
       {
@@ -5422,6 +6038,20 @@
         "range": null
       },
       {
+        "description": "light a particle scatters, over its cross-section",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.scattering_efficiency",
+        "range": null
+      },
+      {
         "description": "share of the light taken out that is scattered, not absorbed",
         "dim": [
           0,
@@ -6128,6 +6758,20 @@
           0
         ],
         "id": "satellite.bulk_density",
+        "range": null
+      },
+      {
+        "description": "distance behind a world, along its shadow",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shadow.distance",
         "range": null
       },
       {

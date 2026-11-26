@@ -17,6 +17,7 @@ pub mod rules;
 pub mod scenario;
 pub mod settings;
 pub mod swap;
+pub mod synoptic;
 pub mod zonal;
 
 pub use conditions::Conditions;
