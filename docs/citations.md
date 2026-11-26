@@ -36,6 +36,7 @@ reference as written, what is relied on, status, what was checked.
 | Magnetic fields (track MF) | [citations/magnetic-fields.md](citations/magnetic-fields.md) | 108 | 2 | none yet (design references; DOIs checked in MF0) |
 | Light, reference objects and design files | [citations/light-reference.md](citations/light-reference.md) | 108 | 18 | planet disc brightness factor, Sizes tab star radii and temperatures |
 | Real spaceflight (track RS) | [citations/spaceflight.md](citations/spaceflight.md) | 3 of 5 | 0 | none (test data for the flight log) |
+| Real catalogues (track RW, RW1) | [citations/real-catalogues.md](citations/real-catalogues.md) | 25 sources | 3 (Hipparcos is non-commercial; the Yale BSC has no clear licence; the MPC's strict catalogue policy is withdrawn) | none (design stage; terms, counts and credit wording) |
 | Exotic objects (track XO) | [citations/exotic-objects.md](citations/exotic-objects.md) | 13 | 1 | none (XO1: gravity blocks and the bend table; XO18: hazard map lines, the Sun check and the latitude fall-off) |
 
 Counts are table rows in each area file after the first pass (19 Nov 2026). About a third of rows are still
