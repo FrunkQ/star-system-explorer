@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { orbitBodies, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, motionsFrom, orbitBodies, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -785,6 +785,8 @@
   let phases = $state<Map<string, number> | null>(null);
   // And where each is in three dimensions, for shadows and eclipses in True (renderer eclipse.ts).
   let places = $state<Map<string, [number, number, number]> | null>(null);
+  // And how fast each moves (the same reply, a minute apart): a shadow's caster is read where the light passed it.
+  let motions = $state<Map<string, [number, number, number]> | null>(null);
   // Play asks ten times a second: one call at a time, and only the latest time waits.
   let orbitsFor = "";
   let orbitsBusy = false;
@@ -794,9 +796,9 @@
     const w = orbitsWant;
     orbitsWant = null;
     orbitsBusy = true;
-    w.s.orbitsAt(w.sc.system, [w.at], orbitBodies(w.sc, w.epoch)).then((r) => {
+    w.s.orbitsAt(w.sc.system, [w.at, w.at - BigInt(MOTION_STEP_S)], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)));
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)));
       pumpOrbits();
     });
   }
@@ -807,7 +809,7 @@
     const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null));
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null));
     orbitsWant = { s, sc, at, epoch, key };
     pumpOrbits();
   });
@@ -818,7 +820,7 @@
     if (!s) return;
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
-  const timed = $derived(withPhases(scene, phases, places));
+  const timed = $derived(withPhases(scene, phases, places, motions));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
   let layerLabels = $state.raw<Map<string, string>>(new Map());
   $effect(() => {
