@@ -1,6 +1,6 @@
 # SSE4: editing rings and belts (track RB)
 
-Status: **PROPOSED 26 Nov 2026, not accepted.** Eight questions for Alex in section 11, each with a recommendation. Design only; nothing here is built. RB is a code only, never shown in the product.
+Status: **ACCEPTED by Alex 26 Nov 2026 18:12 UTC** ("your recs make sense": yes to all eight questions of section 11, so each recommendation there is a ruling; his steers are in section 11A). Proposed the same day. Design only; nothing here is built by this note. Packages for builders are in section 12. RB is a code only, never shown in the product.
 
 Readable copy with drawn mock-ups: https://claude.ai/artifact/1YxqDTEaSyXXPqU43Gk81j
 
@@ -224,9 +224,10 @@ The chain's rules: mass and the six element groups are real amounts; no join pas
 1. **A ring or belt is a reservoir.** Its mass by element group is its stock. Zones are a split of that stock, so their masses add up to the ring's, group by group. The Profile part enforces it in the page and the kernel renormalises on the way in.
 2. **Shaping is free.** Variants, joins and zone heights move mass about inside the ring. No source is needed and nothing shows on the GM's list.
 3. **"How much" is a claim on a source.** Raising a ring's mass takes it from somewhere, and the handle's verdict says where:
-   - by default, **the parent's leftover stock** (the giant's moon-forming disc, or the system's leftover solids), which the formation budget already tracks and closes;
-   - or **a named body**: "Take it from…" a moon, an asteroid, a comet. This is what `make_small_body` already does in the other direction (`made_from`).
-   - If the stock cannot cover it, the edit still happens. It is marked authored, and the GM's "What does not add up" list says "Tarn's ring holds 3 times what its disc had: 2 × 10^19 kg from no source", with "Take it from a moon" as the offered fix. No new ledger is built for this; it is one line against the system's birth claim.
+   - first offered, **a moon** (Alex, 26 Nov: "More ring mass = destroy a moon"): when the mark goes up, the verdict leads with the moon that would supply it. "Another 2 × 10^19 kg: *break up Tethys* (it holds 30 times that; the rest stays a smaller moon), or *take it from the disc's leftovers*, or *add it from nowhere*." Breaking the moon up is the act of point 5, so mass and makeup carry over exactly;
+   - or **the parent's leftover stock** (the giant's moon-forming disc, or the system's leftover solids), which the formation budget already tracks and closes. A small rise that the stock covers is taken from it quietly, with the moon still on offer;
+   - or **any named body**: "Take it from…" an asteroid, a comet. This is what `make_small_body` already does in the other direction (`made_from`);
+   - or **from nowhere**, always there and always last. The edit happens, it is marked authored, and the GM's "What does not add up" list says "Tarn's ring holds 3 times what its disc had: 2 × 10^19 kg from no source", with the moon as the offered fix. No new ledger is built for this; it is one line against the system's birth claim.
 4. **Lowering "How much"** returns the mass to the same stock, or names where it went ("fell into the planet", "gathered into a moon").
 5. **Two acts make the big changes honest, and both conserve mass exactly:**
    - **Break up**: a moon inside (or dragged inside) the tide limit becomes a ring; a world becomes a debris belt. The moon's makeup becomes the ring's. Formation already makes rings this way.
@@ -320,10 +321,16 @@ If the catalogues note is not accepted, only points 1 and 3 change wording; noth
 2. **Shaping keeps the mass.** Raising one zone thins the others; only "How much" changes the total. *Recommend yes.* It is what keeps the books closed without the GM thinking about them.
 3. **Colour is never typed.** You add a material and the colour follows, or you pin the colour and it carries the honesty mark. The app answers "what would it take" with an amount, a source and how long it lasts. *Recommend yes.* It follows the rule that material properties come only from the data sheet.
 4. **One new editing part, the Profile** (an amount along a line), added to the editing grammar and usable elsewhere. *Recommend yes.*
-5. **Extra mass may come from nowhere, marked.** If the parent's leftover stock cannot cover a bigger ring, the edit still happens and the GM's list says how much has no source, offering "Take it from a moon". *Recommend yes*, in line with "plausible, repeatable and explained, not exact".
-6. **Break up and Gather** as two acts (moon to ring, world to belt, and back), each conserving mass. *Recommend yes, built after the basics.*
+5. **Extra mass may come from nowhere, marked, as the last choice.** The first offer is a moon to break up, then the parent's leftovers; "from nowhere" is always allowed and the GM's list says how much has no source. *Recommend yes*, in line with "plausible, repeatable and explained, not exact".
+6. **Break up and Gather** as two acts (moon to ring, world to belt, and back), each conserving mass. *Recommend yes.* After Alex's steer in 11A, Break up is built with the "How much" handle, not later.
 7. **Detail thins the members, never the sub-rings.** Zones are always drawn and sharpen with zoom. *Recommend yes.*
 8. **A ring changed during play is a Build edit "from this date",** not a Run desk act, for 4.0. *Recommend yes.* A Playbook step that fires such an edit can come later.
+
+### 11A. Alex's ruling, 26 Nov 2026
+
+- 18:11 UTC, on the whole: "great generation - pushing users to plausible but let them play."
+- 18:11 UTC, on adding mass: "More ring mass = destroy a moon 🙂 Maybe one option to add mass befoire actually doing it without". Read as: when a ring's mass is raised, offer breaking up a moon first, before adding it with no source. Section 6 point 3 and questions 5 and 6 say this.
+- 18:12 UTC: "your recs make sense". Yes to all eight, so: (1) pick and fine design are both there, layered, and first generation uses the generator's pick; (2) shaping keeps the mass; (3) colour is never typed; (4) the Profile joins the editing grammar; (5) extra mass may come from nowhere, marked, as the last choice after a moon and the leftovers; (6) Break up and Gather, with Break up built alongside "How much"; (7) Detail thins members, never sub-rings; (8) a ring changed during play is a Build edit "from this date" for 4.0.
 
 ---
 
@@ -334,11 +341,11 @@ Each is sized for one agent. Code on Opus.
 | Package | What | Needs | Owner (proposed) |
 |---|---|---|---|
 | **RB0** | This note, the status file, the row in START-HERE | | this thread (done) |
-| **RB1** | Kernel: a ring or belt's inputs as authored fields (edges, mass by group, makeup, size ladder, stir, `variant`, zones), read by `ring_structure`'s place form; `branch` on it if not already wired; the size ladder and thickness read; its own golden area | the ring structure job merged; Alex's yes | the ring structure thread, or kernel |
+| **RB1** | Kernel: a ring or belt's inputs as authored fields (edges, mass by group, makeup, size ladder, stir, `variant`, zones), read by `ring_structure`'s place form; `branch` on it if not already wired; the size ladder and thickness read; its own golden area | the ring structure job merged | the ring structure thread, or kernel |
 | **RB2** | The row and boxes: handle sheet rows for "ring or belt" (Where with two marks, How much, Made of, Grains, Stir), walls and reference dots, typing, "Type it all in"; Explore tries, Build keeps | RB1 | planet and star editing |
-| **RB3** | The Profile part in `ui-contract` and `views/editing`, read-only first: zones, cause tags, the moons' axis; then joins and heights with the trade that keeps the sum; the grammar check learns it | RB1; question 4 | planet and star editing |
+| **RB3** | The Profile part in `ui-contract` and `views/editing`, read-only first: zones, cause tags, the moons' axis; then joins and heights with the trade that keeps the sum; the grammar check learns it | RB1 | planet and star editing |
 | **RB4** | "Others like this": five thumbnails from variants, pencil preview on the world, pick as one change; Kinds; the Add hoop and edge grips on the chart | RB2, RB3 | planet and star editing, with the chart room |
-| **RB5** | The books: "How much" as a claim on the parent's stock or a named body; the overdraft line in "What does not add up"; Break up and Gather | RB1; questions 5 and 6 | kernel |
+| **RB5** | The books: "How much" offers a moon to break up first, then the parent's stock or a named body, then "from nowhere" with the overdraft line in "What does not add up"; Break up and Gather | RB1 | kernel |
 | **RB6** | Sculptors: authored zones against moons (verdicts with "lasts about"), Reach it adding the moon for a gap or an edge, the three "Could be" records; planets sculpting belts through the same answer | RB3, RB5 | small bodies, with editing |
 | **RB7** | Coatings and the "What it would take" card: a zone's own makeup, coating or mixed through, colour as a result, Reach it on colour, "from this date" with the fade. Proven on the red B ring, a generated ring, and a belt | RB3, RB5; pigment optics rows on the data sheet | editing, with the data sheet |
 | **RB8** | The Detail fit: the size ladder with the cut on the Grains strip, kept members, the zone list's "Show finer" | RW4, RW5 (if accepted) | small bodies |
@@ -358,4 +365,4 @@ RB1 to RB4 give a GM a ring they can pick and shape. RB5 to RB7 make it honest a
 
 ## 14. Picking this up without the chat
 
-State of the track: `handover/status/ring-and-belt-editing.md`. Nothing is built. No builder starts until Alex answers section 11; his answers go in a section 11A here and in `decisions.md`.
+State of the track: `handover/status/ring-and-belt-editing.md`. Nothing is built. The note is accepted (section 11A); RB1 is the first package and waits for the ring structure job to merge.
