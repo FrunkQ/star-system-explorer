@@ -62,8 +62,10 @@ test("the band table is Planck through the sheet's bands: hotter is brighter in 
 test("the picture repeats the kernel: its rays land where the kernel's traced points did, with their shift and seen temperature", async () => {
   const k = nodeKernel();
   try {
+    // The data sheet (base-reference) carries the Sun the kernel's dimming figure is measured against, as in the app.
     const base = JSON.parse(readFileSync(new URL("packs/base-physics/pack.json", root), "utf8"));
-    const s = await Session.open(k.client, gmSeat(), { id: "holes", seed: "holes" }, [base]);
+    const sheet = JSON.parse(readFileSync(new URL("packs/base-reference/pack.json", root), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "holes", seed: "holes" }, [base, sheet]);
     const r = await s.readLightPaths({ fixture: "black-holes", table: true });
     assert.ok(r.ok, JSON.stringify(r));
     const table = r.bend_table as unknown as BendTable;
@@ -94,7 +96,8 @@ test("the picture repeats the kernel: its rays land where the kernel's traced po
       // rule at 64 steps a decade, ui-contract's bandRadiance by 48 trapezoids; they agree to 0.02% for the fed holes,
       // and to 0.6% for the starved one, whose 800 K disc puts the visible band deep in Planck's tail.
       const br = brightest(table, disc, img.tilt_rad)!;
-      assert.ok(Math.abs(br.times_sun_surface / img.exposure.times_sun_surface - 1) < (img.brightest.t_seen_k > 1e4 ? 0.001 : 0.01), `${p.address}: dimmed ${br.times_sun_surface} against the kernel's ${img.exposure.times_sun_surface}`);
+      assert.ok(img.exposure.times_sun_surface !== null, "the sheet's Sun is in force");
+      assert.ok(Math.abs(br.times_sun_surface / img.exposure.times_sun_surface! - 1) < (img.brightest.t_seen_k > 1e4 ? 0.001 : 0.01), `${p.address}: dimmed ${br.times_sun_surface} against the kernel's ${img.exposure.times_sun_surface}`);
       // Geometry the frame is measured against: the shadow's edge at √27, the far side's inner edge above it.
       const view = { distance: 2000, tilt: img.tilt_rad, half: 16, turning: 1 as const };
       const m = marksOf(table, disc, view);

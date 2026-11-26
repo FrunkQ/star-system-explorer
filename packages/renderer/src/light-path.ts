@@ -70,7 +70,7 @@ export interface LightPathsRead {
     brightest: Spot;
     approaching: Spot;
     receding: Spot;
-    exposure: { times_sun_surface: number; note: string };
+    exposure: { times_sun_surface: number | null; note: string };
     stand_ins?: string[];
     why?: string[];
   } | null;
