@@ -1,7 +1,7 @@
 // Shadows and eclipses in True (eclipse.ts): the processor twin of the GPU's shadow sums.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { discCover, glintBrdf, ringPassAt, shadeFor, slopeVariance, starLightAt, turnOnto, umbraLight, type Placed } from "../src/eclipse.ts";
+import { discCover, GLINT_FALLBACK, glintBrdf, ringPassAt, seenFrom, shadeFor, starLightAt, turnOnto, umbraLight, type Placed } from "../src/eclipse.ts";
 
 const near = (a: number, b: number, tol: number, what: string) => assert.ok(Math.abs(a - b) <= tol, `${what}: ${a} not within ${tol} of ${b}`);
 
@@ -38,6 +38,20 @@ test("a total eclipse of the Sun: dark at the spot under the Moon, a penumbra a 
   const mid = at(2000);
   assert.ok(mid > 0.05 && mid < 0.95, `penumbra ${mid}`);
   assert.equal(at(6000), 1);
+});
+
+test("a caster is read where it was when the light passed it: the Moon 1.25 s and 1.28 km back along its path", () => {
+  // The Moon on the Sun–Earth line now, moving at 1.022 km/s across it: the light reaching Earth passed it 3.75e8/c s ago.
+  const moving: Placed = { ...moonAt(0), v_m_s: [0, 1022, 0] };
+  const back = seenFrom(moving, earth);
+  const tau = 3.75e8 / 299792458;
+  near(back[1], -1022 * tau, 1e-9, "the light time's step back");
+  near(back[1], -1278.4, 0.5, "about 1.28 km");
+  // In the shade the caster sits that far off the line, in the world's radii (Earth's here, turned onto +x light).
+  const sh = shadeFor(earth, [moving], sun, [1, 0, 0])!;
+  near(sh.casters[0]!.at[1], (-1022 * tau) / 6.371e6, 1e-12, "drawn where the light passed it");
+  // No velocity, no step: the caster stays where it is.
+  assert.deepEqual(seenFrom(moonAt(0), earth), moonAt(0).at_m);
 });
 
 test("no eclipse when the Moon passes 5° to one side, as it does most months", () => {
@@ -106,14 +120,17 @@ test("a ring's shadow on its world: (1 − cover)^(1/μ₀) where the ray to the
   assert.equal(ringPassAt([0, 0, -1], [0, 0, 1], n, 1.2, 2.3, cover), 1);
 });
 
-test("the sun's glint: brightest where the sea mirrors it, spread wider and dimmer by a stronger wind (Cox and Munk)", () => {
+test("the sun's glint: brightest where the sea mirrors it, spread wider and dimmer by rougher waves", () => {
   const n = [0, 0, 1];
   const l = [Math.sin(0.5), 0, Math.cos(0.5)];
   const mirror = [-Math.sin(0.5), 0, Math.cos(0.5)];
   const aside = [-Math.sin(0.9), 0, Math.cos(0.9)];
-  const calm = slopeVariance(2);
-  const windy = slopeVariance(15);
-  near(calm, 0.003 + 0.01024, 1e-12, "Cox and Munk's variance");
+  // The kernel's slope variances (sse.light.sea_glint, Cox and Munk) for a 2 m/s and a 15 m/s wind.
+  const calm = 0.01324;
+  const windy = 0.0798;
+  // The stand-in is the kernel's answer for water under 7 m/s: 0.003 + 5.12e-3 × 7 and ((1.333 − 1)/(1.333 + 1))².
+  near(GLINT_FALLBACK.slope_variance, 0.003 + 5.12e-3 * 7, 1e-12, "the stand-in slope variance");
+  near(GLINT_FALLBACK.normal_reflectance, ((1.333 - 1) / (1.333 + 1)) ** 2, 1e-4, "the stand-in reflectance");
   assert.ok(glintBrdf(n, l, mirror, calm) > glintBrdf(n, l, mirror, windy), "a calm sea's glint is brighter at its centre");
   assert.ok(glintBrdf(n, l, aside, windy) > glintBrdf(n, l, aside, calm), "a rough sea's glint reaches further out");
   // Energy: over the sky the glint gives back about Fresnel's share (2 to 10% at these angles), never more than the light.

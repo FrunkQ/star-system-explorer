@@ -106,10 +106,13 @@ try {
       // Every body takes a click (Alex, 24 Nov: only two did): the pointer picks the nearest body, so pins that overlap
       // at Real scale no longer hide the worlds beneath them. Checked on each pin clear of its neighbours by 6 px.
       // A click also flies in to the body's close-up (Alex, 24 Nov); "‹ Sun" comes back out before the next one.
-      // The camera's distance holds still for a few frames: the fly-in or fly-out has finished (a loaded runner takes
-      // longer than the tween's 620 ms, so the test waits on the camera, not on a clock).
+      // The fly-in has finished (the chart says data-flying while it is under way) and the camera's distance then holds
+      // still for a few polls. A loaded runner can go longer than 600 ms between frames, so the camera holding still
+      // alone once passed mid-flight and the next click landed on pins that were still moving.
       const settled = () => gm.waitForFunction(() => {
         const v = document.querySelector("[aria-roledescription='3D chart']");
+        const w0 = /** @type {any} */ (window);
+        if (v?.hasAttribute("data-flying")) return (w0.__distWas = null), false;
         const d = v?.getAttribute("data-dist");
         const w = /** @type {any} */ (window);
         if (w.__distWas !== d) { w.__distWas = d; w.__distSame = 0; return false; }

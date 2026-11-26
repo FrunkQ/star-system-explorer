@@ -544,7 +544,7 @@ pub enum Request {
     },
     /// Weather from the rule-based weather block (weather track): `want` is
     /// `climate`, `systems`, `field` (a cube-sphere `tile` [face, level, x,
-    /// y], `n` × `n` cells), `report`, `column` (descent hazards) or `sound`,
+    /// y], `n` × `n` cells), `report`, `glint` (the sun's glint off the seas: slope variance and reflectance, EC2), `column` (descent hazards) or `sound`,
     /// at `day` (days since the campaign epoch) and `lat`/`lon` where a place
     /// is needed. The world is a weather fixture by `world` label, given
     /// `conditions`, or a `body` of an adopted `system` (read at `at_s`, like
