@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -1756,7 +1756,7 @@
       </label>
     {/if}
     <!-- How much (2.4): the depth. On a phone it lives in More. -->
-    <div class="depth-bar"><Segmented label="Depth" value={depth} options={DEPTHS} onchange={chooseDepth} slide /></div>
+    {#if partShows("depth", desk)}<div class="depth-bar"><Segmented label="Depth" value={depth} options={DEPTHS} onchange={chooseDepth} slide /></div>{/if}
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
@@ -1764,7 +1764,7 @@
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
-          <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
+          <div class="depth-more" data-always={partShows("depth", desk) ? undefined : ""}><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
             <!-- The edit group reads its words and keys from the one action list (ui-contract actions.ts), as the object menu does. -->
             <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>{moreWords("copy")} {selName ?? "a body"} <kbd>{moreKey("copy")}</kbd></button>
@@ -1814,6 +1814,7 @@
         {toSystem}
         toGalaxy={() => toScale("galaxy")}
         {toWorkshop}
+        workshopDoor={partShows("workshop-door", desk)}
       />
       {#key ws.screen}
       <Stage
@@ -1869,7 +1870,7 @@
     {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
-      <span>Seat: {session.seat.label}</span>
+      {#if partShows("status-line", desk, "seat")}<span>Seat: {session.seat.label}</span>{/if}
       <span class="kept">
         <span data-kept={savedAt ?? ""} title={saveProblem ?? "The campaign is kept in this browser after every change"}>{saveProblem ? "Not kept" : savedWords}</span>
       </span>
@@ -1892,7 +1893,7 @@
         />
       {/if}
       <!-- The engine's own numbers by depth (2.4): Science adds the device tier, Engine the kernel and the hashes. -->
-      {#if depth !== "curious"}
+      {#if depth !== "curious" && partShows("status-line", desk, "engine")}
         <span class="engine-line">
           {#if depth === "engine"}<span>kernel {status.kernel}</span>{/if}
           <span title="Measured capability tier of this device">tier {status.tier}</span>
@@ -2238,6 +2239,10 @@
     gap: 12px;
     padding: 8px 16px;
     border-bottom: var(--sse-line) solid var(--sse-rule);
+  }
+  /* On Run the dial is not in the bar, so More carries it at every width (three desks design 3.1). */
+  .depth-more[data-always] {
+    display: flex;
   }
   .depth-more .depth-k {
     font-size: 12px;
