@@ -1,6 +1,6 @@
 # SSE4: life's spread, population and pace from the energy it can get (track LE)
 
-Status: **SHAPED BY ALEX 26 Nov 2026 23:50 UTC** (section 0): 4.0 builds a broad-brush baseline, the detail and all tech go in the 4.1 bucket. Question 5 answered 23:54: two maintenance values in 4.0. Design only; nothing here is built by this note. Packages for builders are in section 9; the 4.1 bucket is section 9A. LE is a code only, never shown in the product.
+Status: **ACCEPTED by Alex 26 Nov 2026** (23:50 and 23:54 UTC; his words are the rulings in section 0): 4.0 builds a broad-brush baseline (section 9), the detail and all tech go in the 4.1 bucket (section 9A). All questions answered. Design only; nothing here is built by this note. Builders may take the section 9 packages; status `handover/status/life-energy.md`. LE is a code only, never shown in the product.
 
 Read with: `SSE4-life-design.md` (boxes B, C, D, E), `SSE4-evolution-design.md` (sections 3 and 5, the gradient catalogue and opportunity times prize), `status/names-and-life.md` (L3), `status/kernel.md` (E1, E2, E4 to E6 built as opt-in), the Energy flow view (memory `sse4-heat-flow-view`, PR 670, track HV).
 
