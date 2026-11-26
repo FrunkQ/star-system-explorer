@@ -17,8 +17,6 @@ use crate::{Member, Settings};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-const G: f64 = sse_core::sheet::G;
-
 /// One thing a body's design asks of its material.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Take {
@@ -47,6 +45,9 @@ fn pa_words(p: f64) -> String {
 /// What a resolved or designed body takes to hold together as it is: empty
 /// when gravity and its own material are enough.
 pub fn takes(b: &Member, s: &Settings) -> Vec<Take> {
+    // The constant in force (an edited sheet reaches it).
+    #[allow(non_snake_case)]
+    let G = sse_core::constants::g();
     let st = &s.strength;
     let rho = b.bulk_density_kg_m3.max(100.0);
     let r = 0.5 * b.diameter_km * 1000.0;
