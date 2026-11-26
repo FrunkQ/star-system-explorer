@@ -5,7 +5,7 @@ metadata:
   type: project
   modified: 2026-11-23T02:59:56.661Z
 ---
-Started 19 Nov 2026. Owns V8 (Route, Window, Voyages), U6 (galaxy and patch charts), V9 (foam, cluster maps), U8 (story finder). Status rows: handover/status/galaxy-and-travel.md (never START-HERE). Logs in handover/packages/ (V8.md, V9.md, GAP19-star-marks.md).
+Started 19 Nov 2026. Owns V8 (Route, Window, Voyages), U6 (galaxy and patch charts), V9 (foam, cluster maps), U8 (story finder). Status rows: handover/status/travel.md (never START-HERE). Logs in handover/packages/ (V8.md, V9.md, GAP19-star-marks.md).
 - Scale screens since U24: scale-galaxy/-cluster/-web.gm.json with rail entries; views send bubbling "sse:place" {scale,id,name,children?} and read a `place` param (ui-contract place-event.ts; ids web:<Mpc>, cell:x.y.z, halo key/address). Shell side merged PR 204.
 - Voyages design SSE4-voyages-design.md all answered. Merged: 3, 3b, 3c (refuel kinds as pack data), MF0 and MF7 belts (PR 185), perf PR 203 (cosmology sigma table kept in a thread-local; Stars::cells shares one TreeWalk; plan_voyage 633 to 86 ms wasm). Next V8: join at a system edge.
 - V3 gaps list /mnt/project-files/sse4/SSE4-v3-gaps.md (23 Nov): mine are 17 "Your systems" map (accepted, stage 2; proposed scale "systems" between galaxy and system, view sse.view.your-systems, chart room thread does place.ts), 18 grids/pinned picture as layers on 17's map, 19 star marks (part 1 PR 222: symbology channel `aura`, size by number:luminosity_lsun, readStarFacts; part 2 shells via read_nebulae), 20 Local Neighbourhood start door.

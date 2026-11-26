@@ -4050,6 +4050,23 @@ fn the_traveller_weapons_reach_their_game_bands() {
     assert_eq!(seen, 7);
 }
 
+#[test]
+fn describe_star_reads_one_star_from_the_formation_life_line() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "describe_star", "mass_msun": 1.0, "age_yr": 4.57e9}).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(r["type"], "star_described", "{r}");
+    assert_eq!(r["star"]["now"]["phase"], "main-sequence");
+    assert_eq!(r["star"]["remnant"]["phase"], "white-dwarf");
+    let bad: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "describe_star", "mass_msun": 0.001, "age_yr": 1.0}).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(bad["code"], "bad_star", "{bad}");
+}
+
 /// `hazard_map` (XO18): a measured Solar System body by name, a ship given
 /// inline, a line; and the plain words for a bad ask.
 #[test]
