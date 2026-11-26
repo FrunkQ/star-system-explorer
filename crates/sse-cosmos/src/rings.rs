@@ -77,6 +77,19 @@ pub struct RingParams {
     /// find about 1 km/s steepens the gradient as observed). Gas drifting out of the
     /// innermost ring feeds the nucleus.
     pub drift_kms: f64,
+    /// A bar sweeps its gas into the nucleus (galaxy design 6, Local Arm
+    /// package): once the galaxy is bar-unstable (`Galaxy::bar_from_gyr`),
+    /// the gas of every ring between `bar_nucleus_rd` and `bar_rd` (disc
+    /// scale lengths) falls inward on the bar's shocks, a share
+    /// 1 - exp(-dt / bar_sweep_gyr) a step, and joins the rings inside
+    /// `bar_nucleus_rd` (the Milky Way's central molecular zone). This is the
+    /// Milky Way's gas gap between about 0.3 and 3 kpc.
+    #[serde(default = "bar_rd_default")]
+    pub bar_rd: f64,
+    #[serde(default = "bar_nucleus_rd_default")]
+    pub bar_nucleus_rd: f64,
+    #[serde(default = "bar_sweep_gyr_default")]
+    pub bar_sweep_gyr: f64,
     /// Yields in solar units per solar mass of stars formed.
     pub yield_alpha: f64,
     pub yield_fe_cc: f64,
@@ -96,6 +109,16 @@ pub struct RingParams {
     /// Core-collapse supernovae per solar mass formed (8 to 40 solar masses of a Chabrier IMF).
     pub cc_per_mass: f64,
     pub k40_half_life_gyr: f64,
+}
+
+fn bar_rd_default() -> f64 {
+    1.15
+}
+fn bar_nucleus_rd_default() -> f64 {
+    0.12
+}
+fn bar_sweep_gyr_default() -> f64 {
+    0.15
 }
 
 impl Default for RingParams {
@@ -118,6 +141,9 @@ impl Default for RingParams {
             eta_radial: 0.6,
             eta_ref_rd: 3.15,
             drift_kms: 1.0,
+            bar_rd: bar_rd_default(),
+            bar_nucleus_rd: bar_nucleus_rd_default(),
+            bar_sweep_gyr: bar_sweep_gyr_default(),
             yield_alpha: 2.0,
             yield_fe_cc: 0.7,
             yield_cn: 1.5,
@@ -449,6 +475,42 @@ pub fn evolve_clocked(
                 gas[i - 1] += moved;
                 for g in 0..6 {
                     units[i - 1][g] += mu[g];
+                }
+            }
+        }
+        // The bar's sweep: its rings' gas, with its metals, falls into the
+        // nucleus's rings (shared by their gas, or by area while they have none).
+        let t_end = gal.t_start_gyr + dt * (k + 1) as f64;
+        if gal.bar_from_gyr.is_some_and(|tb| t_end > tb) && p.bar_sweep_gyr > 0.0 {
+            let share = 1.0 - m::exp(-dt / p.bar_sweep_gyr);
+            let (nuc, bar) = (p.bar_nucleus_rd * rd, p.bar_rd * rd);
+            let inside = mid.iter().take_while(|r| **r < nuc).count().max(1);
+            let mut moved = 0.0;
+            let mut mu = [0.0f64; 6];
+            for i in inside..nr {
+                if mid[i] >= bar {
+                    break;
+                }
+                moved += gas[i] * share;
+                gas[i] -= gas[i] * share;
+                for g in 0..6 {
+                    mu[g] += units[i][g] * share;
+                    units[i][g] -= units[i][g] * share;
+                }
+            }
+            if moved > 0.0 {
+                let held: f64 = gas[..inside].iter().sum();
+                let room: f64 = area[..inside].iter().sum();
+                for i in 0..inside {
+                    let w = if held > 0.0 {
+                        gas[i] / held
+                    } else {
+                        area[i] / room
+                    };
+                    gas[i] += moved * w;
+                    for g in 0..6 {
+                        units[i][g] += mu[g] * w;
+                    }
                 }
             }
         }

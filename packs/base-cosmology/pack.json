@@ -107,6 +107,9 @@
     "rings": {
      "agb_min_gyr": 0.1,
      "cc_per_mass": 0.0118,
+     "bar_nucleus_rd": 0.12,
+     "bar_rd": 1.15,
+     "bar_sweep_gyr": 0.15,
      "drift_kms": 1.0,
      "eta_radial": 0.6,
      "eta_ref_rd": 3.15,

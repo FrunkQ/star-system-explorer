@@ -191,6 +191,10 @@ pub struct Galaxy {
     pub now: GalaxyState,
     pub morphology: Morphology,
     pub barred: bool,
+    /// When the bar formed (universe time, Gyr): the earliest time from which
+    /// the disc has been bar-unstable ever since; none for an unbarred galaxy.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bar_from_gyr: Option<f64>,
     /// Active-nucleus episodes (universe time, Gyr; black hole mass gained).
     pub active_nuclei: Vec<(f64, f64)>,
     /// Gas inflow per step (for the rings), solar masses, and the part of it
@@ -569,7 +573,6 @@ pub fn evolve_feeding(
         state = Some(st);
     }
     let now_state = state.expect("at least one step");
-    let disc_mass = (now_state.stars - now_state.bulge) + now_state.gas;
     // The rotation curve now (DM4), and its peak for the bar test.
     let structure = crate::structure::Structure::new(
         c,
@@ -579,10 +582,31 @@ pub fn evolve_feeding(
         1.0 / (1.0 + now_state.z),
     );
     let rotation = crate::structure::curve_table(&structure);
-    let v_max = rotation.iter().map(|e| e.1).fold(0.0, f64::max);
     // Efstathiou, Lake and Negroponte 1982: v_max / sqrt(G M_d / R_d) below about 1.1 is bar-unstable.
-    let enl = v_max / m::sqrt(G_KPC * disc_mass.max(1.0) / now_state.disc_kpc.max(1.0e-3));
-    let barred = enl < p.bar_threshold && now_state.stars > 1.0e9;
+    let barred = bar_unstable(p, &rotation, &now_state);
+    // When the bar formed: the earliest history point from which the disc
+    // has been bar-unstable ever since (bars, once formed, are long-lived
+    // and are not destroyed by the disc's own gas, so the run back stops at
+    // the first stable point). The rings sweep the bar's gas from then on.
+    let bar_from_gyr = if barred {
+        let mut from = now_state.t_gyr;
+        for st in history.iter().rev() {
+            let s = crate::structure::Structure::new(
+                c,
+                &p.structure,
+                &|z| halo.mass_at(z),
+                st,
+                1.0 / (1.0 + st.z),
+            );
+            if !bar_unstable(p, &crate::structure::curve_table(&s), st) {
+                break;
+            }
+            from = st.t_gyr;
+        }
+        Some(from)
+    } else {
+        None
+    };
     let morphology = classify(&now_state, barred);
     Galaxy {
         halo: halo.address.clone(),
@@ -590,6 +614,7 @@ pub fn evolve_feeding(
         now: now_state,
         morphology,
         barred,
+        bar_from_gyr,
         active_nuclei: agn,
         inflow: inflow_steps,
         returned: returned_steps,
@@ -599,6 +624,16 @@ pub fn evolve_feeding(
         assembled: feeding.map(crate::feed::Feeding::finish),
         ejected_now: ejected,
     }
+}
+
+/// The Efstathiou, Lake and Negroponte (1982) test on a galaxy state and its
+/// rotation curve: v_max / sqrt(G M_disc / R_d) below the threshold, for a
+/// disc of more than 1e9 solar masses of stars.
+fn bar_unstable(p: &GalaxyParams, rotation: &[(f64, f64)], s: &GalaxyState) -> bool {
+    let v_max = rotation.iter().map(|e| e.1).fold(0.0, f64::max);
+    let disc_mass = (s.stars - s.bulge) + s.gas;
+    let enl = v_max / m::sqrt(G_KPC * disc_mass.max(1.0) / s.disc_kpc.max(1.0e-3));
+    enl < p.bar_threshold && s.stars > 1.0e9
 }
 
 /// Morphology as a rule over the numbers (pack-adjustable later).
