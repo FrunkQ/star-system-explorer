@@ -183,6 +183,15 @@ test("the ship's flights read from its flight log (MC7): one line a voyage, and 
   assert.equal(lines[0]!.who, "pack");
   assert.ok(lines.every((l) => l.what === "flight"));
   assert.deepEqual(flightLines(null, (s) => s, (a) => a), [], "no flight log, no lines");
+  // A jump planned while the trip to Mars is still under way: each arrival closes the newest open departure.
+  const both = { events: [
+    { at_s: 1 * D, kind: "stop", type: "depart", place_id: "earth", mark: "planned" },
+    { at_s: 2 * D, kind: "stop", type: "depart", place_id: "sol", mark: "planned" },
+    { at_s: 9 * D, kind: "stop", type: "arrive", place_id: "kestrel", mark: "planned" },
+    { at_s: 100 * D, kind: "stop", type: "arrive", place_id: "mars", mark: "planned" },
+  ] };
+  const n2: Record<string, string> = { ...names, sol: "Sol", kestrel: "Kestrel" };
+  assert.deepEqual(flightLines(both as unknown as Json, (s) => s / D, (a) => n2[a] ?? a).map((l) => l.text), ["Flew Sol to Kestrel (7 days)", "Flew Earth to Mars (99 days)"]);
 });
 
 test("a players' screen sees aboard only what its scene discloses (MC8)", () => {

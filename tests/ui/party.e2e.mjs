@@ -5,7 +5,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go } from "./nav.mjs";
+import { desk as toDesk, go } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -128,9 +128,10 @@ try {
   await aboard.click();
   const card = pl.locator("[data-party-card]");
   await card.waitFor({ timeout: 15000 });
-  // Beowulf has not been shown to the table, so the card says so and shows nothing of it.
-  await card.locator("[data-party-card-unknown]").waitFor({ timeout: 15000 });
-  assert.equal(await card.locator("[data-picture], [data-party-crew], [data-fuel]").count(), 0, "nothing the table does not know");
+  // The table has only heard of Beowulf: the card draws the ship, but its tanks read "not known", never full.
+  await card.locator("[data-picture]").first().waitFor({ timeout: 15000 });
+  await card.locator("[data-fuel] [data-fuel-unknown], [data-fuel-unknown]").first().waitFor({ timeout: 15000 });
+  assert.equal(await card.locator("[role=meter]").count(), 0, "no tank level the table does not know");
   await shot(pl, "party-player-ship-card");
   await aboard.click();
   await card.waitFor({ state: "detached" });
@@ -179,7 +180,26 @@ try {
   await flew.waitFor({ timeout: 15000 });
   assert.match(await flew.innerText(), /planned/);
   assert.ok((await desk.locator("[data-log] li").allInnerTexts()).some((l) => /voyage to Mars/.test(l)), "the tanks' draw-down is in the log");
+  // The jump between the stars is a line of its own, named by the stars, not "elsewhere".
+  const jumped = desk.locator("[data-log] [data-log-what=flight]", { hasText: /Flew .+ to .+ \(\d+ days\)/ });
+  assert.equal(await desk.locator("[data-log] [data-log-what=flight]").filter({ hasText: "elsewhere" }).count(), 0, "every place named");
+  assert.ok((await jumped.count()) >= 2, "the trip to Mars and the jump each read as a flight");
   await shot(gm, "party-ship-log");
+
+  // Shown to the table (Known to on Build, MC2), Beowulf's card on the players' screen reads its tanks
+  // (MC8), and the players' screen stays live: the reveal replays there (travel's record intents, PR 452).
+  await toDesk(gm, "Build");
+  await go(gm, "constructs");
+  const shipRow = desk.locator("li", { has: gm.locator("[data-construct]", { hasText: "Beowulf" }) });
+  await shipRow.locator("[data-known-open]").click();
+  await shipRow.locator("[data-known-pop] [data-known-step=known]").first().click();
+  await gm.keyboard.press("Escape");
+  await shipRow.locator("span.known[data-known=known]").waitFor({ timeout: 15000 });
+  await aboard.click();
+  await card.locator("[role=meter]").first().waitFor({ timeout: 20000 });
+  assert.equal(await card.locator("[data-fuel-unknown]").count(), 0, "the tanks read once the ship is known");
+  assert.equal(await pl.locator("footer[data-link]").getAttribute("data-link"), "live", "the players' screen stays live after the reveal");
+  await shot(pl, "party-player-ship-card-known");
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("party e2e: ok");

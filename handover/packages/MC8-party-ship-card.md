@@ -24,9 +24,8 @@ Track MC. Owner thread "Build ship manifest and crew roster". Open question 2 (p
 ## Checks
 
 - `tests/ui/manifest.test.ts`: `seenAboard` sorts people, lots and the rest; leaves out what is elsewhere or not disclosed; and shows a state.
-- `tests/ui/party.e2e.mjs`: the card opens from the header and closes again. With Beowulf not shown to the table, it says the table knows nothing more and shows nothing of it. Screens: project files `sse4/handover-screens/MC8-screens/`.
+- `tests/ui/party.e2e.mjs`: the card opens from the header and closes again. While the table has only heard of Beowulf, the card draws the ship and its tanks read "not known". After the GM shows Beowulf to the table (Known to on Build), the tanks read their levels and the players' screen stays live. Screens: project files `sse4/handover-screens/MC8-screens/`.
 
 ## Known
 
-- **Blocked, reported 24 Nov (coordinator):** a players' screen cannot follow a campaign once the GM has used a Known to eye. Replaying that `set_known` gives a different state on the replica, so the screen asks to reload. The kernel alone is deterministic with or without the record, which points at the observe setup the replica builds. Until that is fixed, a known ship and its shown crew can't be checked end to end on a players' screen.
-- A replica's root-scope scene can fail with `data view "rumour" is not defined`. The card then falls back to the ship's system.
+- Fixed 26 Nov by travel's PR 452 (record writes go through the logged intents that players replay) and the kernel's PR 546 (stacked packs merge their data views, which ended the `data view "rumour" is not defined` fault). The reveal is now checked end to end in party.e2e. The card's fallback to the ship's system stays, for screens whose root scene cannot be read.

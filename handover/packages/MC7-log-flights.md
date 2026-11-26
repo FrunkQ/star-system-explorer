@@ -5,7 +5,7 @@ Track MC. Owner thread "Build ship manifest and crew roster". Alex, 24 Nov 17:54
 ## What it does
 
 - `flightLines(log, yr, place)` (ui-contract constructs.ts) turns a construct's flight log events into Log lines (`ShipLogEntry.what` "flight"):
-  - A voyage is one line on arrival: "Flew Earth to Mars (108 days)", or hours under two days. A departure with no arrival yet reads "Left Mars, under way".
+  - A voyage is one line on arrival: "Flew Earth to Mars (108 days)", or hours under two days. A departure with no arrival yet reads "Left Mars, under way". Each arrival closes the newest open departure, so a jump planned while a trip is still under way reads as two flights. Places outside the current system are named by their star ("Flew k1302 to k1246").
   - Launches, burns ("Burn of 3.6 km/s, 12.5 t of propellant"), flybys, entries, landings, splits, joins, refuels, loads and unloads each get a line on their own date.
   - An entry marked planned or estimated, rather than recorded, says so beside its reason.
 - `LOG_RANK` is the one ordering of same-moment lines, shared by `shipLog` and the card.
@@ -15,7 +15,8 @@ Track MC. Owner thread "Build ship manifest and crew roster". Alex, 24 Nov 17:54
 
 ## Checks
 
-- `tests/ui/manifest.test.ts`: a voyage, a burn with its estimate, a flyby, a refuel and an unfinished departure, out of order in, in order out.
+- `tests/ui/manifest.test.ts`: a voyage, a burn with its estimate, a flyby, a refuel and an unfinished departure, out of order in, in order out; two overlapping voyages pair correctly.
+- `tests/ui/party.e2e.mjs`: after the trip to Mars and the jump, Beowulf's log has a flight line for each, and no place reads "elsewhere".
 - `tests/ui/party.e2e.mjs`: after Beowulf flies Earth to Mars, its Log on Ships and stations reads "Flew Earth to Mars (… days) · planned" and the "voyage to Mars" draw-down. Screens: project files `sse4/handover-screens/MC7-screens/party-ship-log.png`.
 - `tests/ui/manifest.e2e.mjs`: passed 3 runs of 3 locally before going into CI.
 - No golden change.

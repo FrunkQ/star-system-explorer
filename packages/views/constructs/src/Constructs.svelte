@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, MANIFEST_WORDS, PERSON, CARGO, aboardLog, flightLines, LOG_RANK, entryFrom, type AboardEntry, type RecordRead, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, MANIFEST_WORDS, PERSON, CARGO, aboardLog, flightLines, LOG_RANK, entryFrom, type AboardEntry, type RecordRead, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, systemShort, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
   import { Aboard, Picture } from "../../manifest/src/index.ts";
@@ -97,7 +97,9 @@
   let log = $state<ShipLogEntry[]>([]);
   const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   // A place's name as this card knows it: the system, a construct in the list, or a body of the scene.
-  const placeName = (a: string) => (a === scene.system ? scene.title : listed.find((x) => x.address === a) ? nameOf(listed.find((x) => x.address === a)!) : (scene.subjects.find((x) => x.address === a)?.label ?? "elsewhere"));
+  const placeName = (a: string) => (a === scene.system ? scene.title : listed.find((x) => x.address === a) ? nameOf(listed.find((x) => x.address === a)!) : (scene.subjects.find((x) => x.address === a)?.label ?? farName(a)));
+  // A place outside this system (the party flew to another star): the star's short name, or the place's own last word.
+  const farName = (a: string) => (/\/cell:[^/]+\/sys:[^/]+$/.test(a) ? systemShort(a) : (a.split("/").pop() ?? a).replace(/^[a-z]+:/, "").replace(/^./, (c) => c.toUpperCase()).replace(/[-_]/g, " ") || "elsewhere");
   async function loadLog(address: string) {
     const [h, r, aboardAll, flown] = await Promise.all([
       session.history(address, { changes: true }),

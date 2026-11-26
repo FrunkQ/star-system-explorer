@@ -146,7 +146,10 @@ type FlightEvent = { at_s: number; kind: string; mark?: string; why?: string; wr
 export function flightLines(log: Json | null | undefined, yr: (at_s: number) => number, place: (address: string) => string): ShipLogEntry[] {
   const events = ((log as { events?: FlightEvent[] } | null)?.events ?? []).filter((e) => e && typeof e.at_s === "number").sort((a, b) => a.at_s - b.at_s);
   const out: ShipLogEntry[] = [];
-  let left: FlightEvent | null = null;
+  // Departures not yet arrived, newest last: a planned voyage can still be under way when the next one is planned
+  // (an arrival closes the newest open departure).
+  const open: FlightEvent[] = [];
+  const placeOf = (e: FlightEvent) => (typeof e.place_id === "string" ? place(e.place_id) : null);
   const said = (e: FlightEvent, text: string, at_s = e.at_s) => {
     const marks = [e.mark && e.mark !== "recorded" ? e.mark : null, typeof e.why === "string" ? e.why : null].filter(Boolean);
     out.push({ at_yr: yr(at_s), what: "flight", text, who: writerWords(e.writer ?? "gm"), ...(marks.length ? { why: marks.join(": ") } : {}), key: `flight.${e.kind === "stop" ? String(e.type) : e.kind}` });
@@ -155,15 +158,14 @@ export function flightLines(log: Json | null | undefined, yr: (at_s: number) => 
   for (const e of events) {
     const at = typeof e.place_id === "string" ? place(e.place_id) : null;
     if (e.kind === "stop" && e.type === "depart") {
-      if (left) said(left, `Left ${typeof left.place_id === "string" ? place(left.place_id) : "port"}`);
-      left = e;
+      open.push(e);
       continue;
     }
     if (e.kind === "stop" && e.type === "arrive") {
-      const from = left && typeof left.place_id === "string" ? place(left.place_id) : null;
+      const left = open.pop() ?? null;
+      const from = left ? placeOf(left) : null;
       const days = left ? (e.at_s - left.at_s) / DAY_S : null;
       said(e, `Flew ${from ? `${from} to ` : "to "}${at ?? "somewhere"}${days !== null ? ` (${days < 2 ? `${num(days * 24, 0)} hours` : `${num(days, 0)} days`})` : ""}`);
-      left = null;
       continue;
     }
     const text =
@@ -180,7 +182,7 @@ export function flightLines(log: Json | null | undefined, yr: (at_s: number) => 
       : e.kind;
     said(e, text);
   }
-  if (left) said(left, `Left ${typeof left.place_id === "string" ? place(left.place_id) : "port"}, under way`);
+  for (const left of open) said(left, `Left ${placeOf(left) ?? "port"}, under way`);
   return out;
 }
 
