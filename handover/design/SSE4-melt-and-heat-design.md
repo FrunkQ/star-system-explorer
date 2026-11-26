@@ -740,4 +740,5 @@ Written from memory. Each needs reading at source, adding to the master list, an
 | Veeder, G. J. et al. 2012, Icarus 219, 701 | Io's heat output |
 | White, S. M., Crisp, J. A. and Spera, F. J. 2006, G-cubed 7, Q03010 | intruded against erupted |
 | Williams, J. G. et al. 2014, JGR Planets 119, 1546 | the Moon's k2 |
+
 - For section 7A (hot ground): the cooling of a lava flow's surface by radiation through a growing crust, and the temperatures and areas of Io's hot spots seen in eclipse. To be found and read at source on 1 Dec; the figures in 7A are from memory and **unverified**.
