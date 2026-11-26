@@ -79,6 +79,9 @@ jobs:
           python3 scripts/test-audit-matter.py
           python3 scripts/audit-matter.py --ledger handover/packages/MP0-typed-copies.txt --base FETCH_HEAD
       - run: cargo run -q -p sse-cli --release -- harness
+      - if: matrix.os == 'ubuntu-latest'
+        name: the Solar System catalogue build (RW7) on its invented fixture
+        run: python3 scripts/test-build-sol-catalogues.py --sse target/release/sse
 
   wasm:
     name: wasm (node + browsers)
