@@ -28,7 +28,7 @@
 3 packages/agents/test/orac-sheet.test.ts
 3 packages/agents/test/orac-triggers.test.ts
 2 packages/agents/test/orac.test.ts
-62 packages/shell/src/App.svelte
+57 packages/shell/src/App.svelte
 3 packages/shell/src/LookAhead.svelte
 2 packages/shell/src/MakeSystem.svelte
 1 packages/shell/src/Players.svelte
