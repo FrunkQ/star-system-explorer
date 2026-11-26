@@ -1,0 +1,21 @@
+{
+ "about": "Measured sizes and geometric albedos of the large distant bodies, which JPL's small-body database gives no diameter for. Each value is quoted from its paper (abstract or results), read on 26 Nov 2026 by the RW7 thread; no value is from memory. The catalogue build uses a row only where JPL has no measured diameter, and checks its name against JPL's row. A diameter from a radius or semi-axes is said so in the note.",
+ "sources": [
+  {"id": "sicardy2011", "citation": "Sicardy, B. et al. 2011, Nature 478, 493: A Pluto-like radius and a high albedo for the dwarf planet Eris from an occultation", "doi": "10.1038/nature10550"},
+  {"id": "ortiz2017", "citation": "Ortiz, J. L. et al. 2017, Nature 550, 219: The size, shape, density and ring of the dwarf planet Haumea from a stellar occultation", "doi": "10.1038/nature24051"},
+  {"id": "brown2013", "citation": "Brown, M. E. 2013, ApJ 767, L7: On the size, shape, and density of dwarf planet Makemake", "doi": "10.1088/2041-8205/767/1/L7"},
+  {"id": "pal2016", "citation": "Pál, A. et al. 2016, AJ 151, 117: Large size and slow rotation of the trans-Neptunian object (225088) 2007 OR10 discovered from Herschel and K2 observations", "doi": "10.3847/0004-6256/151/5/117"},
+  {"id": "margoti2026", "citation": "Margoti, G. et al. 2026, arXiv:2607.06450: Size, shape, density, and atmospheric limit of (50000) Quaoar revealed from 14 years of stellar occultation", "arxiv": "2607.06450"},
+  {"id": "pal2012", "citation": "Pál, A. et al. 2012, A&A 541, L6: \"TNOs are Cool\": A survey of the trans-Neptunian region. VII. Size and surface characteristics of (90377) Sedna and 2010 EK139", "doi": "10.1051/0004-6361/201218874"},
+  {"id": "fornasier2013", "citation": "Fornasier, S. et al. 2013, A&A 555, A15: \"TNOs are Cool\": A survey of the trans-Neptunian region. VIII. Combined Herschel PACS and SPIRE observations of nine bright targets at 70-500 um", "doi": "10.1051/0004-6361/201321329"}
+ ],
+ "small_bodies": [
+  {"pdes": "136199", "name": "Eris", "diameter_km": 2326.0, "albedo": 0.96, "src": "sicardy2011", "note": "twice the occultation radius 1,163 +/- 6 km; pV 0.96 +0.09/-0.04"},
+  {"pdes": "136108", "name": "Haumea", "diameter_km": 1595.0, "albedo": 0.51, "src": "ortiz2017", "note": "volume-equivalent diameter 1,595 +/- 11 km of the triaxial body (semi-axes 1,161, 852, 513 km); pV 0.51 +/- 0.02"},
+  {"pdes": "136472", "name": "Makemake", "diameter_km": 1434.0, "albedo": 0.81, "src": "brown2013", "note": "equatorial diameter 1,434 +/- 14 km (polar 1,422 +/- 14 km); pV 0.81 +0.01/-0.02"},
+  {"pdes": "225088", "name": "Gonggong", "diameter_km": 1535.0, "albedo": 0.089, "src": "pal2016", "note": "radiometric, 1,535 +75/-225 km; pV 0.089 +0.031/-0.009"},
+  {"pdes": "50000", "name": "Quaoar", "diameter_km": 1094.4, "albedo": 0.125, "src": "margoti2026", "note": "volume-equivalent diameter 1,094.4 +/- 4.6 km from occultations; pV 0.125 +/- 0.038 (a preprint)"},
+  {"pdes": "90377", "name": "Sedna", "diameter_km": 995.0, "albedo": 0.32, "src": "pal2012", "note": "radiometric, 995 +/- 80 km; pV 0.32 +/- 0.06"},
+  {"pdes": "90482", "name": "Orcus", "diameter_km": 958.4, "albedo": 0.231, "src": "fornasier2013", "note": "radiometric, all data, 958.4 +/- 22.9 km; pV 0.231 +0.018/-0.011 (arXiv v2 table 4)"}
+ ]
+}

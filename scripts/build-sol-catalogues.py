@@ -50,6 +50,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHEET = os.path.join(ROOT, "packs", "base-reference", "pack.json")
 NOTABLE = os.path.join(ROOT, "scripts", "sol-notables.json")
 BASE_SOL = os.path.join(ROOT, "packs", "base-sol", "pack.json")
+MEASURED = os.path.join(ROOT, "scripts", "sol-measured-sizes.json")
 
 SBDB = "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
 SATS_ELEM = "https://ssd.jpl.nasa.gov/sats/elem/"
@@ -229,6 +230,20 @@ def build_small_bodies(cache, got, out, min_size):
                 recs.append(r)
     k_km = H_TO_D_KM
     # Medians of measured albedo per JPL orbit class, and per kind, from this download.
+    # Measured sizes JPL lacks (the large distant bodies), each quoted from its
+    # paper: they take part as measured, and their albedos join their class's.
+    measured = json.load(open(MEASURED, encoding="utf-8"))
+    papers = {x["id"]: x for x in measured["sources"]}
+    supplement = {x["pdes"]: x for x in measured["small_bodies"]}
+    for r in recs:
+        x = supplement.get(r["pdes"])
+        if x is None or num(r["diameter"]) is not None:
+            continue
+        if norm(x["name"]) != norm(r["name"]):
+            raise SystemExit("sol-measured-sizes: %s is %r at JPL, %r in the file" % (r["pdes"], r["name"], x["name"]))
+        r["diameter"], r["_dsrc"] = x["diameter_km"], x["src"]
+        if num(r["albedo"]) is None:
+            r["albedo"], r["_psrc"] = x["albedo"], x["src"]
     by_class, by_kind = {}, {}
     for r in recs:
         p = num(r["albedo"])
@@ -273,9 +288,10 @@ def build_small_bodies(cache, got, out, min_size):
         grades[dg] += 1
         row = {
             "id": rid, "spkid": r["spkid"], "name": (r["name"] or r["full_name"] or "").strip() or None,
-            "orbit_class": r["class"], "diameter_km": d, "diameter_grade": dg, "diameter_source": "jpl-sbdb" if dg == "measured" else "rw7-build",
+            "orbit_class": r["class"], "diameter_km": d, "diameter_grade": dg,
+            "diameter_source": r.get("_dsrc", "jpl-sbdb") if dg == "measured" else "rw7-build",
             "albedo": p, "albedo_grade": pg if p is not None else None,
-            "albedo_source": ("jpl-sbdb" if pg == "measured" else "rw7-build") if p is not None else None,
+            "albedo_source": (r.get("_psrc", "jpl-sbdb") if pg == "measured" else "rw7-build") if p is not None else None,
             "h_mag": num(r["H"]), "m1_mag": num(r["M1"]), "m2_mag": num(r["M2"]), "size_from": hsrc if dg == "estimated" else None,
             "epoch_jd": num(r["epoch"]), "a_au": num(r["a"]), "q_au": q, "e": num(r["e"]), "i_deg": num(r["i"]),
             "node_deg": num(r["om"]), "peri_deg": num(r["w"]), "mean_anomaly_deg": num(r["ma"]), "tp_jd": tp,
@@ -300,6 +316,9 @@ def build_small_bodies(cache, got, out, min_size):
                 grades["measured"] += 1
                 row.update(diameter_km=2 * radius["v"] / 1000.0, diameter_grade="measured",
                            diameter_source="base-sol", size_from=None)
+                geo = twin["values"].get("body.albedo_geometric")
+                if geo and row.get("albedo_grade") != "measured":
+                    row.update(albedo=geo["v"], albedo_grade="measured", albedo_source="base-sol")
         rows.append({k: v for k, v in row.items() if v is not None})
     rows.sort(key=lambda x: (-x["diameter_km"], x["id"]))
     jpl = "jpl-sbdb"
@@ -355,6 +374,10 @@ def build_small_bodies(cache, got, out, min_size):
              "kind": "downloaded", "licence": "US government work; no licence stated",
              "credit": "NASA Space Science Data Coordinated Archive, Planetary Fact Sheets, D. R. Williams",
              "link": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"},
+            *[{"id": k, "name": v["citation"], "version": "published", "kind": "authored",
+               "licence": "a published measurement, quoted and cited",
+               "credit": v["citation"] + (" (doi:%s)" % v["doi"] if "doi" in v else " (arXiv:%s)" % v.get("arxiv", ""))}
+              for k, v in sorted(papers.items())],
             {"id": "rw7-build", "name": "SSE4 catalogue build (scripts/build-sol-catalogues.py)", "version": "1",
              "kind": "authored", "licence": "Apache-2.0",
              "credit": "Sizes and albedos marked estimated were worked out by SSE4 from JPL's absolute magnitudes: "

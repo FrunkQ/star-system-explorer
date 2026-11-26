@@ -43,6 +43,10 @@ def main(argv):
         assert by["1"]["base_sol"] == "ceres"
         # A base-sol body's measured size beats an estimate from brightness (JPL gives Pluto none).
         assert by["134340"]["diameter_grade"] == "measured" and by["134340"]["diameter_source"] == "base-sol", by["134340"]
+        assert by["134340"]["albedo_source"] == "base-sol", by["134340"]
+        # A size JPL lacks comes from its paper (scripts/sol-measured-sizes.json), graded measured.
+        assert by["136199"]["diameter_km"] == 2326.0 and by["136199"]["diameter_source"] == "sicardy2011", by["136199"]
+        assert by["136199"]["albedo"] == 0.96 and by["136199"]["albedo_grade"] == "measured"
         assert by["1"]["spkid"] == "2000001", "spkid comes as a JSON number and is kept as text"
         moons = json.load(open(os.path.join(out, "sol-moons-ecliptic-j2000.catalogue.json"), encoding="utf-8"))["rows"]
         nereid = [m for m in moons if m["name"] == "Nereid"]

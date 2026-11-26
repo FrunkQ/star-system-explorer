@@ -28,10 +28,10 @@ The run found these, each fixed in the script and covered by the fixture test (s
 - Nereid's printed GM of 0 means no measurement, so it now reads as absent.
 - Puck has two rows on the elements page. The first row is kept and the second is reported.
 - JPL names 9P, 81P and 103P without their numbers, so the notable list now uses JPL's names.
-- The dwarf planets came out about 3.6 times too big. SBDB has no diameter for them, and the TNO class had too few measured albedos, so they fell back to the all-asteroid median of 0.078. A class's own median is now used with as few as 5 measured albedos. Pluto takes base-sol's measured size. The large TNOs are brighter than their class, so their measured sizes still need putting on record (next part).
+- The dwarf planets came out about 3.6 times too big. SBDB has no diameter for them, and the TNO class had too few measured albedos, so they fell back to the all-asteroid median of 0.078. A class's own median is now used with as few as 5 measured albedos. Pluto takes base-sol's measured size. The rebuild showed this made it worse: Eris came out at 10,170 km, because the TNO class's 12 measured albedos are small, dark bodies (median 0.054). The cause is that the large distant bodies are bright and JPL has no sizes for them. So `scripts/sol-measured-sizes.json` now carries the measured sizes and albedos of Eris, Haumea, Makemake, Gonggong, Quaoar, Sedna and Orcus, each quoted from its paper and cited. They take part as measured, their albedos join their class's median, and the build checks each name against JPL's. Pluto also takes its geometric albedo from base-sol.
 
 ## Not done yet (later RW7 parts)
-- Measured sizes for the dwarf planets and large TNOs (Eris, Makemake, Haumea, Gonggong, Quaoar, Sedna, Orcus), read at source, as base-sol bodies.
+- More measured TNO sizes (the "TNOs are Cool" tables) so the class median is not set by a dozen small bodies.
 - **The real run on Alex's PC.** The output files and their sizes, and which of them ship in the app and which go to the store (RW8).
 - Base-sol's full orbits at a date for its moons, from JPL's mean elements (the planets and the Moon are RW17's series).
 - Belt masses by group, which need cited totals (the paper search is back on 1 Dec).
