@@ -332,6 +332,158 @@ pub fn base_heights(
     }
 }
 
+/// What one epoch's slope relaxation cost: its steps and edge sweeps (the
+/// work, for the tests that keep small bodies fast).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Relaxed {
+    pub steps: u32,
+    pub sweeps: u64,
+}
+
+/// Explicit diffusion steps allowed per epoch before the implicit solve
+/// takes over. A body's cells shrink with its radius and the explicit
+/// scheme's stable step with the square of a cell, so a small moon would need
+/// tens of thousands of steps an epoch (Phobos about 70,000: minutes per
+/// surface). Past this many, every mode the grid can hold that the steps
+/// would resolve has long since decayed, and backward Euler (stable at any
+/// step) gives the same surface within the tolerance the wear tests state.
+pub const EXPLICIT_STEPS_MAX: u32 = 64;
+/// Backward Euler steps per epoch when the implicit solve is used: the body's
+/// longest-lived modes decay within about half a per cent of the exact rate
+/// at this split (backward Euler damps a mode by 1 / (1 + x / 32)^32 for
+/// e^-x).
+pub const IMPLICIT_STEPS: u32 = 32;
+
+/// Relax the heights by linear slope diffusion of diffusivity `kappa`
+/// (m^2/yr) over an epoch of `dt` years: explicit steps while they are few
+/// (exactly as before), the implicit solve otherwise. `on_step` is handed
+/// each step's change of height, in order, for the cover to follow.
+pub fn relax_slopes(
+    h: &mut [f64],
+    edges: &BTreeSet<(usize, usize)>,
+    lens: &[f64],
+    kappa: f64,
+    dt: f64,
+    on_step: &mut dyn FnMut(&[f64]),
+) -> Relaxed {
+    let lmin = lens.iter().copied().fold(f64::INFINITY, f64::min);
+    let sub = m::ceil(dt * kappa / (lmin * lmin) / 0.2).max(1.0) as u32;
+    if sub <= EXPLICIT_STEPS_MAX {
+        relax_explicit(h, edges, lens, kappa, dt, sub, on_step)
+    } else {
+        relax_implicit(h, edges, lens, kappa * dt, IMPLICIT_STEPS, on_step)
+    }
+}
+
+/// `sub` explicit (forward Euler) steps over `dt` years: exactly conserving, stable while
+/// each step is under a fifth of a cell's diffusion time.
+pub fn relax_explicit(
+    h: &mut [f64],
+    edges: &BTreeSet<(usize, usize)>,
+    lens: &[f64],
+    kappa: f64,
+    dt: f64,
+    sub: u32,
+    on_step: &mut dyn FnMut(&[f64]),
+) -> Relaxed {
+    let ds = dt / sub as f64;
+    for _ in 0..sub {
+        let mut dh = vec![0.0; h.len()];
+        for (&(a, b), l) in edges.iter().zip(lens) {
+            let f = ds * kappa * (h[b] - h[a]) / (l * l);
+            dh[a] += f;
+            dh[b] -= f;
+        }
+        for (x, d) in h.iter_mut().zip(&dh) {
+            *x += d;
+        }
+        on_step(&dh);
+    }
+    Relaxed {
+        steps: sub,
+        sweeps: sub as u64,
+    }
+}
+
+/// `steps` backward Euler steps over `kt` (diffusivity times time, m^2), each (I + ds L) h' = h solved by conjugate
+/// gradients with a diagonal preconditioner (the matrix is symmetric and
+/// positive definite; the solve conserves the total height like the explicit
+/// one, since every row of L sums to zero). Its cost grows only as the square
+/// root of the explicit step count.
+pub fn relax_implicit(
+    h: &mut [f64],
+    edges: &BTreeSet<(usize, usize)>,
+    lens: &[f64],
+    kt: f64,
+    steps: u32,
+    on_step: &mut dyn FnMut(&[f64]),
+) -> Relaxed {
+    let n = h.len();
+    let mut sweeps = 0u64;
+    let ds = kt / steps.max(1) as f64;
+    let wts: Vec<f64> = lens.iter().map(|l| ds / (l * l)).collect();
+    let mut diag = vec![1.0; n];
+    for (&(a, b), w) in edges.iter().zip(&wts) {
+        diag[a] += w;
+        diag[b] += w;
+    }
+    let apply = |x: &[f64], y: &mut [f64]| {
+        y.copy_from_slice(x);
+        for (&(a, b), w) in edges.iter().zip(&wts) {
+            let f = w * (x[a] - x[b]);
+            y[a] += f;
+            y[b] -= f;
+        }
+    };
+    let dot = |x: &[f64], y: &[f64]| x.iter().zip(y).map(|(a, b)| a * b).sum::<f64>();
+    let mut dh = vec![0.0; n];
+    let (mut r, mut z, mut p, mut q) = (vec![0.0; n], vec![0.0; n], vec![0.0; n], vec![0.0; n]);
+    for _ in 0..steps.max(1) {
+        let b = h.to_vec();
+        // Start from the old heights: r = b - A h.
+        apply(h, &mut q);
+        sweeps += 1;
+        for i in 0..n {
+            r[i] = b[i] - q[i];
+            z[i] = r[i] / diag[i];
+            p[i] = z[i];
+        }
+        let bb = dot(&b, &b).max(1e-300);
+        let mut rz = dot(&r, &z);
+        for _ in 0..4 * n.max(16) {
+            if dot(&r, &r) <= 1e-24 * bb {
+                break;
+            }
+            apply(&p, &mut q);
+            sweeps += 1;
+            let pq = dot(&p, &q);
+            if pq <= 0.0 {
+                break;
+            }
+            let alpha = rz / pq;
+            for i in 0..n {
+                h[i] += alpha * p[i];
+                r[i] -= alpha * q[i];
+                z[i] = r[i] / diag[i];
+            }
+            let rz2 = dot(&r, &z);
+            let beta = rz2 / rz;
+            rz = rz2;
+            for i in 0..n {
+                p[i] = z[i] + beta * p[i];
+            }
+        }
+        for i in 0..n {
+            dh[i] = h[i] - b[i];
+        }
+        on_step(&dh);
+    }
+    Relaxed {
+        steps: steps.max(1),
+        sweeps,
+    }
+}
+
 /// Wear a cell grid of heights from `from_myr` to `to_myr` (Myr since the
 /// world formed), raining the wet epochs' climate.
 #[allow(clippy::too_many_arguments)]
@@ -525,28 +677,14 @@ pub fn wear(
             last_q = q;
         }
         // Slopes relax, wet or dry (effective coarse-grid diffusivity).
-        let kappa = w.diffusion_m2_yr;
-        let lmin = edges
-            .iter()
-            .map(|&(a, b)| dist(a, b))
-            .fold(f64::INFINITY, f64::min);
-        let sub = m::ceil(dt * kappa / (lmin * lmin) / 0.2).max(1.0) as u32;
-        let ds = dt / sub as f64;
-        for _ in 0..sub {
-            let mut dh = vec![0.0; nc];
-            for &(a, b) in &edges {
-                let l = dist(a, b);
-                let f = ds * kappa * (h[b] - h[a]) / (l * l);
-                dh[a] += f;
-                dh[b] -= f;
-            }
+        let lens: Vec<f64> = edges.iter().map(|&(a, b)| dist(a, b)).collect();
+        relax_slopes(&mut h, &edges, &lens, w.diffusion_m2_yr, dt, &mut |dh| {
             for c in 0..nc {
-                h[c] += dh[c];
                 // Creep strips the cover where slopes lower and lays it
                 // where they fill.
                 standing[c] = (standing[c] + dh[c]).max(0.0);
             }
-        }
+        });
         if steady {
             // On a world whose plates move, the plate history's heights are
             // already the balance of uplift and wear (S2 wears its belts
