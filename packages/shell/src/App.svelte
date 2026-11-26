@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -633,16 +633,12 @@
   let mine = $state<Lens[]>(loadMine());
   // Desks (top-level design 2.3): what the GM is doing. The desk arms the verbs (Build edits, Explore and Run do not) and
   // picks the lens it opens with; "See as" changes the lens for this desk only, remembered on this device.
-  type Desk = "explore" | "build" | "run";
-  const DESKS: { value: Desk; label: string; key: string; hint: string }[] = [
-    { value: "explore", label: "Explore", key: "V", hint: "Look around: nothing changes by accident (V)" },
-    { value: "build", label: "Build", key: "E", hint: "Change things: values edit, bodies drag, undo and redo (E)" },
-    { value: "run", label: "Run", key: "R", hint: "At the table: what players know, their screens and requests (R)" },
-  ];
-  const DESK_MODE: Record<Desk, "edit" | "view"> = { explore: "view", build: "edit", run: "view" };
-  const deskLensDefault = (d: Desk) => (d === "build" ? "building" : d === "run" ? "running" : defaultLens(session?.device()?.tier));
+  // The desks are data (TM1, three desks design section 10): the switch's words, keys and hints, the lens each opens
+  // with and whether its changes are kept all come from the three `sse.desk/1` records.
+  const DESKS = SHIPPED_DESKS.map((d) => ({ value: d.id, label: d.label, key: d.key, hint: d.hint }));
+  const deskLensDefault = (d: Desk) => deskDoc(d).lens ?? defaultLens(session?.device()?.tier);
   const storedDesk = loadPref("desk");
-  let desk = $state<Desk>(storedDesk === "build" || storedDesk === "run" ? storedDesk : "explore");
+  let desk = $state<Desk>(isDesk(storedDesk) ? storedDesk : "explore");
   let deskLens = $state<Partial<Record<Desk, string>>>(((): Partial<Record<Desk, string>> => {
     try {
       return JSON.parse(loadPref("desk-lens") ?? "{}") as Partial<Record<Desk, string>>;
@@ -669,7 +665,7 @@
   // each typed value going to the fact the universe holds (SceneFact.kernel), so Build means build everywhere.
   $effect(() => {
     // The Workshop changes the tool, not the universe, so its screens are always armed.
-    ws.mode = railScale === "workshop" ? "edit" : DESK_MODE[desk];
+    ws.mode = railScale === "workshop" || deskKeeps(desk) ? "edit" : "view";
   });
   // Secrets (SV2): the desk decides whether the "Known to" eyes show; a share's connected players hold reveals.
   $effect(() => {

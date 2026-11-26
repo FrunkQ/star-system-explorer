@@ -9,11 +9,11 @@
 //
 // Presentation only: this file says what is offered and why not. What each action does is the shell's, by id.
 
-export const DESKS = ["explore", "build", "run"] as const;
-export type Desk = (typeof DESKS)[number];
+import { DESKS, SHIPPED_DESKS, type Desk } from "./desk.ts";
+export { DESKS, type Desk };
 
-/** The desks' names as the desk switch says them. */
-export const DESK_WORDS: Record<Desk, string> = { explore: "Explore", build: "Build", run: "Run" };
+/** The desks' names as the desk switch says them, from the desk records (desk.ts). */
+export const DESK_WORDS = Object.fromEntries(SHIPPED_DESKS.map((d) => [d.id, d.label])) as Record<Desk, string>;
 
 /** How the menu groups its items, in this order, with a rule between groups. */
 export const ACTION_GROUPS = ["look", "table", "change", "ships"] as const;

@@ -3,6 +3,8 @@
 // open) and Known (open). Pressing the eye reveals to the table, or hides again; everything finer is in the popup.
 // While players are connected a reveal is held for two seconds, so Undo within that time means they never saw it.
 
+import { partShows, type Desk } from "./desk.ts";
+
 /** The three landmarks every ladder has (design section 3). */
 export const LANDMARKS = ["gm_only", "heard_of", "known"] as const;
 export type Landmark = (typeof LANDMARKS)[number];
@@ -99,8 +101,8 @@ export function knownChangedWords(l: Landmark, audienceLabel: string, held: bool
 }
 
 /** The marks show on the Build and Run desks only, and not until they matter (design 4, question 10). */
-export function eyesShow(desk: "explore" | "build" | "run" | undefined, relevant: boolean): boolean {
-  return (desk === "build" || desk === "run") && relevant;
+export function eyesShow(desk: Desk | undefined, relevant: boolean): boolean {
+  return !!desk && partShows("eyes", desk) && relevant;
 }
 
 /** Whether secrecy has become relevant for this thing: something is held back, or the campaign is shared. */
