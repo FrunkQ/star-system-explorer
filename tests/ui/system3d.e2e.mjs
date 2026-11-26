@@ -119,8 +119,22 @@ try {
       const pinsNow = () => view.locator(".pin").evaluateAll((ps) => ps.map((e) => { const r = e.getBoundingClientRect(); return { id: e.dataset.body, x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
       const ids = (await pinsNow()).map((q) => q.id);
       let clicked = 0;
+      // A pin is clicked only once it holds still: read while the chart is still easing, it has moved on by the time
+      // the click lands and the click misses (CI, 26 Nov, on a loaded runner).
+      const pinsStill = async () => {
+        let was = "";
+        let at = await pinsNow();
+        for (let same = 0, i = 0; same < 3 && i < 100; i++) {
+          await gm.waitForTimeout(100);
+          at = await pinsNow();
+          const now = at.map((q) => `${q.id}:${Math.round(q.x)},${Math.round(q.y)}`).join(" ");
+          same = now === was ? same + 1 : 0;
+          was = now;
+        }
+        return at;
+      };
       for (const id of ids) {
-        const pinsAt = await pinsNow();
+        const pinsAt = await pinsStill();
         const q = pinsAt.find((x) => x.id === id);
         if (!q || pinsAt.some((o) => o.id !== q.id && Math.hypot(o.x - q.x, o.y - q.y) < 6)) continue;
         await gm.mouse.click(q.x, q.y);
