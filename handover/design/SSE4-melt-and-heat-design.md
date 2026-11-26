@@ -379,11 +379,17 @@ Three pieces respond in far less than a step: the retained melt (thousands of ye
 
 The history's transitions are its marks for `happenings`, each with a `why` built from the numbers at that step, in the style `core.rs` already uses:
 
-- melting starts; melting stops ("the last lavas");
-- the surface switches between conducting its heat and erupting it (melt carries more than half);
-- the crust reaches the lid's base and starts to be pushed under;
-- tidal runaway and freeze-out;
-- the existing dynamo start, inner core birth and dynamo death.
+They are `CoreEvent`s, in the list the history already publishes, with these kinds:
+
+| Kind | When |
+|---|---|
+| `melting-start`, `last-lavas` | melting starts; melting stops |
+| `erupting`, `conducting` | the surface switches to erupting its heat (melt carries more than half), or back |
+| `crust-recycling` | the crust reaches the lid's base and starts to be pushed under |
+| `tidal-runaway`, `freeze-out` | tidal heat and softening feed each other; the interior stiffens and tidal heat dies away |
+| `dynamo-start`, `inner-core-birth`, `dynamo-death` | as now |
+
+A screen draws any kind it is given, with its `why`; the list is the kernel's and may grow.
 
 "The last lavas" is the physical date for what `sse.heat.active_geology_lifetime` now gets from a calibrated threshold (`q_crit` 0.019 W/m², in the fudge register). Replacing that block's use is C5.
 
@@ -408,12 +414,26 @@ The history publishes, at every grid point (W/m² of surface unless said):
 | `heat_conducted` | through the lid or plate |
 | `heat_erupted` | carried by lava |
 | `heat_made` | radiogenic (mantle and crust) plus tidal |
+| `heat_radiogenic` | the radiogenic part, mantle and crust together |
 | `heat_tidal` | the tidal part, and whether it was pinned by a measurement |
 | `core_heat` | out of the core (as now) |
+| `core_freezing` | the part of `core_heat` that comes from the inner core freezing (latent heat and the settling of the light element) |
+| `mantle_cooling` | the fall in the mantle's own stored heat, the latent heat of its retained melt included. Negative while the mantle warms |
+| `lid_cooling` | the fall in the lid's stored heat (3.2). Negative while the lid warms |
 | `lid_km`, `crust_km` | |
 | `melt_made`, `melt_erupted` | m of rock over the whole surface per Myr |
 | `melt_retained` | share of the melt zone that is liquid |
 | `mantle_k`, `fertile`, `water` | |
+
+**One set of names, one unit.** These are the only names, published from the first package that has the number, in W/m² of surface. No reader, the heat screen included, keeps a second mapping; a screen that wants terawatts multiplies by the world's area. The fields close on each other at every grid point:
+
+```
+heat_lost = heat_conducted + heat_erupted
+heat_made = heat_radiogenic + heat_tidal
+heat_lost = heat_made + mantle_cooling + lid_cooling + core_heat
+```
+
+The third line is 3.8's bookkeeping read from outside, and the same test holds it to 1 part in 10⁶. So a flow diagram drawn from these fields balances with nothing left over. Before HF4b.1 there is no lid store and no eruption: `lid_cooling` and `heat_erupted` are published as zero, never left out.
 
 Readers, and which package moves each:
 
