@@ -30,8 +30,8 @@ Tours (data, `sse.tour/1`; play once tours and bookmarks exist, PB2b): "Why torc
 | HOPE fusion | 248 days, torch | 249 days outbound | agree (test band 5%) |
 | Discovery II to Jupiter | 168 days, torch | 118 days | NAV flies constant acceleration on a straight line; the study's thrust is constant, so acceleration grows as 818 t burns off, and its path is shaped (test band 1.0 to 1.5) |
 | Discovery II to Saturn | 257 days, torch | 212 days | as above (band 1.0 to 1.3) |
-| HOPE nuclear electric | 444 days (70 waiting), Lambert | 832 days | **NAV gap**: at 6e-5 g the ship is offered an impulsive transfer; slow spirals are RK5 (travel thread), told 24 Nov |
-| Fission fragment | 375 days, Lambert | over 2,100 days | same gap, at 1.5e-5 g |
+| HOPE nuclear electric | 444 days (70 waiting), Lambert; **1,064 days** after RK5 (part 3) | 832 days | part 1: NAV offered an impulsive transfer at 6e-5 g. Part 3: see below |
+| Fission fragment | 375 days, Lambert; **1,629 days** after RK5 (part 3) | over 2,100 days | as above, at 1.5e-5 g |
 | Orion | 547 days incl. 452 waiting, Lambert | 450 days round trip | different measures (one way against round trip); not compared |
 | Longshot | 313 years to Alpha Centauri (part 2) | about 100 years | single stage against the study's staging (part 2) |
 
@@ -47,9 +47,20 @@ Fudges: figures the builder works out are marked `derived` (register: "Paper spa
 - The tech reader's "leans on" picks the lowest-level advance that meets a need, so a drive can lean on a different not-yet-built advance than its own (HOPE's 77,000 s reads the fission fragment rocket, level 5, before the fusion drive, also level 5, by id). The DRA ship's 900 s is above Pewee's tested 875 s, so it reads Orion. Both are honest readings of base-tech's rules; the recipe's `advances` list says which advance the study used.
 - Looked for and not found as open text: Moravec's 1977 skyhook paper (abstract only), Daedalus's final report, Lofstrom's launch loop. Recorded in the sources file.
 
+## Part 3 (26 Nov 2026): after the slow spirals (RK5, PR 452)
+
+The travel thread's PR 452 gives gentle drives an Edelbaum spiral between two bodies and refuses short-kick courses whose burns are not short. Its own test flies a 6e-5 g, 78.5 km/s ship to Jupiter in 868 days, with no reserve. Flown from the pack's records in `plan_voyage`, HOPE's nuclear electric ship and the fission fragment ship do not take that spiral:
+
+- The direct spiral needs more Δv than the tanks hold after the reserve (out of Earth orbit, across, and down to a low Jupiter orbit). So the voyage search stops at the Main Belt for fuel.
+- The legs to and from a belt (`belt_legs` in `crates/sse-nav/src/insystem.rs`) skip the new short-kick check. Earth to the belt is a 460-day Hohmann transfer whose burns take months at 6e-5 g. The belt to Jupiter is a straight-line torch flight.
+- So SSE4 now says 1,064 days (HOPE NEP) and 1,629 days (fission fragment), against 832 and over 2,100. Both are closer than part 1's figures, but the first leg is still a short-kick course flown by a gentle drive.
+
+Told the travel thread on 26 Nov. The fudge register's RK6 low-thrust row now names this narrower gap. The voyage test gives these two ships no band until belt legs spiral too.
+
 ## Next (in order)
 1. Ask the data sheet thread to check the RK6 sources against the page images (most are OCR).
 2. Stages on ship records read by NAV (with track RS), so Longshot and the DRA ship drop their tanks.
 3. More studies, from primary text once found: Project Daedalus (JBIS 1978 supplement), EMPIRE (1962 to 1963), the Jupiter Icy Moons Orbiter (masses and thrust not yet read).
 4. Launch loops (Lofstrom 1985) and skyhooks (Moravec 1977) as constructs, once a construct can carry them.
 5. Tours play once PB2b (bookmarks) and the tour player land; the Starshot ship flies once RK5 has beamed legs.
+6. When belt legs spiral (travel thread), give HOPE NEP and the fission fragment ship test bands and retire the low-thrust row in the fudge register.
