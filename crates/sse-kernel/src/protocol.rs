@@ -1437,7 +1437,9 @@ pub enum Request {
     Systems,
     /// L1d's `LifeView` (biosphere view and life timeline) for a fixture
     /// world (`earth`, `earth-archean`, `europa`, `red-dwarf-desert`,
-    /// `dead-earth`), or for a body once adopted systems carry habitat graphs.
+    /// `dead-earth`), or for a `body` of any system on the chart (L3): its
+    /// habitats built from the climate, air, water, ice and heat the surface
+    /// suites resolve for it, at the system's now.
     LifeView {
         #[serde(default)]
         #[ts(optional)]
@@ -3725,10 +3727,13 @@ pub enum Response {
         state_hash: String,
     },
     /// `life_view`: `source` is `fixture:<name>` (or the body's address).
+    /// `held`: for a body, what was held at today's value or left out, in words.
     LifeViewed {
         source: String,
         #[ts(type = "unknown")]
         view: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        held: Vec<String>,
     },
     /// `export_chronicle`: a JSON document to save as is
     /// (`format` `sse.chronicle-export/1`).

@@ -4,7 +4,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { ToolButton, ViewControls } from "../../../chart-grammar/src/index.ts";
-  import { actionById, hasTool, type Json, type ViewChoice, type ViewControlsSpec, type ViewModule, type Workspace } from "../../../ui-contract/src/index.ts";
+  import { actionById, hasTool, partShows, type Desk, type Json, type ViewChoice, type ViewControlsSpec, type ViewModule, type Workspace } from "../../../ui-contract/src/index.ts";
 
   type Mount = { module: ViewModule; params: Record<string, Json> };
   let {
@@ -31,7 +31,7 @@
     extraTools,
   }: {
     ws: Workspace;
-    desk: string;
+    desk: Desk;
     lensId: string;
     /** A look ahead is open (the views show its snapshot). */
     ahead: boolean;
@@ -73,14 +73,14 @@
   {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH} data-chart-overlay><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
   <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
   <nav class="tools" aria-label="Tools" data-chart-overlay>
-    <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
-    {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
+    {#if partShows("tools", desk, "select")}<ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />{/if}
+    {#if hasTool(ws.lens, "undo") && (partShows("tools", desk, "undo") || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
     <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
     {@render extraTools?.()}
     {#if clipArmed}<ToolButton label={tool("copy").label} icon="M8 8h11v11H8zM5 16V5h11" keyhint={tool("copy").key} disabled={!ws.selection} onclick={copyBody} />{/if}
     {#if clipArmed}<ToolButton label={tool("add").label} icon="M12 5v14M5 12h14" keyhint={tool("add").key} onclick={openAdd} />{/if}
     {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
-    <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={openKeys} />
+    {#if partShows("tools", desk, "keys")}<ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={openKeys} />{/if}
   </nav>
   {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
   {#if ws.adding && ws.adding.a_au === null}

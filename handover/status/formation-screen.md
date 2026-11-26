@@ -6,8 +6,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`.
 
 | Package | State | Log |
 |---|---|---|
-| F10a the chart: distance across, time down, a track per body (width by mass, bends as it migrates, joins at merging impacts, runs off the edge when thrown out), the gas disc and its condensation lines, belts, events, the upheaval span; the stage strip; the time slice tied to the time ruler; the Inherited panel and "Worked out at"; kernel op `formation_record`; rail entry "How it formed" (system, Understand, Explore and Build desks) | done in this PR | packages/F10a.md |
-| F10b the selected world's story card (where its material came from, its events, how sure each number is), "How this was worked out", "Watch it form" as the screen's Play, opening from the Make a system preview | next | |
+| F10a the chart: distance across, time down, a track per body (width by mass, bends as it migrates, joins at merging impacts, runs off the edge when thrown out), the gas disc and its condensation lines, belts, events, the upheaval span; the stage strip; the time slice tied to the time ruler; the Inherited panel and "Worked out at"; kernel op `formation_record`; rail entry "How it formed" (system, Understand, Explore and Build desks) | done (PR 614) | packages/F10a.md |
+| F10b the selected world's story card (material by band from the ledger, its events, how sure), "How this was worked out" (a fold under the chart), "Watch it form" as the screen's Play | done in its PR | packages/F10b.md |
 | Change the story, the Orac panel | later: needs the engine to branch a formation run from a stored moment (F9) | |
 | Passing star and comet shower lines | later: needs systems tied to their place in the galaxy (star slots, GZ13 and GZ2) | |
 
