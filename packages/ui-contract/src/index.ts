@@ -226,3 +226,5 @@ export type { MakeupKind, MakeupPart } from "./makeup.ts";
 export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";
 export { STAR_KINDS, spectralLetter, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export { chartFate, fateLine, fatePlan, withFate, FATE_LIMIT_MYR } from "./formation-fate.ts";
+export type { ChartFate, FateMark, FatePlan, FateWorld } from "./formation-fate.ts";
