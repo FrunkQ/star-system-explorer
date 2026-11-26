@@ -147,6 +147,9 @@ mod tests {
     /// Leinert et al. 1998, doi:10.1051/aas:1998105, table 32, 30 to 60 S10).
     #[test]
     fn the_glow_follows_the_galaxy_and_its_dust() {
+        // A Milky Way calibration check: on the median reference galaxy
+        // (GZ12; the web's real homes scatter, fudge register).
+        crate::cosmos::use_reference_home();
         let mut k = open();
         let g = ask(
             &mut k,

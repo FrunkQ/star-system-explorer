@@ -87,6 +87,9 @@ pub struct CosmologyPack {
     /// V9w: which galaxies light the web cube.
     #[serde(default)]
     pub web_light: crate::web_light::WebLightParams,
+    /// GZ12: what the universe's home galaxy should be like.
+    #[serde(default)]
+    pub home: crate::home::HomeWish,
 }
 
 /// The pack fields that moved to the sheet, with the sheet's id for each.

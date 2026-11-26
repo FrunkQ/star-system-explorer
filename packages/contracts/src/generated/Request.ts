@@ -176,7 +176,7 @@ route_audience?: unknown,
 /**
  * The routes' "Known to" rung (as `set_link`'s `tier`).
  */
-route_tier?: string, at_s: bigint, } | { "op": "roll_profile", program: string, body: string, reroll: boolean, apply: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "matter_budget", cell?: [bigint, bigint, bigint], } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
+route_tier?: string, at_s: bigint, } | { "op": "roll_profile", program: string, body: string, reroll: boolean, apply: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "home_galaxy" } | { "op": "set_home", halo?: string, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "matter_budget", cell?: [bigint, bigint, bigint], } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
 /**
  * Most stars listed, brightest first (default 20,000, the phone
  * tier of ruling 12; desktops ask 200,000). A cut list says
