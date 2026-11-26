@@ -15766,6 +15766,166 @@
       "unit": "kg m-3",
       "src": "turcotte2014",
       "check": "unverified"
+     },
+     "phases": {
+      "solidus": {
+       "fit": "T = a P^2 + b P + c, T in degC, P in GPa",
+       "coeffs": [
+        -5.104,
+        132.899,
+        1120.661
+       ],
+       "valid_gpa": [
+        0.0,
+        10.0
+       ],
+       "src": "hirschmann2000",
+       "check": "unverified",
+       "note": "dry peridotite"
+      },
+      "liquidus": {
+       "fit": "T = a P^2 + b P + c, T in degC, P in GPa",
+       "coeffs": [
+        -2.0,
+        45.0,
+        1780.0
+       ],
+       "valid_gpa": [
+        0.0,
+        10.0
+       ],
+       "src": "katz2003",
+       "check": "unverified",
+       "note": "dry lherzolite"
+      },
+      "liquidus_deep": {
+       "fit": "T = T0 (P / P0 + 1)^(1 / c), T in K, P in GPa",
+       "coeffs": [
+        1940.0,
+        29.0,
+        1.9
+       ],
+       "src": "andrault2011",
+       "check": "unverified",
+       "note": "chondritic mantle; the base of a magma ocean"
+      },
+      "latent_fusion": {
+       "v": 400000.0,
+       "unit": "J kg-1",
+       "src": "turcotte2014",
+       "check": "unverified",
+       "note": "6e5 is also quoted"
+      },
+      "solidus_rise_depleted": {
+       "v": 150.0,
+       "unit": "K",
+       "src": "morschhauser2011",
+       "check": "unverified",
+       "note": "at 20% melt taken"
+      }
+     },
+     "rigidity": {
+      "v": 65000000000.0,
+      "unit": "Pa",
+      "src": "turcotte2014",
+      "check": "unverified",
+      "note": "shear modulus of the upper mantle"
+     },
+     "creep": {
+      "viscosity_ref": {
+       "v": 1e+21,
+       "unit": "Pa s",
+       "src": "hirth-kohlstedt2003",
+       "check": "unverified",
+       "note": "wet upper mantle at t_ref; calibrated on Earth"
+      },
+      "t_ref": {
+       "v": 1600.0,
+       "unit": "K",
+       "src": "hirth-kohlstedt2003",
+       "check": "unverified"
+      },
+      "activation": {
+       "v": 300000.0,
+       "unit": "J mol-1",
+       "src": "hirth-kohlstedt2003",
+       "check": "unverified"
+      },
+      "dry_factor": {
+       "v": 100.0,
+       "unit": "1",
+       "src": "hirth-kohlstedt2003",
+       "check": "unverified",
+       "note": "dry over wet; water weakens olivine 10 to 100 times"
+      },
+      "melt_weakening": {
+       "v": 26.0,
+       "unit": "1",
+       "src": "mei2002",
+       "check": "unverified",
+       "note": "viscosity falls as exp(-a phi)"
+      },
+      "andrade_exponent": {
+       "v": 0.3,
+       "unit": "1",
+       "src": "jackson-faul2010",
+       "check": "unverified"
+      }
+     },
+     "melt": {
+      "lockup_share": {
+       "v": 0.4,
+       "unit": "1",
+       "src": "costa2009",
+       "check": "unverified",
+       "note": "melt share above which the mush flows as a liquid"
+      },
+      "grain_size": {
+       "v": 0.01,
+       "unit": "m",
+       "src": "bierson-nimmo2016",
+       "check": "unverified",
+       "note": "1 mm to 1 cm argued"
+      },
+      "permeability_exponent": {
+       "v": 2.6,
+       "unit": "1",
+       "src": "miller2014",
+       "check": "unverified"
+      },
+      "permeability_constant": {
+       "v": 58.0,
+       "unit": "1",
+       "src": "miller2014",
+       "check": "unverified",
+       "note": "k = d^2 phi^n / C"
+      }
+     },
+     "thermal": {
+      "conductivity": {
+       "v": 3.0,
+       "unit": "W m-1 K-1",
+       "src": "turcotte2014",
+       "check": "unverified"
+      },
+      "diffusivity": {
+       "v": 1e-06,
+       "unit": "m2 s-1",
+       "src": "turcotte2014",
+       "check": "unverified"
+      },
+      "heat_capacity": {
+       "v": 1200.0,
+       "unit": "J kg-1 K-1",
+       "src": "turcotte2014",
+       "check": "unverified"
+      },
+      "expansivity": {
+       "v": 1.5e-05,
+       "unit": "K-1",
+       "src": "turcotte2014",
+       "check": "unverified"
+      }
      }
     },
     {
@@ -18232,6 +18392,25 @@
        "check": "unverified",
        "note": "rock sample as measured by Egan and Hilgeman; no sample or locality named where read; alpha = 4 pi k / lambda"
       }
+     },
+     "density": {
+      "v": 2900.0,
+      "unit": "kg m-3",
+      "src": "turcotte2014",
+      "check": "unverified"
+     },
+     "density_liquid": {
+      "v": 2800.0,
+      "unit": "kg m-3",
+      "src": "stolper-walker1980",
+      "check": "unverified"
+     },
+     "viscosity_liquid": {
+      "v": 10.0,
+      "unit": "Pa s",
+      "src": "giordano2008",
+      "check": "unverified",
+      "note": "10 to 100 Pa s"
      }
     },
     {
@@ -19572,6 +19751,12 @@
      "doi": "10.1088/1674-1137/abddaf"
     },
     {
+     "id": "andrault2011",
+     "text": "Andrault, D. et al. 2011, Earth and Planetary Science Letters 304, 251: solidus and liquidus profiles of chondritic mantle (deep liquidus, Simon form)",
+     "status": "unverified",
+     "doi": "10.1016/j.epsl.2011.02.006"
+    },
+    {
      "id": "arp1998-helium",
      "text": "Arp, V. D., McCarty, R. D. and Friend, D. G. 1998, NIST Technical Note 1334 (revised): thermophysical properties of helium-4 from 0.8 to 1500 K with pressures to 2000 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified"
@@ -19587,6 +19772,12 @@
      "text": "A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)",
      "status": "textbook",
      "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
+    },
+    {
+     "id": "bierson-nimmo2016",
+     "text": "Bierson, C. J. and Nimmo, F. 2016, JGR Planets 121, 2211: a test for Io's magma ocean, modeling tidal dissipation with a partially molten mantle (grain size, porous flow)",
+     "status": "unverified",
+     "doi": "10.1002/2016JE005005"
     },
     {
      "id": "bisterzo2014",
@@ -19685,6 +19876,12 @@
      "status": "unverified",
      "doi": "10.1021/ie4033999",
      "url": "https://github.com/CoolProp/CoolProp"
+    },
+    {
+     "id": "costa2009",
+     "text": "Costa, A., Caricchi, L. and Bagdassarov, N. 2009, Geochemistry, Geophysics, Geosystems 10, Q03010: a model for the rheology of particle-bearing suspensions and partially molten rocks (rheological lock-up)",
+     "status": "unverified",
+     "doi": "10.1029/2008GC002138"
     },
     {
      "id": "crc-handbook",
@@ -19796,6 +19993,12 @@
      "doi": "10.1063/5.0128269"
     },
     {
+     "id": "giordano2008",
+     "text": "Giordano, D., Russell, J. K. and Dingwell, D. B. 2008, Earth and Planetary Science Letters 271, 123: viscosity of magmatic liquids, a model",
+     "status": "unverified",
+     "doi": "10.1016/j.epsl.2008.03.038"
+    },
+    {
      "id": "haldemann2020",
      "text": "Haldemann, J., Alibert, Y., Mordasini, C. and Benz, W. 2020, A&A 643, A105: AQUA, a collection of H2O equations of state for planetary models (the ice VI-VII fit, Eq. 22 and Table 2, read from arXiv 2009.10098)",
      "status": "verified",
@@ -19813,6 +20016,18 @@
      "text": "Harvey, D. et al. 2015, Science 347, 1462: the nongravitational interactions of dark matter in colliding galaxy clusters",
      "status": "verified",
      "doi": "10.1126/science.1261381"
+    },
+    {
+     "id": "hirschmann2000",
+     "text": "Hirschmann, M. M. 2000, Geochemistry, Geophysics, Geosystems 1, 1042: mantle solidus, experimental constraints and the effects of peridotite composition (dry peridotite solidus fit, 0 to 10 GPa)",
+     "status": "unverified",
+     "doi": "10.1029/2000GC000070"
+    },
+    {
+     "id": "hirth-kohlstedt2003",
+     "text": "Hirth, G. and Kohlstedt, D. 2003, in Inside the Subduction Factory, AGU Geophysical Monograph 138, 83: rheology of the upper mantle and the mantle wedge (creep laws, water weakening)",
+     "status": "unverified",
+     "doi": "10.1029/138GM06"
     },
     {
      "id": "huber2009-water",
@@ -19889,6 +20104,12 @@
      "doi": "10.1515/pac-2019-0603"
     },
     {
+     "id": "jackson-faul2010",
+     "text": "Jackson, I. and Faul, U. H. 2010, Physics of the Earth and Planetary Interiors 183, 151: grainsize-sensitive viscoelastic relaxation in olivine (Andrade exponent)",
+     "status": "unverified",
+     "doi": "10.1016/j.pepi.2010.09.005"
+    },
+    {
      "id": "johnson-origins",
      "text": "Johnson, J. A., Origin of the Elements in the Solar System: periodic table colour-coded by origin (Ohio State University, CC BY-SA 4.0; the six-source legend)",
      "status": "verified",
@@ -19925,6 +20146,12 @@
      "text": "Kasen, D. et al. 2017, Nature 551, 80: origin of the heavy elements in binary neutron-star mergers from a gravitational-wave event (the GW170817 kilonova)",
      "status": "verified",
      "doi": "10.1038/nature24453"
+    },
+    {
+     "id": "katz2003",
+     "text": "Katz, R. F., Spiegelman, M. and Langmuir, C. H. 2003, Geochemistry, Geophysics, Geosystems 4, 1073: a new parameterization of hydrous mantle melting (lherzolite liquidus fit)",
+     "status": "unverified",
+     "doi": "10.1029/2002GC000433"
     },
     {
      "id": "kaye-laby",
@@ -20099,6 +20326,18 @@
      "doi": "10.1103/PhysRevLett.117.201101"
     },
     {
+     "id": "mei2002",
+     "text": "Mei, S., Bai, W., Hiraga, T. and Kohlstedt, D. L. 2002, Earth and Planetary Science Letters 201, 491: influence of melt on the creep behaviour of olivine-basalt aggregates (melt weakening exponent)",
+     "status": "unverified",
+     "doi": "10.1016/S0012-821X(02)00722-0"
+    },
+    {
+     "id": "miller2014",
+     "text": "Miller, K. J., Zhu, W., Montesi, L. G. J. and Gaetani, G. A. 2014, Earth and Planetary Science Letters 388, 273: experimental quantification of permeability of partially molten mantle rock (k = d^2 phi^n / C)",
+     "status": "unverified",
+     "doi": "10.1016/j.epsl.2013.12.003"
+    },
+    {
      "id": "millot2018",
      "text": "Millot, M., Hamel, S., Rygg, J. R., Celliers, P. M., Collins, G. W., Coppari, F., Fratanduono, D. E., Jeanloz, R., Swift, D. C. and Eggert, J. H. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression (ice melts near 5000 K at 190 GPa; conductivity about 30 S/cm on the Hugoniot and about 150 S/cm on reverberating shocks). Read from the OSTI copy (osti.gov 1542614) on 24 Nov 2026; volume and page not on that copy",
      "status": "unverified",
@@ -20127,6 +20366,12 @@
      "text": "Moritz, H. 2000, J. Geodesy 74, 128: Geodetic Reference System 1980 (Earth's angular velocity 7 292 115e-11 rad/s)",
      "status": "verified",
      "doi": "10.1007/s001900050278"
+    },
+    {
+     "id": "morschhauser2011",
+     "text": "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541: crustal recycling, mantle dehydration and the thermal evolution of Mars (solidus rise of depleted mantle)",
+     "status": "unverified",
+     "doi": "10.1016/j.icarus.2010.12.028"
     },
     {
      "id": "mulero2012",
@@ -20566,6 +20811,12 @@
      "status": "unverified",
      "doi": "10.3390/min11121328",
      "url": "https://www.sshade.eu/data/experiment/EXPERIMENT_OP_20201223_001"
+    },
+    {
+     "id": "stolper-walker1980",
+     "text": "Stolper, E. and Walker, D. 1980, Contributions to Mineralogy and Petrology 74, 7: melt density and the average composition of basalt",
+     "status": "unverified",
+     "doi": "10.1007/BF00375484"
     },
     {
      "id": "taylor2001-lscc",
