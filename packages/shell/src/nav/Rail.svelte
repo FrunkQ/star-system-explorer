@@ -16,6 +16,7 @@
     toSystem,
     toGalaxy,
     toWorkshop,
+    workshopDoor = true,
   }: {
     railScale: RailScale;
     rail: ReturnType<typeof railOf>;
@@ -33,6 +34,8 @@
     toSystem: () => void;
     toGalaxy: () => void;
     toWorkshop: () => void;
+    /** The Workshop door at the foot of the rail; off on Run, where it is in More (three desks design section 5). */
+    workshopDoor?: boolean;
   } = $props();
 </script>
 
@@ -53,7 +56,7 @@
     </div>
   {/each}
   {#if railScale === "system"}<button type="button" class="door" data-go="out" onclick={toGalaxy} title="The galaxy around this system, the galaxies nearby and the cosmic web: they are on the place line above the system">Out to the galaxy ›</button>{/if}
-  {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
+  {#if railScale !== "workshop" && workshopDoor}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
 </nav>
 
 <style>
