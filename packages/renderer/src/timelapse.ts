@@ -7,7 +7,7 @@
 // rain, ice, runoff) blend; plates, coasts and heights show the nearer frame,
 // because a blend of two plate maps is not a world that existed.
 
-import { constant } from "../../ui-contract/src/index.ts";
+import { constant, naturalDirection } from "../../ui-contract/src/index.ts";
 
 export type V3 = readonly [number, number, number];
 
@@ -150,6 +150,25 @@ export function readFrames(r: RawFrames): TimeLapse {
 /** The cell a unit direction falls in (nearest centre). */
 export function cellOf(tl: TimeLapse, x: number, y: number, z: number): number {
   return nearestCell(tl.index, tl.dirs, x, y, z);
+}
+
+/**
+ * The smallest angle one plate-grid cell spans (the cube's equiangular cells are smallest at the corners), so the
+ * shared outline warp never carries a cell's centre out of its own cell.
+ */
+export function plateCellAngle(tl: TimeLapse): number {
+  return (Math.PI / 2 / tl.n) * 0.72;
+}
+
+/**
+ * The cell drawn at a direction: the nearest cell to the direction nudged by the shared natural-outline warp
+ * (ui-contract `naturalDirection`, the same step the Survey globe and the Land screen use), so coasts, ice edges
+ * and plate boundaries wander like real ones instead of following the cube grid's blocks. The warp is keyed on the
+ * direction alone, never on time, so an edge only moves between frames where the kernel's own cells change.
+ */
+export function drawnCellOf(tl: TimeLapse, d: V3): number {
+  const w = naturalDirection(d, plateCellAngle(tl));
+  return nearestCell(tl.index, tl.dirs, w[0], w[1], w[2]);
 }
 
 /** The keyframes around `t`: the earlier, the later and the blend weight toward the later (0 at the earlier). */
@@ -431,7 +450,7 @@ export function layersFor(tl: TimeLapse): { spec: LayerSpec; available: boolean;
 
 /** What is under a direction at a time: every field's value, the cell, and the nearest dated event within `near_deg`. */
 export function pickAt(tl: TimeLapse, d: V3, t_myr: number, near_deg = 10): { cell: number; values: Partial<Record<FieldName, number>>; sea_level_m: number; sea: boolean; event: FrameEvent | null; why: string[]; frame_why: string[] } {
-  const cell = cellOf(tl, d[0], d[1], d[2]);
+  const cell = drawnCellOf(tl, d);
   const values: Partial<Record<FieldName, number>> = {};
   for (const f of FIELDS) {
     const v = valueAt(tl, f, cell, t_myr);
@@ -454,7 +473,7 @@ export function pickAt(tl: TimeLapse, d: V3, t_myr: number, near_deg = 10): { ce
  * small step away falls on another plate. `step` is in radians (about a cell).
  */
 export function onPlateEdge(tl: TimeLapse, d: V3, t_myr: number, step: number): boolean {
-  const c = cellOf(tl, d[0], d[1], d[2]);
+  const c = drawnCellOf(tl, d);
   const p = valueAt(tl, "plate", c, t_myr);
   if (p === null) return false;
   // Two tangents.
@@ -463,7 +482,7 @@ export function onPlateEdge(tl: TimeLapse, d: V3, t_myr: number, step: number): 
   const t2 = cross(d, t1);
   for (const [u, v] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
     const q = norm3([d[0] + step * (u * t1[0] + v * t2[0]), d[1] + step * (u * t1[1] + v * t2[1]), d[2] + step * (u * t1[2] + v * t2[2])]);
-    if (valueAt(tl, "plate", cellOf(tl, q[0], q[1], q[2]), t_myr) !== p) return true;
+    if (valueAt(tl, "plate", drawnCellOf(tl, q), t_myr) !== p) return true;
   }
   return false;
 }
@@ -536,7 +555,7 @@ export function recolour<P extends { faces: ({ s: number; rgb: Uint8ClampedArray
       for (let i = 0; i < s; i++) {
         const k = j * s + i;
         const d = dirOf(face, -1 + (i + 0.5) * span, -1 + (j + 0.5) * span);
-        const cell = cellOf(tl, d[0], d[1], d[2]);
+        const cell = drawnCellOf(tl, d);
         const edge = layer === "plates" && onPlateEdge(tl, d, t_myr, step);
         const c = layerColour(tl, layer, cell, t_myr, edge);
         rgb[k * 3] = c[0];
