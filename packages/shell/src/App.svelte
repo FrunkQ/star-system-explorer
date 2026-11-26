@@ -193,7 +193,6 @@
     const packs = st ? [...st.base, ...(st.campaign ? [st.campaign] : [])] : [];
     return (need: string) => stackProvides(packs, need);
   });
-  const rail = $derived(railOf(SCREENS, railScale, stackHas));
   // A screen opened from elsewhere (a why?'s "Open the flow", a key) takes the rail to a scale that lists it.
   $effect(() => {
     const on = scalesOf(SCREENS[ws.screen] ?? {});
@@ -671,6 +670,9 @@
   $effect(() => {
     ws.desk = desk;
   });
+  // The rail at the scale in view, for this desk (TM2, three desks design section 5): an entry not listed on the desk
+  // in front is left off; Find and the desk switch still reach it.
+  const rail = $derived(railOf(SCREENS, railScale, stackHas, desk));
   $effect(() => {
     ws.players_online = share?.state.players ?? 0;
     ws.sendLanding = (show) => {
