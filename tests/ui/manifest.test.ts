@@ -81,6 +81,40 @@ test("life support days are the stores over the crew's daily use, less what is r
   assert.equal(half.stores.find((s) => s.store === "food")!.days, r.stores.find((s) => s.store === "food")!.days);
 });
 
+test("life support reads as two headings, air and supplies, each lasting as long as its first store to run out", () => {
+  const crew = [person("A", {}), person("B", {}), person("C", { [ABOARD.state]: "cold_sleep" })];
+  const stores = [lot("Water tanks", "water", 1, "t"), lot("Rations", "rations", 360, "kg"), lot("Air", "oxygen", 82, "kg")];
+  const r = lifeSupport(crew, stores, ls);
+  const h = ls.rates.human!;
+  assert.deepEqual(r.headings.map((g) => [g.heading, g.stores]), [["air", ["oxygen"]], ["supplies", ["water", "food"]]]);
+  const air = r.headings[0]!;
+  const sup = r.headings[1]!;
+  // Absolute: 82 kg of oxygen for two awake people at the pack's rate; the sleeper draws nothing.
+  assert.ok(Math.abs(air.days! - 82 / (2 * h.oxygen_kg_day!)) < 1e-9, String(air.days));
+  // Supplies last as long as the shorter of water (1000 kg) and food (360 kg) for two.
+  const water = 1000 / (2 * h.water_kg_day!);
+  const food = 360 / (2 * h.food_kg_day!);
+  assert.ok(Math.abs(sup.days! - Math.min(water, food)) < 1e-9, String(sup.days));
+  assert.equal(sup.first, food < water ? "food" : "water");
+  assert.equal(sup.kg, 1360);
+  assert.equal(air.first, undefined, "one store under the heading needs no 'runs out first'");
+  // The finer stores are all kept beside the headings.
+  assert.deepEqual(r.stores.map((s) => s.store), ["oxygen", "water", "food"]);
+  // Everyone in cold sleep: nothing is used, so no heading has a count of days.
+  const asleep = lifeSupport([person("C", { [ABOARD.state]: "cold_sleep" })], stores, ls);
+  assert.deepEqual(asleep.headings.map((g) => g.days), [null, null]);
+});
+
+test("without headings from a pack, or with a store left out of them, every store still has a heading", () => {
+  const bare = { ...ls, headings: {} };
+  assert.deepEqual(lifeSupport([person("A", {})], [], bare).headings.map((g) => g.heading), ["oxygen", "water", "food"]);
+  const partial = { ...ls, headings: { air: ["oxygen"] } };
+  assert.deepEqual(lifeSupport([person("A", {})], [], partial).headings.map((g) => g.heading), ["air", "water", "food"]);
+  // A higher pack's headings replace the base pack's whole.
+  const top = { provides: { other: { life_support: { headings: { breath: ["oxygen"], larder: ["water", "food"] } } } } } as unknown as Json;
+  assert.deepEqual(Object.keys(lifeSupportFrom([pack, top]).headings!), ["breath", "larder"]);
+});
+
 test("a kind of being with no rates is named apart, never given a human's", () => {
   const r = lifeSupport([person("Vesh one", { [ABOARD.being]: "vesh" }), person("Vesh two", { [ABOARD.being]: "vesh" }), person("Ada", {})], [lot("Water", "water", 100, "kg")], ls);
   assert.deepEqual(r.unrated, [{ being: "vesh", count: 2 }]);
