@@ -179,9 +179,17 @@ try {
     assert.equal(await classes.getAttribute("data-atlas"), "sse.base-atlas", "SSE4's own atlas first");
     assert.deepEqual(await classes.locator("[data-scheme]").evaluateAll((els) => els.map((e) => e.dataset.scheme)), ["physical", "surface", "air", "habitability"]);
     const tiles = classes.locator('[data-gallery="physical"] .tile');
+    // V14i part 2: the gallery a page at a time, 12 by default, then 24 or 48 (Alex, 24 Nov).
+    await tiles.nth(11).waitFor({ timeout: 20000 });
+    assert.equal(await tiles.count(), 12, "a page of 12");
+    assert.match(await classes.locator("[data-page-shown]").innerText(), /^1 to 12 of \d+$/);
+    await classes.locator("[data-page-next]").click();
+    assert.match(await classes.locator("[data-page-shown]").innerText(), /^13 to /);
+    await classes.locator("[data-page-size]").selectOption("48");
     await tiles.nth(14).waitFor({ timeout: 20000 });
     assert.ok((await tiles.count()) >= 15, "the physical scheme's base classes are tiles");
-    assert.equal(await tiles.locator("svg.icon").count(), await tiles.count(), "every tile has its mark");
+    // Each tile wears its turning globe, or its mark until one is drawn (or where none can be: a small body, a giant).
+    assert.equal((await tiles.locator("svg.icon").count()) + (await tiles.locator("[data-tile-picture]").count()), await tiles.count(), "every tile has its mark or its globe");
     // SSE4's atlas classes have marks of their own (scripts/add-atlas-marks.py): no two physical tiles draw alike.
     const looks = await tiles.locator("svg.icon").evaluateAll((els) => els.map((e) => e.innerHTML));
     assert.equal(new Set(looks).size, looks.length, "every physical class draws its own mark");
@@ -203,6 +211,12 @@ try {
       assert.equal(await pic.getAttribute("data-picture"), "drawn", await pic.innerText());
       assert.match(await pic.innerText(), /after Mercury/);
       await classes.locator('[data-class="iron-rich"] [data-tile-picture]').waitFor({ state: "attached" });
+      // The shipped atlas's globes come pre-drawn while the build's look is the one they were drawn with.
+      const baked = await classes.locator('[data-class="iron-rich"] [data-tile-picture]').getAttribute("data-baked");
+      console.log(`class globes: iron-rich ${baked === "true" ? "pre-drawn" : "drawn live"}`);
+      // A small body's sample has no size yet, so it keeps its mark and says why.
+      await gm.waitForFunction(() => ["drawn", "none"].includes(document.querySelector('[data-class="small-body"]')?.getAttribute("data-picture-state") ?? ""), null, { timeout: 60000 });
+      assert.equal(await classes.locator('[data-class="small-body"]').getAttribute("data-picture-state"), "none");
       await shot(gm, "classes-picture-desk");
       await gm.keyboard.press("Escape");
     }
@@ -216,7 +230,9 @@ try {
     await gm.keyboard.press("Escape");
     // SSE 3's classic list, which the charts marked first.
     await classes.locator('[data-atlas-pick="sse.sse3-classic"]').click();
-    await gm.locator('[data-atlas="sse.sse3-classic"] [data-gallery="sse3-classic"] .tile').nth(60).waitFor();
+    await gm.locator('[data-atlas="sse.sse3-classic"] [data-gallery="sse3-classic"] .tile').first().waitFor();
+    // Its 61 or more classes, a page at a time.
+    assert.ok(Number((await classes.locator("[data-page-shown]").innerText()).split(" of ")[1]) >= 61, "SSE 3's classic classes are all in the gallery");
     if (vp === "phone") {
       const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert.ok(over <= 0, `classes overflow by ${over} px`);
