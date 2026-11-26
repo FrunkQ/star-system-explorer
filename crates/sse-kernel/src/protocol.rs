@@ -609,6 +609,26 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Light near a mass (XO2, XO3; exotic objects design 3.5): for each body
+    /// and its far viewer, which bender applies, the sizes from the gravity
+    /// blocks, the bend table's hash and layout, the feed (what falls onto
+    /// it, through which flow, where its disc ends), the disc traced point
+    /// by point as that viewer sees it, its light by band, and the viewer's
+    /// clock rate and tide. Each of `bodies` is `sse_light::paths::PathsAsk`;
+    /// `fixture: "black-holes"` reads design 3.4's three (a 10 Sun hole fed
+    /// by a companion, a quasar, a starved galactic centre). `table: true`
+    /// adds the bend table itself (fetch it once, keyed by its hash).
+    ReadLightPaths {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        table: Option<bool>,
+    },
     /// Sensing (O9): for each target (light given as `conditions` or a ready
     /// `light`, distance, dust as A_V, bright neighbours with their sky
     /// separation) and each sensor (band, aperture, noise, stare,
@@ -2611,6 +2631,7 @@ impl Request {
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::Weather { .. } => "weather",
             Request::ReadLight { .. } => "read_light",
+            Request::ReadLightPaths { .. } => "read_light_paths",
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
@@ -2953,6 +2974,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_light",
             Cost::Light,
             "per body: one small flow run and about 2,000 Planck evaluations",
+        ),
+        o(
+            "read_light_paths",
+            Cost::Light,
+            "per body: about 100,000 rays, each a bend-table read and one formula block, then band integrals; the bend table is worked out once per process",
         ),
         o(
             "adopt",
@@ -3563,6 +3589,17 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `read_light_paths`: each of `paths` is `sse_light::paths::LightPaths`;
+    /// `bend_table`, when asked, is `{ hash, rows, cols, row_length, flat }`
+    /// with `flat` as `sse_gravity::BendTable::flat` lays it out.
+    LightPathsRead {
+        source: String,
+        #[ts(type = "unknown[]")]
+        paths: Vec<serde_json::Value>,
+        #[ts(optional, type = "unknown")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        bend_table: Option<serde_json::Value>,
     },
     /// `detect`: each of `detections` is `sse_sense::Detection` (target by
     /// sensor, in order); `radar` is `sse_sense::RadarRanges` when asked.

@@ -37,6 +37,7 @@ sse-activity = { path = "../sse-activity" }
 sse-field = { path = "../sse-field" }
 sse-sense = { path = "../sse-sense" }
 sse-hazard = { path = "../sse-hazard" }
+sse-gravity = { path = "../sse-gravity" }
 sse-codes = { path = "../sse-codes" }
 sse-names = { path = "../sse-names" }
 sse-sector-io = { path = "../sse-sector-io" }

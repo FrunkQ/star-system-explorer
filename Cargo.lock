@@ -689,6 +689,7 @@ dependencies = [
  "sse-field",
  "sse-flow",
  "sse-formation",
+ "sse-gravity",
  "sse-hazard",
  "sse-import-v3",
  "sse-life",
@@ -741,6 +742,7 @@ dependencies = [
  "sse-atoms",
  "sse-core",
  "sse-flow",
+ "sse-gravity",
  "sse-pack",
  "sse-reference",
 ]

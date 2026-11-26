@@ -37,6 +37,12 @@ pub struct Accretion {
     pub rate_kg_s: f64,
     pub r_inner_m: f64,
     pub r_outer_m: f64,
+    /// The viewer's angle from the disc's axis, degrees (0 face on). Given,
+    /// the disc is traced as that viewer sees it (XO3): tilt, beaming and
+    /// the climb out of gravity, through the bend table. Absent, it is seen
+    /// alike from every side.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tilt_deg: Option<f64>,
 }
 
 /// A built thing's heat radiator.
@@ -330,20 +336,40 @@ pub fn describe(
             .push("No global magnetic field, so no magnetosphere and no auroral radio.".into());
     }
     if let Some(a) = &c.accretion {
-        d.parts.push(Part::Disc {
-            mass_kg: a.mass_kg,
-            accretion_kg_s: a.rate_kg_s,
-            r_inner_m: a.r_inner_m,
-            r_outer_m: a.r_outer_m,
-            cause: "accretion disc".into(),
-        });
         d.why.push(format!(
             "Gas falling in at {:.2e} kg/s through a disc heats it to {:.2e} K near the inner edge.",
             a.rate_kg_s,
             disc_temperature(a.mass_kg, a.rate_kg_s, a.r_inner_m, a.r_inner_m * 49.0 / 36.0)
         ));
-        d.stand_ins
-            .push("the disc is seen from all sides alike: no tilt, no relativistic beaming or redshift (O7)".into());
+        match a.tilt_deg {
+            Some(tilt) => {
+                let img = crate::disc_image::trace(
+                    a.mass_kg,
+                    a.rate_kg_s,
+                    a.r_inner_m,
+                    a.r_outer_m,
+                    tilt.clamp(0.0, 90.0) * m::PI / 180.0,
+                    sse_gravity::scenario::table(),
+                    &model.table,
+                )?;
+                d.parts.push(crate::disc_image::part(&img));
+                d.why.extend(img.why.iter().cloned());
+                d.stand_ins.extend(img.stand_ins.iter().cloned());
+                d.stand_ins.push(crate::feed::NEWTONIAN_DISC.into());
+                d.references.push(crate::disc_image::luminet_reference());
+            }
+            None => {
+                d.parts.push(Part::Disc {
+                    mass_kg: a.mass_kg,
+                    accretion_kg_s: a.rate_kg_s,
+                    r_inner_m: a.r_inner_m,
+                    r_outer_m: a.r_outer_m,
+                    cause: "accretion disc".into(),
+                });
+                d.stand_ins
+                    .push("the disc is seen from all sides alike: no tilt, no relativistic beaming or redshift (O7)".into());
+            }
+        }
         d.references.push(Reference {
             text: R_SS73.into(),
             doi: None,

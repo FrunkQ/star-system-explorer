@@ -3963,6 +3963,11 @@ impl Kernel {
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }
+            Request::ReadLightPaths {
+                fixture,
+                bodies,
+                table,
+            } => systems::read_light_paths(fixture.as_deref(), bodies, table.unwrap_or(false))?,
             Request::ReadNebulae {
                 at_s,
                 seed,
