@@ -628,6 +628,56 @@ pub(crate) fn effect_at_range(
     Ok(Response::EffectsAtRange { effects })
 }
 
+/// The Hazard map's reading (XO18): explicit asks, or a measured Solar
+/// System body.
+pub(crate) fn hazard_map(
+    asks: Vec<serde_json::Value>,
+    fixture: Option<&str>,
+    body: Option<&str>,
+    ship: Option<serde_json::Value>,
+    line: Option<&str>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    let base;
+    let sheet = if sheet.row("constants", "c").is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    let bad = |e: String| err("bad_hazard", e);
+    let line: sse_hazard::Line = match line {
+        None => sse_hazard::Line::Equator,
+        Some(l) => serde_json::from_value(serde_json::Value::String(l.into()))
+            .map_err(|_| bad(format!("no line {l}; lines: equator, poles")))?,
+    };
+    let ship: Option<sse_hazard::Ship> = ship
+        .map(|v| serde_json::from_value(v).map_err(|e| bad(format!("ship: {e}"))))
+        .transpose()?;
+    let asks: Vec<sse_hazard::Ask> = match (fixture, body, asks.is_empty()) {
+        (Some("solar-system"), Some(b), true) => {
+            vec![sse_hazard::solar_system_ask(b, ship, line, sheet).map_err(bad)?]
+        }
+        (Some(f), _, _) if f != "solar-system" => {
+            return Err(bad(format!(
+                "no hazard fixture {f}; fixtures: solar-system, with body"
+            )))
+        }
+        (None, None, false) => asks
+            .into_iter()
+            .enumerate()
+            .map(|(n, v)| serde_json::from_value(v).map_err(|e| bad(format!("ask {n}: {e}"))))
+            .collect::<Result<_, _>>()?,
+        _ => return Err(bad("give asks, or fixture: solar-system with a body".into())),
+    };
+    let mut maps = vec![];
+    for (n, a) in asks.iter().enumerate() {
+        let m = sse_hazard::hazard_map(a, sheet).map_err(|e| bad(format!("ask {n}: {e}")))?;
+        maps.push(serde_json::to_value(m).expect("serialisable"));
+    }
+    Ok(Response::HazardMaps { maps })
+}
+
 pub(crate) fn light_through_gas(
     passages: Vec<serde_json::Value>,
     sheet: &sse_reference::Reference,

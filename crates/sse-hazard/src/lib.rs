@@ -31,12 +31,17 @@ use sse_reference::Reference as Sheet;
 mod tests;
 
 const SETTINGS: &str = include_str!("../data/hazard.json");
+const SOL: &str = include_str!("../../../packs/base-sol/pack.json");
 
 /// The blocks the reading runs, in the order their references are listed.
 const BLOCKS: &[&str] = &[
     "sse.climate.insolation",
     "sse.climate.equilibrium_temperature",
     "sse.planet.escape_velocity",
+    "sse.belts.latitude_falloff",
+    "sse.gravity.gravitational_radius",
+    "sse.gravity.clock_rate",
+    "sse.planet.surface_gravity",
 ];
 
 /// Points along the line, spaced evenly on a stretched (logarithmic) scale.
@@ -213,6 +218,12 @@ pub struct ShipMark {
     /// short of the ground.
     pub set_by: String,
     pub says: String,
+    /// A clock here against one far away: at Park on a circular orbit, at
+    /// Dive falling through from far away (XO20).
+    pub clock_rate: f64,
+    /// The push to hold still here instead, in m/s² (gravity over the
+    /// hovering clock rate).
+    pub hover_m_s2: f64,
 }
 
 /// The totals for one fall-through, at the Dive mark.
@@ -223,6 +234,8 @@ pub struct Pass {
     pub peak_hull_k: f64,
     /// Hours spent inside the belts' outer edge.
     pub hours_in_belts: f64,
+    /// Seconds the ship's clock falls behind a far clock over the pass.
+    pub clock_lost_s: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -309,12 +322,14 @@ fn hull_limit(ship: &Ship, sheet: &Sheet) -> Result<(f64, String), String> {
 
 /// The belts as a dose rate (Sv an hour) behind one shield, at a distance
 /// and magnetic latitude: the field line through the point, on a dipole, is
-/// the shell at L = r / cos²λ, and the dose along it is taken as the shell's
-/// equatorial dose (an upper bound until the latitude fall-off block lands).
+/// the shell at L = r / cos²λ, and the dose along it is the shell's
+/// equatorial dose thinned by `sse.belts.latitude_falloff`.
 struct BeltDose<'a> {
     belts: &'a Belts,
     /// ln(dose) per shell behind this ship's shield (−inf where none).
     ln_dose: Vec<f64>,
+    /// The belt model's own pitch-angle anisotropy, for the fall-off.
+    anisotropy: f64,
 }
 
 impl<'a> BeltDose<'a> {
@@ -324,7 +339,11 @@ impl<'a> BeltDose<'a> {
             .iter()
             .map(|sh| Self::pick(&belts.shields_kg_m2, &sh.dose_sv_h, shield))
             .collect();
-        BeltDose { belts, ln_dose }
+        BeltDose {
+            belts,
+            ln_dose,
+            anisotropy: sse_field::Settings::default().belts.anisotropy,
+        }
     }
 
     /// ln(dose) behind `shield`, from doses listed behind shields `s`.
@@ -407,7 +426,14 @@ impl<'a> BeltDose<'a> {
             // Straight over the pole: the field line there never closes.
             return 0.0;
         }
-        self.on_shell(r / cos2_lat)
+        let at_equator = self.on_shell(r / cos2_lat);
+        if at_equator <= 0.0 || cos2_lat >= 1.0 {
+            return at_equator;
+        }
+        // Away from the equator the belt thins along its line
+        // (`sse.belts.latitude_falloff`).
+        let lat = m::acos(m::sqrt(cos2_lat));
+        at_equator * run("sse.belts.latitude_falloff", &[lat], &[self.anisotropy]).unwrap_or(1.0)
     }
 }
 
@@ -456,6 +482,35 @@ fn say_distance(d: f64, radius: f64, au: f64) -> String {
     }
 }
 
+/// A span of seconds in the unit that reads best.
+fn say_seconds(s: f64) -> String {
+    let a = s.abs();
+    if a >= 86_400.0 {
+        format!("{:.1} days", s / 86_400.0)
+    } else if a >= 3600.0 {
+        format!("{:.1} hours", s / 3600.0)
+    } else if a >= 1.0 {
+        format!("{s:.1} s")
+    } else if a >= 1e-3 {
+        format!("{:.1} ms", s * 1e3)
+    } else if a >= 1e-6 {
+        format!("{:.1} µs", s * 1e6)
+    } else {
+        format!("{:.1} ns", s * 1e9)
+    }
+}
+
+/// How a clock at this rate keeps time against one far away.
+fn clock_words(rate: f64, where_: &str) -> String {
+    if rate <= 0.0 {
+        return format!("A clock {where_} stops against one far away.");
+    }
+    format!(
+        "A clock {where_} loses {} a day against one far away.",
+        say_seconds((1.0 - rate) * 86_400.0)
+    )
+}
+
 /// The hazard map's reading for one body, ship and line.
 pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     let set = settings();
@@ -502,6 +557,26 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
         let v = run("sse.planet.escape_velocity", &[mass, r], &[])?;
         Ok(v * (1.0 - 1.0 / m::sqrt(2.0)))
     };
+    // Clocks (XO20): the gravitational radius, then the hovering and
+    // orbiting rates; a fall from far away (a parabola) runs at the hovering
+    // rate squared, 1 − 2rg/r. Holding still takes gravity over the hovering rate.
+    let rg = run("sse.gravity.gravitational_radius", &[mass], &[])?;
+    let clock = |r: f64| -> Result<(f64, f64, f64), String> {
+        let out = block("sse.gravity.clock_rate")
+            .eval(&[rg, r], &[])
+            .map_err(|e| format!("sse.gravity.clock_rate: {e}"))?;
+        let (hover, orbit) = (out[0], out[1]);
+        let g = run("sse.planet.surface_gravity", &[mass, r], &[])?;
+        let push = if hover > 0.0 {
+            g / hover
+        } else {
+            f64::INFINITY
+        };
+        Ok((orbit, hover * hover, push))
+    };
+    used.push("sse.gravity.gravitational_radius");
+    used.push("sse.gravity.clock_rate");
+    used.push("sse.planet.surface_gravity");
 
     // The span: out past every hazard's harsh edge.
     let mut far = 30.0 * r0;
@@ -523,6 +598,7 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     }
     if let Some(bl) = &ask.belts {
         far = far.max(bl.outer_m);
+        used.push("sse.belts.latitude_falloff");
     }
     if let Some(x) = b.bubble_m {
         far = far.max(x);
@@ -663,12 +739,16 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
                 word_of(h)
             ),
         };
-        ShipMark {
+        let (orbit, _, push) = clock(sb[0])?;
+        Ok::<_, String>(ShipMark {
             distance_m: sb[0],
             set_by,
-            says,
-        }
+            says: format!("{says} {}", clock_words(orbit, "on an orbit there")),
+            clock_rate: orbit,
+            hover_m_s2: push,
+        })
     });
+    let park = park.transpose()?;
     if safe_bands.len() > 1 {
         why.push(format!(
             "There are {} places {} where it can stay: {}.",
@@ -695,12 +775,12 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     let gm = run("sse.planet.escape_velocity", &[mass, 1.0], &[])?;
     let gm = gm * gm / 2.0;
     let belts_out = ask.belts.as_ref().map_or(0.0, |x| x.outer_m);
-    let pass_of = |q: f64| -> Result<(f64, f64, f64), String> {
+    let pass_of = |q: f64| -> Result<(f64, f64, f64, f64), String> {
         // r = 2q / (1 + cos ν); dt = r² dν / h, h = √(2 GM q).
         let h = m::sqrt(2.0 * gm * q);
         let nu_out = m::acos((2.0 * q / far - 1.0).clamp(-1.0, 1.0));
         let dnu = 2.0 * nu_out / PASS_STEPS as f64;
-        let (mut sv, mut hours) = (0.0, 0.0);
+        let (mut sv, mut hours, mut lost) = (0.0, 0.0, 0.0);
         for k in 0..PASS_STEPS {
             let nu = -nu_out + (k as f64 + 0.5) * dnu;
             let r = 2.0 * q / (1.0 + m::cos(nu));
@@ -719,15 +799,16 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
             if r <= belts_out {
                 hours += dt / 3600.0;
             }
+            lost += (1.0 - clock(r)?.1) * dt;
         }
-        Ok((sv, hull_t(q)?, hours))
+        Ok((sv, hull_t(q)?, hours, lost))
     };
     let dive_fails = |i: usize| -> Result<Option<&'static str>, String> {
         let q = grid[i];
         if air_top.is_some_and(|a| q < a) {
             return Ok(Some("air"));
         }
-        let (sv, t, _) = pass_of(q)?;
+        let (sv, t, _, _) = pass_of(q)?;
         if t >= hull_k {
             return Ok(Some("heat"));
         }
@@ -751,7 +832,8 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
             } else {
                 dive_fails(i - 1)?.unwrap_or("surface")
             };
-            let (sv, t, hours) = pass_of(grid[i])?;
+            let (sv, t, hours, lost) = pass_of(grid[i])?;
+            let (_, fall, push) = clock(q)?;
             let says = match set_by {
                 "surface" => format!(
                     "A fall-through {} can skim the surface and come back out.",
@@ -778,13 +860,20 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
                 Some(ShipMark {
                     distance_m: q,
                     set_by: set_by.into(),
-                    says,
+                    says: format!(
+                        "{says} {} Over the pass its clock falls {} behind a far one.",
+                        clock_words(fall, "falling through there"),
+                        say_seconds(lost)
+                    ),
+                    clock_rate: fall,
+                    hover_m_s2: push,
                 }),
                 Some(Pass {
                     closest_m: grid[i],
                     dose_sv: sv,
                     peak_hull_k: t,
                     hours_in_belts: hours,
+                    clock_lost_s: lost,
                 }),
             )
         }
@@ -890,7 +979,7 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     }
     if ask.belts.is_some() {
         stand_ins.push("belts are electrons only until the proton belt lands (fudge register F40), so Earth's inner belt and doses behind thick shields read low".into());
-        stand_ins.push("along a field line away from the magnetic equator the dose is taken as the shell's equatorial dose, an upper bound, until the latitude fall-off block lands".into());
+        stand_ins.push("away from the magnetic equator the dose thins by the dipole fall-off for the belt's pitch-angle spread; the loss cone is not cut and the field is taken as an untilted dipole".into());
         if ship.shield_kg_m2
             < ask
                 .belts
@@ -970,4 +1059,60 @@ fn refs_of(ids: &[&str]) -> Vec<Reference> {
         }
     }
     out
+}
+
+/// An ask for a body of the Solar System as measured (`read_field`'s fixture
+/// "solar-system"): its mass, radius and light from `packs/base-sol`, its
+/// belts and bubble from the measured fields. `id` is "jupiter" or
+/// "sol/jupiter".
+pub fn solar_system_ask(
+    id: &str,
+    ship: Option<Ship>,
+    line: Line,
+    sheet: &Sheet,
+) -> Result<Ask, String> {
+    let id = id.strip_prefix("sol/").unwrap_or(id);
+    let v: serde_json::Value = serde_json::from_str(SOL).map_err(|e| format!("base-sol: {e}"))?;
+    let b = v["provides"]["other"]["sol"]["bodies"]
+        .as_array()
+        .ok_or("base-sol has no bodies")?
+        .iter()
+        .find(|b| b["id"] == id)
+        .ok_or_else(|| format!("no body {id} in the Solar System"))?;
+    let val = |k: &str| b["values"][k]["v"].as_f64();
+    let set = sse_field::Settings {
+        electron: match (
+            sheet.constant("m_e"),
+            sheet.constant("e"),
+            sheet.constant("eps0"),
+        ) {
+            (Some(mass_kg), Some(charge_c), Some(eps0)) => Some(sse_field::Electron {
+                mass_kg,
+                charge_c,
+                eps0,
+            }),
+            _ => None,
+        },
+        ..sse_field::Settings::default()
+    };
+    let mp = sheet
+        .constant("m_p")
+        .ok_or("the data sheet has no proton mass")?;
+    let fields = sse_field::solar_system(&set, mp)?;
+    let f = fields
+        .iter()
+        .find(|f| f.read.address == format!("sol/{id}"));
+    Ok(Ask {
+        body: Body {
+            address: format!("sol/{id}"),
+            mass_kg: val("body.mass").ok_or_else(|| format!("{id} has no mass"))?,
+            radius_m: val("body.radius").ok_or_else(|| format!("{id} has no radius"))?,
+            luminosity_w: val("star.luminosity").unwrap_or(0.0),
+            air_top_m: None,
+            bubble_m: f.map(|f| f.read.obstacle.standoff_m),
+        },
+        belts: f.and_then(|f| f.read.belts.clone()),
+        ship,
+        line,
+    })
 }

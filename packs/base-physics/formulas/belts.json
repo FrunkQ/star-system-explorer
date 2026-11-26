@@ -91,6 +91,88 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.belts.latitude_falloff",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "latitude",
+     "letter": "lat"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "share",
+     "letter": "S"
+    }
+   ],
+   "params": [
+    {
+     "param": "anisotropy",
+     "letter": "A",
+     "default": 0.3,
+     "range": [
+      0.0,
+      2.0
+     ],
+     "description": "the belt's pitch-angle anisotropy, the same figure the belt model grows its waves with (A in sin^(2A) of the pitch angle); 0 is the same in every direction"
+    }
+   ],
+   "references": [
+    "Roederer, J. G. 1970, Dynamics of Geomagnetically Trapped Radiation, Springer (Physics and Chemistry in Space 2): Liouville's theorem along a field line, so a pitch-angle spread sin^n of the equatorial angle keeps its shape and scales as (B_eq / B)^(n/2). doi:10.1007/978-3-642-49300-3",
+    "Walt, M. 1994, Introduction to Geomagnetically Trapped Radiation, Cambridge University Press, chapter 3: the dipole field along a line, B / B_eq = sqrt(1 + 3 sin^2 lat) / cos^6 lat. doi:10.1017/CBO9780511524981"
+   ],
+   "shown": "S = (cos⁶λ / √(1 + 3 sin²λ))^A",
+   "equation": {
+    "name": "How a belt thins away from the magnetic equator along its field line",
+    "formula": "c = abs(cos(lat))\nS = if c <= 0 then 0 else (c^6 / sqrt(1 + 3 * sin(lat)^2))^A",
+    "inputs": {
+     "lat": {
+      "kind": "shield.magnetic_latitude",
+      "unit": "1",
+      "name": "magnetic latitude on the field line, radians",
+      "valid": [
+       -1.5707963267948966,
+       1.5707963267948966
+      ]
+     },
+     "A": {
+      "kind": "model.belt_anisotropy",
+      "unit": "1",
+      "name": "pitch-angle anisotropy"
+     }
+    },
+    "outputs": {
+     "S": {
+      "kind": "belts.latitude_share",
+      "unit": "1",
+      "name": "share of the equator's dose left at this latitude"
+     }
+    },
+    "source": {
+     "text": "Roederer 1970; Walt 1994",
+     "doi": "10.1017/CBO9780511524981",
+     "where": "Liouville mapping on a dipole line"
+    },
+    "explain": {
+     "curious": "Trapped particles bounce up and down their field line, but most turn back before they get far from the equator. So the belt is thickest at the equator and thins towards the poles, which is why probes come in over the poles.",
+     "science": "For a directional flux sin^(2A) of the equatorial pitch angle, Liouville's theorem gives the omnidirectional flux at latitude λ on a dipole line as (B_eq/B)^A of its equatorial value, B/B_eq = √(1+3 sin²λ)/cos⁶λ. A stand-in for a real pitch-angle model; the loss cone is not cut."
+    },
+    "examples": [
+     {
+      "lat": 0.5,
+      "A": 0.3,
+      "S": 0.7307231206412502
+     },
+     {
+      "lat": 0.0,
+      "A": 0.3,
+      "S": 1.0
+     }
+    ]
+   }
   }
  ]
 }

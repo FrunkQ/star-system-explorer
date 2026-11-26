@@ -4137,3 +4137,45 @@ fn describe_star_reads_one_star_from_the_formation_life_line() {
     .unwrap();
     assert_eq!(bad["code"], "bad_star", "{bad}");
 }
+
+/// `hazard_map` (XO18): a measured Solar System body by name, a ship given
+/// inline, a line; and the plain words for a bad ask.
+#[test]
+fn hazard_map_reads_the_solar_system() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "hazard_map", "fixture": "solar-system", "body": "jupiter"}),
+    );
+    assert_eq!(r["type"], "hazard_maps", "{r}");
+    let m = &r["maps"][0];
+    assert_eq!(m["address"], "sol/jupiter");
+    assert_eq!(m["stock_ship"], true);
+    assert_eq!(m["park"]["set_by"], "radiation_belts", "{}", m["park"]);
+    assert!(m["moons"].as_array().unwrap().len() >= 4);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "hazard_map", "fixture": "solar-system", "body": "sol/sun",
+            "line": "poles",
+            "ship": {"name": "probe", "delta_v_m_s": 30000.0, "shield_kg_m2": 100.0, "max_k": 1644.0,
+                     "absorbed_over_emitted": 1.0, "faces": "shield", "length_m": 3.0}}),
+    );
+    assert_eq!(r["type"], "hazard_maps", "{r}");
+    assert_eq!(r["maps"][0]["dive"]["set_by"], "heat");
+    assert_eq!(r["maps"][0]["line"], "poles");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "hazard_map", "fixture": "solar-system", "body": "jupiter", "line": "sideways"}),
+    );
+    assert_eq!(r["type"], "error", "{r}");
+    assert!(
+        r["message"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("equator, poles"),
+        "{r}"
+    );
+}
