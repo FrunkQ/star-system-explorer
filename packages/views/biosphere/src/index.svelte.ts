@@ -8,9 +8,9 @@ import Biosphere from "./Biosphere.svelte";
  * axis with production, the food web by feeding level, traits, what a scan
  * would show at each tier, the dials results lean on, and story hooks. Every
  * reason comes in three lenses (physics, ecology, history). The Board shows
- * the pipeline that worked it out as a flow (U7 part 2). Until adopted
- * systems carry habitat graphs, the kernel's example worlds stand in, and the
- * view says so.
+ * the pipeline that worked it out as a flow (U7 part 2). A world picked on
+ * the chart is read from its own conditions (kernel L3); the example worlds
+ * show when nothing is picked or the GM asks for one.
  */
 export const biosphere: ViewModule = {
   id: "sse.view.biosphere",
@@ -18,7 +18,7 @@ export const biosphere: ViewModule = {
   tiers: ["text", "canvas"],
   inputs: [{ event_kinds: ["authored.set", "adopt.v3", "adopt.formation", "time.aged"] }],
   params: [
-    { name: "example", type: "enum", default: "earth", options: ["earth", "earth-archean", "europa", "red-dwarf-desert", "dead-earth"], meaning: "The example world shown when the selected body has no biosphere in the kernel yet.", promoted: true },
+    { name: "example", type: "enum", default: "earth", options: ["earth", "earth-archean", "europa", "red-dwarf-desert", "dead-earth"], meaning: "The example world shown when no world is picked, or when the GM picks one over the chart's world.", promoted: true },
     { name: "show", type: "enum", default: "story", options: ["story", "board"], meaning: "What it opens on: the story (timeline, food web, scan) or the board (the LifeFlow: the life pipeline as a flow of stages)." },
     { name: "lens", type: "enum", default: "ecology", options: ["physics", "ecology", "history"], meaning: "The lens reasons are told in first: the physics behind it, what the living world did, or where it sits in the world's history." },
   ],

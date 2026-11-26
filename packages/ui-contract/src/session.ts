@@ -188,9 +188,9 @@ export interface ViewSession {
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
   importChronicle(doc: Json): Promise<{ ok: true; state_hash: string; events: number; stack_matches: boolean } | { ok: false; code: string; message: string }>;
-  /** One world's life (U7, kernel `life_view`): a body once systems carry habitat graphs, or one of the example fixtures. GM only. */
+  /** One world's life (U7, kernel `life_view`): a body of any system on the chart (L3, with `held`: what was held at today's value), or one of the example fixtures. GM only. */
   /** A world's life; with `dials`, a read-only what-if under other dial values (the kernel changes nothing). */
-  lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
+  lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView; held?: string[] } | { ok: false; code: string; message: string }>;
   /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
   orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
   /**
@@ -1124,10 +1124,10 @@ export class Session implements ViewSession {
     return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebGalaxies }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  async lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {
+  async lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView; held?: string[] } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads a world's whole biosphere; players see it through data views" };
     const r = await this.#call({ op: "life_view", ...(by.body !== undefined ? { body: by.body } : {}), ...(by.fixture !== undefined ? { fixture: by.fixture } : {}), ...(by.dials !== undefined ? { dials: by.dials } : {}) });
-    return r.type === "life_viewed" ? { ok: true, source: String(r.source), view: (r as unknown as { view: LifeView }).view } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    return r.type === "life_viewed" ? { ok: true, source: String(r.source), view: (r as unknown as { view: LifeView }).view, ...((r as unknown as { held?: string[] }).held ? { held: (r as unknown as { held: string[] }).held } : {}) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
