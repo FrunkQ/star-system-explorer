@@ -1123,6 +1123,9 @@
     left: 50%;
     transform: translateX(-50%);
     bottom: 64px;
+    /* Over the note: in True the note can run to more lines than the gap below the bar, and it must never cover
+       the way back out of a close-up. */
+    z-index: 2;
     display: flex;
     gap: 10px;
     align-items: center;
