@@ -53,6 +53,13 @@ pub struct ShadowLight {
     /// the middle of those heights, before the spreading.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub transmission_550: Option<f64>,
+    /// How bright that light is: its luminance at the middle of the shadow as
+    /// a share of the star's own light there with nothing in the way. Each
+    /// point of the limb passes `T` of the star's light and spreads it over
+    /// the star's image behind it (a disc of radius s·D, s the star's angular
+    /// radius); the middle gathers every height whose image covers it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub share: Option<f64>,
     pub why: Vec<String>,
     pub stand_ins: Vec<String>,
     pub references: Vec<Reference>,
@@ -118,6 +125,7 @@ pub fn shadow_light(
         star_colour: star_colour.clone(),
         heights_m: None,
         transmission_550: None,
+        share: None,
         why: vec![why],
         stand_ins,
         references,
@@ -153,6 +161,10 @@ pub fn shadow_light(
     let d = ask.distance_m;
     let dh = h_scale / STEPS_PER_H as f64;
     let mut total = vec![0.0; wl.len()];
+    // The same light by what reaches the middle: each height's ring of limb
+    // (2πr dh) spread over the star's image (π (s d)²) behind it.
+    let mut gathered = vec![0.0; wl.len()];
+    let spot = s_star * s_star * d * d;
     let (mut lo, mut hi) = (f64::INFINITY, 0.0_f64);
     let mut green_at: Vec<f64> = Vec::new();
     for i in 0..STEPS_PER_H * SCALE_HEIGHTS {
@@ -193,7 +205,9 @@ pub fn shadow_light(
             gas::pass(&passage, &optics_rows, &wl, &star_light, sheet)?.light_out
         };
         for (k, t) in total.iter_mut().enumerate() {
-            *t += through[k] * m::exp(-sigma[k] * column) * phi * dh;
+            let passed = through[k] * m::exp(-sigma[k] * column);
+            *t += passed * phi * dh;
+            gathered[k] += passed * 2.0 * r * dh / spot;
         }
         lo = lo.min(h);
         hi = hi.max(h);
@@ -214,6 +228,7 @@ pub fn shadow_light(
     }
     let c = colour::colour_of(eye, &total)?;
     let t550 = green_at[green_at.len() / 2];
+    let share = colour::colour_of(eye, &gathered)?.xyz[1] / star_colour.xyz[1];
     let why = vec![
         format!(
             "Starlight skimming the air {:.1} to {:.1} km above the ground is bent by about {:.2}° and reaches the middle of the shadow {:.0} km behind.",
@@ -227,6 +242,11 @@ pub fn shadow_light(
             t550 * 100.0,
             c.hex
         ),
+        format!(
+            "It is about {:.1} magnitudes fainter than the star's full light ({:.1e} of it): every height whose image of the star covers the middle adds its share.",
+            -2.5 * m::log10(share.max(1e-30)),
+            share
+        ),
     ];
     references.extend(colour::references(eye));
     Ok(ShadowLight {
@@ -236,6 +256,7 @@ pub fn shadow_light(
         star_colour,
         heights_m: Some([lo, hi]),
         transmission_550: Some(t550),
+        share: Some(share),
         why,
         stand_ins,
         references,

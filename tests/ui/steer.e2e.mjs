@@ -7,7 +7,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { desk } from "./nav.mjs";
+import { desk, go } from "./nav.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -33,7 +33,7 @@ try {
   await gm.goto(base + "#chart");
   await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
   await desk(gm, "Run");
-  await gm.getByRole("button", { name: "Switchboard" }).first().click();
+  await go(gm, "switchboard"); // On Run the rail is folded into the view controls (three desks design 3.1).
   await gm.locator("[data-go-on-air]").click();
   const link = await gm.locator("[data-switchboard] [data-players-link]").getAttribute("data-players-link");
   const wall = await context.newPage();
