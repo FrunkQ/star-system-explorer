@@ -7,6 +7,7 @@
 // defaults, and its link form. The plan and the camera made from it are in journey.ts. Presentation only: none of
 // this reaches the kernel or the state hash.
 import { placeRank, type Place, type PlaceScale } from "./place.ts";
+import { constant } from "./sheet.ts";
 
 export const APPROACH_SCHEMA = "sse.approach/1";
 
@@ -31,8 +32,8 @@ export interface RungInfo {
   held?: string;
 }
 
-const PC = 3.0857e16;
-const AU = 1.495978707e11;
+const PC = constant("pc");
+const AU = constant("au");
 
 /**
  * Why Local stars is held. The conserved budget chain (accepted 26 Nov 2026, its section 13) redraws every star
