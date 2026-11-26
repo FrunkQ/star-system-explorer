@@ -257,9 +257,53 @@ Alex's "10000 asteroids and hundreds of trojans" is the 10 km stop. RW2 measures
 
 **Motion and its honest limit.** A catalogue orbit is true at its date. Moved forward as a plain ellipse it stays good for decades and drifts over centuries as the planets tug it. The view says "as catalogued" near the date and "plausible" far from it. Over millions of years the real small bodies are today's snapshot and their past is the reconstructed history the chain note already plans for imported systems (CC12).
 
-### 6.2 Other real systems
+### 6.2 Backfill: a probable system round a real star
 
-A real star with known planets gets them as pins in its formation request; formation fills the rest and tags it fill. This is the route X3b built for Traveller worlds ("codes win, impossible values marked with reasons"). No new mechanism.
+Alex, 26 Nov 17:53: "did you see how SSE3 imports stars/planets and adds plausible planets (the default option)... we have the mechanism to 'backfill' detail on a probable star system for a star of a particular age/type. So just reuse that machinery."
+
+I had read V3's importer only as far as its file list. Read properly, on 26 Nov, V3 does this in `generation/infill.ts` (`infillSystem`), and every V3 importer calls it (real sky, file import, Traveller):
+
+- **The star is pinned.** The generator is seeded with the real star's measured mass, radius, temperature and luminosity, so its habitable zone, snow line and planet slots follow from the real star.
+- **Confirmed planets are anchors.** They are never moved or removed. A generated planet that lands within 3.5 mutual Hill radii of an anchor is dropped.
+- **It is deterministic.** The seed comes from the system's own catalogue name, so "one person's Polaris is everyone's Polaris".
+- **It is honest.** Every generated body is tagged `origin/generated`; a measured one is not.
+- **It is the default**, with the GM's generation dials and an age beside it, and a hard planet count for Traveller.
+
+SSE4 has the same machinery in a stronger form and this track adds none: formation grown `from_star` with pins (F9 `pins::solve`; the Traveller pack's X3b already grows a whole system round one pinned world this way), and the reconstructed history for imported systems (CC12). So:
+
+- **Backfill is on by default at import**, as in V3. The preview says how many measured worlds each system has and that the rest will be filled. A GM can import "measured only".
+- A real star is a pinned star: its measured facts seed formation. Its age and metal content come from the catalogue where measured, and otherwise from the ring at its place.
+- Known planets are formation pins. Formation runs round them and they do not move. What V3 did with a Hill-radius cut after the event, formation does by building round the pins.
+- The seed is the star's catalogue id and the pack versions, so every device fills the same star the same way.
+- Every filled body carries the evidence grade "fill" and every measured one "catalogued", as already ruled.
+- Backfill waits for a visit. Importing a thousand stars forms no systems; opening one does ("best calc is no calc"). The result is then kept.
+- The same backfill serves a real small-body list (the seeded tail below the catalogue's limit, section 6), a Traveller world, and a hand-built system. It is one routine with pins, as V3 made it one routine.
+
+The difference from V3 worth keeping: V3 draws planets from tables for a star type. SSE4 forms them, so a filled world has a history and its share of the star's birth budget, and the conserved chain holds for filled and measured bodies alike.
+
+### 6.3 Every step is a block chain
+
+Alex, 26 Nov 17:53: "These all should be block chains in the physics." This is the standing rule of 19 Nov (new physics goes into editable, cited flows of small blocks, each with a view), and it applies to every sum this track adds. None of them may hide in an importer's code. Each is a flow in a pack, cited, editable on the Build desk, with the usual "how this was worked out" on the card.
+
+| Flow | From | To |
+|---|---|---|
+| A star's mass | measured brightness, colour and distance | mass, with its grade |
+| A star's age and metals where unmeasured | its place, speed and kind | an age and six element groups from the ring's history there |
+| A star's orbit | position, proper motion, line-of-sight speed | the closed-form orbit in the galaxy |
+| A missing line-of-sight speed | the measured sideways speed and the ring's spread of speeds | a drawn value, graded fill |
+| A small body's size | brightness and albedo | diameter |
+| A missing albedo | its type, family or region | albedo, graded estimate |
+| A small body's mass | diameter and makeup | mass by element group |
+| A catalogue's completeness | size and distance | the share of what exists that it holds |
+| Thinning | completeness and a seeded count | which fill survives beside the catalogue |
+| The best-fit slot | an entry and the seeded slots near it | the slot it claims |
+| Backfill | pinned star, pinned worlds, the ring's stock | a formed system round the pins (the formation flow, unchanged) |
+| The Expected stop | size, makeup and self-gravity | "round" or not |
+| The census | a system's ranked lists | counts and masses by group and size step |
+
+Two consequences. A GM or a pack author can change any of them (a different mass relation for red dwarfs, a different albedo for a class of asteroid) without touching code, and the change shows in the stack hash like any other physics. And the importer itself shrinks to reading a file and handing rows to flows, which is what keeps it general.
+
+Reading a catalogue file and drawing a million points are not physics and stay as code: the reader is "never invent", and the shader's orbit sum is a registered display stand-in.
 
 ---
 
@@ -395,6 +439,7 @@ Each is sized for one agent. "Now" means nothing blocks it. The star half waits 
 | **RW1** | Read every catalogue's terms, size and count at its source (through the browser on Alex's PC; papers after 1 Dec). Replace every **[unverified]** in this note. A terms table in `docs/citations.md` | now | citations thread |
 | **RW2** | Measure, merge nothing: the real size lists and counts per stop; points a phone and AC-ProArt can draw moving; the cost of a pin and of a table row; a 50 pc tracked set. Output: the set points and ceilings | now; Alex's PC for the GPU | quality tiers, with small bodies |
 | **RW3** | The catalogue format `sse.catalogue/1` and its reader crate: entries in size order with a range index, frame, anchor, date, completeness, grades, terms. "Never invent." Contract types. Tests: a prefix read never touches the rest of the file | now | kernel |
+| **RW3b** | The estimating flows as blocks in a pack (section 6.3): star mass, small-body size, albedo and mass, completeness, thinning, the round test. Cited, each with its view; nothing estimated in importer code | RW3 | data sheet, with the kernel |
 | **RW4** | Populations: the table read (`population`: a block of ranks as columns) for seeded belts, clouds, rings and moons, and for catalogued ones through RW3, joined with thinning. Own golden area | RW3 | small bodies, with the kernel |
 | **RW5** | The Detail control: `ViewControls.detail`, stops as data, the ceiling from the probe, per-device memory, the always-shown rule, the readout in the level's own measure. System level first | RW2, RW4 | chart room, with quality tiers |
 | **RW6** | Drawing a crowd: columns to the GPU, orbits in the shader, a press resolves one member, on the system chart, System 3D and True; the phone and text paths. Retires the four-member stand-in (SB-sample) | RW4, RW5 | small bodies, with the renderer |
@@ -404,11 +449,13 @@ Each is sized for one agent. "Now" means nothing blocks it. The star half waits 
 | **RW10** | The census: op `census`, the "Against the Solar System" card, the thousand-seed report and the gap list | RW4, RW7 | proven core |
 | **RW11** | Claims in the star field: a pin from outside with measured mass, place and velocity; best-fit slot in the count tree; thinning by completeness; the block overdraft rule; the three tests. Core golden | GZ13, CC6, RW3 | kernel (core lane) |
 | **RW12** | The real sky pack: the home wish, the galaxy's measured claims, the measured arms, the Sun's slot, the date, the named neighbours as claims; the shipped bright and named stars. The start sheet's Solar System door opens it | GZ12, RW11, the Local Arm fix, RW1 | galaxy charts and histories, with the kernel |
-| **RW13** | Star sources: CNS5, doubles, known planets, names, the live route, reusing V3's importer logic through the converter module; planets as formation pins | RW8, RW11 | converter thread |
+| **RW13** | Star sources: CNS5, doubles, known planets, names, the live route, reusing V3's importer logic through the converter module; known planets as formation pins (F9) and backfill on by default, formed on a visit (section 6.2) | RW8, RW11 | converter thread, proven core |
 | **RW14** | The import action: centre, radius, preview, apply; any anchor in any galaxy; the Traveller sector as a catalogue | RW11, RW13 | galaxy charts and histories, Traveller |
 | **RW15** | Detail on the other levels: Local stars, Galaxies nearby, the web, a world's moons and rings. The night sky's star budgets move under it | RW5, GZ7 | each view's owner |
 
 First four to open: RW1, RW2, RW3, then RW7. RW4 to RW6 give Alex the slider on generated systems before any real data arrives, and RW7 then makes the Solar System fill it.
+
+**Flows, not code.** Every sum in sections 3, 6 and 7 is a block flow (section 6.3). A package that estimates anything in Rust or TypeScript lists it under "Candidates to move into flows" in `docs/fudges.md`, as the standing rule asks.
 
 **Fudges this track registers:** estimated sizes and masses from brightness; plain-ellipse motion of catalogue orbits away from their date; orbits worked out in the shader for display; the seeded web round a real galaxy; a line-of-sight speed drawn where none was measured; block-level closure for over-full cells.
 
@@ -432,11 +479,18 @@ Each has my recommendation. Routine choices went to the coordinator and are not 
 12. **Catalogues are placed by an anchor, so the real neighbourhood can be dropped into a fictional galaxy and a fictional star list into the real one.** *Recommend yes;* it costs nothing extra and it is the general form.
 13. **A far-off catalogue star stays a table row until someone looks at it**, instead of becoming a full pin at import. A 100 pc import is then megabytes, not most of a gigabyte. *Recommend yes.*
 
+### 12A. Alex's steers after the first draft, 26 Nov 2026 17:53 UTC
+
+Not answers to the numbered questions, which are still open. Both are taken as rulings and written into sections 6.2 and 6.3.
+
+- **Reuse the backfill machinery; it is the default.** "we have the mechanism to 'backfill' detail on a probable star system for a star of a particular age/type. So just reuse that machinery."
+- **Block chains.** "These all should be block chains in the physics."
+
 ---
 
 ## 13. What I checked, and what I did not
 
-Checked by reading main at 7e01502: the handover, decisions, the chain notes, the night sky, galaxy and grand zoom notes, the status files named above, `packs/base-sol` (its bodies, regions and value keys), the store pack `sol-today`, the converter's copy of V3's importer (its file list and the three services it calls), the site Worker's routes, and the roster prototype's report. I tried ten catalogue hosts from the cloud and all were refused.
+Checked by reading main at 7e01502: the handover, decisions, the chain notes, the night sky, galaxy and grand zoom notes, the status files named above, `packs/base-sol` (its bodies, regions and value keys), the store pack `sol-today`, the converter's copy of V3's importer (its file list and the three services it calls) and, after Alex's 17:53 message, V3's own `import/realsky/fillout.ts` and `generation/infill.ts`, the site Worker's routes, and the roster prototype's report. I tried ten catalogue hosts from the cloud and all were refused.
 
 Not done: I ran no code and measured nothing. I did not read the Local Arm branch. I searched the formation and small-body crates for words (trojan, family, Kirkwood and so on) and did not read how each structure is made, so section 2.4 says what the code mentions, not how well it does it. I did not see GZ12's pull request. Every figure marked unverified is from memory.
 

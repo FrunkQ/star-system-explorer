@@ -9,6 +9,8 @@ It builds on, and does not replace: the night sky note's section 8 and stage Y8 
 
 Nothing is built. RW is a code only, never shown in the product.
 
+**Alex's steers, 26 Nov 17:53 UTC (rulings, note 12A):** reuse the existing backfill machinery for a probable system round a real star, on by default (V3's `infillSystem`; in SSE4, formation `from_star` with F9 pins); every sum this track adds is a block chain in the physics, not importer code.
+
 **Order.** The system half (RW3 to RW7, RW9, RW10) is inside a system and can start once accepted. The star half (RW11 to RW14) waits for GZ13 and CC6.
 
 **Known before any build:** the cloud build machine cannot reach any catalogue host (JPL, the Minor Planet Center, CDS, the NASA Exoplanet Archive, ESA, Codeberg; tried 26 Nov), so catalogue files are built on Alex's PC. Every figure marked unverified in the note is from memory until RW1.
@@ -19,6 +21,7 @@ Nothing is built. RW is a code only, never shown in the product.
 | RW1 read every catalogue's terms, size and count at source; replace the unverified figures; a terms table in `docs/citations.md` | proposed | citations |
 | RW2 measure, merge nothing: real size lists and counts per stop, moving points a phone and AC-ProArt can draw, the cost of a pin and of a table row, a 50 pc tracked set; gives the set points and ceilings | proposed | quality tiers, small bodies |
 | RW3 the catalogue format `sse.catalogue/1` and its reader crate (size order, range index, frame, anchor, date, completeness, grades, terms; never invent) | proposed | kernel |
+| RW3b the estimating flows as blocks in a pack (note 6.3): star mass, small-body size, albedo and mass, completeness, thinning, the round test | proposed, needs RW3 | data sheet, kernel |
 | RW4 populations: the table read (a block of ranks as columns) for seeded and catalogued lists, joined with thinning; own golden area | proposed, needs RW3 | small bodies, kernel |
 | RW5 the Detail control on `ViewControls` (stops as data, ceiling from the probe, per-device memory, the always-shown rule), system level first | proposed, needs RW2, RW4 | chart room, quality tiers |
 | RW6 drawing a crowd: columns to the GPU, orbits in the shader, a press resolves one member; phone and text paths; retires fudge SB-sample | proposed, needs RW4, RW5 | small bodies, renderer |
@@ -28,7 +31,7 @@ Nothing is built. RW is a code only, never shown in the product.
 | RW10 the census: op `census`, the "Against the Solar System" card, the thousand-seed report and the gap list | proposed, needs RW4, RW7 | proven core |
 | RW11 claims in the star field: a pin from outside, best-fit slot in the count tree, thinning by completeness, the block overdraft rule, three tests. Core golden | proposed, needs GZ13, CC6, RW3 | kernel (core lane) |
 | RW12 the real sky pack: home wish, measured galaxy claims, arms, the Sun's slot, the date, named neighbours, shipped bright and named stars; the start sheet's Solar System door opens it | proposed, needs GZ12, RW11, the Local Arm fix, RW1 | galaxy charts and histories, kernel |
-| RW13 star sources: CNS5, doubles, known planets, names, the live route, reusing V3's importer through the converter module; planets as formation pins | proposed, needs RW8, RW11 | converter |
+| RW13 star sources: CNS5, doubles, known planets, names, the live route, reusing V3's importer through the converter module; known planets as formation pins (F9), backfill on by default and formed on a visit (note 6.2) | proposed, needs RW8, RW11 | converter |
 | RW14 the import action: centre, radius, preview, apply; any anchor in any galaxy; a Traveller sector as a catalogue | proposed, needs RW11, RW13 | galaxy charts and histories, Traveller |
 | RW15 Detail on the other levels (Local stars, Galaxies nearby, the web, a world's moons and rings); the night sky's star budgets move under it | proposed, needs RW5, GZ7 | each view's owner |
 
