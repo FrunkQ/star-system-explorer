@@ -642,7 +642,9 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-atoms",
  "sse-core",
+ "sse-flow",
 ]
 
 [[package]]
@@ -687,6 +689,7 @@ dependencies = [
  "sse-field",
  "sse-flow",
  "sse-formation",
+ "sse-hazard",
  "sse-import-v3",
  "sse-life",
  "sse-light",
@@ -786,6 +789,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-light",
+ "sse-reference",
 ]
 
 [[package]]

@@ -66,7 +66,7 @@ export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
 export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
 export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
-export { bracket, cellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
+export { bracket, cellOf, drawnCellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, plateCellAngle, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
 export type { FieldName, Frame, FrameEvent, LayerSpec, RawFrames, TimeLapse } from "./timelapse.ts";
 export { addLayers, CLOUD_G, cloudReflectance, HAZE_G, liveSystems, narrateWeather, readWeather, slabReflectance, stormAt, WEATHER_REFS, weatherAt, withWeather } from "./weather.ts";
 export type { WeatherCell, WeatherLayer, WeatherMap, WeatherSystem, WeatherTile } from "./weather.ts";

@@ -1,6 +1,6 @@
 // Roll call (track SH2) in a real browser, against the built shell (scripts/build-shell.sh first). The "Sol today"
-// folder is served from store-packs/sol-today as the front door's `?spaceflight=` folder would be on Explorers: Roll
-// call is on the rail, opens on a day with people up, takes a typed date, steps by day and by event, says an empty day
+// folder is served from store-packs/sol-today as the front door's `?spaceflight=` folder would be on Explorers: the
+// address opens the Solar System in Roll call, which is on the rail too, opens on a day with people up, takes a typed date, steps by day and by event, says an empty day
 // in words, and fits a phone. No figure from a book is pinned here: only that the page agrees with the look-up.
 // Usage: node tests/ui/rollcall.e2e.mjs [chromium firefox] [--screens DIR]   (SSE_SHOTS=<dir> for screenshots)
 import { spawn } from "node:child_process";
@@ -42,29 +42,38 @@ try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: shots ? 2 : 1 });
     page.on("pageerror", (e) => errors.push(e.message));
     await servePack(page);
-    await page.goto(`http://localhost:${port}/?spaceflight=/sol-today/#chart`);
+    await page.goto(`http://localhost:${port}/?spaceflight=/sol-today/`);
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
-    const startSkip = page.locator("[data-start-skip], .start [data-skip]").first();
-    if (await startSkip.isVisible().catch(() => false)) await startSkip.click();
 
-    // On the rail, under Travel, because the folder gives crews.
-    const entry = page.locator('.rail [data-go="rollcall"]').first();
-    await entry.waitFor();
-    await entry.click();
+    // The front door (SH8 part 1): the folder's address opens the Solar System in Roll call, no start sheet, no click.
+    // Roll call is on the rail under Travel as well.
     const panel = page.locator("[data-rollcall]");
-    await panel.waitFor();
+    await panel.waitFor({ timeout: 60000 });
+    await page.locator('.rail [data-go="rollcall"]').first().waitFor();
+    await page.getByText("The Solar System").first().waitFor({ timeout: 60000 });
 
     // It opens on the pack's latest day, which has people up.
     const sentence = panel.locator("[data-rollcall-sentence]");
     await page.waitForFunction(() => /in space, aboard/.test(document.querySelector("[data-rollcall-sentence]")?.textContent ?? ""));
     assert.ok((await panel.locator("[data-rollcall-person]").count()) > 0, "people listed");
 
+    // The count (SH3): a stepped line over the pack's span; pressing it goes to that day; losses are hollow marks.
+    const strip = panel.locator("[data-rollcall-strip] svg");
+    await strip.waitFor();
+    const before = await panel.locator("[data-rollcall-date]").textContent();
+    const box = await strip.boundingBox();
+    await page.mouse.click(box.x + box.width * 0.2, box.y + box.height / 2);
+    await page.waitForFunction((b) => document.querySelector("[data-rollcall-date]")?.textContent !== b, before);
+    assert.match(await panel.locator("[data-rollcall-strip-read]").textContent(), /people in space|person in space/i);
+
     // Type a date: the title takes it, and the roster is that day's.
     const typeDate = async (text) => {
       await panel.locator("[data-rollcall-date]").click();
       await panel.locator("[data-rollcall-type]").fill(text);
       await panel.locator("[data-rollcall-type]").press("Enter");
-      await page.waitForFunction((t) => document.querySelector("[data-rollcall-date]")?.textContent?.trim() === t, text);
+      await page.waitForFunction((t) => document.querySelector("[data-rollcall-date]")?.textContent?.trim() === t, text, { timeout: 30000 }).catch(async (e) => {
+        throw new Error(`typed "${text}", the title says "${await panel.locator("[data-rollcall-date], [data-rollcall-type]").first().evaluate((el) => el.textContent || el.value)}"; alert: ${await panel.getByRole("alert").textContent().catch(() => "none")}`, { cause: e });
+      });
     };
     await typeDate("20 July 1969");
     await page.waitForFunction(() => document.querySelectorAll("[data-rollcall-person]").length > 0 && !!document.querySelector("[data-rollcall-place]"));

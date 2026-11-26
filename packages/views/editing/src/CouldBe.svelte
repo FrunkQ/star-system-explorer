@@ -15,6 +15,7 @@
     results,
     cls,
     depth,
+    label,
     commit,
   }: {
     ctx: ViewContext;
@@ -24,10 +25,19 @@
     results: Record<string, Json>;
     cls: string;
     depth: Depth;
+    /** The world's name, for the Curious sentence ("Mars could have a field of its own"). */
+    label: string;
     commit: (h: Handle, si: number, how: { source: "computed" }, shown?: string) => Promise<string | null>;
   } = $props();
 
-  const offered = $derived(couldBeNow(results));
+  // A suggestion the GM stopped for this world stays stopped, with the campaign (ED10 part 2): suggest, never nag.
+  const quietKey = (c: CouldBe) => `${address}#${c.id}`;
+  const offered = $derived(couldBeNow(results).filter((c) => !(ctx.workspace.could_quiet ?? []).includes(quietKey(c))));
+  function quiet(c: CouldBe) {
+    ctx.workspace.could_quiet = [...(ctx.workspace.could_quiet ?? []), quietKey(c)];
+    open = null;
+    steps = null;
+  }
   let open = $state<CouldBe | null>(null);
   let steps = $state.raw<RecipeStep[] | null>(null);
   let working = $state(false);
@@ -55,9 +65,9 @@
 
 {#if offered.length}
   <div class="could" data-could-be>
-    <span class="lead">Could be</span>
+    {#if depth === "curious"}<span class="lead">{label} could</span>{:else}<span class="lead">Could be</span>{/if}
     {#each offered as c, i (c.id)}
-      {#if i}<span class="dot" aria-hidden="true">·</span>{/if}
+      {#if i}<span class="dot" aria-hidden="true">{depth === "curious" ? (i === offered.length - 1 ? "or" : ",") : "·"}</span>{/if}
       <button type="button" class="opt" class:open={open?.id === c.id} aria-expanded={open?.id === c.id} data-could={c.id} onclick={() => show(c)}>{c.label}</button>
     {/each}
   </div>
@@ -74,11 +84,25 @@
         {/each}
       {:else if steps}<p>Nothing within eight times any of its handles would {open.label}.</p>{/if}
       {#if said}<p class="problem">{said}</p>{/if}
+      {#if !working}<p class="quiet"><button type="button" class="link" data-could-quiet={open.id} onclick={() => quiet(open!)}>Stop suggesting this for {label}</button></p>{/if}
     </div>
   {/if}
 {/if}
 
 <style>
+  .quiet {
+    margin: 4px 0 0;
+  }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--sse-ink-muted);
+    font: inherit;
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   .could {
     display: flex;
     flex-wrap: wrap;

@@ -610,6 +610,19 @@
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
+  /* A page in a narrow box (a part beside a chart, a phone): one column, the figures under their labels. */
+  @container atlas (max-width: 460px) {
+    .atlas-page {
+      padding: 16px 12px 14px;
+    }
+    h1 {
+      font-size: 28px;
+      overflow-wrap: anywhere;
+    }
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
   /*
     Black and white (atlas design 14A note 7): a true toner-friendly form under any ancestor marked .ink-bw, not a
     grey copy of the colours. The shell's toner tokens give the white ground and black ink (the view names no

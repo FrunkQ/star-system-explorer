@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Jupiter",
+  "camera": "about 10,000 km over the Great Red Spot",
+  "date": "2017-07-10",
+  "needs": [
+    "CU1 close-up over a giant",
+    "the giant bands' storms"
+  ]
+}

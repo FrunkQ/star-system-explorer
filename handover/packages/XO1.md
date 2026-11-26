@@ -7,7 +7,7 @@ Track XO (exotic objects), design `handover/design/SSE4-exotic-objects-design.md
 Adding any block to the base registry changes `tests/golden/contract.jsonl` (the constants reach report lists every block), so XO1 is split:
 
 - **Part 1 (this pull request): the bend table.** No existing golden changes; one new golden file.
-- **Part 2 (golden lane, waits for its turn with the coordinator): the nine gravity blocks** below. Their file, `packs/base-physics/formulas/gravity.json`, and their tests, `crates/sse-gravity/src/blocks_tests.rs`, are kept ready in `handover/packages/XO1-part2/` (copied into place by part 2, then that folder is deleted). Part 2 also needs: `"gravity"` in `crates/sse-atoms/src/formulas.rs` FILES, sixteen kinds in `KIND_DESCRIPTIONS` (listed in `XO1-part2/kinds.txt`), the first-wave count 122 to 131 in `sse-atoms/src/tests.rs`, `SSE_BLESS=1 cargo test -p sse-atoms`, the kernel fixture copy, the contract golden, and `sse-atoms`, `sse-flow` as dev-dependencies of `sse-gravity` with `mod blocks_tests;`.
+- **Part 2 (landed with XO18 part 2, in the golden lane): the nine gravity blocks** below, in `packs/base-physics/formulas/gravity.json`, their tests in `crates/sse-gravity/src/blocks_tests.rs`; sixteen kinds in `sse-atoms` `KIND_DESCRIPTIONS`; first-wave count 122 to 131 (132 with `sse.belts.latitude_falloff`). Golden: `tests/golden/contract.jsonl` changes on purpose: the base-physics stack hash (new blocks) and the constants reach report, which lists every block.
 
 ## What was done
 

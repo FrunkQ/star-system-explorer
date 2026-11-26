@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 142,
+        n, 168,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1377,4 +1377,193 @@ fn redox_blocks_match_the_stage_8_sums() {
     let red = rx::outgassed_mix(-3.0, 1.0, 1.0, 1.0e7, &rx::OUTGAS);
     assert!(ox[1] > ox[0] && ox[3] > ox[2], "{ox:?}");
     assert!(red[0] > red[1] && red[2] > red[3], "{red:?}");
+}
+
+/// K-e: the Mie series against Bohren and Huffman's own worked example
+/// (n = 1.55, x = 5.213: Q_ext = Q_sca = 3.1054), the Rayleigh limit for
+/// small spheres, the extinction paradox (Q_ext → 2) for big ones, a phase
+/// function whose mean over the sphere is 1 and whose mean cosine is g, and
+/// water's primary bow showing as a bump near 138° in a big drop.
+#[test]
+fn mie_scattering_matches_the_textbook() {
+    use crate::mie::mie;
+    let o = mie(5.213, 1.55, 0.0, &[]).unwrap();
+    assert!((o.q_ext - 3.1054).abs() < 2e-3, "{}", o.q_ext);
+    assert!((o.q_sca - o.q_ext).abs() < 1e-9);
+    let x = 0.01;
+    let s = mie(x, 1.5, 0.0, &[]).unwrap();
+    let r = (1.5f64 * 1.5 - 1.0) / (1.5 * 1.5 + 2.0);
+    let rayleigh = 8.0 / 3.0 * x * x * x * x * r * r;
+    assert!(
+        (s.q_sca / rayleigh - 1.0).abs() < 1e-3,
+        "{} {rayleigh}",
+        s.q_sca
+    );
+    assert!(s.g.abs() < 1e-3);
+    let big = mie(2000.0, 1.33, 1e-4, &[]).unwrap();
+    assert!((big.q_ext - 2.0).abs() < 0.02, "{}", big.q_ext);
+    // Normalisation and asymmetry from a fine table.
+    let n = 3601;
+    let angles: Vec<f64> = (0..n).map(|i| m::PI * i as f64 / (n - 1) as f64).collect();
+    let t = mie(5.213, 1.55, 0.0, &angles).unwrap();
+    let (mut norm, mut mean_cos) = (0.0, 0.0);
+    for i in 0..n - 1 {
+        let (a, b) = (angles[i], angles[i + 1]);
+        let w = 0.5 * (m::sin(a) * t.phase[i] + m::sin(b) * t.phase[i + 1]) * (b - a);
+        norm += w;
+        mean_cos += 0.5 * (m::cos(a) + m::cos(b)) * w;
+    }
+    assert!((norm / 2.0 - 1.0).abs() < 1e-3, "{norm}");
+    assert!(
+        (mean_cos / 2.0 - t.g).abs() < 2e-3,
+        "{} {}",
+        mean_cos / 2.0,
+        t.g
+    );
+    // A 100 µm water drop in green light: the bow's bump near 138°.
+    let deg: Vec<f64> = (120..=160).map(|d| d as f64 * m::PI / 180.0).collect();
+    let w = mie(2.0 * m::PI * 1e-4 / 5.5e-7, 1.333, 0.0, &deg).unwrap();
+    let peak = (0..deg.len())
+        .max_by(|&a, &b| w.phase[a].total_cmp(&w.phase[b]))
+        .unwrap()
+        + 120;
+    assert!((136..=141).contains(&peak), "{peak}");
+    assert!(mie(3e4, 1.33, 0.0, &[]).unwrap_err().contains("geometric"));
+}
+
+#[test]
+fn ledger_blocks_match_the_field_sums() {
+    use crate::ledger as lg;
+    let near = |a: f64, b: f64, what: &str| {
+        assert!(
+            (a - b).abs() <= 1e-12 * a.abs().max(b.abs()).max(1e-30),
+            "{what}: {a} against {b}"
+        );
+    };
+    let mu0 = sse_core::sheet::MU0;
+    for (q, g, a, rho, cp, p, d) in [
+        (0.02, 7.0, 1.25e-5, 1.1e4, 840.0, 86164.0, 2.26e6),
+        (5.4, 23.0, 1.0e-5, 1500.0, 14000.0, 35730.0, 5.0e7),
+        (0.0, 7.0, 1.25e-5, 1.1e4, 840.0, 86164.0, 2.26e6),
+    ] {
+        let got = run("sse.dynamo.flow_speed", &[q, g, a, rho, cp, p, d]);
+        let (u, ro) = lg::flow_speed(q, g, a, rho, cp, p, d, lg::FLOW_C, lg::FLOW_B);
+        near(got[0], u, "flow speed");
+        near(got[1], ro, "local Rossby");
+        let got = run("sse.dynamo.reynolds", &[u.max(1e-6), d, 1.0e6]);
+        let (rm, tau) = lg::reynolds(u.max(1e-6), d, 1.0e6, mu0);
+        near(got[0], rm, "Rm");
+        near(got[1], tau, "decay time");
+        near(
+            run("sse.dynamo.onset", &[rm])[0],
+            lg::onset(rm, lg::ONSET_LO, lg::ONSET_HI),
+            "onset",
+        );
+        let got = run("sse.dynamo.rossby", &[p, d, u.max(1e-6)]);
+        let (r, f) = lg::rossby(p, d, u.max(1e-6), lg::ROSSBY_SAT, lg::ROSSBY_SLOPE);
+        near(got[0], r, "Rossby");
+        near(got[1], f, "Rossby factor");
+    }
+    // Earth's core: about a millimetre a second (secular variation, 0.1 to
+    // 1 mm/s), Rm in the hundreds to thousands, a dead core's field gone in
+    // tens of thousands of years, and spin never limiting.
+    let (u, _) = lg::flow_speed(
+        0.02,
+        7.0,
+        1.25e-5,
+        1.1e4,
+        840.0,
+        86164.0,
+        2.26e6,
+        lg::FLOW_C,
+        lg::FLOW_B,
+    );
+    assert!((1e-4..3e-3).contains(&u), "Earth core flow {u} m/s");
+    let (rm, tau) = lg::reynolds(u, 2.26e6, 1.0e6, mu0);
+    assert!((100.0..1e4).contains(&rm), "Earth Rm {rm}");
+    let tau_kyr = tau / sse_core::sheet::YR_JULIAN / 1e3;
+    assert!((10.0..1000.0).contains(&tau_kyr), "decay {tau_kyr} kyr");
+    assert_eq!(lg::onset(rm, lg::ONSET_LO, lg::ONSET_HI), 1.0);
+    assert_eq!(
+        lg::rossby(86164.0, 2.26e6, u, lg::ROSSBY_SAT, lg::ROSSBY_SLOPE).1,
+        1.0
+    );
+    // Salty water: no dynamo.
+    let (rm_sea, _) = lg::reynolds(0.01, 1.0e5, 5.0, mu0);
+    assert_eq!(lg::onset(rm_sea, lg::ONSET_LO, lg::ONSET_HI), 0.0);
+}
+
+#[test]
+fn the_dipole_ratio_constant_is_the_blocks_default() {
+    let reg = registry();
+    let d = reg
+        .get("sse.magnetic.surface_dipole")
+        .expect("block")
+        .decl();
+    let k = d.param("dipole_ratio").expect("param").1.default;
+    assert_eq!(k, crate::magnetic::DIPOLE_RATIO);
+}
+
+/// The inertia blocks give the same C as `inertia`'s sums; Earth's comes
+/// out a few per cent over its measured 0.3307 (no self-compression), the
+/// coreless Moon near a uniform ball's 0.4, a giant at the polytrope's 0.261.
+#[test]
+fn inertia_blocks_match_their_sums() {
+    use crate::inertia as ia;
+    for (q, rc, r) in [
+        (0.325, 3.48e6, 6.371e6),
+        (0.24, 1.83e6, 3.39e6),
+        (0.0, 0.0, 1.7374e6),
+        (0.5, 7.0e6, 6.0e6),
+    ] {
+        let got = run("sse.interior.inertia_two_layer", &[q, rc, r])[0];
+        assert!(
+            (got - ia::two_layer(q, rc, r)).abs() < 1e-12,
+            "{q} {rc} {r}: {got}"
+        );
+    }
+    let earth = ia::two_layer(0.325, 3.48e6, 6.4e6);
+    assert!(earth > 0.3307 && earth < 0.36, "{earth}");
+    assert!((ia::two_layer(0.0, 0.0, 1.7e6) - 0.4).abs() < 1e-12);
+    for z in [0.0, 0.1, 0.25] {
+        let got = run("sse.interior.inertia_giant", &[z])[0];
+        assert!(
+            (got - ia::giant(z, ia::CORE_SHARE)).abs() < 1e-12,
+            "{z}: {got}"
+        );
+    }
+    assert!((ia::giant(0.0, 0.5) - 0.2614).abs() < 1e-4);
+}
+
+#[test]
+fn weathering_blocks_match_their_sums() {
+    use crate::weathering as w;
+    for (t, f, o) in [
+        (3.2e16, 1.0, 1.0),
+        (3.2e15, 1.0, 1.0),
+        (3.2e16, 7.0, 0.0),
+        (0.0, 1.0, 1.0),
+    ] {
+        let got = run("sse.surface.space_weathering", &[t, f, o])[0];
+        let want = w::maturity(t, f, o > 0.5, w::TAU_1AU_S, w::WIND_SHARE);
+        assert!(
+            (got - want).abs() < 1e-12,
+            "{t} {f} {o}: {got} against {want}"
+        );
+    }
+    assert_eq!(
+        w::maturity(0.0, 1.0, true, w::TAU_1AU_S, w::WIND_SHARE),
+        0.0
+    );
+    for m in [0.0, 0.3, 1.0] {
+        let got = run("sse.surface.weathered_reflectance", &[m]);
+        let want = w::factors(m, w::MATURE_OVER_FRESH);
+        for i in 0..3 {
+            assert!((got[i] - want[i]).abs() < 1e-12, "{m}: {got:?}");
+        }
+    }
+    // Fresh ground is exactly unchanged; mature ground is redder.
+    assert_eq!(w::factors(0.0, w::MATURE_OVER_FRESH), [1.0, 1.0, 1.0]);
+    let f = w::factors(1.0, w::MATURE_OVER_FRESH);
+    assert!(f[0] > f[1] && f[1] > f[2]);
 }

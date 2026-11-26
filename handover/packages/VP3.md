@@ -58,8 +58,31 @@ True's ground was a typed palette (packs/base-surface `colours`, ui-contract `sa
 - **Data.** The data sheet holds laboratory spectra of Apollo soils (MP35, PR 512: mature highland 62231, mature, submature and immature mare 10084, 71501, 12030). `renderer/src/ground-rows.json` names which rows each kernel material reads (a fudge row until base-surface names them in the golden lane).
 - **Weathering.** The kernel's space weathering (proven core SW1) gives each bare-ground sample a `maturity`, 0 fresh to 255 mature, only on worlds where space reaches the ground (no air). Mature soil is darker and redder (nanophase iron, Hapke 2001).
 - **Drawing.** `ground-optics.ts` samples each row at 650, 550 and 450 nm, blends fresh to mature in log space by the sample's maturity, and lays the result on the tiles as `ground_rgb` (sRGB). ui-contract `sampleColour` uses it for bare ground, so True, the Body globe, the card and finer and deep tiles all agree. Applied in `readTrueFace`, `views/body/src/surface.ts` and `finer-tiles.ts`.
-- **Dormant until SW1 lands**: a tile with no `maturity` keeps the palette, so Earth and every world with air are unchanged.
+- **On for every world (25 Nov, MATCH1):** the renderer's photo matches found Mercury, Mars, Io, Europa and Pluto all wearing the same typed tan palette. Bare ground now reads the sheet on every world. A tile with no `maturity` is drawn fully mature (fudge row). A row may also be a refractive index n + ik (water ice `h2o` for the kernel's "ice" material), drawn as a thick layer of 50 µm grains by Hapke's slab (`rowBands`, through sheet-optics.ts). Granite has no row yet and keeps the palette. Stains (TRUE4) still move each texel's hue over this base.
+- **What the base alone can't fix (25 Nov dump of the real Sol, base-sol through solBatches):**
+  - Every icy world's tiles are rock: Europa, Ganymede, Callisto, Pluto, Triton and Titan carry no "ice" material and no ice cover. That's the proven core's (kernel, golden lane).
+  - Tile albedo is a flat 300.
+  - Mars and Pluto get no stains until proven core PR 417 hands the catalogued gases to the Orbit atlas (plumes thread).
+  - Io's sulphur has no optics on the sheet.
+  So those worlds come out an honest neutral grey until then, not tan.
 - **Look.** With every sample mature, the sample Sol's Moon goes from beige to a dark neutral grey (mature mare soil about 6 % reflective, highland about 13 %). Screens: `VP-screens/VP3-part5-moon-palette-vs-measured.png`.
+
+## Smooth coarse tiles (25 Nov, MATCH1)
+
+Basin discs had hard pixel edges in True. A coarse tile was laid into a finer face picture in nearest-neighbour blocks (`composeFaces`), and a coarser face was repeated up in blocks in the GPU atlas. Both now spread bilinearly between sample centres. A shore stays the nearest sample's, so there are no half-wet texels. Test: `texture-ladder.test.ts`, "spread smoothly", fails on the old code.
+
+Craters at globe scale are kernel facts down to the fact floor: they come with deeper tiles and are never invented. The sub-floor crater layer (`ground.craters`, the renderer's VP10) and ground roughness (this thread's) both wait on kernel facts (`crater_cover`, `roughness_m`, `grain_m`), so neither is drawn yet.
+
+## Natural outlines (Alex 25 Nov: "they look a bit bitmap"; "reuse on the timelapse")
+
+One shared, deterministic step in `ui-contract/src/globe.ts`. It never changes a fact: at every sample's centre the kernel's own cover shows.
+- `sampleNatural(globe, d)`: the four samples round a point are blended. Each kind (bare ground, ice, liquid) gets its share plus the edge noise, and the largest wins, so coasts and ice edges are smooth contours instead of steps.
+- `softenGround(tile)`: bare ground's colour is averaged over bare neighbours two cells each way (two box passes), laid on as `ground_rgb`. `withGround` runs it for every True and Body read.
+- `edgeNoise(d, cell_rad, seed)`, `naturalEdge(...)` and `naturalDirection(...)`: the pieces underneath, keyed only on direction and seed, never time. The surface time-lapse thread calls them in `renderer/src/timelapse.ts recolour` on its own cells, so frames don't shimmer.
+- Used by the Land map (`views/surface/Surface.svelte`) and True's small equirect pictures (`true-look.ts`).
+- Not yet: the canvas-tier Body globe, whose per-pixel loop is too hot for the noise per frame; it gets softened colour only.
+- Still blocky because the kernel's facts are blocky: the polar ice ends on the climate's latitude band, and some lakes are multi-cell rectangles.
+- Pictures: `VP-screens/VP3-natural-outlines-earth-close.png` and `-map.png`.
 
 ## Code
 

@@ -76,6 +76,7 @@
   import compareDoc from "./documents/compare.gm.json";
   import { POSTCARD_SCREENS } from "./postcards/screens.postcards.svelte.ts";
   import { visit, openOwn, GO_BOOKMARK_EVENT, PASTE_CLIP_EVENT } from "./postcards/visits.svelte.ts";
+  import { loadSets, postcardSets } from "./postcards/sets.svelte.ts";
   import { checkPostcard, looksLikePostcard, readPostcard, postcardBlocker, isPostcard, fixDate } from "../../ui-contract/src/index.ts";
   import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
@@ -96,9 +97,11 @@
   import { MORE_SCREENS } from "./screens.more.ts";
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
+  import { EXOTIC_SCREENS } from "./screens.exotic.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
   import { ATLAS_SCREENS } from "./atlas/screens.atlas.ts";
   import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
+  import { packFolder } from "./rollcall/feed.ts";
   import Bookmarks from "./run/Bookmarks.svelte";
   import OnAir from "./run/OnAir.svelte";
   import { tablePort } from "./run/table-port.ts";
@@ -131,7 +134,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -376,8 +379,9 @@
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
       share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
-      // Grounds on held screens (PC5): the campaign's postcards; the packs' sets join with PC6.
-      share.setGrounds({ bookmarks: () => ws.bookmarks ?? [] });
+      // Grounds on held screens (PC5): the campaign's postcards, and the postcard sets (PC6: the base set, then the stack's).
+      void loadSets(s.stack().base);
+      share.setGrounds({ bookmarks: () => ws.bookmarks ?? [], sets: () => postcardSets.list });
       // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
       if (!reopened) {
         const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
@@ -451,6 +455,7 @@
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
     ws.unit_choices = save.workspace.unit_choices ?? {};
+    ws.could_quiet = save.workspace.could_quiet ?? [];
     ws.party = save.workspace.party ?? null;
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
     ws.playbook = playbookFrom(save.workspace.playbook);
@@ -473,7 +478,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [] })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, could_quiet: ws.could_quiet ?? [], party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [] })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -1198,7 +1203,18 @@
     ws.screen = "system";
     showSystem(SOL);
   }
-  let startOpen = $state(typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
+  // The spaceflight front door (SH8 part 1, spaceflight history design section 7): an address with ?spaceflight=<a
+  // "Sol today" folder> opens the Solar System and lands in Roll call, with no start sheet. A linked place (#...) wins.
+  const spaceflightDoor = packFolder() !== null && typeof location !== "undefined" && !parsePlaceHash(location.hash);
+  let startOpen = $state(!spaceflightDoor && typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
+  let spaceflightOpened = false;
+  $effect(() => {
+    if (!spaceflightDoor || spaceflightOpened || !session) return;
+    spaceflightOpened = true;
+    void openSol().then(() => {
+      if (viewing?.system === SOL) ws.screen = "rollcall";
+    });
+  });
   const keptSave = readStored(`u:${base.universe.id}`).save;
   const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
   /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
@@ -1613,7 +1629,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, ...(minervaHost ? { describe } : {}) }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, adopted: (sys, note, hash) => adopted([...sys], note, hash), ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {

@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band (Composite of near-infrared filters)",
+  "frame": "Jupiter",
+  "camera": "from Earth's place",
+  "tests": "Infrared: high hazes bright, deep clouds dark",
+  "needs": [
+    "haze heights by band (giant bands thread)"
+  ]
+}

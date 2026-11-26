@@ -6,8 +6,9 @@
 // Space weathering darkens and reddens soil (nanophase iron, Hapke 2001): blend in log space, so a mature fraction m
 // gives fresh^(1-m) * mature^m, the same as fresh * (mature/fresh)^m.
 import type { SurfaceTile } from "../../ui-contract/src/index.ts";
-import { SURFACE_MATERIALS as MATERIALS, SURFACE_COVERS as COVERS } from "../../ui-contract/src/index.ts";
+import { softenGround, SURFACE_MATERIALS as MATERIALS, SURFACE_COVERS as COVERS } from "../../ui-contract/src/index.ts";
 import ROWS from "./ground-rows.json" with { type: "json" };
+import { GRAIN_UM, grainAlbedo, indexAt, indexTableOf, layerReflectance } from "./sheet-optics.ts";
 
 type V3 = [number, number, number];
 
@@ -44,6 +45,22 @@ export interface MatterReader {
   readMatter(ask: { table?: string; id?: string }): Promise<{ ok: true; value: unknown } | { ok: false; message: string }>;
 }
 
+/**
+ * A sheet row's reflectance at the three bands: its measured spectrum (`optical.reflectance`) where it has one, else a
+ * thick layer of its grains from its refractive index n + ik (Hapke's equivalent slab, sheet-optics.ts, at the same
+ * grain size the stains use for regolith, GRAIN_UM), or null when it has neither.
+ */
+export function rowBands(row: unknown): V3 | null {
+  const t = (row as { optical?: { reflectance?: ReflectanceTable } } | null)?.optical?.reflectance;
+  if (t?.lambda_nm?.length && t.r?.length === t.lambda_nm.length) return bandsOf(t);
+  const ix = indexTableOf(row);
+  if (!ix) return null;
+  return GROUND_BANDS_NM.map((nm) => {
+    const { n, k } = indexAt(ix, nm);
+    return layerReflectance(grainAlbedo(n, k, nm, GRAIN_UM));
+  }) as V3;
+}
+
 let read: Promise<GroundOptics> | null = null;
 
 /** Every named row's bands, read from the sheet once for the page. A row the sheet lacks is simply left out. */
@@ -55,9 +72,9 @@ export function readGroundOptics(k: MatterReader): Promise<GroundOptics> {
       for (const which of ["fresh", "mature"] as const) {
         const id = ids[which];
         if (!id) continue;
-        const r = await k.readMatter({ table: "mixtures", id });
-        const t = r.ok ? (r.value as { row?: { optical?: { reflectance?: ReflectanceTable } } }).row?.optical?.reflectance : undefined;
-        if (t?.lambda_nm?.length && t.r?.length === t.lambda_nm.length) o[which] = bandsOf(t);
+        const r = await k.readMatter({ id });
+        const b = r.ok ? rowBands((r.value as { row?: unknown }).row) : null;
+        if (b) o[which] = b;
       }
       if (o.fresh || o.mature) out[material] = o;
     }
@@ -91,27 +108,31 @@ export function groundReflectance(o: GroundOptics, material: string, m: number):
 const enc = (v: number) => 255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(Math.max(0, v), 1 / 2.4) - 0.055);
 
 /**
- * The tiles with their measured ground colour laid on (`ground_rgb`, sRGB 0..255): only bare ground on a tile that
- * carries `maturity` (a world where space reaches the ground) and whose material the sheet has a row for. Other
- * tiles come back as they were. The reflectance is the colour's linear value, so True's physical lighting shows the
- * soil as dark as it is.
+ * The tiles with their measured ground colour laid on (`ground_rgb`, sRGB 0..255): bare ground whose material the
+ * sheet has a row for, on every world (MATCH1, 25 Nov: one typed tan palette made Mercury, Mars, Io, Europa and Pluto
+ * alike). A tile that carries `maturity` blends fresh to mature by it; one without (no weathering age from the kernel
+ * yet) is drawn fully mature, as old exposed ground mostly is (fudge register: 'Ground with no weathering age drawn
+ * mature'). Other samples keep the palette. The reflectance is the colour's linear value, so True's physical lighting
+ * shows the soil as dark as it is.
  */
 export function withGround(tiles: readonly SurfaceTile[], o: GroundOptics): SurfaceTile[] {
-  if (!Object.keys(o).length) return tiles.slice();
-  return tiles.map((t) => {
-    if (!t.maturity) return t;
-    const n = t.material.length;
+  // Then softened over its neighbours (natural outlines, ui-contract softenGround), so ground colour has no square patches.
+  if (!Object.keys(o).length) return tiles.map((t) => softenGround(t));
+  return tiles.map((t) => softenGround(withRows(t, o)));
+}
+
+function withRows(t: SurfaceTile, o: GroundOptics): SurfaceTile {
+  const n = t.material.length;
     const rgb = new Float32Array(n * 3).fill(NaN);
     let any = false;
     for (let i = 0; i < n; i++) {
       if ((COVERS[t.cover[i]!] ?? "none") !== "none") continue;
-      const r = groundReflectance(o, MATERIALS[t.material[i]!] ?? "", (t.maturity[i] ?? 255) / 255);
+      const r = groundReflectance(o, MATERIALS[t.material[i]!] ?? "", (t.maturity?.[i] ?? 255) / 255);
       if (!r) continue;
       rgb[i * 3] = enc(r[0]);
       rgb[i * 3 + 1] = enc(r[1]);
       rgb[i * 3 + 2] = enc(r[2]);
       any = true;
     }
-    return any ? { ...t, ground_rgb: rgb } : t;
-  });
+  return any ? { ...t, ground_rgb: rgb } : t;
 }

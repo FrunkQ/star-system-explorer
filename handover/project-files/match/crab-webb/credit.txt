@@ -1,0 +1,9 @@
+Title: The Crab Nebula
+Credit: NASA, ESA, CSA, STScI, T. Temim (Princeton University)
+Date: 
+Source: https://esawebb.org/images/weic2326a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Webb's infrared Crab Nebula, to set beside Hubble's visible one.
+
+About (from the source page):
+The NASA/ESA/CSA James Webb Space Telescope has gazed at the Crab Nebula in the search for answers about the supernova remnant’s origins. Webb’s NIRCam (Near-Infrared Camera) and MIRI (Mid-Infrared Instrument) have revealed new details in infrared light.

@@ -8,11 +8,13 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, makeupOf, PART_WORDS, type MakeupPart, scaleClass, stripDomain, sweepAsk, sweepMarks, atlasPacks, yearsToSeconds, classNamesIn, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
   import Reach from "./Reach.svelte";
   import AirBox from "./AirBox.svelte";
+  import MakeupBox from "./MakeupBox.svelte";
   import Sheet from "./Sheet.svelte";
   import CouldBe from "./CouldBe.svelte";
 
@@ -102,6 +104,64 @@
     return [...refs.filter((r) => !here.some((x) => x.label === r.label)), ...here];
   }
 
+  // The sweep behind the strip (ED2, kernel K1): when a world's Orbit or Mass strip opens on the Build desk, the
+  // kernel runs that input over the strip's range on a scratch branch it throws away, and the strip marks where the
+  // world stops lasting and where a yes-or-no result it can reach flips ("turns freely from here"). Nothing is
+  // written; it runs again only when the value moves.
+  // The class atlas (packs/base-atlas): on the stack, or the one the shell ships. The Mass strip's sweep labels each step
+  // with it, so the strip also marks where the world's class changes; the Makeup box takes its Kinds from it.
+  const stackedAtlas = $derived(atlasPacks(ctx.session.stack().base));
+  let shippedAtlas = $state.raw<unknown[]>([]);
+  $effect(() => {
+    if (stackedAtlas.length || shippedAtlas.length || on !== "world") return;
+    void fetch("packs/base-atlas.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => p && (shippedAtlas = [p]))
+      .catch(() => {});
+  });
+  const atlas = $derived(stackedAtlas.length ? stackedAtlas : shippedAtlas);
+  const classNames = $derived(classNamesIn(atlas, "physical"));
+  // The class regions read every part of the makeup, so only a world with its makeup set gets class marks; a change of
+  // makeup makes the Mass strip's marks stale, so it is part of the sweep's key.
+  const makeupSig = $derived(makeupOf(mine).map((g) => g.share).join(","));
+  const sweepKey = (h: Handle, v: number | null) => `${h.id === "mass" ? makeupSig : ""}§${subject.address}|${h.id}|${v}`;
+  let swept = $state.raw<{ key: string; marks: PartMark[]; why?: string } | null>(null);
+  let sweeping = $state<{ key: string; done: number; total: number } | null>(null);
+  let sweepRunning = $state<string | null>(null);
+  const SWEPT = ["orbit", "mass"];
+  $effect(() => {
+    const id = open;
+    const sys = scene.system;
+    const sweep = ctx.session.sweep?.bind(ctx.session);
+    if (!id || !SWEPT.includes(id) || on !== "world" || !editable || ws.branch || !sys || scene.fixture || !sweep) return;
+    const h = handles.find((x) => x.id === id);
+    const v = h ? handleValue(h, mine) : null;
+    if (!h || v === null || !(v > 0)) return;
+    const key = sweepKey(h, v);
+    const classes = h.id === "mass" && makeupSig && atlas.length ? { packs: atlas, scheme: "physical" } : undefined;
+    // One sweep per value at a time: the kernel names its scratch branch after the body and field, so a second
+    // sweep of the same started before the first ends would share (and lose) its branch.
+    if (swept?.key === key || sweepRunning) return;
+    const d = stripDomain(h, v, untrack(() => dotsFor(h.id)));
+    sweepRunning = key;
+    sweeping = { key, done: 0, total: 0 };
+    void sweep(sweepAsk(h, { system: sys, address: subject.address, at_s: yearsToSeconds(untrack(() => ws.now_yr)) }, d.lo, d.hi, 12, classes), (done, total) => {
+      sweeping = { key, done, total };
+    })
+      .then((r) => (r.ok ? { key, marks: sweepMarks(h, r.result, undefined, classNames) } : { key, marks: [], why: r.message }))
+      // A sweep that throws (its scratch branch gone under it) must not hold the next one back.
+      .catch((e: unknown) => ({ key, marks: [], why: e instanceof Error ? e.message : String(e) }))
+      .then((done) => {
+        sweepRunning = null;
+        sweeping = null;
+        swept = done;
+      });
+  });
+  const sweptFor = (h: Handle) => {
+    const v = handleValue(h, mine);
+    return swept && swept.key === sweepKey(h, v) ? swept.marks : [];
+  };
+
   // The held value's exact answer on a pause (design section 3, point 4): a scratch branch holds a what-if's own edits
   // and the held value, the kernel resolves it (BC1), and the branch goes. What would follow, in the card's own words.
   async function pause(h: Handle, si: number, at?: string): Promise<string | null> {
@@ -127,6 +187,16 @@
       }),
   );
 
+  // The Makeup handle's figure (ED9): its two largest parts, or "Earth's" when none is set (the physics' own default).
+  function makeupWords(f: Record<string, Json>): string {
+    const m = makeupOf(f).filter((g) => g.share > 0).sort((a, b) => b.share - a.share);
+    if (!m.length) return depth === "curious" ? "like Earth" : "Earth's (not set)";
+    return m
+      .slice(0, 2)
+      .map((g) => `${PART_WORDS[g.gas as MakeupPart][depth === "curious" ? "curious" : "science"]} ${say(g.share, "share", { class: cls }, { depth }).text}`)
+      .join(", ");
+  }
+
   // The Air box's mix (ED8): several shares as one change, one Undo; the card then says what followed, as for a handle.
   async function commitMix(edits: { address?: string; field: string; value: number; before: Json }[], display: string, before_display: string, label = "Air", source: string | null = null): Promise<string | null> {
     const system = scene.system;
@@ -138,7 +208,7 @@
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
-    followed = { handle: label === "Air" ? "air" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
+    followed = { handle: label === "Air" ? "air" : label === "Makeup" || label === "Radius" ? "makeup" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
     return null;
   }
 
@@ -177,7 +247,8 @@
   <div class="handles" data-handles={on} role="toolbar" aria-label={editable ? "What you can set" : "What sets this world"}>
     {#each handles as h (h.id)}
       {@const fig = handleFigure(h, mine, cls, { depth, reading: pick(h) })}
-      {@const waits = h.part.scale === "bar"}
+      {@const waits = h.part.scale === "bar" && h.id !== "makeup"}
+      {@const built = h.id === "makeup" ? makeupWords(mine) : null}
       <button
         type="button"
         class="handle"
@@ -193,7 +264,7 @@
         }}
       >
         <span class="label">{depth === "curious" ? h.names.curious : h.names.science}</span>
-        <span class="value">{#if fig}{fig.main.text}{#if fig.also}, {fig.also.text}{/if}{:else if waits}soon{:else}not set{/if}</span>
+        <span class="value">{#if built}{built}{:else if fig}{fig.main.text}{#if fig.also}, {fig.also.text}{/if}{:else if waits}soon{:else}not set{/if}</span>
       </button>
     {/each}
     {#if editable}
@@ -203,7 +274,7 @@
     {/if}
   </div>
   {#if on === "world" && editable && !ws.branch && scene.system}
-    <CouldBe {ctx} system={scene.system} address={subject.address} facts={mine} results={resultsOf(surfaces, subject.address)} {cls} {depth} commit={(h, si, how, shown) => commit(h, si, how, shown)} />
+    <CouldBe {ctx} system={scene.system} address={subject.address} facts={mine} results={resultsOf(surfaces, subject.address)} {cls} {depth} label={subject.label} commit={(h, si, how, shown) => commit(h, si, how, shown)} />
   {/if}
   <!-- On a phone the open strip docks across the full width above the time ruler, with the verdict over it (design
        section 15, "Phone"). -->
@@ -213,16 +284,22 @@
   {:else if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
-      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} {commit} {pause} onclose={() => (open = null)} />
+      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} swept={sweptFor(h)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
-      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
+      {#if h.id === "makeup"}
+        <MakeupBox {ctx} {atlas} at_s={yearsToSeconds(ws.now_yr)} handle={h} system={scene.system} address={subject.address} facts={mine} {cls} {depth} {editable} onbranch={!!ws.branch} {commitMix} />
+      {:else}
+      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} marks={sweptFor(h)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
       {#if h.id === "air" && h.on === "world"}
         <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {sol} {commitMix} />
+      {/if}
       {/if}
       {#if h.reach?.length && editable && !ws.branch && scene.system && handleValue(h, mine) !== null}
         <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
       {/if}
     {/if}
+    {#if sweeping && sweeping.key.endsWith(`|${open}|${handleValue(h, mine)}`)}<p class="sweeping" role="status" data-sweeping>Running {h.names[depth === "curious" ? "curious" : "science"].toLowerCase()} across the strip{sweeping.total ? ` (${sweeping.done} of ${sweeping.total})` : ""}…</p>{/if}
+    {#if swept?.why && swept.key.endsWith(`|${open}|${handleValue(h, mine)}`)}<p class="sweeping" role="status" data-sweep-why>The strip's marks could not be worked out: {swept.why}</p>{/if}
     {#if tryProblem}<p class="try-problem" role="status">{tryProblem}</p>{/if}
   {/if}
   {#if followed}
@@ -315,6 +392,11 @@
   }
   .handle:disabled .value {
     border-bottom-color: transparent;
+  }
+  .sweeping {
+    margin: 2px 18px;
+    font-size: 11px;
+    color: var(--sse-ink-muted);
   }
   .try-problem {
     margin: 0;

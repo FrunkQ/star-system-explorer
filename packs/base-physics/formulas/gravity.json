@@ -1,0 +1,757 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.gravity",
+ "about": "Strong and weak gravity near any mass (exotic objects design, track XO, package XO1): sizes, bending, clocks and tides. The bend table itself is a kernel table in crates/sse-gravity.",
+ "atoms": [
+  {
+   "id": "sse.gravity.gravitational_radius",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    }
+   ],
+   "constants": {
+    "G": "constants/G",
+    "c": "constants/c"
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Schwarzschild, K. 1916, Über das Gravitationsfeld eines Massenpunktes nach der Einsteinschen Theorie, Sitzungsber. Preuss. Akad. Wiss., 189 https://ui.adsabs.harvard.edu/abs/1916SPAW.......189S",
+    "Misner, C. W., Thorne, K. S. and Wheeler, J. A. 1973, Gravitation, W. H. Freeman (Schwarzschild geometry, chapters 25 and 31) https://ui.adsabs.harvard.edu/abs/1973grav.book.....M"
+   ],
+   "shown": "r_g = GM / c²",
+   "equation": {
+    "name": "The length that sets the size of everything strong gravity does",
+    "formula": "rg = G * M / c^2",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m/s",
+      "name": "speed of light"
+     }
+    },
+    "outputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius"
+     }
+    },
+    "source": {
+     "text": "Schwarzschild 1916; Misner, Thorne and Wheeler 1973, Gravitation",
+     "url": "https://ui.adsabs.harvard.edu/abs/1973grav.book.....M",
+     "where": "geometrised units, G = c = 1"
+    },
+    "explain": {
+     "curious": "Every mass has a length of its own. For the Sun it is about 1.5 km, for the Earth about 4.4 mm. Strong gravity happens within a few of these lengths: a black hole's edge is two of them from the middle.",
+     "science": "r_g = GM/c². Every distance in the Schwarzschild and Kerr geometries scales with it: horizon 2 r_g (no spin), photon orbit 3 r_g, last stable orbit 6 r_g, shadow √27 r_g."
+    },
+    "examples": [
+     {
+      "M": 2e+30,
+      "rg": 1485.232,
+      "tolerance": 1e-05
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.horizon",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "spin",
+     "letter": "a"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "horizon_radius",
+     "letter": "rh"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    }
+   ],
+   "references": [
+    "Kerr, R. P. 1963, Gravitational field of a spinning mass as an example of algebraically special metrics, Phys. Rev. Lett. 11, 237. doi:10.1103/PhysRevLett.11.237",
+    "Misner, C. W., Thorne, K. S. and Wheeler, J. A. 1973, Gravitation, W. H. Freeman (Schwarzschild geometry, chapters 25 and 31) https://ui.adsabs.harvard.edu/abs/1973grav.book.....M"
+   ],
+   "shown": "r₊ = r_g (1 + √(1 − a²))",
+   "equation": {
+    "name": "The surface of no return",
+    "formula": "rh = rg * (1 + sqrt(max(1 - a^2, 0)))",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "a": {
+      "kind": "gravity.spin",
+      "unit": "1",
+      "name": "spin a = Jc/GM², signed: below zero means against the spin",
+      "valid": [
+       -1.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "rh": {
+      "kind": "gravity.horizon_radius",
+      "unit": "m",
+      "name": "radius of the surface of no return"
+     }
+    },
+    "source": {
+     "text": "Kerr 1963, Phys. Rev. Lett. 11, 237",
+     "doi": "10.1103/PhysRevLett.11.237",
+     "where": "outer horizon of the Kerr metric in Boyer-Lindquist coordinates"
+    },
+    "explain": {
+     "curious": "Inside this surface not even light gets out. A black hole of ten Suns is 60 km across. Spinning shrinks it, to half at the fastest spin.",
+     "science": "Outer horizon r₊ = M + √(M² − a²) (G = c = 1): 2 r_g for no spin, r_g at a = 1. The sign of a does not matter here."
+    },
+    "examples": [
+     {
+      "rg": 1476.625,
+      "a": 0,
+      "rh": 2953.25
+     },
+     {
+      "rg": 1.0,
+      "a": 0.998,
+      "rh": 1.0632139225171164
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.photon_orbit",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "spin",
+     "letter": "a"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "photon_orbit_radius",
+     "letter": "rph"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    }
+   ],
+   "references": [
+    "Bardeen, J. M. 1973, Timelike and null geodesics in the Kerr metric, in Black Holes (Les Houches 1972), eds. DeWitt and DeWitt, Gordon and Breach, 215 https://ui.adsabs.harvard.edu/abs/1973blho.conf..215B",
+    "Bardeen, J. M., Press, W. H. and Teukolsky, S. A. 1972, Rotating black holes: locally nonrotating frames, energy extraction, and scalar synchrotron radiation, ApJ 178, 347, equations 2.18 to 2.21. doi:10.1086/151796",
+    "Luminet, J.-P. 1979, Image of a spherical black hole with thin accretion disk, A&A 75, 228 https://ui.adsabs.harvard.edu/abs/1979A%26A....75..228L"
+   ],
+   "shown": "r_ph = 2 r_g (1 + cos(⅔ arccos(−a)))",
+   "equation": {
+    "name": "Where light can go round in a circle",
+    "formula": "x = -a\nacx = atan2(sqrt(max(1 - x^2, 0)), x)\nrph = 2 * rg * (1 + cos(2 / 3 * acx))",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "a": {
+      "kind": "gravity.spin",
+      "unit": "1",
+      "name": "spin a, signed: above zero means light circling with the spin",
+      "valid": [
+       -1.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "rph": {
+      "kind": "gravity.photon_orbit_radius",
+      "unit": "m",
+      "name": "radius of the circular orbit of light in the equator"
+     }
+    },
+    "source": {
+     "text": "Bardeen, Press and Teukolsky 1972, ApJ 178, 347",
+     "doi": "10.1086/151796",
+     "where": "equation 2.18"
+    },
+    "explain": {
+     "curious": "Light passing at just this distance goes round and round. It is the thin bright ring hugging a black hole's shadow.",
+     "science": "Circular photon orbit in the equatorial plane of a Kerr hole: r = 2M{1 + cos[⅔ arccos(∓a)]}, 3 r_g for no spin, r_g (with the spin) to 4 r_g (against it) at a = 1."
+    },
+    "examples": [
+     {
+      "rg": 1.0,
+      "a": 0,
+      "rph": 3.0
+     },
+     {
+      "rg": 1.0,
+      "a": -1,
+      "rph": 4.0
+     },
+     {
+      "rg": 1.0,
+      "a": 1,
+      "rph": 1.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.last_stable_orbit",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "spin",
+     "letter": "a"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "last_stable_orbit_radius",
+     "letter": "risco"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    }
+   ],
+   "references": [
+    "Bardeen, J. M., Press, W. H. and Teukolsky, S. A. 1972, Rotating black holes: locally nonrotating frames, energy extraction, and scalar synchrotron radiation, ApJ 178, 347, equations 2.18 to 2.21. doi:10.1086/151796"
+   ],
+   "shown": "r_isco = r_g (3 + Z₂ ∓ √((3 − Z₁)(3 + Z₁ + 2Z₂)))",
+   "equation": {
+    "name": "The innermost orbit matter can keep",
+    "formula": "s = abs(a)\nz1 = 1 + cbrt(1 - s^2) * (cbrt(1 + s) + cbrt(1 - s))\nz2 = sqrt(3 * s^2 + z1^2)\nd = sqrt(max((3 - z1) * (3 + z1 + 2 * z2), 0))\nrisco = if a < 0 then rg * (3 + z2 + d) else rg * (3 + z2 - d)",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "a": {
+      "kind": "gravity.spin",
+      "unit": "1",
+      "name": "spin a, signed: above zero means orbiting with the spin",
+      "valid": [
+       -1.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "risco": {
+      "kind": "gravity.last_stable_orbit_radius",
+      "unit": "m",
+      "name": "radius of the last stable circular orbit"
+     }
+    },
+    "source": {
+     "text": "Bardeen, Press and Teukolsky 1972, ApJ 178, 347",
+     "doi": "10.1086/151796",
+     "where": "equation 2.21"
+    },
+    "explain": {
+     "curious": "Closer than this, nothing can orbit for long: gas spirals straight in. It is the inner edge of a black hole's disc, six gravitational radii out with no spin, much closer for a fast spinner.",
+     "science": "Marginally stable circular orbit of the Kerr metric (Bardeen, Press and Teukolsky 1972, eq. 2.21): 6 r_g at a = 0, 1.237 r_g at a = 0.998 prograde, 9 r_g at a = 1 retrograde. The sign choice is a real boundary (the orbit's direction), not a class."
+    },
+    "examples": [
+     {
+      "rg": 1.0,
+      "a": 0,
+      "risco": 6.0
+     },
+     {
+      "rg": 1.0,
+      "a": 0.998,
+      "risco": 1.237,
+      "tolerance": 0.001
+     },
+     {
+      "rg": 1.0,
+      "a": -1,
+      "risco": 9.0
+     },
+     {
+      "rg": 1.0,
+      "a": 0.5,
+      "risco": 4.233,
+      "tolerance": 0.001
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.shadow_angle",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "distance",
+     "letter": "D"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "shadow_angle",
+     "letter": "theta"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    },
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "checks": [
+    {
+     "port": "distance",
+     "min": 0,
+     "finite": true,
+     "says": "distance must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Synge, J. L. 1966, The escape of photons from gravitationally intense stars, MNRAS 131, 463 (angular size of the capture cone for a static observer). doi:10.1093/mnras/131.3.463",
+    "Luminet, J.-P. 1979, Image of a spherical black hole with thin accretion disk, A&A 75, 228 https://ui.adsabs.harvard.edu/abs/1979A%26A....75..228L",
+    "Bardeen, J. M. 1973, Timelike and null geodesics in the Kerr metric, in Black Holes (Les Houches 1972), eds. DeWitt and DeWitt, Gordon and Breach, 215 https://ui.adsabs.harvard.edu/abs/1973blho.conf..215B"
+   ],
+   "shown": "sin θ = √27 (r_g / D) √(1 − 2 r_g / D)",
+   "equation": {
+    "name": "How big the dark middle looks from here",
+    "formula": "q = rg / D\nsn = if D <= 3 * rg then 1 else sqrt(27) * q * sqrt(1 - 2 * q)\ntheta = atan2(sn, sqrt(max(1 - sn^2, 0)))",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "D": {
+      "kind": "observer.distance",
+      "unit": "m",
+      "name": "distance of the viewer from the hole's centre"
+     }
+    },
+    "outputs": {
+     "theta": {
+      "kind": "gravity.shadow_angle",
+      "unit": "1",
+      "name": "angular radius of the shadow, radians"
+     }
+    },
+    "source": {
+     "text": "Synge 1966, MNRAS 131, 463",
+     "doi": "10.1093/mnras/131.3.463",
+     "where": "capture cone of a static observer"
+    },
+    "explain": {
+     "curious": "A black hole's shadow is two and a half times wider than the hole itself, because light that passes too close is swallowed. M87's looks 40 millionths of an arcsecond across from here.",
+     "science": "For a viewer at rest at radius D outside a non-spinning hole, sin θ = √27 (M/D)(1 − 2M/D)^½; far away the shadow's edge has impact parameter √27 M. Spin changes the size by up to about 4% and flattens one side (not in this block; see the fudge register). Inside the photon orbit (D ≤ 3M) the dark part covers more than half the sky; this block stops at 90°."
+    },
+    "examples": [
+     {
+      "rg": 1.0,
+      "D": 1000000000000.0,
+      "theta": 5.196152422706632e-12,
+      "tolerance": 1e-09
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.weak_bend",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "passing_distance",
+     "letter": "b"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "bend_angle",
+     "letter": "alpha"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    },
+    {
+     "port": "passing_distance",
+     "says": "passing distance"
+    }
+   ],
+   "references": [
+    "Einstein, A. 1915, Erklärung der Perihelbewegung des Merkur aus der allgemeinen Relativitätstheorie, Sitzungsber. Preuss. Akad. Wiss., 831 (light deflection 4GM/c²b) https://ui.adsabs.harvard.edu/abs/1915SPAW.......831E",
+    "Dyson, F. W., Eddington, A. S. and Davidson, C. 1920, A determination of the deflection of light by the Sun's gravitational field, Phil. Trans. R. Soc. A 220, 291. doi:10.1098/rsta.1920.0009"
+   ],
+   "shown": "α = 4 r_g / b",
+   "equation": {
+    "name": "How much a mass bends light passing at a distance",
+    "formula": "alpha = 4 * rg / b",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "b": {
+      "kind": "gravity.impact_parameter",
+      "unit": "m",
+      "name": "distance at which the light passes the mass"
+     }
+    },
+    "outputs": {
+     "alpha": {
+      "kind": "gravity.bend_angle",
+      "unit": "1",
+      "name": "angle the light is turned, radians"
+     }
+    },
+    "source": {
+     "text": "Einstein 1915, Sitzungsber. Preuss. Akad. Wiss., 831",
+     "url": "https://ui.adsabs.harvard.edu/abs/1915SPAW.......831E",
+     "where": "deflection 4GM/c²Δ"
+    },
+    "explain": {
+     "curious": "Light grazing the Sun is turned by 1.75 seconds of arc, as Eddington's eclipse team measured in 1919. Far from any mass this one line is all the bending there is.",
+     "science": "First-order deflection α = 4GM/(c²b), good when b ≫ r_g (the next term is 15π/4 (r_g/b)², 6% at b = 50 r_g). Closer in, the bend table takes over."
+    },
+    "examples": [
+     {
+      "rg": 1476.625,
+      "b": 700000000.0,
+      "alpha": 8.43786e-06,
+      "tolerance": 0.0001
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.einstein_angle",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "lens_distance",
+     "letter": "Dl"
+    },
+    {
+     "port": "source_distance",
+     "letter": "Ds"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "einstein_angle",
+     "letter": "thetaE"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    },
+    {
+     "port": "lens_distance",
+     "says": "lens distance"
+    },
+    {
+     "port": "source_distance",
+     "says": "source distance"
+    }
+   ],
+   "references": [
+    "Einstein, A. 1936, Lens-like action of a star by the deviation of light in the gravitational field, Science 84, 506. doi:10.1126/science.84.2188.506"
+   ],
+   "shown": "θ_E = √(4 r_g (D_s − D_l) / (D_l D_s))",
+   "equation": {
+    "name": "The ring a star makes behind a mass",
+    "formula": "thetaE = sqrt(max(4 * rg * (Ds - Dl) / (Dl * Ds), 0))",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "Dl": {
+      "kind": "observer.lens_distance",
+      "unit": "m",
+      "name": "distance to the bending mass"
+     },
+     "Ds": {
+      "kind": "observer.source_distance",
+      "unit": "m",
+      "name": "distance to the light behind it"
+     }
+    },
+    "outputs": {
+     "thetaE": {
+      "kind": "gravity.einstein_angle",
+      "unit": "1",
+      "name": "angular radius of the Einstein ring, radians"
+     }
+    },
+    "source": {
+     "text": "Einstein 1936, Science 84, 506",
+     "doi": "10.1126/science.84.2188.506",
+     "where": "ring radius for exact alignment"
+    },
+    "explain": {
+     "curious": "A star exactly behind a mass is drawn out into a ring. Slightly off, it makes two images, one each side; this is the size they sit at.",
+     "science": "Point-lens Einstein radius with flat-space distances, D_ls = D_s − D_l. Across a galaxy that is exact enough; across the universe the distances become angular-diameter distances (not in this block)."
+    },
+    "examples": [
+     {
+      "rg": 1.0,
+      "Dl": 1.0,
+      "Ds": 2.0,
+      "thetaE": 1.4142135623730951
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.clock_rate",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "distance",
+     "letter": "r"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "hovering_rate",
+     "letter": "hover"
+    },
+    {
+     "port": "orbiting_rate",
+     "letter": "orbit"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    },
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Misner, C. W., Thorne, K. S. and Wheeler, J. A. 1973, Gravitation, W. H. Freeman (Schwarzschild geometry, chapters 25 and 31) https://ui.adsabs.harvard.edu/abs/1973grav.book.....M",
+    "Schwarzschild, K. 1916, Über das Gravitationsfeld eines Massenpunktes nach der Einsteinschen Theorie, Sitzungsber. Preuss. Akad. Wiss., 189 https://ui.adsabs.harvard.edu/abs/1916SPAW.......189S"
+   ],
+   "shown": "dτ/dt = √(1 − 2r_g/r) hovering, √(1 − 3r_g/r) on a circular orbit",
+   "equation": {
+    "name": "How slowly a clock runs near a mass",
+    "formula": "hover = if r <= 2 * rg then 0 else sqrt(1 - 2 * rg / r)\norbit = if r <= 3 * rg then 0 else sqrt(1 - 3 * rg / r)",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "r": {
+      "kind": "gravity.distance",
+      "unit": "m",
+      "name": "distance from the centre"
+     }
+    },
+    "outputs": {
+     "hover": {
+      "kind": "gravity.clock_rate_hovering",
+      "unit": "1",
+      "name": "clock rate against a far clock, holding still"
+     },
+     "orbit": {
+      "kind": "gravity.clock_rate_orbiting",
+      "unit": "1",
+      "name": "clock rate against a far clock, on a circular orbit"
+     }
+    },
+    "source": {
+     "text": "Misner, Thorne and Wheeler 1973, Gravitation",
+     "url": "https://ui.adsabs.harvard.edu/abs/1973grav.book.....M",
+     "where": "Schwarzschild metric, static and circular-orbit observers"
+    },
+    "explain": {
+     "curious": "Near a black hole time runs slow. Holding still at three times the hole's own radius, an hour of yours is about 1 hour 13 minutes far away.",
+     "science": "Static observer: dτ/dt = (1 − 2M/r)^½; circular geodesic orbit: (1 − 3M/r)^½, gravity and speed together. No circular orbit exists inside 3M (rate 0 means none); a hovering ship there needs a huge thrust."
+    },
+    "examples": [
+     {
+      "rg": 1.0,
+      "r": 6.0,
+      "hover": 0.816496580927726,
+      "orbit": 0.7071067811865476
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gravity.tide",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "distance",
+     "letter": "r"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "stretch_per_metre",
+     "letter": "k"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Misner, C. W., Thorne, K. S. and Wheeler, J. A. 1973, Gravitation, W. H. Freeman (Schwarzschild geometry, chapters 25 and 31) https://ui.adsabs.harvard.edu/abs/1973grav.book.....M"
+   ],
+   "shown": "Δg / Δr = 2GM / r³",
+   "equation": {
+    "name": "How hard a mass stretches something along its length",
+    "formula": "k = 2 * G * M / r^3",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "r": {
+      "kind": "gravity.distance",
+      "unit": "m",
+      "name": "distance from the centre"
+     }
+    },
+    "outputs": {
+     "k": {
+      "kind": "gravity.tide_per_metre",
+      "unit": "s-2",
+      "name": "difference in pull per metre of length"
+     }
+    },
+    "source": {
+     "text": "Misner, Thorne and Wheeler 1973, Gravitation",
+     "url": "https://ui.adsabs.harvard.edu/abs/1973grav.book.....M",
+     "where": "Newtonian tidal tensor along the radius"
+    },
+    "explain": {
+     "curious": "Your feet are pulled harder than your head. A thousand km from a black hole of ten Suns the difference over two metres is about five thousand times Earth's gravity; a supermassive hole is gentle by comparison.",
+     "science": "Radial tidal acceleration per unit length, 2GM/r³ (the radial eigenvalue of the Newtonian tidal tensor; the same in Schwarzschild for a static observer). Multiply by a length for the stretch across it."
+    },
+    "examples": [
+     {
+      "M": 1.98841e+31,
+      "r": 1000000.0,
+      "k": 2654.249,
+      "tolerance": 1e-05
+     }
+    ]
+   }
+  }
+ ]
+}

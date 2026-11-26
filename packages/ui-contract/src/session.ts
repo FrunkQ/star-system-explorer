@@ -65,7 +65,7 @@ import type { LookedAhead, SystemSpec } from "./fate.ts";
 
 export type IntentResult =
   /** For a stack change the kernel chronicles a `stack.adopt` event; `view` is the data view a scan_toggle left in force. */
-  | { status: "applied"; event_id: string; state_hash: string; affected: string[]; view?: string | null }
+  | { status: "applied"; event_id: string; state_hash: string; affected: string[]; view?: string | null; reply?: Record<string, Json> }
   | { status: "pending"; intent: Intent }
   | { status: "refused"; reason: string }
   | { status: "error"; code: string; message: string };
@@ -167,6 +167,8 @@ export interface ViewSession {
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. With `branch`, the world as that what-if holds it (a class sample's). */
   surfaceTiles(system: string, body: string, branch?: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }>;
+  /** A catalogued Solar System body's six level-0 tiles by its base-sol id (`mars`, `moon`, ...), with no campaign: for the size comparison and other reference views. Any seat may read it: these are public facts. */
+  referenceTiles(body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
   /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
   surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
   /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
@@ -192,6 +194,14 @@ export interface ViewSession {
   /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
   orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
   /**
+   * K1, the sweep (ED2): one field of a body run over a range on a what-if branch the kernel throws away, step by step
+   * (`start_job` then `step_job`); per step the value, the asked results and the stability verdict, and where the
+   * verdict or class changes, the tipping point narrowed. Nothing is written. GM only.
+   */
+  /** K2: what the science expects for each set field if it were left out (GM only); nothing moves. */
+  expects?(system: string, address: string, fields: string[], at_s?: bigint): Promise<{ ok: true; fields: { field: string; set: Json | null; expects: Json | null; from?: string; why?: string }[] } | { ok: false; code: string; message: string }>;
+  sweep?(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }>;
+  /**
    * Whether the orbits at or under a system last (kernel `orbit_stability`, ST1): the worst verdict, and every check
    * with its block, its numbers and what it says. `bodies` lays facts over the kernel's (a held value not yet written).
    */
@@ -211,6 +221,10 @@ export interface ViewSession {
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
   /** What a ship can do at each of some worlds (kernel `ship_at_world`): aerocapture, entry, landing, take-off, with dangers, margins and rough chances; nothing rolled. An adopted `system` is GM only. Writes nothing. */
+  /** V8 flight log: write one entry of a construct's log on the record (GM only). */
+  logFlight(ask: { construct: string; at_s: number } & ({ piece: Json } | { event: Json } | { name?: string; about?: string } | { withdraw: string })): Promise<{ ok: true; event_id: string; seeded: string[]; notes: string[] } | { ok: false; code: string; message: string }>;
+  /** V8 flight log: a construct's log as written, and with `where_at` and a system, where the craft was then (GM only). */
+  flightLog(ask: { construct: string; at_s?: number; where_at?: number; fixture?: string; nav?: unknown; system?: string }): Promise<{ ok: true; log: Json; entries: Json[]; at?: Json } | { ok: false; code: string; message: string }>;
   shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }>;
   /** One galaxy grown from the universe's seed (U6, kernel `galaxy_chart`, G1 to G4). Read only; GM only. */
   galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }>;
@@ -274,18 +288,23 @@ export interface ViewSession {
   resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
+  /** Light through layers of gas and particles (kernel `light_through_gas`, light track ND2): colour in and out per passage. Read only; any seat. */
+  lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
   /** The kernel `weather` op: a fixture `world`, or a `body` of an adopted `system` at `at_s`; `want` picks climate, systems, field (a cube-sphere `tile`), report, column or sound, at `day` (days since the campaign epoch). */
   /** Y2: the stars seen from a place at a time down to a limiting magnitude (kernel `sky_from_here`); read only. */
-  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
+  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
   /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
   readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
+  /** XO18: the Hazard map's reading (kernel `hazard_map`): a measured Solar System body by `fixture` and `body`, or
+   * handed `asks`; along `line` ("equator" or "poles"); with `ship`, or the stated stock ship. Read only. */
+  hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }>;
   /** SV2: who knows a thing, or one fact on it (kernel `known_to`): per audience its landmark, rung and exceptions. GM only. */
   knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }>;
   /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
@@ -592,10 +611,18 @@ export class Session implements ViewSession {
     return this.#apply(intent);
   }
 
-  async #apply(intent: Intent): Promise<IntentResult> {
-    const r = await this.#applyRaw(intent);
-    if (r.status === "applied") for (const l of [...this.#listeners]) l(intent, r);
-    return r;
+  // Intents apply one at a time, in the order they were sent: each one's state hash is the state after it, so two
+  // sent together (a flight log entry and a tank level) must not interleave, or the players' copy replays them in a
+  // different order from the one the hashes were taken in and falls out of step.
+  #applying: Promise<unknown> = Promise.resolve();
+  #apply(intent: Intent): Promise<IntentResult> {
+    const run = this.#applying.then(async () => {
+      const r = await this.#applyRaw(intent);
+      if (r.status === "applied") for (const l of [...this.#listeners]) l(intent, r);
+      return r;
+    });
+    this.#applying = run.catch(() => undefined);
+    return run;
   }
 
   async #applyRaw(intent: Intent): Promise<IntentResult> {
@@ -621,6 +648,10 @@ export class Session implements ViewSession {
     }
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
+    if (intent.kind === "record" && r.type !== "error") {
+      const address = String((intent.ask as { construct?: string; address?: string }).construct ?? (intent.ask as { address?: string }).address ?? "");
+      return { status: "applied", event_id: String(r.event_id ?? r.change_id ?? ""), state_hash: String(r.state_hash ?? (await this.stateHash())), affected: address ? [address] : [], reply: r as Record<string, Json> };
+    }
     if ((intent.kind === "set_known" || intent.kind === "undo_known") && (r.type === "known_set" || r.type === "known_undone"))
       return { status: "applied", event_id: String(r.undo ?? r.event_id ?? ""), state_hash: String(r.state_hash ?? (await this.stateHash())), affected: intent.kind === "set_known" ? [intent.address] : [] };
     if (r.type === "error") return { status: "error", code: String(r.code), message: String(r.message) };
@@ -747,6 +778,14 @@ export class Session implements ViewSession {
     return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: record?.regime_label, ...(record ? { record: record as unknown as Json } : {}), ...(record?.kind ? { kind: record.kind } : {}) };
   }
 
+  async referenceTiles(body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }> {
+    const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ face, level: 0, x: 0, y: 0 }));
+    const r = await this.#call({ op: "reference_tiles", body, tiles });
+    if (r.type !== "reference_tiles") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; regime_label?: string };
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.regime_label };
+  }
+
   async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
     if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const r = await this.#call({ op: "resolved_system", system, tiles: keys.map((k) => ({ body, face: k.face, level: k.level, x: k.x, y: k.y })) });
@@ -810,6 +849,20 @@ export class Session implements ViewSession {
     return r.type === "route_planned" ? { ok: true, plan: (r as unknown as { plan: import("./route.ts").RoutePlan }).plan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async logFlight(ask: { construct: string; at_s: number } & ({ piece: Json } | { event: Json } | { name?: string; about?: string } | { withdraw: string })): Promise<{ ok: true; event_id: string; seeded: string[]; notes: string[] } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "flight logs are written on the game master's machine" };
+    const w = await this.#record("log_flight", { ...ask, at_s: Math.round(ask.at_s) });
+    if (!w.ok) return w;
+    const r = w.reply;
+    return r.type === "flight_logged" ? { ok: true, event_id: String(r.event_id), seeded: (r.seeded as string[]) ?? [], notes: (r.notes as string[]) ?? [] } : { ok: false, code: "unexpected", message: JSON.stringify(r) };
+  }
+
+  async flightLog(ask: { construct: string; at_s?: number; where_at?: number; fixture?: string; nav?: unknown; system?: string }): Promise<{ ok: true; log: Json; entries: Json[]; at?: Json } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "flight logs are read on the game master's machine" };
+    const r = await this.#call({ op: "flight_log", ...ask } as Json);
+    return r.type === "flight_log_is" ? { ok: true, log: r.log as Json, entries: (r.entries as Json[]) ?? [], ...(r.at !== undefined ? { at: r.at as Json } : {}) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }> {
     if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master judges a ship against a system's full record" };
     const r = await this.#call({ op: "ship_at_world", ...ask });
@@ -843,6 +896,11 @@ export class Session implements ViewSession {
     return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "light_through_gas", passages });
+    return r.type === "gas_passed" ? { ok: true, passages: (r as unknown as { passages: Json[] }).passages } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "surface_frames", ...ask } as Json);
     if (r.type !== "frames_made") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
@@ -850,7 +908,7 @@ export class Session implements ViewSession {
     return { ok: true, frames: f.frames, label: f.label, source: f.source };
   }
 
-  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
+  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "sky_from_here", ...ask } as Json);
     return r.type === "sky" ? { ok: true, sky: (r as unknown as { sky: Json }).sky } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -875,6 +933,11 @@ export class Session implements ViewSession {
   async readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_field", ...ask } as Json);
     return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "hazard_map", ...ask } as Json);
+    return r.type === "hazard_maps" ? { ok: true, maps: (r as unknown as { maps: Json[] }).maps } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }> {
@@ -945,34 +1008,43 @@ export class Session implements ViewSession {
     return r.type === "templates_listed" ? { ok: true, templates: (r as unknown as { templates: import("./constructs.ts").ConstructTemplate[] }).templates } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  /** A record write as a `record` intent (it travels to players' screens): the kernel's reply, or why not. */
+  async #record(op: import("./intent.ts").RecordOp, ask: Record<string, unknown>): Promise<{ ok: true; reply: Record<string, Json> } | { ok: false; code: string; message: string }> {
+    const plain = Object.fromEntries(Object.entries(ask).map(([k, v]) => [k, typeof v === "bigint" ? Number(v) : v])) as Json;
+    const res = await this.send({ kind: "record", op, ask: plain });
+    if (res.status === "applied") return { ok: true, reply: res.reply ?? {} };
+    return { ok: false, code: res.status === "error" ? res.code : res.status, message: res.status === "error" ? res.message : res.status === "refused" ? res.reason : "waiting for the game master" };
+  }
+
   async createFrom(ask: { template: string; under: string; key?: string; name?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./constructs.ts").Created } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "ships and stations are made on the game master's machine" };
-    const r = await this.#call({ op: "create", template: ask.template, under: ask.under, ...(ask.key ? { key: ask.key } : {}), ...(ask.name ? { name: ask.name } : {}), at_s: ask.at_s ?? 0 });
-    return r.type === "created" ? { ok: true, result: r as unknown as import("./constructs.ts").Created } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("create", { template: ask.template, under: ask.under, ...(ask.key ? { key: ask.key } : {}), ...(ask.name ? { name: ask.name } : {}), at_s: ask.at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "created" ? { ok: true, result: w.reply as unknown as import("./constructs.ts").Created } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async retire(address: string, reason?: string, at_s?: number | bigint): Promise<{ ok: true; event_id: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master takes things out of play" };
-    const r = await this.#call({ op: "retire", address, ...(reason ? { reason } : {}), at_s: at_s ?? 0 });
-    return r.type === "retired" ? { ok: true, event_id: String(r.event_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("retire", { address, ...(reason ? { reason } : {}), at_s: at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "retired" ? { ok: true, event_id: String(w.reply.event_id) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async addNote(n: { address: string; text: string; audience: "everyone" | "gm" | string[]; tags?: string[]; narrative?: boolean; supersedes?: string; at_s?: number | bigint }): Promise<{ ok: true; note_id: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
-    const r = await this.#call({ op: "add_note", address: n.address, text: n.text, audience: n.audience, ...(n.tags?.length ? { tags: n.tags } : {}), ...(n.narrative ? { narrative: true } : {}), ...(n.supersedes ? { supersedes: n.supersedes } : {}), at_s: n.at_s ?? 0 });
-    return r.type === "note_added" ? { ok: true, note_id: String(r.note_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("add_note", { address: n.address, text: n.text, audience: n.audience, ...(n.tags?.length ? { tags: n.tags } : {}), ...(n.narrative ? { narrative: true } : {}), ...(n.supersedes ? { supersedes: n.supersedes } : {}), at_s: n.at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "note_added" ? { ok: true, note_id: String(w.reply.note_id) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async addActor(a: { id: string; name: string; kind: string; parent?: string; at_s?: number | bigint }): Promise<{ ok: true; address: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
-    const r = await this.#call({ op: "add_actor", id: a.id, name: a.name, kind: a.kind, ...(a.parent ? { parent: a.parent } : {}), at_s: a.at_s ?? 0 });
-    return r.type === "actor_added" ? { ok: true, address: String(r.address) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("add_actor", { id: a.id, name: a.name, kind: a.kind, ...(a.parent ? { parent: a.parent } : {}), at_s: a.at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "actor_added" ? { ok: true, address: String(w.reply.address) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async setKept(k: { address: string; kind: string; value: Json | null; reason?: string; at_s?: number | bigint }): Promise<{ ok: true; change_id: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
-    const r = await this.#call({ op: "set_kept", address: k.address, kind: k.kind, value: k.value, ...(k.reason ? { reason: k.reason } : {}), at_s: k.at_s ?? 0 });
-    return r.type === "kept_set" ? { ok: true, change_id: String(r.change_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("set_kept", { address: k.address, kind: k.kind, value: k.value, ...(k.reason ? { reason: k.reason } : {}), at_s: k.at_s ?? 0 });
+    if (!w.ok) return w;
+    return w.reply.type === "kept_set" ? { ok: true, change_id: String(w.reply.change_id) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async record(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }> {
@@ -1038,6 +1110,32 @@ export class Session implements ViewSession {
   async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
     return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async expects(system: string, address: string, fields: string[], at_s?: bigint): Promise<{ ok: true; fields: { field: string; set: Json | null; expects: Json | null; from?: string; why?: string }[] } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master asks what the science expects" };
+    const r = await this.#call({ op: "expects", system, address, fields, ...(at_s !== undefined ? { at_s } : {}) });
+    return r.type === "expected"
+      ? { ok: true, fields: (r as unknown as { fields: { field: string; set: Json | null; expects: Json | null; from?: string; why?: string }[] }).fields }
+      : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async sweep(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master sweeps a world's inputs" };
+    const no = (r: Raw) => ({ ok: false as const, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) });
+    const { at_s, ...rest } = ask;
+    const started = await this.#call({ op: "start_job", job: { kind: "sweep", ...JSON.parse(JSON.stringify(rest)), ...(at_s !== undefined ? { at_s } : {}) } });
+    if (started.type !== "job_started") return no(started);
+    const job = Number(started.job);
+    // A few resolves a step, so other asks (a strip's pause, a scene) get in between.
+    for (let i = 0; i < 400; i++) {
+      const r = await this.#call({ op: "step_job", job, budget: 2 });
+      if (r.type === "job_done") return { ok: true, result: r.result as unknown as import("./sweep.ts").Swept };
+      if (r.type !== "job_progress") return no(r);
+      onprogress?.(Number(r.done_units), Number(r.total_units));
+    }
+    await this.#call({ op: "cancel_job", job });
+    return { ok: false, code: "too_long", message: "the sweep ran past its steps and was stopped" };
   }
 
   async orbitStability(system: string, opts: { bodies?: { address: string; facts: Record<string, number | string> }[]; at_s?: bigint } = {}): Promise<{ ok: true; verdict: string; checks: StabilityCheck[] } | { ok: false; code: string; message: string }> {

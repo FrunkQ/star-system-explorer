@@ -1,5 +1,5 @@
 {
-  "note": "Which data sheet reflectance rows (packs/base-reference mixtures, optical.reflectance) each kernel ground material reads in True, fresh and fully weathered. A drawing choice, not physics: it moves into packs/base-surface (each material naming its rows) in the golden lane; fudge register 'True ground rows named in the renderer'. A material with no row keeps the palette. Rows are read only where space reaches the ground (a tile with `maturity`), so 'sediment' there is impact-gardened fines, the same soil as 'regolith'.",
+  "note": "Which data sheet rows (packs/base-reference) each kernel ground material reads in True, fresh and fully weathered: a measured reflectance spectrum (optical.reflectance), or a refractive index n + ik drawn as a thick layer of grains (Hapke). A drawing choice, not physics: it moves into packs/base-surface (each material naming its rows) in the golden lane; fudge register 'True ground rows named in the renderer'. A material with no row keeps the palette. 'sediment' reads the same soil as 'regolith' (impact-gardened fines on an airless world; on a world with air its stains colour it).",
   "rows": {
     "regolith": {
       "mature": "lunar-soil-mature-highland"
@@ -10,6 +10,9 @@
     "basalt": {
       "fresh": "lunar-soil-immature-mare",
       "mature": "lunar-soil-mature-mare"
+    },
+    "ice": {
+      "fresh": "h2o"
     }
   }
 }

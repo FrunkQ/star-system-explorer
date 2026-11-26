@@ -3711,6 +3711,60 @@ fn read_bows_gives_rainbows_and_halos() {
         "{r}"
     );
     assert!(r["items"][1]["halo_60_deg"].as_f64().unwrap() > 21.0, "{r}");
+    // Water's index read off the sheet in red light: a slightly smaller bow.
+    let r: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_bows", "items": [
+            {"id": "red", "substance": "h2o", "wavelength_m": 6.5e-7, "kind": "drop"}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    let red = r["items"][0]["primary_deg"].as_f64().unwrap();
+    assert!(red > 42.0 && red < 42.6, "{r}");
+}
+
+/// K-e: read_scattering gives a cloud droplet's forward-thrown phase table
+/// and refuses a particle too big for the series.
+#[test]
+fn read_scattering_gives_phase_tables() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_scattering", "items": [
+            {"id": "cloud", "radius_m": 1e-5, "wavelength_m": 5.5e-7, "n": 1.333, "spread": 0.3}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    assert_eq!(r["type"], "scattering_read", "{r}");
+    let c = &r["items"][0];
+    let g = c["g"].as_f64().unwrap();
+    assert!((0.8..0.9).contains(&g), "{g}");
+    assert_eq!(c["phase"].as_array().unwrap().len(), 181);
+    // The same droplet with water's n and k read off the sheet.
+    let w: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_scattering", "items": [
+            {"id": "sheet", "radius_m": 1e-5, "wavelength_m": 5.5e-7, "substance": "h2o"}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    assert!(
+        (w["items"][0]["g"].as_f64().unwrap() - 0.85).abs() < 0.07,
+        "{w}"
+    );
+    assert!((c["single_scattering_albedo"].as_f64().unwrap() - 1.0).abs() < 1e-9);
+    let r: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_scattering", "items": [
+            {"id": "boulder", "radius_m": 1.0, "wavelength_m": 5.5e-7, "n": 1.5}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    assert_eq!(r["code"], "bad_particle", "{r}");
 }
 
 /// O3b: read_nebulae gives a giant's dusty shell and a young star's jets.
@@ -4048,4 +4102,80 @@ fn the_traveller_weapons_reach_their_game_bands() {
         seen += 1;
     }
     assert_eq!(seen, 7);
+}
+
+#[test]
+fn read_shadow_light_colours_an_eclipse() {
+    let mut k = crate::Kernel::new();
+    let ask = serde_json::json!({"op": "read_shadow_light", "items": [{"id": "earth-moon",
+        "air": {"address": "u:sol/sys:0/planet:2", "gases": [{"gas": "n2", "fraction": 0.7808}, {"gas": "o2", "fraction": 0.2095}, {"gas": "ar", "fraction": 0.0093}, {"gas": "co2", "fraction": 0.0004}],
+            "surface_pressure_pa": 101325, "surface_temperature_k": 288, "gravity_m_s2": 9.81},
+        "radius_m": 6.371e6, "distance_m": 3.844e8,
+        "star": {"teff_k": 5772, "radius_m": 6.957e8, "distance_m": 1.496e11}}]});
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(&ask.to_string())).unwrap();
+    assert_eq!(r["type"], "shadow_light_read", "{r}");
+    let c = &r["items"][0]["colour"]["linear_srgb"];
+    assert!(c[0].as_f64().unwrap() > c[2].as_f64().unwrap(), "{r}");
+    let bad = serde_json::json!({"op": "read_shadow_light", "items": [{"id": "x"}]});
+    let e: serde_json::Value = serde_json::from_str(&k.handle_json(&bad.to_string())).unwrap();
+    assert_eq!(e["code"], "bad_shadow", "{e}");
+}
+
+#[test]
+fn describe_star_reads_one_star_from_the_formation_life_line() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "describe_star", "mass_msun": 1.0, "age_yr": 4.57e9}).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(r["type"], "star_described", "{r}");
+    assert_eq!(r["star"]["now"]["phase"], "main-sequence");
+    assert_eq!(r["star"]["remnant"]["phase"], "white-dwarf");
+    let bad: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "describe_star", "mass_msun": 0.001, "age_yr": 1.0}).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(bad["code"], "bad_star", "{bad}");
+}
+
+/// `hazard_map` (XO18): a measured Solar System body by name, a ship given
+/// inline, a line; and the plain words for a bad ask.
+#[test]
+fn hazard_map_reads_the_solar_system() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "hazard_map", "fixture": "solar-system", "body": "jupiter"}),
+    );
+    assert_eq!(r["type"], "hazard_maps", "{r}");
+    let m = &r["maps"][0];
+    assert_eq!(m["address"], "sol/jupiter");
+    assert_eq!(m["stock_ship"], true);
+    assert_eq!(m["park"]["set_by"], "radiation_belts", "{}", m["park"]);
+    assert!(m["moons"].as_array().unwrap().len() >= 4);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "hazard_map", "fixture": "solar-system", "body": "sol/sun",
+            "line": "poles",
+            "ship": {"name": "probe", "delta_v_m_s": 30000.0, "shield_kg_m2": 100.0, "max_k": 1644.0,
+                     "absorbed_over_emitted": 1.0, "faces": "shield", "length_m": 3.0}}),
+    );
+    assert_eq!(r["type"], "hazard_maps", "{r}");
+    assert_eq!(r["maps"][0]["dive"]["set_by"], "heat");
+    assert_eq!(r["maps"][0]["line"], "poles");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "hazard_map", "fixture": "solar-system", "body": "jupiter", "line": "sideways"}),
+    );
+    assert_eq!(r["type"], "error", "{r}");
+    assert!(
+        r["message"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("equator, poles"),
+        "{r}"
+    );
 }

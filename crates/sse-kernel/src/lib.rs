@@ -54,6 +54,7 @@ mod orbits;
 #[cfg(test)]
 mod power_books_tests;
 pub mod protocol;
+mod reference;
 mod sea;
 mod sky;
 mod small;
@@ -680,6 +681,8 @@ pub struct Kernel {
     /// ND6: each pack's sources, fudges and reproduction report, worked
     /// out when the stack loaded.
     reports: Vec<trust::PackReport>,
+    /// `reference_tiles`' private Solar System, kept until the stack loads again.
+    reference: Option<Universe>,
 }
 
 impl Default for Kernel {
@@ -1209,6 +1212,7 @@ impl Kernel {
             land: vec![],
             climates: sse_climate::Cache::new(8),
             reports: vec![],
+            reference: None,
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -2151,11 +2155,12 @@ impl Kernel {
         let s: sse_cosmos::stars::StarSystem = serde_json::from_value(description)
             .map_err(|e| err("bad_record", format!("{address}: {e}")))?;
         let u = self.universe()?;
-        let elapsed_gyr = clock::elapsed_myr(&u.chronicle) / 1000.0;
+        let elapsed_myr = clock::elapsed_myr(&u.chronicle);
         let (seed, root) = (u.seed, u.root.clone());
-        cosmos::with_stars(&seed, &root, None, |st, now| {
+        // `with_stars` gives the galaxy's now in Myr; the birth reads Gyr.
+        cosmos::with_stars(&seed, &root, None, |st, now_myr| {
             let b = serde_json::to_value(st.birth(&s)).expect("plain data");
-            Ok((b, now + elapsed_gyr))
+            Ok((b, (now_myr + elapsed_myr) / 1000.0))
         })
     }
 
@@ -2301,7 +2306,11 @@ impl Kernel {
                 refused.push(serde_json::json!({"class": id, "why": "the class has no in example to sample"}));
                 continue;
             };
-            let system = format!("{root}/sys:class-sample-{n}");
+            // The branch and class in the address: a surface cache keyed by
+            // address never hands one call's world to another (renderer
+            // thread, 25 Nov).
+            let key = sse_core::ContentHash::of_bytes(format!("{branch}/{id}").as_bytes()).hex();
+            let system = format!("{root}/sys:class-sample-{n}-{}", &key[..8]);
             let star = format!("{system}/star:0");
             let body = format!("{system}/body:0");
             let mut edits: Vec<(String, String, serde_json::Value)> = vec![
@@ -3218,6 +3227,8 @@ impl Kernel {
                 tiers: tiers(),
             },
             Request::LoadStack { packs } => {
+                // The reference Solar System is read under the stack in force.
+                self.reference = None;
                 let mut ms = Vec::new();
                 for (i, p) in packs.iter().enumerate() {
                     ms.push(
@@ -3985,9 +3996,38 @@ impl Kernel {
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::ReadBows { items } => systems::read_bows(items)?,
+            Request::ReadScattering { items } => systems::read_scattering(items)?,
+            Request::ReadShadowLight { items } => {
+                systems::read_shadow_light(items, &self.observe.reference)?
+            }
+            Request::DescribeStar {
+                mass_msun,
+                age_yr,
+                feh,
+            } => {
+                let d = sse_formation::describe::describe(mass_msun, age_yr, feh.unwrap_or(0.0))
+                    .map_err(|e| err("bad_star", e.0))?;
+                Response::StarDescribed {
+                    star: serde_json::to_value(d).expect("plain data"),
+                }
+            }
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }
+            Request::HazardMap {
+                asks,
+                fixture,
+                body,
+                ship,
+                line,
+            } => systems::hazard_map(
+                asks,
+                fixture.as_deref(),
+                body.as_deref(),
+                ship,
+                line.as_deref(),
+                &self.observe.reference,
+            )?,
             Request::Detect {
                 targets,
                 sensors,
@@ -4038,6 +4078,7 @@ impl Kernel {
                 }
                 fields::read_system(
                     &u.chronicle,
+                    &u.seed,
                     &a,
                     at_s,
                     u.runs.get(&system),
@@ -4226,6 +4267,7 @@ impl Kernel {
                         .hex(),
                 }
             }
+            Request::ReferenceTiles { body, tiles } => self.reference_tiles(&body, &tiles)?,
             Request::ResolvedSystem {
                 system,
                 at_s,

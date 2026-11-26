@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band",
+  "frame": "Jupiter",
+  "camera": "from Earth's place",
+  "tests": "Infrared: H3+ auroral emission",
+  "needs": [
+    "giant-planet aurorae (aurorae thread)"
+  ]
+}

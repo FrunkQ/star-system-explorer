@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Triton",
+  "camera": "about 200,000 km",
+  "tests": "Visible: nitrogen frost colours",
+  "needs": [
+    "nitrogen ice and its seasonal cap"
+  ],
+  "date": "1989-08-25"
+}

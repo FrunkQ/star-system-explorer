@@ -87,6 +87,8 @@ pub struct UpperAir {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Emission {
     pub line: String,
+    /// The light table's name for the line ("[O I] 557.7 nm (green aurora, airglow)").
+    pub name: String,
     pub matter: String,
     pub wavelength_m: f64,
     /// Both hemispheres together, W.
@@ -284,6 +286,7 @@ pub fn glow(
             .join("+");
         emissions.push(Emission {
             line: line.id.clone(),
+            name: line.name.clone(),
             matter,
             wavelength_m: line.at_m,
             power_w: power_w * share,

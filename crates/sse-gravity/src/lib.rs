@@ -24,6 +24,8 @@ pub mod scenario;
 pub use bend::{BendRow, BendTable};
 
 #[cfg(test)]
+mod blocks_tests;
+#[cfg(test)]
 mod tests;
 
 #[cfg(test)]

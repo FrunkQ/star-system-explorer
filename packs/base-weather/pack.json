@@ -188,8 +188,57 @@
      "gyre_half_width_deg": 15.0,
      "source": "Eastern-boundary upwelling (W7c): cold water within about 500 km of a coast lying to the spin's east under the subtropical high, the seat of the Californian, Peruvian, Canarian and Benguela stratocumulus decks (Klein and Hartmann 1993); the coast's sea surface runs about 5 K below the zonal mean there. Western boundary currents (Gulf Stream, Kuroshio) run about 4 K above it within about 300 km of the coast lying to the spin's west, across the subtropical gyre (about 15 degrees either side of the Hadley edge). All figures read off observation: docs/fudges.md."
     },
+    "synoptic": {
+     "edge_spread": 0.45,
+     "slope_synoptic": 3.0,
+     "slope_mesoscale": 1.6667,
+     "break_km": 500.0,
+     "finest_km": 150.0,
+     "shared": [0.4, 0.8, 0.8],
+     "front_width_km": 250.0,
+     "cold_front": 2.5,
+     "warm_front": 1.8,
+     "comma_head": 2.0,
+     "dry_slot": 2.0,
+     "frontal_share": 0.35,
+     "trade_cumulus": 0.25,
+     "in_cloud_tau": {"cumulus": 10.0, "stratocumulus": 10.0, "altostratus": 9.0, "nimbostratus": 30.0, "cirrus": 1.5},
+     "source": "The day's cloud out of the average cover: cloudy where water passes saturation, the threshold keeping the mean (Sommeria and Deardorff 1977; Tompkins 2002); eddies from half an Eady wavelength down, k^-3 then k^-5/3 past 500 km (Nastrom and Gage 1985); cyclone fronts, comma head and dry slot (Carlson 1980; Browning 1997); a storm track's mid-level share (Rossow and Schiffer 1999) and trade cumulus over subtropical seas (Warren et al. 1988; Norris 1998). Front strengths and widths are Earth-like stand-ins (docs/fudges.md)"
+    },
     "clear_visibility_km": 50.0,
     "references": [
+     {
+      "text": "Rossow, W. B. and Schiffer, R. A. 1999, Advances in understanding clouds from ISCCP, Bull. Amer. Meteor. Soc. 80, 2261",
+      "doi": "10.1175/1520-0477(1999)080<2261:AIUCFI>2.0.CO;2"
+     },
+     {
+      "text": "Warren, S. G. et al. 1988, Global distribution of total cloud cover and cloud type amounts over the ocean, NCAR/TN-317+STR",
+      "doi": "10.5065/D6QC01D1"
+     },
+     {
+      "text": "Norris, J. R. 1998, Low cloud type over the ocean from surface observations. Part I, J. Climate 11, 369",
+      "doi": "10.1175/1520-0442(1998)011<0369:LCTAFO>2.0.CO;2"
+     },
+     {
+      "text": "Sommeria, G. and Deardorff, J. W. 1977, Subgrid-scale condensation in models of nonprecipitating clouds, J. Atmos. Sci. 34, 344",
+      "doi": "10.1175/1520-0469(1977)034<0344:SSCIMO>2.0.CO;2"
+     },
+     {
+      "text": "Tompkins, A. M. 2002, A prognostic parameterization for the subgrid-scale variability of water vapor and clouds in large-scale models and its use to diagnose cloud cover, J. Atmos. Sci. 59, 1917",
+      "doi": "10.1175/1520-0469(2002)059<1917:APPFTS>2.0.CO;2"
+     },
+     {
+      "text": "Nastrom, G. D. and Gage, K. S. 1985, A climatology of atmospheric wavenumber spectra of wind and temperature observed by commercial aircraft, J. Atmos. Sci. 42, 950",
+      "doi": "10.1175/1520-0469(1985)042<0950:ACOAWS>2.0.CO;2"
+     },
+     {
+      "text": "Carlson, T. N. 1980, Airflow through midlatitude cyclones and the comma cloud pattern, Mon. Wea. Rev. 108, 1498",
+      "doi": "10.1175/1520-0493(1980)108<1498:ATMCAT>2.0.CO;2"
+     },
+     {
+      "text": "Browning, K. A. 1997, The dry intrusion perspective of extra-tropical cyclone development, Meteorol. Appl. 4, 317",
+      "doi": "10.1017/S1350482797000613"
+     },
      {
       "text": "Lemmon, M. T. et al. 2015, Dust aerosol, clouds, and the atmospheric optical depth record over 5 Mars years of the Mars Exploration Rover mission, Icarus 251, 96",
       "url": "https://arxiv.org/abs/1403.4234"

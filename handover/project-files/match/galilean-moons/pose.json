@@ -1,0 +1,8 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "Sizes, True, Visible, Real scale",
+  "frame": "Jupiter's moons",
+  "camera": "Sizes lineup of Io, Europa, Ganymede, Callisto",
+  "tests": "Visible colour and albedo of four very different moons at one scale",
+  "needs": []
+}

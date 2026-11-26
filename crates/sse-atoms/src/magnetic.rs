@@ -38,6 +38,9 @@ pub fn dynamo_field_rms(density: f64, flux: f64, c: f64, f_ohm: f64) -> f64 {
     m::sqrt(2.0 * MU0 * e)
 }
 
+/// The surface dipole block's default dipole ratio (F-S29 until MF3's shape).
+pub const DIPOLE_RATIO: f64 = 0.085;
+
 /// The equatorial dipole field at `r_surface` from a dynamo of rms field
 /// `b_rms` and outer radius `r_dynamo`, and the dipole moment, A m².
 pub fn surface_dipole(b_rms: f64, r_dynamo: f64, r_surface: f64, dipole_ratio: f64) -> (f64, f64) {

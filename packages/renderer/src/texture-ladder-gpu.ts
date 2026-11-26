@@ -102,7 +102,9 @@ function toHalf(a: Float32Array): Uint16Array {
 
 const Q = Math.PI / 4;
 
-/** Lay the six face pictures into one 3 × 2 atlas of `m` texels a face (smaller faces repeated up, nearest). */
+const o0 = (f: { n: number }, x: number, y: number) => y * f.n + x;
+
+/** Lay the six face pictures into one 3 × 2 atlas of `m` texels a face (smaller faces spread up bilinearly). */
 function atlas(c: Composite): { m: number; rgb: Uint8Array; h: Float32Array; present: number[] } {
   const m = Math.max(1, ...c.faces.map((f) => f?.n ?? 1));
   const W = 3 * m;
@@ -120,12 +122,28 @@ function atlas(c: Composite): { m: number; rgb: Uint8Array; h: Float32Array; pre
           rgb.set([128, 128, 128, 255], o * 4);
           continue;
         }
-        const s = Math.floor((y * f.n) / m) * f.n + Math.floor((x * f.n) / m);
-        rgb[o * 4] = f.rgb[s * 3]!;
-        rgb[o * 4 + 1] = f.rgb[s * 3 + 1]!;
-        rgb[o * 4 + 2] = f.rgb[s * 3 + 2]!;
+        if (f.n === m) {
+          rgb[o * 4] = f.rgb[o0(f, x, y) * 3]!;
+          rgb[o * 4 + 1] = f.rgb[o0(f, x, y) * 3 + 1]!;
+          rgb[o * 4 + 2] = f.rgb[o0(f, x, y) * 3 + 2]!;
+          rgb[o * 4 + 3] = 255;
+          h[o] = f.height_m[o0(f, x, y)]!;
+          continue;
+        }
+        // A coarser face is spread up bilinearly, not repeated in blocks (no stair-stepped edges).
+        const fx = Math.min(f.n - 1, Math.max(0, ((x + 0.5) * f.n) / m - 0.5));
+        const fy = Math.min(f.n - 1, Math.max(0, ((y + 0.5) * f.n) / m - 0.5));
+        const i = Math.max(0, Math.min(f.n - 2, Math.floor(fx)));
+        const j = Math.max(0, Math.min(f.n - 2, Math.floor(fy)));
+        const ax = fx - i;
+        const ay = fy - j;
+        const w = [(1 - ax) * (1 - ay), ax * (1 - ay), (1 - ax) * ay, ax * ay];
+        const i1 = Math.min(f.n - 1, i + 1);
+        const j1 = Math.min(f.n - 1, j + 1);
+        const k = [j * f.n + i, j * f.n + i1, j1 * f.n + i, j1 * f.n + i1];
+        for (let ch = 0; ch < 3; ch++) rgb[o * 4 + ch] = Math.round(w[0]! * f.rgb[k[0]! * 3 + ch]! + w[1]! * f.rgb[k[1]! * 3 + ch]! + w[2]! * f.rgb[k[2]! * 3 + ch]! + w[3]! * f.rgb[k[3]! * 3 + ch]!);
         rgb[o * 4 + 3] = 255;
-        h[o] = f.height_m[s]!;
+        h[o] = w[0]! * f.height_m[k[0]!]! + w[1]! * f.height_m[k[1]!]! + w[2]! * f.height_m[k[2]!]! + w[3]! * f.height_m[k[3]!]!;
       }
     }
   });

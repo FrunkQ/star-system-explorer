@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Vesta",
+  "camera": "about 5,200 km",
+  "tests": "Visible: basaltic surface, irregular shape",
+  "needs": [
+    "a non-spherical figure (asteroids thread)",
+    "giant impact basin"
+  ]
+}

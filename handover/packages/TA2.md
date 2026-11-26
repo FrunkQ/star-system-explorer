@@ -28,7 +28,7 @@ Track TA (`handover/status/true-air.md`). Golden-changing in its own area only (
   (its frame's z, or `pole` when there is no frame) and wider round it; clouds follow the same shape.
 - The system chart's True reader and the size comparison read the shape with the face; the HUD note says
   "flattened by its spin: the pole 6.5% shorter than the equator (Darwin-Radau)".
-- Until the proven core's `body.moment_of_inertia_factor` (PR 417, MOI1) is on main every world is drawn round and
-  says so; after it Jupiter and Saturn flatten by themselves.
+- A world without `body.moment_of_inertia_factor` is drawn round and says so. Since the proven core's PR 417 (MOI1,
+  25 Nov) Sol's worlds flatten by themselves: Jupiter 6.3%, Saturn 10%, Uranus 1.7%, Neptune 1.6%, Earth 0.33%.
 - Test `packages/renderer/test/true-shape.test.ts`: the kernel flattens Jupiter and Saturn by about their measured
   amounts from their facts; a world without C is round and says which fact is missing; the volume is kept.

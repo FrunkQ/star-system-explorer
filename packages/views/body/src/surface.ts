@@ -7,15 +7,25 @@ export type Surface = { tiles: SurfaceTile[]; regime?: string; refused: number; 
 
 const cache = new Map<string, Surface>();
 const pending = new Map<string, Promise<Surface | string>>();
+// Kept per kernel as well: a postcard's visit (shell postcards/visiting.ts) reads the same addresses on a kernel of its own.
+const kernels = new WeakMap<object, number>();
+let kernelCount = 0;
+// Keyed by the session's universe record, one frozen object per kernel's session however views are handed it.
+const keyOf = (session: Pick<ViewContext["session"], "universe">, system: string, address: string) => {
+  const u = session.universe ?? kernels;
+  let n = kernels.get(u);
+  if (n === undefined) kernels.set(u, (n = ++kernelCount));
+  return `${n}|${system}|${address}`;
+};
 
-/** The surface already built for this body, if any (no work). */
-export function surfaceKept(system: string, address: string): Surface | undefined {
-  return cache.get(`${system}|${address}`);
+/** The surface already built for this body on this session's kernel, if any (no work). */
+export function surfaceKept(ctx: Pick<ViewContext, "session">, system: string, address: string): Surface | undefined {
+  return cache.get(keyOf(ctx.session, system, address));
 }
 
 /** The surface of one body: from the cache, else built once (concurrent asks share the build). A string is the kernel's refusal. */
 export function loadSurface(ctx: ViewContext, system: string, address: string): Promise<Surface | string> {
-  const key = `${system}|${address}`;
+  const key = keyOf(ctx.session, system, address);
   const hit = cache.get(key);
   if (hit) return Promise.resolve(hit);
   const on = pending.get(key);
@@ -35,7 +45,7 @@ export function loadSurface(ctx: ViewContext, system: string, address: string): 
     }
     const kind = (r as { kind?: unknown }).kind;
     // Bare ground in its measured colour where the kernel weathers it (renderer ground-optics.ts, VP3 part 5).
-    const tiles = r.tiles.some((t) => t.maturity) ? withGround(r.tiles, await readGroundOptics(ctx.session)) : r.tiles;
+    const tiles = withGround(r.tiles, await readGroundOptics(ctx.session));
     const v: Surface = { tiles, regime: r.regime, refused: r.refused.length, air: facts, ...(typeof kind === "string" ? { kind } : {}) };
     cache.set(key, v);
     return v;

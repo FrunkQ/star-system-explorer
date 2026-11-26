@@ -195,6 +195,7 @@ def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
     row = {"id": pid, "name": name, "kind": kind, "host": host, "values": values}
     values.update(surface_facts(pid, src))
     values.update(composition_facts(pid, src))
+    values.update(interior_facts(pid))
     if pid in NOTES:
         row["note"] = NOTES[pid]
     return row
@@ -277,6 +278,41 @@ COMPOSITION = {
 }
 
 
+# Rocky worlds' measured interiors (proven core, 24 Nov 2026): the core's share
+# of the mass, and the moment of inertia factor C = I/(M R^2). Recalled from the
+# papers named, not yet re-read against them, so every value is marked
+# unverified. Venus has no measured core, so it has no core share here.
+INTERIOR = {
+    "mercury": ((0.69, "hauck2013", "from a core radius of 2020 +/- 30 km"), (0.346, "margot2012")),
+    "venus": (None, (0.337, "margot2021")),
+    "earth": ((0.325, "mcdonough2003", "the core is 32.5% of Earth's mass"), (0.3307, "yoder1995")),
+    "moon": ((0.015, "weber2011", "from a core radius of about 330 km"), (0.3932, "konopliv1998")),
+    "mars": ((0.24, "staehler2021", "from a core radius of 1830 +/- 40 km and a core density near 6000 kg/m3"), (0.3644, "konopliv2011")),
+}
+INTERIOR_SOURCES = [
+    {"id": "hauck2013", "text": "Hauck, S. A. et al. 2013, JGR Planets 118, 1204: the curious case of Mercury's internal structure (core radius 2020 +/- 30 km)", "status": "unverified", "doi": "10.1002/jgre.20091"},
+    {"id": "margot2012", "text": "Margot, J.-L. et al. 2012, JGR Planets 117, E00L09: Mercury's moment of inertia from spin and gravity data (C/MR^2 = 0.346 +/- 0.014)", "status": "unverified", "doi": "10.1029/2012JE004161"},
+    {"id": "margot2021", "text": "Margot, J.-L. et al. 2021, Nature Astronomy 5, 676: spin state and moment of inertia of Venus (C/MR^2 = 0.337 +/- 0.024)", "status": "unverified", "doi": "10.1038/s41550-021-01339-7"},
+    {"id": "mcdonough2003", "text": "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547: compositional model for the Earth's core (the core is 32.5% of Earth's mass)", "status": "unverified", "doi": "10.1016/B0-08-043751-6/02015-6"},
+    {"id": "yoder1995", "text": "Yoder, C. F. 1995, Astrometric and geodetic properties of Earth and the Solar System, AGU Reference Shelf 1, 1 (Earth C/MR^2 = 0.3307)", "status": "unverified", "doi": "10.1029/RF001p0001"},
+    {"id": "weber2011", "text": "Weber, R. C. et al. 2011, Science 331, 309: seismic detection of the lunar core (radius about 330 km)", "status": "unverified", "doi": "10.1126/science.1199375"},
+    {"id": "konopliv1998", "text": "Konopliv, A. S. et al. 1998, Science 281, 1476: improved gravity field of the Moon from Lunar Prospector (C/MR^2 = 0.3932 +/- 0.0002)", "status": "unverified", "doi": "10.1126/science.281.5382.1476"},
+    {"id": "staehler2021", "text": "Staehler, S. C. et al. 2021, Science 373, 443: seismic detection of the martian core (radius 1830 +/- 40 km)", "status": "unverified", "doi": "10.1126/science.abi7730"},
+    {"id": "konopliv2011", "text": "Konopliv, A. S. et al. 2011, Icarus 211, 401: Mars high resolution gravity fields from MRO, Mars seasonal gravity and other dynamical parameters (C/MR^2 = 0.3644 +/- 0.0005)", "status": "unverified", "doi": "10.1016/j.icarus.2010.10.004"},
+]
+
+
+def interior_facts(pid):
+    if pid not in INTERIOR:
+        return {}
+    core, moi = INTERIOR[pid]
+    out = {}
+    if core is not None:
+        out["interior.core_mass_fraction"] = val(core[0], "1", core[1], note=core[2], check="unverified")
+    out["body.moment_of_inertia_factor"] = val(moi[0], "1", moi[1], note="C = I/(M R^2)", check="unverified")
+    return out
+
+
 def composition_facts(pid, src):
     if pid not in COMPOSITION:
         return {}
@@ -297,7 +333,7 @@ def build():
     sun["values"].update(sol_extra.SUN_AGE)
     sun["values"].update(sun_frame())
     bodies = [sun] + [planet_row(*p) for p in PLANETS] + [moon_row(*x) for x in MOONS] + sol_extra.BODIES
-    sources = sorted(SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
+    sources = sorted(SOURCES + INTERIOR_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
     regions = sol_extra.regions({b["id"]: b for b in bodies})
     return {
         "format": "sse.pack/1", "id": "sse.base-sol", "version": "0.1.0", "kind": ["base-physics"],

@@ -7,7 +7,7 @@ test("the view controls page says what the screens offer (node tests/ui/view-con
   assert.equal(pageOnDisk(), viewControlsPage());
 });
 
-test("the page's copy of Galaxies nearby's inline controls matches the screen", () => {
+test("Galaxies nearby declares the controls the page reads", () => {
   const src = readFileSync(new URL("../../packages/views/cluster-map/src/index.svelte.ts", import.meta.url), "utf8");
-  assert.match(src, /controls: flatChart\("3D cells come with the galaxy charts' Free view"\)/);
+  assert.match(src, /controls: CLUSTER_CONTROLS,/);
 });

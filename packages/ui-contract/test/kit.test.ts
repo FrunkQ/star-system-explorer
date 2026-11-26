@@ -138,9 +138,12 @@ test("kitScreen: a starter's layout for a situation is an ordinary screen docume
   const world = kitScreen("sse.kit.hauler", "world")!;
   assert.deepEqual(world.items, sys.items, "world extends system");
   assert.equal(kitScreen("sse.kit.hauler", "holding"), null);
+  assert.equal(controlSetOf(resolveKit("sse.kit.hauler")).id, "hauler", "the resolved kit keeps its control set");
+  assert.equal(controlSetOf(resolveKit("sse.kit.guide")).id, "guide");
   assert.equal(kitScreen("no.such.kit", "system"), null);
   for (const k of STARTER_KITS) for (const s of ["sector", "system", "world", "landing"] as const) {
     const d = kitScreen(k, s);
+    for (const i of d?.items ?? []) if (i.view === "sse.view.atlas") assert.equal(i.params?.edition, k.atlas?.edition, `${k.id} ${s}: the Atlas part wears the kit's edition`);
     assert.ok(d, `${k.id} has a ${s} screen`);
     const areas = d.items.map((i) => i.area);
     assert.equal(new Set(areas).size, areas.length, `${k.id} ${s}: one part to an area`);

@@ -10,9 +10,9 @@ PC1, PC3 and PC4 part 1 are built and on main (PR 509, merged 25 Nov 10:21 UTC; 
 | PC1 contract: `pose` on the bookmark, `sse.postcard/1` | done 25 Nov (ui-contract pose.ts, postcard.ts; the globe keeps its camera) | `packages/PC1.md` |
 | PC2 a still of any True view from a pose; the reason line per pass | next; for the renderer thread (agreed, design section 14) | |
 | PC3 the card (front, back), making one, the wall | done 25 Nov for the globe (Keep as postcard, the wall, Send); other views draw when PC2 lands; the bookmark row's "Make a postcard" is with the Run desk | `packages/PC3.md` |
-| PC4 opening one from outside: the visit | part 1 done 25 Nov (paste, link, file open a read-only visit; packs and newer-physics lines; Keep this system). Part 2 next: draw an address place not open here (a visiting session) | `packages/PC3.md` |
-| PC5 grounds on holding and transmission cards, the Quotes kind | queued; for the Run desk thread (agreed) | |
-| PC6 the base set of about 24 and its check | queued; with the trailer thread | |
+| PC4 opening one from outside: the visit | done 25 Nov. Part 1: paste, link, file open a read-only visit; packs and newer-physics lines; Keep this system. Part 2: a sent postcard's world opens on a visiting kernel and its front is drawn live, matching the sender's picture. An address postcard (none are made yet) still shows its stamp | `packages/PC3.md` |
+| PC5 grounds on holding and transmission cards, the Quotes kind | done 25 Nov by the Run desk thread (PR 563); "Make a postcard" on a Bookmarks row opens it on the wall (visits.own) | `packages/PC5.md` |
+| PC6 the base set of about 24 and its check | part 1 done 25 Nov: `sse.postcards/1` sets, the wall and held-screen grounds read them, the base set has 3 cards made by `scripts/build-postcard-set.mjs`. Part 2: grow to about 24 with the trailer thread | `packages/PC6.md` |
 | PC7 the quote set | queued; for the Atlas thread. Quote rights answered yes: real scientists' and astronauts' words in the base app, film, song and game quotes in the free fan pack | |
 | PC8 Explorers: shelf with an always-free selection, stamps, the link page, private sends with a message (sender sets its life, a year at most), Discord webhook, "Offer for the shipped set" | no owner and not started, on purpose: waiting for an Explorers owner thread and Alex's own yes on storage | |
 

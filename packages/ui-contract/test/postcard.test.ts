@@ -7,6 +7,7 @@ import {
   MESSAGE_MAX,
   POSTCARD_SCHEMA,
   checkPostcard,
+  clipAsSystem,
   clipThroughSeat,
   envelope,
   fixDate,
@@ -27,6 +28,8 @@ import {
   type Postcard,
 } from "../src/postcard.ts";
 import type { Clip } from "../src/clip.ts";
+import { postcardSetsOn, setPack } from "../src/postcard-sets.ts";
+import { readFileSync } from "node:fs";
 
 const pose: Pose = poseOfGlobe("u:sol/mars", 30, 20, 3.39e6);
 const at: Whereabouts = { scope: "u:sol", now_yr: 4.6e9, instrument: "body", scale: "world", view: { style: "true", seen: "free", band: "visible" }, selected: "u:sol/mars", pose };
@@ -198,4 +201,63 @@ test("a reference shot keeps its Composite mix, its stretch and the famous pictu
   const bad = checkPostcard({ ...withRef, bookmark: { ...withRef.bookmark, view: { ...withRef.bookmark.view, mix: [{ band: "visible", line: "Ne V", weight: 1, colour: "#fff" }] } } });
   assert.ok(bad.ok && !bad.postcard.bookmark.view?.mix, "a bad mix is dropped, the postcard still opens");
   assert.equal(poseFrom({ ...pose, stretch: "log" }), null);
+});
+
+test("a visit lays a clip out as a system of its own, the star on the system's own address", () => {
+  const { edits, addressOf } = clipAsSystem(clip, "u:visit/sys:1", ["u:visit/sys:1/body:0"], 1.4e17);
+  assert.equal(addressOf.get("n0"), "u:visit/sys:1");
+  assert.equal(addressOf.get("n1"), "u:visit/sys:1/body:1", "a taken address is passed over");
+  assert.equal(addressOf.get("n2"), "u:visit/sys:1/body:1/body:0");
+  assert.ok(edits.some((e) => e.address === "u:visit/sys:1" && e.field === "name" && e.value === "Kestrel"));
+  assert.ok(edits.some((e) => e.address === "u:visit/sys:1" && e.field === "system.age" && e.value === 1.4e17));
+  assert.ok(edits.some((e) => e.address === "u:visit/sys:1/body:1/body:0" && e.field === "orbit.host" && e.value === "u:visit/sys:1/body:1"));
+  assert.ok(!edits.some((e) => e.address === "u:visit/sys:1" && e.field.startsWith("orbit.")), "the star orbits nothing");
+});
+
+test("a postcard's origin carries the world's own facts, never notes, and only at its own addresses", () => {
+  const b = fixDate(makeBookmark([], at, "Vault", "Body"), 4.6e9);
+  const origin = {
+    universe: { id: "kestrel", seed: "kestrel reach campaign" },
+    system: "u:kestrel/sys:1",
+    nodes: { n0: "u:kestrel/sys:1", n1: "u:kestrel/sys:1/body:3", n9: "u:kestrel/sys:1/body:9" },
+    facts: [
+      { address: "u:kestrel/sys:1/body:3", field: "body.surface_water_oceans", value: 1 },
+      { address: "u:kestrel/sys:1/body:3", field: "v3.gmNotes", value: "the vault holds the key" },
+      { address: "u:kestrel/sys:1/body:3", field: "v3.roleHint", value: "planet" },
+      { address: "u:elsewhere/sys:2", field: "body.mass", value: 1 },
+    ],
+  };
+  const r = checkPostcard(JSON.parse(JSON.stringify(envelope(b, { how: "clip", clip, packs: clip.packs, made_with: "4.0.0", about: "n1", age_s: 1.4e17, origin }))));
+  assert.ok(r.ok, r.ok ? "" : r.why);
+  const w = r.postcard.world;
+  assert.ok(w.how === "clip" && w.origin);
+  assert.equal(w.about, "n1");
+  assert.deepEqual(w.origin.nodes, { n0: "u:kestrel/sys:1", n1: "u:kestrel/sys:1/body:3" }, "only the clip's own nodes");
+  assert.deepEqual(w.origin.facts.map((f) => f.field), ["body.surface_water_oceans"], "no notes, no import bookkeeping, nothing from another system");
+});
+
+test("postcard sets read from packs; a later pack's set of the same id replaces it", () => {
+  const b = fixDate(makeBookmark([], at, "Mars", "Body"), 4.6e9);
+  const card = JSON.parse(postcardText(envelope(b, address, { id: "c1", name: "Mars" })));
+  const pack = (id: string, sets: unknown) => ({ id, version: "1.0.0", provides: { other: { postcard_sets: sets } } }) as never;
+  const r = postcardSetsOn([
+    pack("a", [{ schema: "sse.postcards/1", id: "s", title: "First", cards: [card, { schema: "nope" }] }]),
+    pack("b", [{ schema: "sse.postcards/1", id: "s", title: "Second", cards: [card] }, { id: "bad" }]),
+    pack("c", "not a list"),
+  ]);
+  assert.deepEqual(r.sets.map((s) => [s.id, s.title, s.pack, s.cards.length]), [["s", "Second", "b", 1]]);
+  assert.equal(r.problems.length, 3, r.problems.join("; "));
+});
+
+test("the base set beside the base presentation pack reads, every card with its stamp and origin", () => {
+  const raw = JSON.parse(readFileSync(new URL("../../../packs/base-presentation/postcards.json", import.meta.url), "utf8"));
+  const r = postcardSetsOn([setPack("sse.base-presentation", raw)]);
+  assert.deepEqual(r.problems, []);
+  const set = r.sets.find((s) => s.id === "sse.base");
+  assert.ok(set && set.cards.length >= 3);
+  for (const c of set.cards) {
+    assert.match(c.stamp ?? "", /^data:image\//, `${c.name} has its stamp`);
+    assert.ok(c.world.how === "clip" && c.world.origin, `${c.name} carries its origin`);
+    assert.equal(c.message, undefined, "a set's postcards carry no message");
+  }
 });

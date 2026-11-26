@@ -71,6 +71,8 @@ export interface Workspace {
   /** The party's ship (party.ts): Voyages starts where it is, Land lands it. Kept with the campaign. */
   party?: import("./party.ts").PartyShip | null;
   setParty?(p: import("./party.ts").PartyShip | null): void;
+  /** "Could be…" suggestions the GM asked to stop, as "address#record" (ED10); kept with the campaign. */
+  could_quiet?: string[];
   /** The readings chosen by pressing a unit (figures.ts `withChoice`), per kind and scale class; kept with the campaign. */
   unit_choices?: import("./figures.ts").UnitChoices;
   /** Keep a reading for a kind and what it is about (null puts the scheme's back). */
@@ -182,6 +184,8 @@ export interface ViewContext {
   styles?: StylesHost;
   /** V3 gap 23: hand a subject to Minerva, the storyteller, to describe from what one audience knows (absent where she cannot run). */
   describe?(address: string): void;
+  /** A view adopted systems into the campaign (e.g. "Grow a system here"): the shell puts them on its list so they open like any other. */
+  adopted?(systems: readonly { system: string; title: string }[], note: string, state_hash: string): void;
   /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
   solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
   /** Range rings to draw (RK12): who holds the weapon (a body's address), its name, and the rings from `rangeRings`. Absent or empty: none. A pack's weapons feed it; the chart draws it under the HUD (layer `range`). */

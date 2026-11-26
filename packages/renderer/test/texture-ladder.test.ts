@@ -69,6 +69,19 @@ test("compose: deeper tiles laid over coarser ones, the gaps keep the coarse rea
   assert.equal(composeFaces([]).faces.every((f) => f === null), true);
 });
 
+test("compose: a coarse tile under finer ones is spread smoothly between its samples, not in blocks", () => {
+  // A step in height across face 0's level-0 tile, then a level-1 tile elsewhere so the face is composed at 16.
+  const h = (d: number[]) => (d[1]! > 0 ? 2000 : 0);
+  const c = composeFaces([...globe(h), tile(0, 1, 1, 1, () => 5000)]);
+  const f = c.faces[0]!;
+  assert.equal(f.n, 16);
+  // Along a row of the coarse lower half, across the step at u = 0: values pass through between (500, 1500) rather
+  // than jumping 0 → 2000 between two blocks of two texels.
+  const heights = Array.from({ length: 8 }, (_, i) => f.height_m[2 * 16 + 4 + i]!);
+  assert.ok(heights.some((x) => x > 100 && x < 1900), `row ${heights}`);
+  assert.equal(new Set(heights.map((x) => Math.round(x))).size >= 4, true, `row ${heights}`);
+});
+
 test("sampling is continuous across a cube edge and matches the tiles' heights", () => {
   const h = (d: number[]) => 3000 * d[0]! + 2000 * d[2]!;
   const c = composeFaces(globe(h, 32));

@@ -5,7 +5,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go } from "./nav.mjs";
+import { desk as toDesk, go } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -112,12 +112,29 @@ try {
   await ins.locator("[data-next]").click();
   await ins.locator("[data-land-here]").waitFor({ timeout: 15000 });
   assert.match(await ins.locator("[data-arrived]").innerText(), /Beowulf is at Mars/);
+  // The flight goes into Beowulf's flight log on the record (V8 flight log).
+  await ins.locator("[data-logged]").waitFor({ timeout: 15000 });
+  assert.match(await ins.locator("[data-logged]").innerText(), /\d+ entries written to Beowulf's flight log/);
+  // What the voyage burned comes off Beowulf's tanks, on its record (fuel draw-down).
+  await ins.locator("[data-drawn]").waitFor({ timeout: 15000 });
+  assert.match(await ins.locator("[data-drawn]").innerText(), /^Tanks now: (reaction mass|jump fuel) [\d.]+ t/);
   await noOverlap(gm);
   await shot(gm, "party-arrived-at-mars");
   await pl.waitForFunction((m) => document.querySelector("header [data-party-ship]")?.getAttribute("data-party-at") === m, mars, { timeout: 15000 });
   assert.match(await aboard.innerText(), /Aboard Beowulf, at Mars/);
   assert.match(await aboard.getAttribute("title"), /Last voyage: Earth to Mars, \d/);
   await shot(pl, "party-player-header");
+  // The players' card for the party's ship (track MC, MC8): opened from the header, read from the table's own scene.
+  await aboard.click();
+  const card = pl.locator("[data-party-card]");
+  await card.waitFor({ timeout: 15000 });
+  // The table has only heard of Beowulf: the card draws the ship, but its tanks read "not known", never full.
+  await card.locator("[data-picture]").first().waitFor({ timeout: 15000 });
+  await card.locator("[data-fuel] [data-fuel-unknown], [data-fuel-unknown]").first().waitFor({ timeout: 15000 });
+  assert.equal(await card.locator("[role=meter]").count(), 0, "no tank level the table does not know");
+  await shot(pl, "party-player-ship-card");
+  await aboard.click();
+  await card.waitFor({ state: "detached" });
 
   // Arriving at a world the table does not fully know, the GM is offered one press to tell them, with Undo.
   const slip = gm.locator(`[data-arrival="${mars}"]`);
@@ -131,6 +148,58 @@ try {
   await ins.locator("[data-land-here]").click();
   await gm.waitForSelector("[data-surface]", { timeout: 30000 });
   await shot(gm, "party-land-on-mars");
+
+  // Between the stars: the party's ship is picked, flies on by jump, logs it and burns jump fuel; the players see where it went.
+  await go(gm, "voyages");
+  await gm.locator("[data-scale-pick=stars]").click();
+  const voy = gm.locator(".voy");
+  await gm.waitForFunction(() => (document.querySelector(".voy [data-ship]")?.value ?? "") === "party", null, { timeout: 15000 });
+  // A far trader has no known fuel beyond its home port here, so the GM lets the crew gamble on a giant to skim.
+  await voy.locator("[data-gambles]").check();
+  await gm.waitForFunction(() => Number(document.querySelector(".voy")?.getAttribute("data-legs") ?? 0) >= 1, null, { timeout: 90000 });
+  assert.match(await voy.locator("[data-next]").innerText(), /Fly Beowulf there/);
+  const star = (await voy.getAttribute("data-voyage")).split(">")[1];
+  await voy.locator("[data-next]").click();
+  await voy.locator("[data-arrived]").waitFor({ timeout: 15000 });
+  assert.match(await voy.locator("[data-arrived]").innerText(), /^Beowulf is at /);
+  await voy.locator("[data-logged]").waitFor({ timeout: 15000 });
+  assert.match(await voy.locator("[data-logged]").innerText(), /\d+ entries written to Beowulf's flight log/);
+  await voy.locator("[data-drawn]").waitFor({ timeout: 15000 });
+  assert.match(await voy.locator("[data-drawn]").innerText(), /jump fuel [\d.]+ t/);
+  await shot(gm, "party-between-stars");
+  await pl.waitForFunction((m) => document.querySelector("header [data-party-ship]")?.getAttribute("data-party-at") === m, star, { timeout: 15000 });
+  assert.doesNotMatch(await aboard.innerText(), /sys:/, "the players read a star's name, not its address");
+  await shot(pl, "party-player-between-stars");
+  // Beowulf's log on Ships and stations reads the voyage from its flight log, and what it burned (track MC, MC7).
+  await go(gm, "constructs");
+  const beowulf = desk.locator("[data-construct]", { hasText: "Beowulf" });
+  await beowulf.waitFor({ timeout: 15000 });
+  if ((await beowulf.getAttribute("aria-pressed")) !== "true") await beowulf.click();
+  await desk.locator("[data-log-toggle]").click();
+  const flew = desk.locator("[data-log] [data-log-what=flight]", { hasText: "Flew Earth to Mars" });
+  await flew.waitFor({ timeout: 15000 });
+  assert.match(await flew.innerText(), /planned/);
+  assert.ok((await desk.locator("[data-log] li").allInnerTexts()).some((l) => /voyage to Mars/.test(l)), "the tanks' draw-down is in the log");
+  // The jump between the stars is a line of its own, named by the stars, not "elsewhere".
+  const jumped = desk.locator("[data-log] [data-log-what=flight]", { hasText: /Flew .+ to .+ \(\d+ days\)/ });
+  assert.equal(await desk.locator("[data-log] [data-log-what=flight]").filter({ hasText: "elsewhere" }).count(), 0, "every place named");
+  assert.ok((await jumped.count()) >= 2, "the trip to Mars and the jump each read as a flight");
+  await shot(gm, "party-ship-log");
+
+  // Shown to the table (Known to on Build, MC2), Beowulf's card on the players' screen reads its tanks
+  // (MC8), and the players' screen stays live: the reveal replays there (travel's record intents, PR 452).
+  await toDesk(gm, "Build");
+  await go(gm, "constructs");
+  const shipRow = desk.locator("li", { has: gm.locator("[data-construct]", { hasText: "Beowulf" }) });
+  await shipRow.locator("[data-known-open]").click();
+  await shipRow.locator("[data-known-pop] [data-known-step=known]").first().click();
+  await gm.keyboard.press("Escape");
+  await shipRow.locator("span.known[data-known=known]").waitFor({ timeout: 15000 });
+  await aboard.click();
+  await card.locator("[role=meter]").first().waitFor({ timeout: 20000 });
+  assert.equal(await card.locator("[data-fuel-unknown]").count(), 0, "the tanks read once the ship is known");
+  assert.equal(await pl.locator("footer[data-link]").getAttribute("data-link"), "live", "the players' screen stays live after the reveal");
+  await shot(pl, "party-player-ship-card-known");
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("party e2e: ok");

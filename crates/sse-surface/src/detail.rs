@@ -93,6 +93,16 @@ pub fn orbit_atlas(
     seed: &Seed,
     epoch_gyr: f64,
 ) -> Result<Atlas, String> {
-    crate::survey::orbit_world(s, body, seed, epoch_gyr, &SurveyOptions::default())
-        .map(|sv| sv.atlas)
+    orbit_atlas_with(s, body, seed, epoch_gyr, &SurveyOptions::default())
+}
+
+/// `orbit_atlas` with survey options (SOL5: the air's measured mix).
+pub fn orbit_atlas_with(
+    s: &SurfaceSettings,
+    body: &Body,
+    seed: &Seed,
+    epoch_gyr: f64,
+    opts: &SurveyOptions,
+) -> Result<Atlas, String> {
+    crate::survey::orbit_world(s, body, seed, epoch_gyr, opts).map(|sv| sv.atlas)
 }
