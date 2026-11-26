@@ -16,16 +16,10 @@ use std::collections::BTreeMap;
 /// Al-26 heat per kg left after a body formed, from the Al-26 block (the
 /// Sun's share of Al-26 until MP7 hands the star's own).
 fn al26_left(formed_myr: f64) -> f64 {
-    let atoms = sse_atoms::atoms();
-    let Some(a) = atoms
-        .iter()
-        .find(|a| a.decl().id == "sse.heat.al26_planetesimal_heating")
-    else {
-        return 0.0;
-    };
-    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
     let t = formed_myr.max(0.0) * 1.0e6 * sse_core::sheet::YR_JULIAN;
-    a.eval(&[1.0, t], &p).map(|o| o[0]).unwrap_or(0.0)
+    sse_physics::run("sse.heat.al26_planetesimal_heating", &[1.0, t])
+        .map(|o| o[0])
+        .unwrap_or(0.0)
 }
 
 /// A world's bulk: its facts, with formation's ledger, captured gas and

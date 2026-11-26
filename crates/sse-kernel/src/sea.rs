@@ -9,15 +9,10 @@ use sse_climate::forcing::MoonPull;
 use sse_climate::{Climate, ClimateSettings, Conditions};
 use sse_core::math as m;
 use sse_core::sheet;
-use sse_flow::Atom;
 
-/// Run one formula block with its default settings.
+/// Run one block with its settings in force (ER2).
 fn run(id: &str, inputs: &[f64]) -> Option<Vec<f64>> {
-    let a = sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)?;
-    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-    a.eval(inputs, &p).ok()
+    sse_physics::run(id, inputs).ok()
 }
 
 /// One body raising a tide on the world.

@@ -25,7 +25,7 @@ Nothing is built. ER is a code only, never shown in the product. Every package l
 | ER0 the note in `handover/design/`, this file, the row in START-HERE | done, 26 Nov | this thread |
 | ER1 the physics object and one scope, built at `load_stack`; physics hash; the shrink-only side-door ledger (`scripts/audit-side-doors.py`, `packages/ER-side-doors.txt`) | done, 26 Nov, PR 644; log and "how to fix a red ledger check" in `packages/ER1-physics-in-force.md` | kernel (thread "Start the reference pack migration") |
 | ER1b the reach gate as a report with a ledger that only shrinks; seen red first | proposed, needs ER1 | kernel |
-| ER2 the block door (`physics::run`), the 20 call sites, `provides.blocks` settings in force | proposed, needs ER1 | kernel |
+| ER2 the block door (`physics::run`), the 20 call sites, `provides.blocks` settings in force | done, 26 Nov; log in `packages/ER2-block-door.md`. Ledger kind `block` 35 lines to 1 (the flow compiler, kept on purpose) | kernel (thread "Migrate the next physics reads") |
 | ER11a `sse.table/1` and the `bake` op; the black hole disc first | proposed, needs ER1; wanted early by the renderer fix jobs | kernel, exotic objects |
 | ER4 the sheet's fast table: every single-number row in force, formula blocks may name any row | proposed, needs ER1 | data sheet, kernel |
 | ER5 (standing rule, not a queued package) the sheet ledger, about 84 files: changed as touched; each read is follows, estimated or kept real | starts once ER4 lands | every thread, in its own crates |
@@ -40,6 +40,6 @@ Nothing is built. ER is a code only, never shown in the product. Every package l
 | ER13 clear up at the end: one agent converts what is left, then the gate is a hard check and the old doors go private | opened when the ledgers are short | kernel |
 
 ## Next
-- ER1 is done (PR 644). ER1b (the reach gate) follows in the same thread; ER2 and ER11a go to fresh agents; then ER4.
+- ER1 is done (PR 644). ER1b (the reach gate) follows in the same thread; ER2 is built (`packages/ER2-block-door.md`); ER11a with a fresh agent; then ER4. ER3 can start once ER2 is on main.
 - Every package's questions are answered, so nothing in the table waits on Alex. ER9 still shows him mock-ups first.
 - The coordinator's routine choices are listed in the note's section 14.

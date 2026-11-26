@@ -1203,10 +1203,14 @@ fn bench_unit(i: u32) -> f64 {
 /// blocks (J2). Ids never clash: `toy.*`, `sse.*`, `logic.*`, `world.*`,
 /// `chance.*`.
 fn kernel_atoms() -> sse_flow::AtomRegistry {
+    kernel_atoms_in_force(&sse_physics::Blocks::shipped())
+}
+
+/// The same with the block library in force (ER2): each block with the
+/// settings the stack gives it, so a flow compiled against it follows them.
+fn kernel_atoms_in_force(blocks: &sse_physics::Blocks) -> sse_flow::AtomRegistry {
     let mut r = sse_flow::toy::registry();
-    for a in sse_atoms::atoms() {
-        r.insert(a);
-    }
+    blocks.insert_into(&mut r);
     // J2: the logic set (`logic.*`, `world.*`, `chance.*`).
     sse_logic::register(&mut r);
     r
@@ -3308,9 +3312,26 @@ impl Kernel {
                                 issues: clashes,
                             });
                         }
+                        // ER2: the block library in force, each block with
+                        // the settings this stack's `provides.blocks` give it.
+                        // Flows compile against it, so they follow an edit.
+                        let blocks = match sse_physics::Blocks::from_packs(&ms) {
+                            Ok(b) => std::sync::Arc::new(b),
+                            Err(es) => {
+                                let issues: Vec<sse_pack::StackIssue> = es
+                                    .into_iter()
+                                    .map(|(pack, message)| sse_pack::StackIssue { pack, message })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: issues.iter().map(|i| i.to_string()).collect(),
+                                });
+                            }
+                        };
+                        let atoms = kernel_atoms_in_force(&blocks);
                         let _sheet = sse_flow::sheet::Scope::new(sheet_of(&observe.reference));
                         let cx = Context {
-                            atoms: &self.atoms,
+                            atoms: &atoms,
                             kinds: &stack.kinds,
                             units: &stack.units,
                         };
@@ -3371,6 +3392,17 @@ impl Kernel {
                                 issues: problems,
                             });
                         }
+                        // The physics in force from here on: the rest of the
+                        // load (codes, adopting a universe) reads the new one.
+                        let flows = std::sync::Arc::new(flows);
+                        let physics = std::sync::Arc::new(sse_physics::Physics::build_with(
+                            &ms,
+                            Some(&stack),
+                            observe.reference.clone(),
+                            flows.clone(),
+                            blocks,
+                        ));
+                        let _in_force = sse_physics::Scope::new(&physics);
                         let codes = match sse_codes::Codes::load(&ms) {
                             Ok(c) => c,
                             Err(problems) => {
@@ -3398,13 +3430,8 @@ impl Kernel {
                             fictional_kinds: stack.fictional_kinds.iter().cloned().collect(),
                             adopted,
                         };
-                        let flows = std::sync::Arc::new(flows);
-                        self.physics = std::sync::Arc::new(sse_physics::Physics::build(
-                            &ms,
-                            Some(&stack),
-                            observe.reference.clone(),
-                            flows.clone(),
-                        ));
+                        self.physics = physics;
+                        self.atoms = atoms;
                         self.stack = Some((stack, flows));
                         self.reports = reports;
                         self.observe = observe;

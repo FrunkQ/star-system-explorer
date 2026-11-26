@@ -15,12 +15,9 @@ use sse_core::math as m;
 use sse_flow::Atom;
 
 /// A formula block from the base packs, found once.
-pub(crate) fn block(id: &str) -> &'static dyn Atom {
-    sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .map(|a| a as &dyn Atom)
-        .unwrap_or_else(|| panic!("base formula block {id} is missing"))
+pub(crate) fn block(id: &str) -> std::sync::Arc<dyn Atom> {
+    // ER2: the block in force, with the settings this universe gives it.
+    sse_physics::block(id).unwrap_or_else(|| panic!("base formula block {id} is missing"))
 }
 
 /// Run a formula block on numbers.

@@ -127,7 +127,9 @@ impl Model {
     pub fn new(physics: &PackManifest, settings: Settings) -> Result<Self, String> {
         let stack = sse_pack::resolve(std::slice::from_ref(physics), "0.1.0")
             .map_err(|e| format!("{e:?}"))?;
-        let atoms = sse_atoms::registry();
+        // ER2: compiled against the blocks in force, so the place model's
+        // flows follow an edit to a block's settings.
+        let atoms = sse_physics::registry();
         let cx = Context {
             atoms: &atoms,
             kinds: &stack.kinds,
