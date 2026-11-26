@@ -45,15 +45,26 @@ pub const HOT_STAND_IN: &str = "the hot thin flow is drawn as a glow of stated s
 pub const THICK_STAND_IN: &str = "the thick flow's light is drawn as the thin disc's until a slim-disc block lands (fudge register: exotic objects, thick flow)";
 pub const NEWTONIAN_DISC: &str = "the thin disc's brightness follows the Newtonian law of Shakura and Sunyaev, not the relativistic one of Novikov and Thorne (fudge register: exotic objects)";
 
-/// A block from the base registry, run with its default parameters.
+/// A block from the physics in force, run on numbers. Its settings are
+/// still the shipped ones (each parameter's stated default): no stack can
+/// change them until ER2's `physics::run` lands, which replaces this.
+/// Outside a kernel call nothing is in force, and the run says so.
 pub(crate) fn run_block(id: &str, inputs: &[f64]) -> Result<Vec<f64>, String> {
-    let a = sse_atoms::formulas::loaded()
+    let physics = sse_physics::now()
+        .ok_or_else(|| format!("{id}: no physics in force (run inside a kernel call)"))?;
+    let a = physics
+        .blocks()
         .iter()
         .find(|a| a.decl().id == id)
-        .ok_or_else(|| format!("base formula block {id} is missing"))?;
-    let params: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
+        .ok_or_else(|| format!("formula block {id} is missing"))?;
+    let params: Vec<f64> = a.decl().params.iter().map(shipped_setting).collect();
     a.eval(inputs, &params)
         .map_err(|e| format!("{id}: {}", e.0))
+}
+
+/// A block parameter as shipped (ER2 gives the stack's).
+fn shipped_setting(p: &sse_flow::Param) -> f64 {
+    p.default
 }
 
 /// Where the matter comes from.

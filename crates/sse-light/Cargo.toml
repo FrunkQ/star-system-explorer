@@ -12,6 +12,7 @@ sse-pack.workspace = true
 sse-flow.workspace = true
 sse-atoms.workspace = true
 sse-reference.workspace = true
+sse-physics.workspace = true
 sse-gravity = { path = "../sse-gravity" }
 serde.workspace = true
 serde_json.workspace = true

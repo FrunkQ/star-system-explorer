@@ -756,6 +756,7 @@ dependencies = [
  "sse-flow",
  "sse-gravity",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
 ]
 
