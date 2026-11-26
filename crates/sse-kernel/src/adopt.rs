@@ -1445,17 +1445,22 @@ pub(crate) fn star_class(
     if !is_star {
         return None;
     }
-    let mass = num("body.mass")? / sse_core::sheet::M_SUN;
+    let mass_kg = num("body.mass")?;
+    let mass = mass_kg / M_SUN_KG;
     let phase = phase.unwrap_or(sse_formation::Phase::MainSequence);
     if matches!(
         phase,
         sse_formation::Phase::BlackHole | sse_formation::Phase::NeutronStar
     ) {
-        return Some(sse_formation::spectral::classify(0.0, mass, 0.0, phase));
+        return Some(sse_formation::spectral::classify(
+            0.0, mass, mass_kg, 0.0, phase,
+        ));
     }
     let teff = num("star.effective_temperature").filter(|x| *x > 0.0)?;
-    let radius = num("body.radius").filter(|x| *x > 0.0)? / sse_core::sheet::R_SUN;
-    Some(sse_formation::spectral::classify(teff, mass, radius, phase))
+    let radius_m = num("body.radius").filter(|x| *x > 0.0)?;
+    Some(sse_formation::spectral::classify(
+        teff, mass, mass_kg, radius_m, phase,
+    ))
 }
 
 pub(crate) fn resolved_system(

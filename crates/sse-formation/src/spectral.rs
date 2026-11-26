@@ -100,13 +100,14 @@ const DWARF: [(&str, [f64; 10]); 10] = [
             7220.0, 7020.0, 6820.0, 6750.0, 6670.0, 6550.0, 6350.0, 6280.0, 6180.0, 6050.0,
         ],
     ),
-    // G2 V is the Sun: the sheet's solar temperature (5772 K) stands for it.
+    // G2 V is the Sun: the life line's own solar temperature (the tracks keep
+    // the real Sun on purpose) stands for it.
     (
         "G",
         [
             5930.0,
             5860.0,
-            sse_core::sheet::T_SUN,
+            crate::lifeline::TEFF_SUN,
             5720.0,
             5680.0,
             5660.0,
@@ -226,10 +227,10 @@ const WD_FEATURELESS_K: f64 = 5000.0;
 /// supermassive.
 const BH_INTERMEDIATE: f64 = 100.0;
 const BH_SUPERMASSIVE: f64 = 1.0e5;
-/// log g of the Sun (cgs): log10(G M_sun / R_sun^2) in cm s^-2.
-pub fn log_g(mass_msun: f64, radius_rsun: f64) -> f64 {
-    let g = sse_core::sheet::G * mass_msun * sse_core::sheet::M_SUN
-        / (radius_rsun * sse_core::sheet::R_SUN * radius_rsun * sse_core::sheet::R_SUN);
+/// log g (cgs) from a mass and radius in SI: log10(G M / R^2) with g in
+/// cm s^-2, G in force.
+pub fn log_g(mass_kg: f64, radius_m: f64) -> f64 {
+    let g = sse_core::constants::g() * mass_kg / (radius_m * radius_m);
     m::log10(g * 100.0)
 }
 
@@ -308,8 +309,16 @@ fn index_text(x: f64) -> String {
     }
 }
 
-/// The class of a star from its life-line results.
-pub fn classify(teff_k: f64, mass_msun: f64, radius_rsun: f64, phase: Phase) -> StarClass {
+/// The class of a star from its life-line results: surface temperature,
+/// mass (solar, for the black hole bands and the words; and in kg with the
+/// radius in m, for surface gravity) and phase.
+pub fn classify(
+    teff_k: f64,
+    mass_msun: f64,
+    mass_kg: f64,
+    radius_m: f64,
+    phase: Phase,
+) -> StarClass {
     match phase {
         Phase::BlackHole => {
             let (word, fam) = if mass_msun >= BH_SUPERMASSIVE {
@@ -367,12 +376,12 @@ pub fn classify(teff_k: f64, mass_msun: f64, radius_rsun: f64, phase: Phase) -> 
                 notes,
             }
         }
-        _ if phase != Phase::BrownDwarf && log_g(mass_msun, radius_rsun) > 6.5 => {
+        _ if phase != Phase::BrownDwarf && log_g(mass_kg, radius_m) > 6.5 => {
             // No phase given and white-dwarf gravity: read as one.
-            classify(teff_k, mass_msun, radius_rsun, Phase::WhiteDwarf)
+            classify(teff_k, mass_msun, mass_kg, radius_m, Phase::WhiteDwarf)
         }
         _ => {
-            let lg = log_g(mass_msun, radius_rsun);
+            let lg = log_g(mass_kg, radius_m);
             let brown = phase == Phase::BrownDwarf || teff_k < 2300.0;
             let (lum, locus) = if brown { ("", 0.0) } else { luminosity_class(teff_k, lg) };
             let giant_scale = matches!(lum, "III" | "II" | "Ib" | "Iab" | "Ia") && teff_k < 6000.0;
@@ -397,9 +406,10 @@ pub fn classify(teff_k: f64, mass_msun: f64, radius_rsun: f64, phase: Phase) -> 
                 )
             } else {
                 format!(
-                    "Surface {} reads {letter}{sub} on the {} temperature scale; surface gravity log g = {lg:.2} (from {mass_msun:.3} solar masses in {radius_rsun:.3} solar radii) is nearest the class {lum} line, log g {locus:.2} at that temperature.",
+                    "Surface {} reads {letter}{sub} on the {} temperature scale; surface gravity log g = {lg:.2} (from {mass_msun:.3} solar masses in a radius of {:.0} km) is nearest the class {lum} line, log g {locus:.2} at that temperature.",
                     kelvin(teff_k),
-                    if giant_scale { "giant" } else { "dwarf" }
+                    if giant_scale { "giant" } else { "dwarf" },
+                    radius_m / 1000.0,
                 )
             };
             if teff_k > 60000.0 {
@@ -483,7 +493,7 @@ pub fn samples() -> Vec<Sample> {
                 continue;
             };
             let n = &d.now;
-            let c = classify(n.teff_k, n.mass_msun, n.radius_rsun, n.phase);
+            let c = classify(n.teff_k, n.mass_msun, n.mass_kg, n.radius_m, n.phase);
             let f = FAMILIES.iter().position(|x| *x == c.family).unwrap_or(0);
             hits.entry((f, c.kind.clone())).or_default().push(Sample {
                 family: c.family,

@@ -160,7 +160,7 @@ pub fn describe(mass_msun: f64, age_yr: f64, feh: f64) -> Result<Description, Ou
             radius_rsun: s.radius,
             mass_msun: s.mass,
             level: s.level,
-            class: crate::spectral::classify(s.teff, s.mass, s.radius, s.phase),
+            class: crate::spectral::classify(s.teff, s.mass, s.mass * M_SUN, s.radius * R_SUN, s.phase),
         },
         phases,
         remnant: Remnant {

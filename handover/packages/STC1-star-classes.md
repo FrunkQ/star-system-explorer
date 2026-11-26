@@ -9,7 +9,7 @@ Ruling kept: processes, not classes. The class is a label read off the life line
 
 ## What it does
 
-- **Kernel read** `sse_formation::spectral::classify(teff_k, mass_msun, radius_rsun, phase) -> StarClass` with `code`
+- **Kernel read** `sse_formation::spectral::classify(teff_k, mass_msun, mass_kg, radius_m, phase) -> StarClass` with `code`
   ("G2 V", "K5 III", "B8 Ia", "T5", "DX 4.5", "DC 10", "NS", "BH"), `letter`, `subclass`, `luminosity`, `family`,
   `kind`, `why` (in words and numbers) and `notes` (what it cannot say).
   - Letter and subclass: surface temperature, nearest subclass on the dwarf scale (Pecaut and Mamajek 2013; L, T, Y
@@ -43,6 +43,12 @@ Ruling kept: processes, not classes. The class is a label read off the life line
   (`ui-contract/src/star-class.ts`), the Atlas page's subtitle and player disclosure read the `spectral` field, the
   Classes page lists the star scheme, and the star chooser's Now line and its letters read describe_star's class
   (`letterOf`; the old `spectralLetter` and the letters table in `star-kinds.json` are gone: one door).
+
+## Physics in force (ER1)
+
+- Surface gravity uses the G in force (`sse_core::constants::g()`) on the star's mass and radius in SI; no new sheet
+  read. The G2 V anchor of the dwarf scale is the life line's own `TEFF_SUN` (the tracks keep the real Sun on purpose).
+  The kernel converts mass to solar masses with its existing `M_SUN_KG`. The side-door ledger is unchanged.
 
 ## Checks
 

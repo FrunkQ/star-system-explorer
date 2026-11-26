@@ -1,13 +1,19 @@
 use crate::describe::describe;
 use crate::lifeline::Phase;
-use crate::spectral::{classify, log_g, FAMILIES};
+use crate::spectral::{log_g, FAMILIES};
+use sse_core::sheet::{M_SUN, R_SUN};
+
+/// Classify from solar masses and radii (the tests' units).
+fn classify(teff: f64, msun: f64, rsun: f64, phase: Phase) -> crate::spectral::StarClass {
+    crate::spectral::classify(teff, msun, msun * M_SUN, rsun * R_SUN, phase)
+}
 
 #[test]
 fn the_sun_is_g2_v() {
     let c = classify(5772.0, 1.0, 1.0, Phase::MainSequence);
     assert_eq!(c.code, "G2 V");
     assert_eq!(c.family, "main-sequence");
-    assert!((log_g(1.0, 1.0) - 4.438).abs() < 0.002);
+    assert!((log_g(M_SUN, R_SUN) - 4.438).abs() < 0.002);
     // Catalogued, with no phase: the same.
     assert_eq!(classify(5772.0, 1.0, 1.0, Phase::MainSequence).code, "G2 V");
 }
