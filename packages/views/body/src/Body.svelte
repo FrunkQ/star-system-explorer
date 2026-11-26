@@ -144,8 +144,8 @@
   const pending = $derived([...new Set(globe.flatMap((t) => t?.pending ?? []))]);
 
   let lon = $state(0);
-  /** The last turn this view sent the globe runtime (not reactive). */
-  let sentLon = Number.NaN;
+  /** Turns this view has sent the globe runtime and not yet seen come back, oldest first (not reactive). */
+  let sentLons: number[] = [];
   let lat = $state(20);
   // The standard view controls (rule 12): the style picks the recipe, "seen from" the latitude looked down from.
   const viewed = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW));
@@ -417,9 +417,12 @@
     if (!h) return;
     const r = mountGlobe(h, untrack(() => runOpts), (st) => {
       gs = st;
-      // Only a turn the runtime made itself (its spin) comes back: a late echo of a turn this view sent must not undo
-      // a newer one not yet sent (two quick key presses lost the second).
-      if (st.lon !== lon && st.lon !== sentLon) lon = st.lon;
+      // Only a turn the runtime made itself (its spin) comes back: a late echo of any turn this view sent must not undo
+      // a newer one (two quick key presses lost the second). The runtime can repeat its last status after a newer turn
+      // is sent but before it is drawn, so every sent turn not yet seen back is remembered, not only the last.
+      const echo = sentLons.indexOf(st.lon);
+      if (echo >= 0) sentLons = sentLons.slice(echo + 1);
+      else if (st.lon !== lon) lon = st.lon;
     });
     run = r;
     untrack(() => attachLapse());
@@ -444,7 +447,7 @@
     const la = lat;
     const st = untrack(() => gs);
     if (st && st.lon === lo && st.lat === la) return;
-    sentLon = lo;
+    sentLons = [...sentLons.slice(-15), lo];
     untrack(() => run)?.setView(lo, la);
   });
   // R3: take a photograph (the still tier, off screen), keep it on this device, save it as a PNG.
