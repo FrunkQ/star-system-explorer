@@ -1703,6 +1703,38 @@
         "v": 0.22,
         "unit": "1",
         "src": "nssdca-saturnian-sats"
+       },
+       "planet.surface_temperature": {
+        "v": 93.65,
+        "unit": "K",
+        "src": "fulchignoni2005",
+        "note": "at the Huygens landing site"
+       },
+       "atmosphere.surface_pressure": {
+        "v": 146700.0,
+        "unit": "Pa",
+        "src": "fulchignoni2005",
+        "note": "at the Huygens landing site"
+       },
+       "atmosphere.main": {
+        "v": "n2",
+        "unit": "substance",
+        "src": "niemann2005",
+        "note": "nitrogen with methane, by volume"
+       },
+       "atmosphere.composition.n2": {
+        "v": 0.9435,
+        "unit": "1",
+        "src": "niemann2005",
+        "check": "unverified",
+        "note": "by volume near the surface; argon and trace organics left out"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 0.0565,
+        "unit": "1",
+        "src": "niemann2005",
+        "check": "unverified",
+        "note": "by volume near the surface (GCMS)"
        }
       }
      },
@@ -2150,6 +2182,12 @@
       "doi": "10.1126/science.1226919"
      },
      {
+      "id": "fulchignoni2005",
+      "text": "Fulchignoni, M. et al. 2005, Nature 438, 785: in situ measurements of the physical characteristics of Titan's environment (surface 93.65 +/- 0.25 K, 1467 +/- 1 hPa)",
+      "status": "verified",
+      "doi": "10.1038/nature04314"
+     },
+     {
       "id": "hauck2013",
       "text": "Hauck, S. A. et al. 2013, JGR Planets 118, 1204: the curious case of Mercury's internal structure (core radius 2020 +/- 30 km)",
       "status": "unverified",
@@ -2214,6 +2252,12 @@
       "text": "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547: compositional model for the Earth's core (the core is 32.5% of Earth's mass)",
       "status": "unverified",
       "doi": "10.1016/B0-08-043751-6/02015-6"
+     },
+     {
+      "id": "niemann2005",
+      "text": "Niemann, H. B. et al. 2005, Nature 438, 779: the abundances of constituents of Titan's atmosphere from the GCMS instrument on the Huygens probe (nitrogen and methane; methane share unverified)",
+      "status": "unverified",
+      "doi": "10.1038/nature04122"
      },
      {
       "id": "nssdca-asteroid",

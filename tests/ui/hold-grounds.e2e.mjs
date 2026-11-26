@@ -98,7 +98,7 @@ try {
 
   // On air: a screen joins and is sent the place; then held with a quote on the postcard's ground.
   await desk(gm, "Run");
-  await gm.getByRole("button", { name: "Switchboard" }).first().click();
+  await go(gm, "switchboard"); // On Run the rail is folded into the view controls (three desks design 3.1).
   await gm.locator("[data-switchboard]").waitFor();
   await gm.locator("[data-go-on-air]").click();
   await gm.locator("[data-on-air]").first().waitFor();
@@ -164,7 +164,7 @@ try {
   )
     await eye.click();
   await gm.waitForTimeout(2600);
-  await gm.getByRole("button", { name: "Switchboard" }).first().click();
+  await go(gm, "switchboard"); // On Run the rail is folded into the view controls (three desks design 3.1).
   await gm.locator("[data-switchboard]").waitFor();
 
   await gm.locator(`[data-hold="screen:${tvId}"]`).click();
