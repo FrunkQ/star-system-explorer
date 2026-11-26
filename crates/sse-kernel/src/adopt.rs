@@ -1047,6 +1047,7 @@ fn bodies_from_facts(
                 .filter(|x| (0.0..=1.0).contains(x))
                 .unwrap_or_else(|| makeup_shares(r).map_or(0.32, |m| m.0)),
             water_fraction: makeup_shares(r).map_or(0.0, |m| m.1),
+            water_from_density: makeup_shares(r).is_none(),
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,
