@@ -1,6 +1,6 @@
 # SSE4: real catalogues, the real Milky Way, and the Detail control (track RW)
 
-Status: **PROPOSED, 26 Nov 2026. Not accepted.** Design only; nothing here is built by this note. The questions for Alex are in section 12, each with a recommendation. RW is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 26 Nov 2026 18:08 UTC** ("yes to all otherwise - you have the drift"), with his rulings of 17:53 to 18:08 in section 12A, which win where they differ from the rest, and his three additions in section 6A. Design only; nothing here is built by this note. RW is a code only, never shown in the product.
 
 Written by the thread "Design the real star catalogue import" (Fable, design only) from Alex's messages of 26 Nov 2026, 17:25 to 17:29 UTC:
 
@@ -330,6 +330,54 @@ Two consequences. A GM or a pack author can change any of them (a different mass
 
 Reading a catalogue file and drawing a million points are not physics and stay as code: the reader is "never invent", and the shader's orbit sum is a registered display stand-in.
 
+## 6A. Alex's additions at acceptance, 26 Nov 2026 18:08 UTC
+
+### 6A.1 Small bodies are lumpy, consistently, and there is a designer for them
+
+Alex: "low sized objects need to be lumpy - consistently and we need the contact binaries and other interesting random asteroids made... a little asteroid and comet designer to do convincing small objects of every size would be useful. small objects like constructs and megaconstructs is almost its own category of 'thing'."
+
+What exists (small bodies track, SB1 to SB4): `sse-small` gives any member a figure from its spin and strength (flattened, elongated, two lobes with a neck for a contact binary, a separated pair), rubble pile or monolith, seeded relief, weathering and albedo, all from the seed and the member's address. The op `make_small_body` adds one by recipe (asteroid, comet nucleus, contact binary, binary pair). System True draws them. What is missing is a screen to design one, shapes on catalogued bodies, and small bodies as a kind of their own.
+
+- **Lumpy, and the same everywhere.** Below the size at which a body pulls itself round, a body is never a sphere in any view. Its shape comes from its address and the seed, so it is the same lump on every device, at every zoom and on every desk, and a point in a crowd opens into the shape it always had.
+- **Catalogued bodies too.** A real body uses its measured shape where one is published (axes, or a two-lobe model for the known contact binaries) and is graded measured. Otherwise its shape is seeded from its catalogue id, constrained by what is measured: size, spin period, and how much its brightness varies as it turns, which bounds how elongated it is. Graded fill.
+- **The interesting ones are made at their real rates**, by the processes that make them: contact binaries and pairs from slow collisions and spin-up, bared cores from shattered worlds, rubble piles from re-gathered debris. They are notables, so they pass the Detail cut and head the "What is interesting here" list.
+- **A small-body designer**, on the Build desk: one screen over the existing recipes. Pick a kind, set size, makeup, spin and the handful of things that drive the look (one lobe or two, rubble or solid, how battered, how active for a comet), and see it turn in True as the numbers change. Each control is an input to a flow, so what is designed is physically what it looks like. The same designer opens any existing member, catalogued or seeded, to adjust it; the change is a deed. It gives itself a `rail` entry and adds no tab.
+- **A kind of its own.** Small bodies become a first-class kind of thing beside worlds, constructs and megaconstructs, with their own card, their own entry in the Add list and the selector, and their own place in the three-desks table. Like a construct, a small body can be designed once and placed many times.
+
+### 6A.2 Everything in the right place at the right time
+
+Alex: "We need everything in the right place at the right time too! For solar system. So we can see eclipses on time, etc."
+
+This is a harder promise than the first draft made, and it needs one addition to the mechanism. A catalogue orbit moved on as a plain ellipse puts a planet in roughly the right place for decades. It does not put the Moon's shadow on the right town at the right minute. That needs the Moon's position to a few thousandths of a degree, and the Moon's path is pulled about by the Sun too strongly for any fixed ellipse.
+
+**The general form: a body may carry a measured motion.** Beside its orbit a catalogue entry may name a motion model, with the span of dates over which it holds. Inside that span the body is where the model says. Outside it the body hands over to the kernel's own orbit, and the view says so ("as measured" becomes "plausible"). Generated systems never have one; any pack may supply one.
+
+For the Solar System the models are published series, which are long sums of sines and cosines of time. They suit the kernel well: pure arithmetic through `sse_core::math`, the same on every device, any date read directly with no stepping.
+
+| Bodies | Model **[all unverified: accuracy, span and terms to be read at source by RW1]** | Good for |
+|---|---|---|
+| The planets | the VSOP87 series (Bretagnon and Francou 1988) | about an arcsecond over several thousand years |
+| The Moon | the ELP lunar theory (Chapront-Touzé and Chapront), cut to the terms that matter | eclipse times to within about a minute near the present |
+| The big moons of Jupiter and Saturn | their own published theories, or mean orbits with their slow turning rates as a first step | moon shadows and mutual events |
+| Everything else | catalogue orbits at a date, as section 6.1 | decades |
+
+Three honest limits, each for the fudge register.
+
+- **Where on the ground an eclipse falls depends on the Earth's spin**, which slows irregularly. Within a few centuries of now it is measured or well predicted. Thousands of years away the time of an eclipse is still good but the place it is seen drifts by a growing amount. The view says so.
+- **A series is a table, not a small flow.** Thousands of terms cannot be drawn as blocks. It is a Big Block whose data is a cited pack table, with the usual view (the terms ranked by size, and what each does), and it goes in the register as one.
+- **Outside the span it is plausible, not measured.** Deep time stays the reconstruction the chain note plans.
+
+**The checks are real eclipses.** The package is done when the app shows the total solar eclipses of 21 Aug 2017, 8 Apr 2024 and 12 Aug 2026 at their published times and on their published paths, to a stated tolerance, plus one lunar eclipse and one ancient eclipse with the place drift shown. This also needs what is already built to line up: body sizes, the Earth's tilt and spin, and the shadow drawing.
+
+### 6A.3 Hypothetical, and newly found
+
+Alex: "hypothetical bodies is a general useful category BUT a lot of larger (pluto size +) have been recently spotted - vera rubin is doing its job!"
+
+Two different things, kept apart.
+
+- **Found bodies are catalogued, however recent.** Anything a survey has reported with an orbit is a catalogue entry like any other, with its discovery date and the grade of its orbit and size. A fresh discovery often has a rough orbit and an estimated size; the card says so. The small-body packs are rebuilt from the sources on a schedule, with the version in the pack, so new finds arrive as a pack update and a "what changed" list. I cannot confirm the recent large discoveries from here: my counts in section 6.1 are from memory and predate them, and RW1 reads the current numbers at source.
+- **Hypothetical is a general grade for any level**: a body, a star or a galaxy that is argued for and not seen. It is off by default, switched on per pack, always labelled, and never counted in a census or a budget as measured. A hypothetical that is later found simply changes grade.
+
 ---
 
 ## 7. The Detail control
@@ -477,8 +525,10 @@ Each is sized for one agent. "Now" means nothing blocks it. The star half waits 
 | **RW13** | Star sources: CNS5, doubles, known planets, names, the live route, reusing V3's importer logic through the converter module; known planets as formation pins (F9) and backfill on by default, formed on a visit (section 6.2) | RW8, RW11 | converter thread, proven core |
 | **RW14** | The import action: centre, radius, preview, apply; any anchor in any galaxy; the Traveller sector as a catalogue | RW11, RW13 | galaxy charts and histories, Traveller |
 | **RW15** | Detail on the other levels: Local stars, Galaxies nearby, the web, a world's moons and rings. The night sky's star budgets move under it | RW5, GZ7 | each view's owner |
+| **RW16** | Small bodies as their own kind, and the designer (6A.1): shapes that are the same lump in every view; measured shapes and brightness-swing limits on catalogued bodies; the Build desk designer over the `make_small_body` recipes with a live True preview; the kind in the Add list, selector and cards | RW6 for crowds; the designer itself can start now | small bodies, with editing |
+| **RW17** | Measured motion (6A.2): the motion-model slot on a catalogue entry with its span and hand-over; the planets' and the Moon's series as cited pack tables behind one Big Block; big moons by mean orbits with rates first; the eclipse checks (2017, 2024, 2026, one lunar, one ancient) | RW1 for the series' terms and accuracy, RW7 | kernel, with the data sheet |
 
-First four to open: RW1, RW2, RW3, then RW7. RW4 to RW6 give Alex the slider on generated systems before any real data arrives, and RW7 then makes the Solar System fill it.
+First to open: RW1, RW2, RW3, then RW7 and RW17 (eclipses on time is the visible proof that the real system is real). The designer half of RW16 can start at once on what the small bodies track has built. RW4 to RW6 give Alex the slider on generated systems before any real data arrives, and RW7 then makes the Solar System fill it.
 
 **Flows, not code.** Every sum in sections 3, 6 and 7 is a block flow (section 6.3). A package that estimates anything in Rust or TypeScript lists it under "Candidates to move into flows" in `docs/fudges.md`, as the standing rule asks.
 
@@ -504,9 +554,9 @@ Each has my recommendation. Routine choices went to the coordinator and are not 
 12. **Catalogues are placed by an anchor, so the real neighbourhood can be dropped into a fictional galaxy and a fictional star list into the real one.** *Recommend yes;* it costs nothing extra and it is the general form.
 13. **A far-off catalogue star stays a table row until someone looks at it**, instead of becoming a full pin at import. A 100 pc import is then megabytes, not most of a gigabyte. *Recommend yes.*
 
-### 12A. Alex's steers after the first draft, 26 Nov 2026 17:53 UTC
+### 12A. Alex's rulings, 26 Nov 2026, 17:53 to 18:08 UTC
 
-Not answers to the numbered questions, which are still open. Both are taken as rulings and written into sections 6.2 and 6.3.
+The note is accepted. These are his words; where they differ from the text above, they win.
 
 - **Reuse the backfill machinery; it is the default.** "we have the mechanism to 'backfill' detail on a probable star system for a star of a particular age/type. So just reuse that machinery."
 - **Block chains.** "These all should be block chains in the physics."
@@ -514,6 +564,10 @@ Not answers to the numbered questions, which are still open. Both are taken as r
 - **Selling, 18:00 UTC.** "just easier to ban selling packs with downloaded data. say 'you can use this' - you can give it away but you cannot 'sell it' as it contains..." A pack holding downloaded catalogue data is free only; the shop refuses a price and says why (section 5.3). This applies to every downloaded catalogue, not only Gaia. 18:00:35: "and we can refuse at store level because of that".
 - **Question 1, 18:03 UTC: "2 doors in".** Read as: the start sheet has two doors, the real sky at Earth today and a new universe. (My reading; which is marked "Start here" was not said, and stays the real sky as recommended until he says otherwise.)
 - **Question 3, 18:03 UTC.** "we have the 9000 in by default showing about 100 by default. I think importing the rest from the store makes sense - bulky and irrelevant to most but useful to some. Like atomic rockets... these are just detail expansion packs." So: the 9,000 bright and named stars ship in the app; the Detail control's default stop at the star level shows about 100 of them; everything bulkier (the complete nearby sample, the deep star sets, the full small-body catalogue) is a **detail expansion pack** on the Explorers store, free, fetched by those who want it, on the same shelf and by the same route as the Atomic Rockets pack. Section 5.3A.
+- **Acceptance, 18:08 UTC.** "yes to all otherwise - you have the drift." Questions 2, 4 to 7 and 9 to 13 are answered yes as recommended; 1 and 3 as above.
+- **Question 8, 18:08 UTC.** "catalogue lives in the store? seems the natural place". Yes: catalogues are store packs. A storage bucket is asked for only if the store cannot serve a large pack in ranges.
+- **Question 10, hypotheticals, 18:08 UTC.** A general category, yes; and newly found large bodies are catalogued, not hypothetical. Section 6A.3.
+- **Lumpy small bodies and a designer; right place, right time (eclipses), 18:08 UTC.** Sections 6A.1 and 6A.2.
 - **Credits, 18:01 UTC.** "make sure the actual credits are shipped in packs as clear readable and show at initial import." Section 5.3.
 
 ---
@@ -526,4 +580,4 @@ Not done: I ran no code and measured nothing. I did not read the Local Arm branc
 
 ## 14. Picking this up without the chat
 
-Read this note, then `handover/status/real-catalogues.md`. Alex's answers to section 12 will be recorded in a section 12A here and in `handover/decisions.md`; where they differ from the text, they win. The readable copy Alex comments on is linked from the status file.
+Read this note, then `handover/status/real-catalogues.md`. Alex's answers are in section 12A here and in `handover/decisions.md`; where they differ from the text, they win. The readable copy Alex comments on is linked from the status file.
