@@ -12,7 +12,7 @@ Written by the thread "Design the real star catalogue import" (Fable, design onl
 
 Read with: `SSE4-night-sky-design.md` section 8 (the real-sky pack, accepted 21 Nov), `SSE4-design-handoff.md` section 10 (real data fetched on demand), `SSE4-galaxy-design.md` section 10 (authored galaxies), `SSE4-grand-zoom-design.md` section 6 (the tie-up of places), `SSE4-conserved-chain-design.md` sections 3, 10 and 11 and `SSE4-conserved-chain-splits.md` sections 4 to 6A, `SSE4-explorers-paid-packs.md` section 8 (Gaia and money; partly overridden by Alex on 26 Nov, section 12A here).
 
-**Figures.** The paper search is out until 1 Dec 2026 and the cloud cannot reach any catalogue host (section 2.5). Every count, size and licence line marked **[unverified]** is from memory and must be read at its source before a builder relies on it. Package RW1 does that.
+**Figures.** The paper search is out until 1 Dec 2026 and the cloud cannot reach any catalogue host (section 2.5). Every count, size and licence line marked **[unverified]** is from memory and must be read at its source before a builder relies on it. Package RW1 does that. **RW1 did that on 26 Nov 2026** through the browser on Alex's PC: the catalogue tables in sections 5.3, 6.1 and 6A.2 now carry figures and terms read at source, and the full terms table with each provider's credit word for word is `docs/citations/real-catalogues.md`. The marks left are what could not be read that day, and each says why.
 
 ---
 
@@ -197,11 +197,11 @@ This keeps the accepted list of catalogues (night sky 8.3). Three ways for data 
 
 | Way | What | Why |
 |---|---|---|
-| **Shipped in the app** | The Solar System down to the "Expected" stop (section 7). A small set of bright and named stars built only from sources with open terms: the Hipparcos and Yale Bright Star catalogues and the IAU's list of star names **[terms and sizes unverified; about 9,000 stars to the naked-eye limit, a few hundred kilobytes, estimate]** | The real sky works offline on day one, in a few hundred kilobytes |
-| **The free real-sky pack**, fetched once from SSE4's own storage | The complete nearby sample: CNS5 (5,931 objects within 25 pc **[count from the night sky note, checked there 21 Nov]**). Doubles from the Washington Double Star Catalog. Known planets from the NASA Exoplanet Archive. Nearby galaxies and named deep-sky objects. Optionally the Gaia Catalogue of Nearby Stars to 100 pc (331,312 objects) as a second, larger download | Complete where a campaign lives. Carries its credits. Kept out of the app only for size |
+| **Shipped in the app** | The Solar System down to the "Expected" stop (section 7). A small set of bright and named stars from Hipparcos (117,955 stars in the new reduction; ESA archive data, CC BY-NC 3.0 IGO, credit "ESA") and the IAU's list of star names (451 in the file of 2022-04-04 plus 59 adopted on 12 Feb 2026; CC BY). The Yale Bright Star Catalogue does not ship: its holder says the copyright may still be Yale's and offers it for research only; its HR numbers stay as identifiers. **[RW1, 26 Nov: terms read at source, `docs/citations/real-catalogues.md` rows S4 to S6. The 9,000 stars to the naked-eye limit and the few hundred kilobytes are still estimates for RW2 to measure.]** Hipparcos and Gaia are both non-commercial, so nothing priced may include them (RW1 section 1.1) | The real sky works offline on day one, in a few hundred kilobytes |
+| **The free real-sky pack**, fetched once from SSE4's own storage | The complete nearby sample: CNS5 (5,931 objects within 25 pc: 5,230 stars and 701 brown dwarfs, Golovin et al. 2023; read at source by RW1). Doubles from the Washington Double Star Catalog (149,104 systems on 28 Oct 2026). Known planets from the NASA Exoplanet Archive (6,473 planets in 4,865 systems on 26 Nov 2026). Nearby galaxies and named deep-sky objects. Optionally the Gaia Catalogue of Nearby Stars to 100 pc (331,312 objects, CC BY-NC 4.0; read at source by RW1) as a second, larger download | Complete where a campaign lives. Carries its credits. Kept out of the app only for size |
 | **Live, on request** | Anything further or fainter, through the site Worker to SIMBAD and the Gaia archive, the route V3's importer already uses. Cached by region and version | No limit on reach; nothing downloaded that was not asked for |
 
-Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hundred systems **[about 340 systems and 540 objects, from memory, unverified]**, a download of tens of kilobytes. A 100 pc import is about 330,000 objects and a few megabytes.
+Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hundred systems **[about 340 systems and 540 objects, from memory, unverified: RW1 could not read CNS5's ReadMe because CDS refused every route on 26 Nov]**, a download of tens of kilobytes. A 100 pc import is about 330,000 objects and a few megabytes.
 
 **Credits travel with the data and are shown (Alex, 26 Nov 18:01 UTC).** "make sure the actual credits are shipped in packs as clear readable and show at initial import." So:
 
@@ -210,7 +210,7 @@ Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hund
 - **The credits are shown at the first import**, in the preview, in full and before Apply, and again whenever a pack that holds them is first loaded on a device. After that they stay one press away: on the Packs screen, and on the card of any object with catalogued values, beside its source.
 - A catalogue with no credit text is refused by the reader. RW1 collects each provider's exact wording at its source; no credit is written from memory.
 
-**Terms, as far as they are known.** Gaia data is CC BY-NC 3.0 IGO (read at ESA's page on 21 Nov by the night sky thread). CNS5 and AT-HYG are built partly from Gaia and are treated as non-commercial until read at source. JPL and NASA data is not copyrighted **[unverified at source]**; the Minor Planet Center's terms need reading. RW1 reads every one at its source before any data is bundled, and nothing ships on my memory of a licence.
+**Terms, read at source by RW1 on 26 Nov 2026** (the full table, with each credit word for word, is `docs/citations/real-catalogues.md`). Gaia and Hipparcos data from ESA's archive are CC BY-NC 3.0 IGO; ESA counts as commercial "any use or application that directly or indirectly generates a financial gain" and asks for a request first. GCNS is CC BY-NC 4.0. CNS5 and AT-HYG carry Gaia values and are non-commercial; AT-HYG and OpenNGC are also CC BY-SA 4.0, so their rows sit in a separately licensed file. NASA science data is CC0 and JPL asks only for a citation. The Minor Planet Center's live policy lets its data files be redistributed with the source named, but bars its circulars and web pages from any product. The Yale Bright Star Catalogue has no clear licence and does not ship. Still unread: the full Gaia DR3 acknowledgement in one piece (the archive was offline for DR4 preparation), the CDS ReadMes and VizieR's rules, and the terms of the moon theories (IMCCE is now the Laboratoire Temps Espace).
 
 **Versions.** Each catalogue's version is pinned in the campaign, as the handoff ruled. Moving to a newer release is a deliberate act with a "what changed" list.
 
@@ -251,32 +251,34 @@ For a generated system this is what exists, plus the table read. For the real So
 
 ### 6.1 The Solar System, every known body
 
-Sources and rough counts, all **[unverified, from memory]**:
+Sources and counts, read at source by RW1 on 26 Nov 2026 (JPL's small-body database through its live API; the table and method are in `docs/citations/real-catalogues.md` section 4):
 
 | Population | Source | Known today |
 |---|---|---|
-| Planets and dwarf planets | NSSDCA, as base-sol now | 8, and 5 recognised dwarf planets |
-| Moons | JPL's satellite tables | over 400, most of them small irregular moons of Jupiter and Saturn |
-| Main belt, Hildas, Jupiter trojans, near-Earth objects, centaurs | Minor Planet Center orbit file, JPL small-body database | about 1.4 to 1.5 million bodies in all; about 15,000 Jupiter trojans; about 40,000 near-Earth objects |
-| Beyond Neptune, the distant detached bodies included | the same | about 5,000 |
-| Comets | the same | about 4,000 to 5,000 |
+| Planets and dwarf planets | NSSDCA, as base-sol now | 8, and 5 recognised dwarf planets (Pluto, Ceres, Eris, Haumea, Makemake) |
+| Moons | JPL's satellite tables | 460 recognised by the IAU, Earth's Moon not counted: Mars 2, Jupiter 115, Saturn 293, Uranus 29, Neptune 16, Pluto 5 |
+| Main belt, Hildas, Jupiter trojans, near-Earth objects, centaurs | JPL small-body database (CC0, citation asked); the Minor Planet Center's data files (redistributable with the source named) | 1,589,842 asteroids in all (895,910 numbered); 1,404,751 in the main belt; 16,684 Jupiter trojans; 43,392 near-Earth objects; 1,114 centaurs. Hildas have no class of their own in the database and are picked out by orbit |
+| Beyond Neptune, the distant detached bodies included | the same | 8,423, growing by thousands a year while the LSST runs (section 6A.3) |
+| Comets | the same | 4,089 (610 numbered) |
 | Hypothetical bodies (a "Planet Nine") | published candidate orbits | a handful; off by default, tagged hypothetical, switched on by the GM (the star census note's rule for hypotheticals) |
 
-**Sizes.** Only a minority of small bodies have a measured diameter (roughly one in ten, mostly from infrared surveys **[unverified]**). The rest have a brightness. The standard relation gives a diameter from brightness and albedo; where the albedo is unmeasured it comes from the body's type or its region's mean. Those sizes are graded "estimated" and the card says so. Masses come from diameter and a density for the makeup, also estimated. Without this the slider would hide nine tenths of the catalogue, so estimated sizes take part (question 7).
+**Sizes.** Only a minority of small bodies have a measured diameter (139,688 of 1,589,842 asteroids, 8.8%, read by RW1; that most come from infrared surveys is still unverified). The rest have a brightness. The standard relation gives a diameter from brightness and albedo; where the albedo is unmeasured it comes from the body's type or its region's mean. Those sizes are graded "estimated" and the card says so. Masses come from diameter and a density for the makeup, also estimated. Without this the slider would hide nine tenths of the catalogue, so estimated sizes take part (question 7).
 
 **Size on disc.** About 30 bytes a body packed (six orbit numbers, size, kind, flags), so the whole catalogue is about 45 MB before compression **[estimate]**. Because it is in size order, the app ships only the top, and each further stop is its own range of the file:
 
-| Down to | Bodies, about **[unverified]** | Download, about |
-|---|---|---|
-| the Expected stop | 50 to 100 | in the app |
-| 100 km | 1,000 | 30 kB |
-| 30 km | 5,000 | 150 kB |
-| 10 km | 15,000 to 20,000 | 0.5 MB |
-| 3 km | 150,000 | 4 MB |
-| 1 km | 800,000 | 25 MB |
-| everything known | 1.5 million | 45 MB |
+Read by RW1 on 26 Nov 2026 from JPL's small-body database. "Measured" counts bodies with a published diameter above the size; "by brightness" counts bodies brighter than the H at which an albedo-0.10 body is that size (my albedo, so an estimate; dark TNOs come out small and bright ones big). Downloads are the counts at 30 bytes a body.
 
-Alex's "10000 asteroids and hundreds of trojans" is the 10 km stop. RW2 measures the real numbers and they replace this table.
+| Down to | Measured diameter | By brightness (estimated) | Download, about |
+|---|---|---|---|
+| the Expected stop | (RW2) | (RW2) | in the app |
+| 100 km | 240 | 5,932 | 180 kB |
+| 30 km | 1,472 | 9,574 | 290 kB |
+| 10 km | 10,183 | 17,317 | 0.5 MB |
+| 3 km | (most unmeasured) | 160,090 | 5 MB |
+| 1 km | 138,765 | 991,017 | 30 MB |
+| everything known | 139,688 | 1,593,931 (asteroids and comets) | 48 MB |
+
+The first draft's 100 km and 30 km rows (1,000 and 5,000) were too low for the estimated sizes and too high for the measured ones; the gap is why section 6.1's estimated sizes must take part, graded. Alex's "10000 asteroids and hundreds of trojans" is the 10 km stop (10,183 measured, about 17,000 estimated, with 16,684 Jupiter trojans of all sizes). RW2 sets the per-group albedos and the Expected stop, and its numbers replace the estimated column.
 
 **What base-sol itself must gain** (it is today's gap, section 2.1): full orbits at a stated date for every body, so that today's positions are right; mass by element group for each belt, so the real belts have amounts; and the kinds of group (trojans, Hildas, centaurs, families) as populations with their own lists.
 
@@ -354,11 +356,11 @@ This is a harder promise than the first draft made, and it needs one addition to
 
 For the Solar System the models are published series, which are long sums of sines and cosines of time. They suit the kernel well: pure arithmetic through `sse_core::math`, the same on every device, any date read directly with no stepping.
 
-| Bodies | Model **[all unverified: accuracy, span and terms to be read at source by RW1]** | Good for |
+| Bodies | Model (read at source by RW1, 26 Nov; terms in `docs/citations/real-catalogues.md` rows M1 to M4) | Good for |
 |---|---|---|
-| The planets | the VSOP87 series (Bretagnon and Francou 1988) | about an arcsecond over several thousand years |
-| The Moon | the ELP lunar theory (Chapront-Touzé and Chapront), cut to the terms that matter | eclipse times to within about a minute near the present |
-| The big moons of Jupiter and Saturn | their own published theories, or mean orbits with their slow turning rates as a first step | moon shadows and mutual events |
+| The planets | the VSOP87 series (Bretagnon and Francou 1988, A&A 202, 309; fitted to DE200; no terms stated in its files) | about 1 arcsecond for Mercury to Mars over 4,000 years either side of J2000, for Jupiter and Saturn over 2,000 years, for Uranus and Neptune over 6,000 years |
+| The Moon | the ELP/MPP02 lunar theory (Chapront and Francou 2003, A&A 404, 735), cut to the terms that matter; the data files' terms are not yet read | under 3 arcsec and 2 km against DE406 over 3000 BC to AD 3000, under 0.03 arcsec and 30 m over two millennia near now. Eclipse times to about a minute near the present is my estimate from that, for RW17 to check |
+| The big moons of Jupiter and Saturn | IMCCE's L1 (Galilean moons, Lainey et al. 2007) and TASS 1.7 (Saturn), whose use is "SUBJECTED TO CONDITIONS" on a page that no longer exists (IMCCE became the Laboratoire Temps Espace in 2025), so mean orbits with their slow turning rates come first, and RW17 asks LTE | L1: "few hundreds of kilometers for the period [1970:2010]"; moon shadows and mutual events |
 | Everything else | catalogue orbits at a date, as section 6.1 | decades |
 
 Three honest limits, each for the fudge register.
@@ -375,7 +377,7 @@ Alex: "hypothetical bodies is a general useful category BUT a lot of larger (plu
 
 Two different things, kept apart.
 
-- **Found bodies are catalogued, however recent.** Anything a survey has reported with an orbit is a catalogue entry like any other, with its discovery date and the grade of its orbit and size. A fresh discovery often has a rough orbit and an estimated size; the card says so. The small-body packs are rebuilt from the sources on a schedule, with the version in the pack, so new finds arrive as a pack update and a "what changed" list. I cannot confirm the recent large discoveries from here: my counts in section 6.1 are from memory and predate them, and RW1 reads the current numbers at source.
+- **Found bodies are catalogued, however recent.** Anything a survey has reported with an orbit is a catalogue entry like any other, with its discovery date and the grade of its orbit and size. A fresh discovery often has a rough orbit and an estimated size; the card says so. The small-body packs are rebuilt from the sources on a schedule, with the version in the pack, so new finds arrive as a pack update and a "what changed" list. RW1 read them on 26 Nov 2026 (`docs/citations/real-catalogues.md` section 5): 37 small bodies are brighter than H 4, 35 of them beyond Neptune. Rubin found two in 2026: 2026 ED138 (600 to 1,500 km, announced 27 Oct, among the ten brightest TNOs) and 2026 EE138; 2017 OF201 (about 700 km, a of about 820 au) was announced in 2025. All are catalogued with orbits and estimated sizes. Rubin's search has reported 2,440 new TNOs so far, and the ED138 paper expects about three more of its size away from the Galactic plane.
 - **Hypothetical is a general grade for any level**: a body, a star or a galaxy that is argued for and not seen. It is off by default, switched on per pack, always labelled, and never counted in a census or a budget as measured. A hypothetical that is later found simply changes grade.
 
 ---
@@ -509,7 +511,7 @@ Each is sized for one agent. "Now" means nothing blocks it. The star half waits 
 | Package | What | Needs | Owner (proposed) |
 |---|---|---|---|
 | **RW0** | This note, the status file, the row in START-HERE | | this thread (done with this PR) |
-| **RW1** | Read every catalogue's terms, size, count and exact credit wording at its source (through the browser on Alex's PC; papers after 1 Dec). Replace every **[unverified]** in this note. A terms table in `docs/citations.md` | now | citations thread |
+| **RW1** | Read every catalogue's terms, size, count and exact credit wording at its source (through the browser on Alex's PC; papers after 1 Dec). Replace every **[unverified]** in this note. A terms table in `docs/citations.md` | done 26 Nov 2026 (`docs/citations/real-catalogues.md`; open items in its section 6) | citations thread |
 | **RW2** | Measure, merge nothing: the real size lists and counts per stop; points a phone and AC-ProArt can draw moving; the cost of a pin and of a table row; a 50 pc tracked set. Output: the set points and ceilings | now; Alex's PC for the GPU | quality tiers, with small bodies |
 | **RW3** | The catalogue format `sse.catalogue/1` and its reader crate: entries in size order with a range index, frame, anchor, date, completeness, grades, terms. "Never invent." Contract types. Tests: a prefix read never touches the rest of the file | now | kernel |
 | **RW3b** | The estimating flows as blocks in a pack (section 6.3): star mass, small-body size, albedo and mass, completeness, thinning, the round test. Cited, each with its view; nothing estimated in importer code | RW3 | data sheet, with the kernel |

@@ -19,19 +19,32 @@ export async function go(page, id) {
     }
     throw new Error(`no way up to ${id}`);
   }
-  const target = page.locator(`.rail [data-go="${id}"]`).first();
+  // On the Run desk the rail is folded to one button at the head of the view controls (three desks design 3.1): open it
+  // before each press. Its Workshop door is in More.
+  const unfold = async () => {
+    const fold = page.locator("[data-rail-fold]").first();
+    if ((await fold.count()) && (await fold.isVisible()) && (await fold.getAttribute("aria-expanded")) !== "true") await fold.click();
+  };
+  const target = page.locator(`.rail [data-go="${id}"]:visible`).first();
   const open = async () => {
+    await unfold();
     if (!(await target.isVisible())) return false;
     if ((await target.getAttribute("aria-pressed")) !== "true") await target.click();
     return true;
   };
   if (await open()) return;
-  const up = page.locator('.rail [data-go="back"], .place [data-go="system"]').first();
+  const up = page.locator('.rail [data-go="back"]:visible, .place [data-go="system"]').first();
+  await unfold();
   if (await up.isVisible()) await up.click();
   if (await open()) return;
   for (const door of ['.rail [data-go="world"]', '.rail [data-go="workshop"]']) {
-    await page.locator(door).first().click();
+    await unfold();
+    const d = page.locator(`${door}:visible`).first();
+    if (await d.isVisible()) await d.click();
+    else if (door.includes("workshop")) await more(page, "Workshop");
+    else continue;
     if (await open()) return;
+    await unfold();
     await up.click();
   }
   throw new Error(`no rail entry for screen ${id}`);

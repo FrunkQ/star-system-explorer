@@ -159,6 +159,7 @@ def moon_row(name, pid, host, mass, r_km, a_km, e, inc, geo, bond, src):
     values = {k: v for k, v in values.items() if v["v"] is not None}
     if bond is not None:
         values["body.albedo"] = val(bond, "1", src, note="Bond albedo")
+    values.update(MOON_SURFACE.get(pid, {}))
     row = {"id": pid, "name": name, "kind": "moon", "host": host, "values": values}
     if pid in MOON_NOTES:
         row["note"] = MOON_NOTES[pid]
@@ -178,6 +179,32 @@ def val(v, unit, src, **kw):
     out = {"v": v, "unit": unit, "src": src}
     out.update(kw)
     return out
+
+
+# Moons' measured surfaces, where a probe has stood on one. Titan: Huygens
+# landed on 14 Jan 2005 and its HASI read 93.65 +/- 0.25 K and 1467 +/- 1 hPa
+# at the surface (Fulchignoni et al. 2005, abstract read 26 Nov 2026). Its
+# air is nitrogen with methane (Niemann et al. 2005, abstract read 26 Nov
+# 2026); the 5.65% methane near the surface is the data sheet's figure from
+# the same paper, not yet re-read against it, so the shares are unverified.
+TITAN_CH4 = 0.0565
+MOON_SURFACE = {
+    "titan": {
+        "planet.surface_temperature": val(93.65, "K", "fulchignoni2005", note="at the Huygens landing site"),
+        "atmosphere.surface_pressure": val(146700.0, "Pa", "fulchignoni2005", note="at the Huygens landing site"),
+        "atmosphere.main": val("n2", "substance", "niemann2005", note="nitrogen with methane, by volume"),
+        "atmosphere.composition.n2": val(round(1.0 - TITAN_CH4, 6), "1", "niemann2005", check="unverified",
+                                         note="by volume near the surface; argon and trace organics left out"),
+        "atmosphere.composition.ch4": val(TITAN_CH4, "1", "niemann2005", check="unverified",
+                                          note="by volume near the surface (GCMS)"),
+    },
+}
+MOON_SURFACE_SOURCES = [
+    {"id": "fulchignoni2005", "text": "Fulchignoni, M. et al. 2005, Nature 438, 785: in situ measurements of the physical characteristics of Titan's environment (surface 93.65 +/- 0.25 K, 1467 +/- 1 hPa)",
+     "status": "verified", "doi": "10.1038/nature04314"},
+    {"id": "niemann2005", "text": "Niemann, H. B. et al. 2005, Nature 438, 779: the abundances of constituents of Titan's atmosphere from the GCMS instrument on the Huygens probe (nitrogen and methane; methane share unverified)",
+     "status": "unverified", "doi": "10.1038/nature04122"},
+]
 
 
 def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
@@ -363,7 +390,7 @@ def build():
     sun["values"].update(sun_frame())
     sun["values"]["time.j2000_s"] = val(J2000_S, "s", "sse-sol-clock", note="the universe second of J2000.0 (2000 January 1, 12:00 TT): the date the motion tables count from")
     bodies = [sun] + [planet_row(*p) for p in PLANETS] + [moon_row(*x) for x in MOONS] + sol_extra.BODIES
-    sources = sorted(SOURCES + INTERIOR_SOURCES + MOTION_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
+    sources = sorted(SOURCES + INTERIOR_SOURCES + MOON_SURFACE_SOURCES + MOTION_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
     regions = sol_extra.regions({b["id"]: b for b in bodies})
     return {
         "format": "sse.pack/1", "id": "sse.base-sol", "version": "0.1.0", "kind": ["base-physics"],
