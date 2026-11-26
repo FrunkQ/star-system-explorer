@@ -181,6 +181,7 @@ G cannot_follow {"block":"sse.light.particle_albedo","why":"computed or fitted w
 G cannot_follow {"block":"sse.light.rainbow","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.reflected_area","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.reflected_limb","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.light.sea_glint","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.slab_reflectance","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.srgb_encode","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.stellar_wind","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

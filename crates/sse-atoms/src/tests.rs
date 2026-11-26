@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 177,
+        n, 178,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1245,6 +1245,22 @@ fn waves_grow_with_wind_and_fetch_until_the_sea_is_full_grown() {
     close(c[0], 3.12, 0.02, "full grown height");
     // Weaker gravity, taller waves for the same wind.
     assert!(h(2.0, 1.0e5, 1.352)[0] > h(2.0, 1.0e5, 9.81)[0]);
+}
+
+#[test]
+fn the_glint_spreads_with_wind_and_brightens_with_the_index() {
+    let g = |u: f64, n: f64| run("sse.light.sea_glint", &[u, n]);
+    // Cox and Munk's clean sea at 10 m/s: 0.0542; calm water 0.003.
+    close(g(10.0, 1.333)[0], 0.0542, 1e-9, "slope variance at 10 m/s");
+    close(g(0.0, 1.333)[0], 0.003, 1e-12, "calm sea");
+    // Water reflects 2.0% straight back; Titan's methane (n about 1.27) 1.4%.
+    close(
+        g(7.0, 1.333)[1],
+        0.020_373,
+        1e-4,
+        "water's normal reflectance",
+    );
+    assert!(g(7.0, 1.27)[1] < g(7.0, 1.333)[1]);
 }
 
 /// MP6: the composition blocks (Equations) and the sums the composition

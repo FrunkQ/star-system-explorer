@@ -683,6 +683,8 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("light.absorption_index", "the imaginary part of the refractive index: how strongly the material soaks up light inside it"),
     ("particle.scattering_efficiency", "light a particle scatters, over its cross-section"),
     ("light.bow_radius", "radius of a rainbow round the point opposite the sun, as an angle"),
+    ("ocean.slope_variance", "mean square slope of the waves on a sea, which sets how far the sun's glint spreads"),
+    ("light.normal_reflectance", "share of light a surface reflects straight back at normal incidence"),
     ("light.prism_angle", "angle between two faces of a crystal light passes through"),
     ("light.halo_radius", "radius of a halo round the sun or moon, as an angle"),
     ("light.minnaert_k", "Minnaert's k: how a lit surface's brightness falls toward its edge (1 is matt)"),
