@@ -1,6 +1,6 @@
 # SSE4: real catalogues, the real Milky Way, and the Detail control (track RW)
 
-Status: **PROPOSED, 26 Nov 2026. Not accepted.** Design only; nothing here is built by this note. The questions for Alex are in section 12, each with a recommendation. RW is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 26 Nov 2026 18:08 UTC** ("yes to all otherwise - you have the drift"), with his rulings of 17:53 to 18:08 in section 12A, which win where they differ from the rest, and his three additions in section 6A. Design only; nothing here is built by this note. RW is a code only, never shown in the product.
 
 Written by the thread "Design the real star catalogue import" (Fable, design only) from Alex's messages of 26 Nov 2026, 17:25 to 17:29 UTC:
 
@@ -10,9 +10,9 @@ Written by the thread "Design the real star catalogue import" (Fable, design onl
 - "we have a set point at 'the stuff people expect to see in a solar system sim'... and see what peeps do when they realise they have added 10000 asteroids and hundreds of trojans and a dozen planet X candidates we keep finding out in the dark. So the 'size' makes sense."
 - "we don't even READ the data we won't use so always have them indexable by size to make it fast."
 
-Read with: `SSE4-night-sky-design.md` section 8 (the real-sky pack, accepted 21 Nov), `SSE4-design-handoff.md` section 10 (real data fetched on demand), `SSE4-galaxy-design.md` section 10 (authored galaxies), `SSE4-grand-zoom-design.md` section 6 (the tie-up of places), `SSE4-conserved-chain-design.md` sections 3, 10 and 11 and `SSE4-conserved-chain-splits.md` sections 4 to 6A, `SSE4-explorers-paid-packs.md` section 8 (Gaia and money).
+Read with: `SSE4-night-sky-design.md` section 8 (the real-sky pack, accepted 21 Nov), `SSE4-design-handoff.md` section 10 (real data fetched on demand), `SSE4-galaxy-design.md` section 10 (authored galaxies), `SSE4-grand-zoom-design.md` section 6 (the tie-up of places), `SSE4-conserved-chain-design.md` sections 3, 10 and 11 and `SSE4-conserved-chain-splits.md` sections 4 to 6A, `SSE4-explorers-paid-packs.md` section 8 (Gaia and money; partly overridden by Alex on 26 Nov, section 12A here).
 
-**Figures.** The paper search is out until 1 Dec 2026 and the cloud cannot reach any catalogue host (section 2.5). Every count, size and licence line marked **[unverified]** is from memory and must be read at its source before a builder relies on it. Package RW1 does that.
+**Figures.** The paper search is out until 1 Dec 2026 and the cloud cannot reach any catalogue host (section 2.5). Every count, size and licence line marked **[unverified]** is from memory and must be read at its source before a builder relies on it. Package RW1 does that. **RW1 did that on 26 Nov 2026** through the browser on Alex's PC: the catalogue tables in sections 5.3, 6.1 and 6A.2 now carry figures and terms read at source, and the full terms table with each provider's credit word for word is `docs/citations/real-catalogues.md`. The marks left are what could not be read that day, and each says why.
 
 ---
 
@@ -189,23 +189,48 @@ Apply writes the claims. Nothing here is a new screen: it is an action with a pr
 
 ### 5.3 Which catalogues
 
-This keeps the accepted list (night sky 8.3) and the ruling that Gaia-derived data lives only in an optional pack. Three ways for data to arrive, one reader for all three.
+This keeps the accepted list of catalogues (night sky 8.3). Three ways for data to arrive, one reader for all three.
+
+**Gaia data may go anywhere (Alex, 26 Nov 17:58 UTC).** "Gaia data can be added to any pack - to any star system - someone can decide to just 'play around Polaris' and never bother with the galaxy view." The first draft of this note said Gaia data lives only in an optional pack. That line came from the old account's memory and from the night sky note's Q3, where it was a cautious recommendation and never Alex's own word; it is dropped. So: any pack, any campaign and any single system may hold Gaia-derived values, and importing a star never requires the real galaxy or the galaxy view. A GM can bring in Polaris and play there. The star still gets a slot, so the galaxy is there if they ever look (section 5.2).
+
+**Downloaded data is never sold (Alex, 26 Nov 18:00 UTC).** "just easier to ban selling packs with downloaded data. say 'you can use this' - you can give it away but you cannot 'sell it' as it contains..." So one plain rule replaces any licence-by-licence test: a pack, system or campaign that holds values downloaded from a catalogue may be used and shared free, and may not carry a price. Every imported value already records its catalogue (section 3.1), so the check is mechanical: the Explorers shop's "may this carry a price" rule refuses with the reason in words, naming the catalogue ("You can use this and give it away, but it cannot be sold: it contains data from ..."), and the pack's own page says the same. A seller who wants a price removes the downloaded values; their pack can still ask for the stars by name and the buyer's app fetches them free. Every downloaded value carries its catalogue's credit line wherever it goes.
 
 | Way | What | Why |
 |---|---|---|
-| **Shipped in the app** | The Solar System down to the "Expected" stop (section 7). A small set of bright and named stars built only from sources with open terms: the Hipparcos and Yale Bright Star catalogues and the IAU's list of star names **[terms and sizes unverified; about 9,000 stars to the naked-eye limit, a few hundred kilobytes, estimate]** | The real sky works offline on day one, and the app stays Apache-2.0 with no non-commercial data in it |
-| **The free real-sky pack**, fetched once from SSE4's own storage | The complete nearby sample: CNS5 (5,931 objects within 25 pc **[count from the night sky note, checked there 21 Nov]**). Doubles from the Washington Double Star Catalog. Known planets from the NASA Exoplanet Archive. Nearby galaxies and named deep-sky objects. Optionally the Gaia Catalogue of Nearby Stars to 100 pc (331,312 objects) as a second, larger download | Complete where a campaign lives. Carries its licences. Never inside a paid pack (paid packs note, ruled) |
+| **Shipped in the app** | The Solar System down to the "Expected" stop (section 7). A small set of bright and named stars from Hipparcos (117,955 stars in the new reduction; ESA archive data, CC BY-NC 3.0 IGO, credit "ESA") and the IAU's list of star names (451 in the file of 2022-04-04 plus 59 adopted on 12 Feb 2026; CC BY). The Yale Bright Star Catalogue does not ship: its holder says the copyright may still be Yale's and offers it for research only; its HR numbers stay as identifiers. **[RW1, 26 Nov: terms read at source, `docs/citations/real-catalogues.md` rows S4 to S6. The 9,000 stars to the naked-eye limit and the few hundred kilobytes are still estimates for RW2 to measure.]** Hipparcos and Gaia are both non-commercial, so nothing priced may include them (RW1 section 1.1) | The real sky works offline on day one, in a few hundred kilobytes |
+| **The free real-sky pack**, fetched once from SSE4's own storage | The complete nearby sample: CNS5 (5,931 objects within 25 pc: 5,230 stars and 701 brown dwarfs, Golovin et al. 2023; read at source by RW1). Doubles from the Washington Double Star Catalog (149,104 systems on 28 Oct 2026). Known planets from the NASA Exoplanet Archive (6,473 planets in 4,865 systems on 26 Nov 2026). Nearby galaxies and named deep-sky objects. Optionally the Gaia Catalogue of Nearby Stars to 100 pc (331,312 objects, CC BY-NC 4.0; read at source by RW1) as a second, larger download | Complete where a campaign lives. Carries its credits. Kept out of the app only for size |
 | **Live, on request** | Anything further or fainter, through the site Worker to SIMBAD and the Gaia archive, the route V3's importer already uses. Cached by region and version | No limit on reach; nothing downloaded that was not asked for |
 
-Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hundred systems **[about 340 systems and 540 objects, from memory, unverified]**, a download of tens of kilobytes. A 100 pc import is about 330,000 objects and a few megabytes.
+Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hundred systems **[about 340 systems and 540 objects, from memory, unverified: RW1 could not read CNS5's ReadMe because CDS refused every route on 26 Nov]**, a download of tens of kilobytes. A 100 pc import is about 330,000 objects and a few megabytes.
 
-**Terms, as far as they are known.** Gaia data is CC BY-NC 3.0 IGO (read at ESA's page on 21 Nov by the night sky thread). CNS5 and AT-HYG are built partly from Gaia and are treated as non-commercial until read at source. JPL and NASA data is not copyrighted **[unverified at source]**; the Minor Planet Center's terms need reading. RW1 reads every one at its source before any data is bundled, and nothing ships on my memory of a licence.
+**Credits travel with the data and are shown (Alex, 26 Nov 18:01 UTC).** "make sure the actual credits are shipped in packs as clear readable and show at initial import." So:
+
+- A catalogue's terms part (section 3.1) holds the provider's own credit text, word for word, with the catalogue's name, version, licence and link. It is plain readable text in the pack, not a code or a reference to look up. The Traveller pack already carries Mongoose's notice this way (`provides.other.notice`, shown on the Packs screen) and the `sol-today` pack carries GCAT's credit line; this is the same field.
+- Any pack, system, campaign or postcard that holds downloaded values carries the credits of every catalogue those values came from. An export copies them; nothing strips them.
+- **The credits are shown at the first import**, in the preview, in full and before Apply, and again whenever a pack that holds them is first loaded on a device. After that they stay one press away: on the Packs screen, and on the card of any object with catalogued values, beside its source.
+- A catalogue with no credit text is refused by the reader. RW1 collects each provider's exact wording at its source; no credit is written from memory.
+
+**Terms, read at source by RW1 on 26 Nov 2026** (the full table, with each credit word for word, is `docs/citations/real-catalogues.md`). Gaia and Hipparcos data from ESA's archive are CC BY-NC 3.0 IGO; ESA counts as commercial "any use or application that directly or indirectly generates a financial gain" and asks for a request first. GCNS is CC BY-NC 4.0. CNS5 and AT-HYG carry Gaia values and are non-commercial; AT-HYG and OpenNGC are also CC BY-SA 4.0, so their rows sit in a separately licensed file. NASA science data is CC0 and JPL asks only for a citation. The Minor Planet Center's live policy lets its data files be redistributed with the source named, but bars its circulars and web pages from any product. The Yale Bright Star Catalogue has no clear licence and does not ship. Still unread: the full Gaia DR3 acknowledgement in one piece (the archive was offline for DR4 preparation), the CDS ReadMes and VizieR's rules, and the terms of the moon theories (IMCCE is now the Laboratoire Temps Espace).
 
 **Versions.** Each catalogue's version is pinned in the campaign, as the handoff ruled. Moving to a newer release is a deliberate act with a "what changed" list.
 
+### 5.3A Detail expansion packs (Alex, 26 Nov 18:03 UTC)
+
+The table in 5.3 stands with its middle row renamed and moved: what is not shipped is not a special "real-sky pack" on a service of its own. It is a set of ordinary **detail expansion packs on the Explorers store**, free, each one a catalogue in size order with its credits, loaded from the Packs screen like any other pack. Alex: "bulky and irrelevant to most but useful to some. Like atomic rockets."
+
+| Where | What | Shown by default |
+|---|---|---|
+| In the app | The Solar System to the Expected stop; about 9,000 bright and named stars | The Expected stop; about 100 stars (the star level's default stop, to be set by RW2) |
+| Detail expansion packs on the store | Nearby stars complete to 25 pc; nearby stars to 100 pc; the Solar System's small bodies, cut into packs by size step so nobody downloads a million rocks to see ten thousand; doubles; known planets | Nothing until loaded; then whatever the Detail control is set to |
+| Live, from the import action | A region round a chosen star that no loaded pack covers | The imported region |
+
+The Detail control is what ties them together: its slider shows stops that need a pack as "get this pack" marks, so going past what is installed offers the download instead of showing nothing. A pack that is loaded simply lengthens the ranked lists.
+
+The live route stays, because "a star and 20 light years" must work for someone who has loaded nothing (my reading; Alex spoke of the bulk, not of the importer).
+
 ### 5.4 The data service
 
-A storage bucket (Cloudflare R2) behind new Worker routes, `/cat/*`, serving catalogue files and caching live queries. Files are immutable and named by catalogue and version. Each is in size order with a small index, so a device asks for a byte range and stops (section 3.1). Star files are also cut by region (HEALPix cells by distance shell, the grid `sse-sky` already has), so a 20 light year import reads one small tile.
+After Alex's 18:03 ruling the catalogue files are store packs, so their bytes sit wherever the Explorers store keeps packs. What this section still needs is that those files can be read by byte range (section 3.1) and that live queries have a cache. Checked 26 Nov after Alex's 18:08 note ("store uses storage buckets I think... and a supabase"): the Explorers store keeps files in two private Cloudflare R2 buckets (`sshub-assets`, `sshub-bundles` in its `wrangler.toml`), served only through its own worker, with Supabase as its database; its `src/lib/server/r2.ts` already does a range read of an object. So no new bucket is needed. What RW8 adds on the store is a download route for V4 packs that passes a byte range through, and an upload size limit that fits a catalogue pack. The first draft's separate bucket and `/cat/*` routes are dropped unless that proves impossible; for the record, they were: If it cannot, the fallback is what the first draft proposed: a storage bucket (Cloudflare R2) behind new Worker routes on the SSE4 site, `/cat/*`, serving catalogue files and caching live queries. Files are immutable and named by catalogue and version. Each is in size order with a small index, so a device asks for a byte range and stops (section 3.1). Star files are also cut by region (HEALPix cells by distance shell, the grid `sse-sky` already has), so a 20 light year import reads one small tile.
 
 Build scripts live in the repo and run on Alex's PC, because the cloud cannot reach the sources (section 2.5). Creating the bucket is Alex's to do in Cloudflare (question 8).
 
@@ -226,40 +251,134 @@ For a generated system this is what exists, plus the table read. For the real So
 
 ### 6.1 The Solar System, every known body
 
-Sources and rough counts, all **[unverified, from memory]**:
+Sources and counts, read at source by RW1 on 26 Nov 2026 (JPL's small-body database through its live API; the table and method are in `docs/citations/real-catalogues.md` section 4):
 
 | Population | Source | Known today |
 |---|---|---|
-| Planets and dwarf planets | NSSDCA, as base-sol now | 8, and 5 recognised dwarf planets |
-| Moons | JPL's satellite tables | over 400, most of them small irregular moons of Jupiter and Saturn |
-| Main belt, Hildas, Jupiter trojans, near-Earth objects, centaurs | Minor Planet Center orbit file, JPL small-body database | about 1.4 to 1.5 million bodies in all; about 15,000 Jupiter trojans; about 40,000 near-Earth objects |
-| Beyond Neptune, the distant detached bodies included | the same | about 5,000 |
-| Comets | the same | about 4,000 to 5,000 |
+| Planets and dwarf planets | NSSDCA, as base-sol now | 8, and 5 recognised dwarf planets (Pluto, Ceres, Eris, Haumea, Makemake) |
+| Moons | JPL's satellite tables | 460 recognised by the IAU, Earth's Moon not counted: Mars 2, Jupiter 115, Saturn 293, Uranus 29, Neptune 16, Pluto 5 |
+| Main belt, Hildas, Jupiter trojans, near-Earth objects, centaurs | JPL small-body database (CC0, citation asked); the Minor Planet Center's data files (redistributable with the source named) | 1,589,842 asteroids in all (895,910 numbered); 1,404,751 in the main belt; 16,684 Jupiter trojans; 43,392 near-Earth objects; 1,114 centaurs. Hildas have no class of their own in the database and are picked out by orbit |
+| Beyond Neptune, the distant detached bodies included | the same | 8,423, growing by thousands a year while the LSST runs (section 6A.3) |
+| Comets | the same | 4,089 (610 numbered) |
 | Hypothetical bodies (a "Planet Nine") | published candidate orbits | a handful; off by default, tagged hypothetical, switched on by the GM (the star census note's rule for hypotheticals) |
 
-**Sizes.** Only a minority of small bodies have a measured diameter (roughly one in ten, mostly from infrared surveys **[unverified]**). The rest have a brightness. The standard relation gives a diameter from brightness and albedo; where the albedo is unmeasured it comes from the body's type or its region's mean. Those sizes are graded "estimated" and the card says so. Masses come from diameter and a density for the makeup, also estimated. Without this the slider would hide nine tenths of the catalogue, so estimated sizes take part (question 7).
+**Sizes.** Only a minority of small bodies have a measured diameter (139,688 of 1,589,842 asteroids, 8.8%, read by RW1; that most come from infrared surveys is still unverified). The rest have a brightness. The standard relation gives a diameter from brightness and albedo; where the albedo is unmeasured it comes from the body's type or its region's mean. Those sizes are graded "estimated" and the card says so. Masses come from diameter and a density for the makeup, also estimated. Without this the slider would hide nine tenths of the catalogue, so estimated sizes take part (question 7).
 
 **Size on disc.** About 30 bytes a body packed (six orbit numbers, size, kind, flags), so the whole catalogue is about 45 MB before compression **[estimate]**. Because it is in size order, the app ships only the top, and each further stop is its own range of the file:
 
-| Down to | Bodies, about **[unverified]** | Download, about |
-|---|---|---|
-| the Expected stop | 50 to 100 | in the app |
-| 100 km | 1,000 | 30 kB |
-| 30 km | 5,000 | 150 kB |
-| 10 km | 15,000 to 20,000 | 0.5 MB |
-| 3 km | 150,000 | 4 MB |
-| 1 km | 800,000 | 25 MB |
-| everything known | 1.5 million | 45 MB |
+Read by RW1 on 26 Nov 2026 from JPL's small-body database. "Measured" counts bodies with a published diameter above the size; "by brightness" counts bodies brighter than the H at which an albedo-0.10 body is that size (my albedo, so an estimate; dark TNOs come out small and bright ones big). Downloads are the counts at 30 bytes a body.
 
-Alex's "10000 asteroids and hundreds of trojans" is the 10 km stop. RW2 measures the real numbers and they replace this table.
+| Down to | Measured diameter | By brightness (estimated) | Download, about |
+|---|---|---|---|
+| the Expected stop | (RW2) | (RW2) | in the app |
+| 100 km | 240 | 5,932 | 180 kB |
+| 30 km | 1,472 | 9,574 | 290 kB |
+| 10 km | 10,183 | 17,317 | 0.5 MB |
+| 3 km | (most unmeasured) | 160,090 | 5 MB |
+| 1 km | 138,765 | 991,017 | 30 MB |
+| everything known | 139,688 | 1,593,931 (asteroids and comets) | 48 MB |
+
+The first draft's 100 km and 30 km rows (1,000 and 5,000) were too low for the estimated sizes and too high for the measured ones; the gap is why section 6.1's estimated sizes must take part, graded. Alex's "10000 asteroids and hundreds of trojans" is the 10 km stop (10,183 measured, about 17,000 estimated, with 16,684 Jupiter trojans of all sizes). RW2 sets the per-group albedos and the Expected stop, and its numbers replace the estimated column.
 
 **What base-sol itself must gain** (it is today's gap, section 2.1): full orbits at a stated date for every body, so that today's positions are right; mass by element group for each belt, so the real belts have amounts; and the kinds of group (trojans, Hildas, centaurs, families) as populations with their own lists.
 
 **Motion and its honest limit.** A catalogue orbit is true at its date. Moved forward as a plain ellipse it stays good for decades and drifts over centuries as the planets tug it. The view says "as catalogued" near the date and "plausible" far from it. Over millions of years the real small bodies are today's snapshot and their past is the reconstructed history the chain note already plans for imported systems (CC12).
 
-### 6.2 Other real systems
+### 6.2 Backfill: a probable system round a real star
 
-A real star with known planets gets them as pins in its formation request; formation fills the rest and tags it fill. This is the route X3b built for Traveller worlds ("codes win, impossible values marked with reasons"). No new mechanism.
+Alex, 26 Nov 17:53: "did you see how SSE3 imports stars/planets and adds plausible planets (the default option)... we have the mechanism to 'backfill' detail on a probable star system for a star of a particular age/type. So just reuse that machinery."
+
+I had read V3's importer only as far as its file list. Read properly, on 26 Nov, V3 does this in `generation/infill.ts` (`infillSystem`), and every V3 importer calls it (real sky, file import, Traveller):
+
+- **The star is pinned.** The generator is seeded with the real star's measured mass, radius, temperature and luminosity, so its habitable zone, snow line and planet slots follow from the real star.
+- **Confirmed planets are anchors.** They are never moved or removed. A generated planet that lands within 3.5 mutual Hill radii of an anchor is dropped.
+- **It is deterministic.** The seed comes from the system's own catalogue name, so "one person's Polaris is everyone's Polaris".
+- **It is honest.** Every generated body is tagged `origin/generated`; a measured one is not.
+- **It is the default**, with the GM's generation dials and an age beside it, and a hard planet count for Traveller.
+
+SSE4 has the same machinery in a stronger form and this track adds none: formation grown `from_star` with pins (F9 `pins::solve`; the Traveller pack's X3b already grows a whole system round one pinned world this way), and the reconstructed history for imported systems (CC12). So:
+
+- **Backfill is on by default at import**, as in V3. The preview says how many measured worlds each system has and that the rest will be filled. A GM can import "measured only".
+- A real star is a pinned star: its measured facts seed formation. Its age and metal content come from the catalogue where measured, and otherwise from the ring at its place.
+- Known planets are formation pins. Formation runs round them and they do not move. What V3 did with a Hill-radius cut after the event, formation does by building round the pins.
+- The seed is the star's catalogue id and the pack versions, so every device fills the same star the same way.
+- Every filled body carries the evidence grade "fill" and every measured one "catalogued", as already ruled.
+- Backfill waits for a visit. Importing a thousand stars forms no systems; opening one does ("best calc is no calc"). The result is then kept.
+- The same backfill serves a real small-body list (the seeded tail below the catalogue's limit, section 6), a Traveller world, and a hand-built system. It is one routine with pins, as V3 made it one routine.
+
+The difference from V3 worth keeping: V3 draws planets from tables for a star type. SSE4 forms them, so a filled world has a history and its share of the star's birth budget, and the conserved chain holds for filled and measured bodies alike.
+
+### 6.3 Every step is a block chain
+
+Alex, 26 Nov 17:53: "These all should be block chains in the physics." This is the standing rule of 19 Nov (new physics goes into editable, cited flows of small blocks, each with a view), and it applies to every sum this track adds. None of them may hide in an importer's code. Each is a flow in a pack, cited, editable on the Build desk, with the usual "how this was worked out" on the card.
+
+| Flow | From | To |
+|---|---|---|
+| A star's mass | measured brightness, colour and distance | mass, with its grade |
+| A star's age and metals where unmeasured | its place, speed and kind | an age and six element groups from the ring's history there |
+| A star's orbit | position, proper motion, line-of-sight speed | the closed-form orbit in the galaxy |
+| A missing line-of-sight speed | the measured sideways speed and the ring's spread of speeds | a drawn value, graded fill |
+| A small body's size | brightness and albedo | diameter |
+| A missing albedo | its type, family or region | albedo, graded estimate |
+| A small body's mass | diameter and makeup | mass by element group |
+| A catalogue's completeness | size and distance | the share of what exists that it holds |
+| Thinning | completeness and a seeded count | which fill survives beside the catalogue |
+| The best-fit slot | an entry and the seeded slots near it | the slot it claims |
+| Backfill | pinned star, pinned worlds, the ring's stock | a formed system round the pins (the formation flow, unchanged) |
+| The Expected stop | size, makeup and self-gravity | "round" or not |
+| The census | a system's ranked lists | counts and masses by group and size step |
+
+Two consequences. A GM or a pack author can change any of them (a different mass relation for red dwarfs, a different albedo for a class of asteroid) without touching code, and the change shows in the stack hash like any other physics. And the importer itself shrinks to reading a file and handing rows to flows, which is what keeps it general.
+
+Reading a catalogue file and drawing a million points are not physics and stay as code: the reader is "never invent", and the shader's orbit sum is a registered display stand-in.
+
+## 6A. Alex's additions at acceptance, 26 Nov 2026 18:08 UTC
+
+### 6A.1 Small bodies are lumpy, consistently, and there is a designer for them
+
+Alex: "low sized objects need to be lumpy - consistently and we need the contact binaries and other interesting random asteroids made... a little asteroid and comet designer to do convincing small objects of every size would be useful. small objects like constructs and megaconstructs is almost its own category of 'thing'."
+
+What exists (small bodies track, SB1 to SB4): `sse-small` gives any member a figure from its spin and strength (flattened, elongated, two lobes with a neck for a contact binary, a separated pair), rubble pile or monolith, seeded relief, weathering and albedo, all from the seed and the member's address. The op `make_small_body` adds one by recipe (asteroid, comet nucleus, contact binary, binary pair). System True draws them. What is missing is a screen to design one, shapes on catalogued bodies, and small bodies as a kind of their own.
+
+- **Lumpy, and the same everywhere.** Below the size at which a body pulls itself round, a body is never a sphere in any view. Its shape comes from its address and the seed, so it is the same lump on every device, at every zoom and on every desk, and a point in a crowd opens into the shape it always had.
+- **Catalogued bodies too.** A real body uses its measured shape where one is published (axes, or a two-lobe model for the known contact binaries) and is graded measured. Otherwise its shape is seeded from its catalogue id, constrained by what is measured: size, spin period, and how much its brightness varies as it turns, which bounds how elongated it is. Graded fill.
+- **The interesting ones are made at their real rates**, by the processes that make them: contact binaries and pairs from slow collisions and spin-up, bared cores from shattered worlds, rubble piles from re-gathered debris. They are notables, so they pass the Detail cut and head the "What is interesting here" list.
+- **A small-body designer**, on the Build desk: one screen over the existing recipes. Pick a kind, set size, makeup, spin and the handful of things that drive the look (one lobe or two, rubble or solid, how battered, how active for a comet), and see it turn in True as the numbers change. Each control is an input to a flow, so what is designed is physically what it looks like. The same designer opens any existing member, catalogued or seeded, to adjust it; the change is a deed. It gives itself a `rail` entry and adds no tab.
+- **A kind of its own.** Small bodies become a first-class kind of thing beside worlds, constructs and megaconstructs, with their own card, their own entry in the Add list and the selector, and their own place in the three-desks table. Like a construct, a small body can be designed once and placed many times.
+
+### 6A.2 Everything in the right place at the right time
+
+Alex: "We need everything in the right place at the right time too! For solar system. So we can see eclipses on time, etc."
+
+This is a harder promise than the first draft made, and it needs one addition to the mechanism. A catalogue orbit moved on as a plain ellipse puts a planet in roughly the right place for decades. It does not put the Moon's shadow on the right town at the right minute. That needs the Moon's position to a few thousandths of a degree, and the Moon's path is pulled about by the Sun too strongly for any fixed ellipse.
+
+**The general form: a body may carry a measured motion.** Beside its orbit a catalogue entry may name a motion model, with the span of dates over which it holds. Inside that span the body is where the model says. Outside it the body hands over to the kernel's own orbit, and the view says so ("as measured" becomes "plausible"). Generated systems never have one; any pack may supply one.
+
+For the Solar System the models are published series, which are long sums of sines and cosines of time. They suit the kernel well: pure arithmetic through `sse_core::math`, the same on every device, any date read directly with no stepping.
+
+| Bodies | Model (read at source by RW1, 26 Nov; terms in `docs/citations/real-catalogues.md` rows M1 to M4) | Good for |
+|---|---|---|
+| The planets | the VSOP87 series (Bretagnon and Francou 1988, A&A 202, 309; fitted to DE200; no terms stated in its files) | about 1 arcsecond for Mercury to Mars over 4,000 years either side of J2000, for Jupiter and Saturn over 2,000 years, for Uranus and Neptune over 6,000 years |
+| The Moon | the ELP/MPP02 lunar theory (Chapront and Francou 2003, A&A 404, 735), cut to the terms that matter; the data files' terms are not yet read | under 3 arcsec and 2 km against DE406 over 3000 BC to AD 3000, under 0.03 arcsec and 30 m over two millennia near now. Eclipse times to about a minute near the present is my estimate from that, for RW17 to check |
+| The big moons of Jupiter and Saturn | IMCCE's L1 (Galilean moons, Lainey et al. 2007) and TASS 1.7 (Saturn), whose use is "SUBJECTED TO CONDITIONS" on a page that no longer exists (IMCCE became the Laboratoire Temps Espace in 2025), so mean orbits with their slow turning rates come first, and RW17 asks LTE | L1: "few hundreds of kilometers for the period [1970:2010]"; moon shadows and mutual events |
+| Everything else | catalogue orbits at a date, as section 6.1 | decades |
+
+Three honest limits, each for the fudge register.
+
+- **Where on the ground an eclipse falls depends on the Earth's spin**, which slows irregularly. Within a few centuries of now it is measured or well predicted. Thousands of years away the time of an eclipse is still good but the place it is seen drifts by a growing amount. The view says so.
+- **A series is a table, not a small flow.** Thousands of terms cannot be drawn as blocks. It is a Big Block whose data is a cited pack table, with the usual view (the terms ranked by size, and what each does), and it goes in the register as one.
+- **Outside the span it is plausible, not measured.** Deep time stays the reconstruction the chain note plans.
+
+**The checks are real eclipses.** The package is done when the app shows the total solar eclipses of 21 Aug 2017, 8 Apr 2024 and 12 Aug 2026 at their published times and on their published paths, to a stated tolerance, plus one lunar eclipse and one ancient eclipse with the place drift shown. This also needs what is already built to line up: body sizes, the Earth's tilt and spin, and the shadow drawing.
+
+### 6A.3 Hypothetical, and newly found
+
+Alex: "hypothetical bodies is a general useful category BUT a lot of larger (pluto size +) have been recently spotted - vera rubin is doing its job!"
+
+Two different things, kept apart.
+
+- **Found bodies are catalogued, however recent.** Anything a survey has reported with an orbit is a catalogue entry like any other, with its discovery date and the grade of its orbit and size. A fresh discovery often has a rough orbit and an estimated size; the card says so. The small-body packs are rebuilt from the sources on a schedule, with the version in the pack, so new finds arrive as a pack update and a "what changed" list. RW1 read them on 26 Nov 2026 (`docs/citations/real-catalogues.md` section 5): 37 small bodies are brighter than H 4, 35 of them beyond Neptune. Rubin found two in 2026: 2026 ED138 (600 to 1,500 km, announced 27 Oct, among the ten brightest TNOs) and 2026 EE138; 2017 OF201 (about 700 km, a of about 820 au) was announced in 2025. All are catalogued with orbits and estimated sizes. Rubin's search has reported 2,440 new TNOs so far, and the ED138 paper expects about three more of its size away from the Galactic plane.
+- **Hypothetical is a general grade for any level**: a body, a star or a galaxy that is argued for and not seen. It is off by default, switched on per pack, always labelled, and never counted in a census or a budget as measured. A hypothetical that is later found simply changes grade.
 
 ---
 
@@ -392,23 +511,28 @@ Each is sized for one agent. "Now" means nothing blocks it. The star half waits 
 | Package | What | Needs | Owner (proposed) |
 |---|---|---|---|
 | **RW0** | This note, the status file, the row in START-HERE | | this thread (done with this PR) |
-| **RW1** | Read every catalogue's terms, size and count at its source (through the browser on Alex's PC; papers after 1 Dec). Replace every **[unverified]** in this note. A terms table in `docs/citations.md` | now | citations thread |
+| **RW1** | Read every catalogue's terms, size, count and exact credit wording at its source (through the browser on Alex's PC; papers after 1 Dec). Replace every **[unverified]** in this note. A terms table in `docs/citations.md` | done 26 Nov 2026 (`docs/citations/real-catalogues.md`; open items in its section 6) | citations thread |
 | **RW2** | Measure, merge nothing: the real size lists and counts per stop; points a phone and AC-ProArt can draw moving; the cost of a pin and of a table row; a 50 pc tracked set. Output: the set points and ceilings | now; Alex's PC for the GPU | quality tiers, with small bodies |
 | **RW3** | The catalogue format `sse.catalogue/1` and its reader crate: entries in size order with a range index, frame, anchor, date, completeness, grades, terms. "Never invent." Contract types. Tests: a prefix read never touches the rest of the file | now | kernel |
+| **RW3b** | The estimating flows as blocks in a pack (section 6.3): star mass, small-body size, albedo and mass, completeness, thinning, the round test. Cited, each with its view; nothing estimated in importer code | RW3 | data sheet, with the kernel |
 | **RW4** | Populations: the table read (`population`: a block of ranks as columns) for seeded belts, clouds, rings and moons, and for catalogued ones through RW3, joined with thinning. Own golden area | RW3 | small bodies, with the kernel |
 | **RW5** | The Detail control: `ViewControls.detail`, stops as data, the ceiling from the probe, per-device memory, the always-shown rule, the readout in the level's own measure. System level first | RW2, RW4 | chart room, with quality tiers |
 | **RW6** | Drawing a crowd: columns to the GPU, orbits in the shader, a press resolves one member, on the system chart, System 3D and True; the phone and text paths. Retires the four-member stand-in (SB-sample) | RW4, RW5 | small bodies, with the renderer |
 | **RW7** | The Solar System catalogue: build scripts (run on Alex's PC) for every moon, minor planet and comet into size-ordered files; estimated sizes graded; base-sol gains full orbits at a date, belt masses by group and the Expected stop; the notable flags | RW1, RW3 | data sheet |
-| **RW8** | The data service: the storage bucket, Worker routes `/cat/*` with byte ranges, immutable versioned files, the live-query cache, the offline edge | question 8 | kernel hand-offs or the Explorers thread |
+| **RW8** | Detail expansion packs on the Explorers store (5.3A): the pack kind, the shelf, byte-range reads of a large pack (test the store first; a bucket only if it fails), versioned files, the live-query cache, the offline edge, "get this pack" marks on the Detail control | question 8 | kernel hand-offs or the Explorers thread |
 | **RW9** | Filters as chips over population columns: group, makeup, orbit, hazard, known, visited, interesting | RW5 | navigation (find by tag) |
 | **RW10** | The census: op `census`, the "Against the Solar System" card, the thousand-seed report and the gap list | RW4, RW7 | proven core |
 | **RW11** | Claims in the star field: a pin from outside with measured mass, place and velocity; best-fit slot in the count tree; thinning by completeness; the block overdraft rule; the three tests. Core golden | GZ13, CC6, RW3 | kernel (core lane) |
 | **RW12** | The real sky pack: the home wish, the galaxy's measured claims, the measured arms, the Sun's slot, the date, the named neighbours as claims; the shipped bright and named stars. The start sheet's Solar System door opens it | GZ12, RW11, the Local Arm fix, RW1 | galaxy charts and histories, with the kernel |
-| **RW13** | Star sources: CNS5, doubles, known planets, names, the live route, reusing V3's importer logic through the converter module; planets as formation pins | RW8, RW11 | converter thread |
+| **RW13** | Star sources: CNS5, doubles, known planets, names, the live route, reusing V3's importer logic through the converter module; known planets as formation pins (F9) and backfill on by default, formed on a visit (section 6.2) | RW8, RW11 | converter thread, proven core |
 | **RW14** | The import action: centre, radius, preview, apply; any anchor in any galaxy; the Traveller sector as a catalogue | RW11, RW13 | galaxy charts and histories, Traveller |
 | **RW15** | Detail on the other levels: Local stars, Galaxies nearby, the web, a world's moons and rings. The night sky's star budgets move under it | RW5, GZ7 | each view's owner |
+| **RW16** | Small bodies as their own kind, and the designer (6A.1): shapes that are the same lump in every view; measured shapes and brightness-swing limits on catalogued bodies; the Build desk designer over the `make_small_body` recipes with a live True preview; the kind in the Add list, selector and cards | RW6 for crowds; the designer itself can start now | small bodies, with editing |
+| **RW17** | Measured motion (6A.2): the motion-model slot on a catalogue entry with its span and hand-over; the planets' and the Moon's series as cited pack tables behind one Big Block; big moons by mean orbits with rates first; the eclipse checks (2017, 2024, 2026, one lunar, one ancient) | RW1 for the series' terms and accuracy, RW7 | kernel, with the data sheet |
 
-First four to open: RW1, RW2, RW3, then RW7. RW4 to RW6 give Alex the slider on generated systems before any real data arrives, and RW7 then makes the Solar System fill it.
+First to open: RW1, RW2, RW3, then RW7 and RW17 (eclipses on time is the visible proof that the real system is real). The designer half of RW16 can start at once on what the small bodies track has built. RW4 to RW6 give Alex the slider on generated systems before any real data arrives, and RW7 then makes the Solar System fill it.
+
+**Flows, not code.** Every sum in sections 3, 6 and 7 is a block flow (section 6.3). A package that estimates anything in Rust or TypeScript lists it under "Candidates to move into flows" in `docs/fudges.md`, as the standing rule asks.
 
 **Fudges this track registers:** estimated sizes and masses from brightness; plain-ellipse motion of catalogue orbits away from their date; orbits worked out in the shader for display; the seeded web round a real galaxy; a line-of-sight speed drawn where none was measured; block-level closure for over-full cells.
 
@@ -420,26 +544,42 @@ Each has my recommendation. Routine choices went to the coordinator and are not 
 
 1. **Is the real sky the first thing a new user gets?** The start sheet's Solar System door would open the real Milky Way at Earth, today, with "a new universe" as the other door. This reverses the night sky note's "fictional galaxies are the default". *Recommend yes:* it is what your message says, and a newcomer recognises it at once.
 2. **Is a real galaxy in a generated universe acceptable?** Measured out to the Local Group, generated beyond, and labelled so. *Recommend yes.* The alternative is a research project.
-3. **What ships, what is a pack, what is live?** In the app: the Solar System to the Expected stop and about 9,000 bright and named stars from open sources. Free optional pack: the complete nearby sample and the full small-body catalogue. Live: anything further. Gaia-derived data stays out of the app, as you ruled. *Recommend yes.*
+3. **What ships, what is a pack, what is live?** By size alone: in the app, the Solar System to the Expected stop and about 9,000 bright and named stars; as a free download, the complete nearby sample and the full small-body catalogue; live, anything further. Gaia data may be in any of them and in any pack or system (your 17:58 ruling). *Recommend yes.* The sold-pack part is answered (18:00, section 12A): a pack holding downloaded data may be used and given away, never sold.
 4. **Detail as a sixth view control on every view**, beside View style, Seen from, Scale, HUD and Band, remembered per device. *Recommend yes.*
 5. **The default is the Expected stop, and the machine sets a marked ceiling the user may pass with a warning**, not a hard limit. *Recommend yes:* suggest, never refuse.
 6. **"Expected" is a rule, not a list:** everything big enough to be round, plus notables whatever their size (so Phobos, Deimos and Halley's comet show). The same rule gives a generated system its default. *Recommend yes.*
 7. **Estimated sizes take part in the slider**, marked as estimates on the card. Otherwise nine in ten known asteroids could never be shown by size. *Recommend yes.*
-8. **A Cloudflare storage bucket for catalogue files**, which you would create (a few minutes; I will write the steps), with the build scripts run on your PC because the cloud cannot reach the catalogue sites. *Recommend yes.* Nothing else can serve 45 MB in ranges.
+8. **Where the pack bytes sit.** After your 18:03 answer the catalogues are store packs. If the Explorers store can serve a large pack in byte ranges, nothing new is needed. If it cannot, a Cloudflare storage bucket that you would create. Either way the build scripts run on your PC, because the cloud cannot reach the catalogue sites. *Recommend: let RW8 test the store first, and ask you for a bucket only if it fails.*
 9. **"Known by a date" as a filter**, so a campaign in 1900 shows players only what had been found. *Recommend yes, as part of RW9, not before.*
 10. **Hypothetical bodies** (the Planet Nine candidates) as a switch in the pack, off by default and tagged hypothetical. *Recommend yes.*
 11. **The Solar System as yardstick, never as target:** the comparison finds missing processes, and no generator number is tuned to match it. The "Against the Solar System" card is shown to the GM on the Explore desk. *Recommend yes.*
 12. **Catalogues are placed by an anchor, so the real neighbourhood can be dropped into a fictional galaxy and a fictional star list into the real one.** *Recommend yes;* it costs nothing extra and it is the general form.
 13. **A far-off catalogue star stays a table row until someone looks at it**, instead of becoming a full pin at import. A 100 pc import is then megabytes, not most of a gigabyte. *Recommend yes.*
 
+### 12A. Alex's rulings, 26 Nov 2026, 17:53 to 18:08 UTC
+
+The note is accepted. These are his words; where they differ from the text above, they win.
+
+- **Reuse the backfill machinery; it is the default.** "we have the mechanism to 'backfill' detail on a probable star system for a star of a particular age/type. So just reuse that machinery."
+- **Block chains.** "These all should be block chains in the physics."
+- **Gaia, 17:58 UTC.** "What ruling? Gaia data can be added to any pack - to any star system - someone can decide to just 'play around Polaris' and never bother with the galaxy view." The "Gaia only in an optional pack" line is withdrawn (section 5.3). Where the night sky note's Q3, the naming note or the paid packs note say otherwise, this wins; and sold packs are settled by the next line.
+- **Selling, 18:00 UTC.** "just easier to ban selling packs with downloaded data. say 'you can use this' - you can give it away but you cannot 'sell it' as it contains..." A pack holding downloaded catalogue data is free only; the shop refuses a price and says why (section 5.3). This applies to every downloaded catalogue, not only Gaia. 18:00:35: "and we can refuse at store level because of that".
+- **Question 1, 18:03 UTC: "2 doors in".** Read as: the start sheet has two doors, the real sky at Earth today and a new universe. (My reading; which is marked "Start here" was not said, and stays the real sky as recommended until he says otherwise.)
+- **Question 3, 18:03 UTC.** "we have the 9000 in by default showing about 100 by default. I think importing the rest from the store makes sense - bulky and irrelevant to most but useful to some. Like atomic rockets... these are just detail expansion packs." So: the 9,000 bright and named stars ship in the app; the Detail control's default stop at the star level shows about 100 of them; everything bulkier (the complete nearby sample, the deep star sets, the full small-body catalogue) is a **detail expansion pack** on the Explorers store, free, fetched by those who want it, on the same shelf and by the same route as the Atomic Rockets pack. Section 5.3A.
+- **Acceptance, 18:08 UTC.** "yes to all otherwise - you have the drift." Questions 2, 4 to 7 and 9 to 13 are answered yes as recommended; 1 and 3 as above.
+- **Question 8, 18:08 UTC.** "catalogue lives in the store? seems the natural place"; "store uses storage buckets I think... and a supabase". Yes: catalogues are store packs in the store's existing buckets. Nothing new for Alex to create (section 5.4).
+- **Question 10, hypotheticals, 18:08 UTC.** A general category, yes; and newly found large bodies are catalogued, not hypothetical. Section 6A.3.
+- **Lumpy small bodies and a designer; right place, right time (eclipses), 18:08 UTC.** Sections 6A.1 and 6A.2.
+- **Credits, 18:01 UTC.** "make sure the actual credits are shipped in packs as clear readable and show at initial import." Section 5.3.
+
 ---
 
 ## 13. What I checked, and what I did not
 
-Checked by reading main at 7e01502: the handover, decisions, the chain notes, the night sky, galaxy and grand zoom notes, the status files named above, `packs/base-sol` (its bodies, regions and value keys), the store pack `sol-today`, the converter's copy of V3's importer (its file list and the three services it calls), the site Worker's routes, and the roster prototype's report. I tried ten catalogue hosts from the cloud and all were refused.
+Checked by reading main at 7e01502: the handover, decisions, the chain notes, the night sky, galaxy and grand zoom notes, the status files named above, `packs/base-sol` (its bodies, regions and value keys), the store pack `sol-today`, the converter's copy of V3's importer (its file list and the three services it calls) and, after Alex's 17:53 message, V3's own `import/realsky/fillout.ts` and `generation/infill.ts`, the site Worker's routes, and the roster prototype's report. I tried ten catalogue hosts from the cloud and all were refused.
 
 Not done: I ran no code and measured nothing. I did not read the Local Arm branch. I searched the formation and small-body crates for words (trojan, family, Kirkwood and so on) and did not read how each structure is made, so section 2.4 says what the code mentions, not how well it does it. I did not see GZ12's pull request. Every figure marked unverified is from memory.
 
 ## 14. Picking this up without the chat
 
-Read this note, then `handover/status/real-catalogues.md`. Alex's answers to section 12 will be recorded in a section 12A here and in `handover/decisions.md`; where they differ from the text, they win. The readable copy Alex comments on is linked from the status file.
+Read this note, then `handover/status/real-catalogues.md`. Alex's answers are in section 12A here and in `handover/decisions.md`; where they differ from the text, they win. The readable copy Alex comments on is linked from the status file.

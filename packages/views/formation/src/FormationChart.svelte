@@ -18,6 +18,7 @@
   }: {
     chart: FormationChart;
     slice: number;
+    /** The body whose story is shown, by its id on the chart. */
     selected?: string | null;
     onslice: (t: number) => void;
     onslicedone: (t: number) => void;
@@ -138,7 +139,7 @@
       <!-- The upheaval: the violent phase from the break to the settling. -->
       {#if chart.upheaval}
         <rect class="upheaval" x={L} y={Y(chart.upheaval.from)} width={pw} height={Math.max(2, Y(chart.upheaval.to) - Y(chart.upheaval.from))} data-upheaval />
-        <text class="note up-t" x={L + 6} y={Y(chart.upheaval.from) + 11}>Upheaval · {chartTime(chart.upheaval.from)} to {chartTime(chart.upheaval.to)}</text>
+        <text class="note up-t" x={L + 6} y={Math.max(Y(chart.upheaval.from) + 11, Y(chart.upheaval.to) - 5)}>Upheaval · {chartTime(chart.upheaval.from)} to {chartTime(chart.upheaval.to)}</text>
       {/if}
 
       <!-- Belts and clouds left over. -->
@@ -161,7 +162,7 @@
 
       <!-- The tracks. -->
       {#each tracks as k (k.id)}
-        <g class="track" class:giant={k.giant} class:selected={selected !== null && k.address === selected} class:lost={k.end.how !== "lasts"} data-track={k.id} data-track-end={k.end.how}>
+        <g class="track" class:giant={k.giant} class:selected={k.id === selected} class:lost={k.end.how !== "lasts"} data-track={k.id} data-track-end={k.end.how}>
           <title>{k.label}: born {chartTime(k.born.t)} at {chartAu(k.born.a)}; {k.end.how === "lasts" ? `now ${chartAu(k.end.a)}` : k.end.how === "merged" ? `merged at ${chartTime(k.end.t)}` : k.end.how === "ejected" ? `thrown out at ${chartTime(k.end.t)}` : `shattered at ${chartTime(k.end.t)}`}</title>
           {#each k.segs as g, i (i)}
             <line x1={X(g.a0)} y1={Y(g.t0)} x2={X(g.a1)} y2={Y(g.t1)} stroke-width={massWidth(g.m)} />
@@ -178,7 +179,7 @@
         </g>
       {/each}
       {#each names as n (n.id)}
-        <text class="name" class:selected={selected !== null && tracks.find((k) => k.id === n.id)?.address === selected} x={n.x} y={n.y}>{n.text}</text>
+        <text class="name" class:selected={n.id === selected} x={n.x} y={n.y}>{n.text}</text>
       {/each}
 
       <!-- Events. -->
@@ -329,6 +330,12 @@
     stroke: var(--sse-ink-muted);
     stroke-width: 1.4;
     fill: none;
+  }
+  .hit:focus {
+    outline: none;
+  }
+  .track:focus-within line {
+    stroke: var(--sse-accent-ink);
   }
   .hit {
     fill: none;
