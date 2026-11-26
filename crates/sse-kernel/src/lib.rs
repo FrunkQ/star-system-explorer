@@ -31,6 +31,9 @@ mod fields;
 mod flights;
 #[cfg(test)]
 mod flights_tests;
+mod formation_record;
+#[cfg(test)]
+mod formation_record_tests;
 mod frame;
 mod frames;
 #[cfg(test)]
@@ -5567,6 +5570,10 @@ impl Kernel {
                     holder: h.to_string(),
                     reading,
                 }
+            }
+            Request::FormationRecord { system } => {
+                let u = self.universe()?;
+                formation_record::formation_record(&u.chronicle, &u.root, &system)?
             }
             Request::Systems => {
                 let u = self.universe()?;

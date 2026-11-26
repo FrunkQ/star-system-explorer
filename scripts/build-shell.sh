@@ -30,6 +30,8 @@ cp packs/base-manifest/pack.json packages/shell/public/packs/base-manifest.json
 cp packs/base-presentation/pack.json packages/shell/public/packs/base-presentation.json
 # The base postcard set (PC6): one recorded world per card, kept beside the pack.
 cp packs/base-presentation/postcards.json packages/shell/public/packs/base-postcards.json
+# The class gallery's pre-drawn globes (V14i part 2), fetched when the Classes page first shows a page.
+cp packs/base-presentation/class-pictures.json packages/shell/public/packs/base-class-pictures.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json

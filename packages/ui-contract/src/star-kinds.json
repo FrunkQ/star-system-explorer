@@ -1,0 +1,26 @@
+{
+ "about": "The star chooser's Kinds (ED6 part 2, editing design section 9). A kind is a phase of a star's life, with the spectral letters it must show where that matters; the chooser finds the mass that is that kind at the system's present age on the kernel's life line (describe_star), so no mass or age is typed here. prefer_msun only picks among several masses that all qualify. Move these into the class atlas once it has star classes.",
+ "letters_about": "Spectral letter from the surface temperature, the usual main-sequence boundaries of the Morgan-Keenan classes (O B A F G K M) and the brown dwarf letters L T Y: a star at or above from_k (and below the previous row) takes the letter.",
+ "letters": [
+  { "letter": "O", "from_k": 30000 },
+  { "letter": "B", "from_k": 10000 },
+  { "letter": "A", "from_k": 7500 },
+  { "letter": "F", "from_k": 6000 },
+  { "letter": "G", "from_k": 5200 },
+  { "letter": "K", "from_k": 3700 },
+  { "letter": "M", "from_k": 2400 },
+  { "letter": "L", "from_k": 1300 },
+  { "letter": "T", "from_k": 550 },
+  { "letter": "Y", "from_k": 0 }
+ ],
+ "kinds": [
+  { "id": "brown-dwarf", "label": "Brown dwarf", "phase": "brown-dwarf" },
+  { "id": "red-dwarf", "label": "Red dwarf", "phase": "main-sequence", "letters": ["M"], "prefer_msun": 0.3 },
+  { "id": "sun-like", "label": "Sun-like", "phase": "main-sequence", "letters": ["G"], "prefer_msun": 1 },
+  { "id": "blue-giant", "label": "Blue giant", "phase": "main-sequence", "letters": ["O", "B"], "prefer_msun": 15 },
+  { "id": "red-giant", "label": "Red giant", "phase": "giant" },
+  { "id": "white-dwarf", "label": "White dwarf", "phase": "white-dwarf" },
+  { "id": "neutron-star", "label": "Neutron star", "phase": "neutron-star" },
+  { "id": "black-hole", "label": "Black hole", "phase": "black-hole" }
+ ]
+}

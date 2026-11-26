@@ -269,9 +269,19 @@
           No oxygen, water or food is listed aboard.
         {/if}
       </p>
-      <ul class="stores">
-        {#each support.stores as s (s.store)}
-          <li data-store={s.store}><span>{s.store}</span> <span class="mono">{valueWords(Math.round(s.kg))} kg</span> <span class="muted">{s.days === null ? "not used" : daysWords(s.days)}</span>{#if depth !== "curious" && s.use_kg_day > 0}<span class="muted small"> · {Number(s.use_kg_day.toPrecision(3))} kg a day</span>{/if}</li>
+      <!-- Two headings, air and supplies (the pack's), each as days left; the stores under each at Science and Engine. -->
+      <ul class="headings">
+        {#each support.headings as h (h.heading)}
+          <li data-heading={h.heading}>
+            <div class="heading"><b>{h.heading.charAt(0).toUpperCase() + h.heading.slice(1)}</b> <span class="mono" data-heading-days>{h.days === null ? "not used" : daysWords(h.days)}</span>{#if h.first}<span class="muted small">{h.first} runs out first</span>{/if}</div>
+            {#if depth !== "curious"}
+              <ul class="stores">
+                {#each support.stores.filter((s) => h.stores.includes(s.store)) as s (s.store)}
+                  <li data-store={s.store}><span>{s.store}</span> <span class="mono">{valueWords(Math.round(s.kg))} kg</span> <span class="muted">{s.days === null ? "not used" : daysWords(s.days)}</span>{#if s.use_kg_day > 0}<span class="muted small"> · {Number(s.use_kg_day.toPrecision(3))} kg a day</span>{/if}</li>
+                {/each}
+              </ul>
+            {/if}
+          </li>
         {/each}
       </ul>
       {#each support.unrated as u (u.being)}<p class="small muted" data-unrated>No life support figures for {u.being} ({u.count} aboard): they are left out of the days above.</p>{/each}
@@ -378,6 +388,9 @@
   .list li.pencil { border-bottom-style: dotted; }
   .list li.gone b { text-decoration: line-through; color: var(--sse-ink-muted); }
   .stores li { display: grid; grid-template-columns: 5em 7em 1fr; gap: 0 10px; }
+  .headings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .heading { display: grid; grid-template-columns: 5em 7em 1fr; gap: 0 10px; align-items: baseline; }
+  .headings .stores { margin: 4px 0 0 1em; }
   .move { width: 100%; }
   .quiet-btn, .go { font: inherit; min-height: 28px; padding: 0 10px; border: 1px solid var(--sse-rule); background: transparent; color: var(--sse-ink); cursor: pointer; transition: transform var(--sse-motion-quick, 120ms) var(--sse-ease, ease-out); }
   .quiet-btn:hover, .go:hover { transform: translateY(-1px); border-color: var(--sse-ink); }

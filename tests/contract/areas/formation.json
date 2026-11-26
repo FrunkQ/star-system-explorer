@@ -1,0 +1,8 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "open_universe", "id": "form", "seed": "form"},
+ {"op": "set_authored_batch", "occurred_at_s": 0, "edits": [{"address": "u:form/sys:0/star:0", "field": "body.mass", "value": 1.9884e+30}]},
+ {"op": "formation_record", "system": "u:form/sys:0"},
+ {"op": "formation_record", "system": "u:form/sys:9"},
+ {"op": "formation_record", "system": "u:elsewhere/sys:0"}
+]
