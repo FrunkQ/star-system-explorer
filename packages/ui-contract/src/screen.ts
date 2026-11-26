@@ -5,6 +5,7 @@ import { resolveParams, type TopicQuery, type ViewModule } from "./view.ts";
 import { checkStyle, COSTS, settingsCost, TIER_RUNS_UP_TO, type StyleDoc } from "./style.ts";
 import type { ParamSpec } from "./view.ts";
 import { checkItemControls, isPicture, resolveControls, type ItemControls } from "./part-controls.ts";
+import { checkDesks, shows, type Desk } from "./desk.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyView = ViewModule<any, any>;
@@ -83,6 +84,8 @@ export interface RailEntry {
    * nowhere. Absent: always shown.
    */
   needs?: string[];
+  /** The desks the entry is listed on (three desks design section 5); left out: all three. */
+  desks?: Desk[];
 }
 
 /** One rail line: the screen it opens and how it is shown. */
@@ -105,6 +108,7 @@ function checkRail(rail: unknown): string[] {
     if (typeof r.label !== "string" || !r.label.trim()) errors.push("rail: an entry needs a label");
     if (typeof r.order !== "number" || !Number.isFinite(r.order)) errors.push("rail: an entry needs a numeric order");
     if (r.needs !== undefined && !(Array.isArray(r.needs) && r.needs.every((n) => typeof n === "string" && n))) errors.push("rail: needs must be a list of pack keys");
+    errors.push(...checkDesks(r.desks, `rail ${String(r.scale)}`));
     if (seen.has(r.scale)) errors.push(`rail: scale ${r.scale} is listed twice`);
     seen.add(r.scale);
   }
@@ -114,11 +118,11 @@ function checkRail(rail: unknown): string[] {
 /**
  * The rail at one scale, from the screens' own entries: grouped in the fixed group order, ordered within each group.
  * Screens are given as id → document; a screen without an entry for the scale is not on it, nor one whose entry
- * `needs` something `has` says the stack lacks.
+ * `needs` something `has` says the stack lacks. Given a desk, an entry not listed on that desk is left out too.
  */
-export function railOf(screens: Readonly<Record<string, Pick<ScreenDoc, "rail">>>, scale: RailScale, has: (need: string) => boolean = () => true): { group: RailGroup; words: string; lines: RailLine[] }[] {
+export function railOf(screens: Readonly<Record<string, Pick<ScreenDoc, "rail">>>, scale: RailScale, has: (need: string) => boolean = () => true, desk?: Desk): { group: RailGroup; words: string; lines: RailLine[] }[] {
   const lines: RailLine[] = [];
-  for (const [screen, doc] of Object.entries(screens)) for (const r of doc.rail ?? []) if (r.scale === scale && (r.needs ?? []).every(has)) lines.push({ ...r, screen });
+  for (const [screen, doc] of Object.entries(screens)) for (const r of doc.rail ?? []) if (r.scale === scale && (r.needs ?? []).every(has) && (!desk || shows(r, desk))) lines.push({ ...r, screen });
   return RAIL_GROUPS.map((group) => ({
     group,
     words: RAIL_GROUP_WORDS[group],
