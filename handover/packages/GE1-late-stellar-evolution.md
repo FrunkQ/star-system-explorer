@@ -48,9 +48,9 @@ sequence to the end, at Z = 0.02 and 0.001:
 
 The reported cases: 25 M☉ at 7.5 Myr is now 2,060 R☉ at 3,171 K (was 6,090 at 2,650); 20 M☉ at 9 Myr 1,124 R☉.
 
-## What is still rough (fudge rows F-S8, F-S31 to F-S34)
+## What is still rough (fudge rows F-S8, F-S32 to F-S35)
 - Red supergiants run about 300 K cool and a quarter large: the HPT00 giant-branch radius is used above the masses it
-  is fitted to (F-S33). Not tuned. The proper fix is HPT00's core helium burning and AGB radius.
+  is fitted to (F-S34). Not tuned. The proper fix is HPT00's core helium burning and AGB radius.
 - The full HPT00 giant phases (L_HeI, L_BAGB, t_He, AGB core growth) are the real replacement for F-S7 and F-S8.
   The coefficient tables are already in `hurley/coeffs.rs`, but the port lacks SSE's `zcnsts` layout of the gbp
   coefficients and `zfuncs`. The cloud session could not fetch them (a package download was refused by the session's
@@ -67,7 +67,7 @@ The cap in `sse-atoms/src/convection.rs` is physics, not a clamp hiding the radi
 shock and lose their energy, and 3D models of red supergiants show near-sonic surface flows. Correctly sized giants
 hit it too (an 18 M☉, 800 R☉ Betelgeuse would be Mach 4.8 uncapped). The weak part is the speed law's fixed
 photospheric opacity, which takes ordinary red giants (Arcturus: Mach 1.5 uncapped) to the cap earlier than real
-ones probably are. Logged as F-S34 with the replacement (velocities from a 3D model atmosphere grid). Not changed:
+ones probably are. Logged as F-S35 with the replacement (velocities from a 3D model atmosphere grid). Not changed:
 it is the star surface block's law, and swapping it moves every star's churn.
 
 ## Checks

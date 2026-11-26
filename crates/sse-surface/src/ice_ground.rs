@@ -13,13 +13,20 @@ use crate::{Body, SurfaceEnvelope, SurfaceSettings};
 use serde::{Deserialize, Serialize};
 use sse_atoms::ice_ground as ig;
 use sse_core::math as m;
-use sse_core::sheet::{mixture_density, G, M_EARTH, R_EARTH_MEAN, T0C, YR_JULIAN};
+use sse_core::sheet::{
+    mixture_density, photo_lifetime_1au, G, M_EARTH, R_EARTH_MEAN, T0C, YR_JULIAN,
+};
 
 /// Read a world's ice from its density only below this mass, Earth masses:
 /// above it self-compression makes rock look denser than it is at low
 /// pressure, so a low density no longer means ice. A stand-in in the fudge
 /// register.
 pub const DENSITY_ICE_BELOW_MEARTH: f64 = 0.1;
+
+/// Smallest ice share the density reading is trusted for: below it a world
+/// a little lighter than rock is as likely to have a small core (the Moon
+/// reads about 2% ice) as any ice. A stand-in in the fudge register.
+pub const DENSITY_ICE_MIN_SHARE: f64 = 0.05;
 
 /// Whether a world's bare ground is ice, and why.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -32,6 +39,36 @@ pub struct IceGround {
     /// Depth of open ice lost over the world's age, km (0 under air).
     pub lost_km: f64,
     pub why: Vec<String>,
+}
+
+/// A world's share of ice and water by mass: its typed makeup (or
+/// formation's share), or, for a small world (below
+/// [`DENSITY_ICE_BELOW_MEARTH`]) whose makeup nothing set, its mean
+/// density read as rock and ice mixed by volume (Showman and Malhotra 1999,
+/// the `sse.surface.ice_share_from_density` block). The one door for
+/// "how icy is it": the regime rules, rounding by gravity, plumes and ice
+/// ground all read it, so a catalogued moon that carries only its mass and
+/// radius is as icy to all of them.
+pub fn water_share(b: &Body) -> f64 {
+    if b.water_fraction > 0.0 || !b.water_from_density {
+        return b.water_fraction;
+    }
+    let mass = b.mass_earth * M_EARTH;
+    let r = b.radius_earth * R_EARTH_MEAN;
+    if b.deep_envelope || mass <= 0.0 || r <= 0.0 || b.mass_earth >= DENSITY_ICE_BELOW_MEARTH {
+        return 0.0;
+    }
+    let rho = mass / (4.0 / 3.0 * m::PI * r * r * r);
+    let w = ig::ice_share(
+        rho,
+        mixture_density::SURFACE_ROCK,
+        mixture_density::SURFACE_ICE,
+    );
+    if w < DENSITY_ICE_MIN_SHARE {
+        0.0
+    } else {
+        w
+    }
 }
 
 /// `b`'s ice ground; None for a world with no ground.
@@ -50,23 +87,17 @@ pub fn ice_ground(
         return None;
     }
     let mut why = vec![];
-    let rho = mass / (4.0 / 3.0 * m::PI * r * r * r);
-    let (ri, rr) = (mixture_density::SURFACE_ICE, mixture_density::SURFACE_ROCK);
-    let share = if b.water_fraction > 0.0 {
+    let ri = mixture_density::SURFACE_ICE;
+    let share = water_share(b);
+    if b.water_fraction > 0.0 {
         why.push(format!(
             "its makeup is {:.0}% ice and water",
             100.0 * b.water_fraction
         ));
-        b.water_fraction
-    } else if b.mass_earth < DENSITY_ICE_BELOW_MEARTH {
-        let w = ig::ice_share(rho, rr, ri);
-        if w > 0.0 {
-            why.push(format!("its mean density of {rho:.0} kg/m³ is lighter than rock: about {:.0}% of it is ice (Showman and Malhotra 1999)", 100.0 * w));
-        }
-        w
-    } else {
-        0.0
-    };
+    } else if share > 0.0 {
+        let rho = mass / (4.0 / 3.0 * m::PI * r * r * r);
+        why.push(format!("its mean density of {rho:.0} kg/m³ is lighter than rock: about {:.0}% of it is ice (Showman and Malhotra 1999)", 100.0 * share));
+    }
     let shell_m = share * mass / (ri * 4.0 * m::PI * r * r);
     let t = e.t_surface_now_k;
     let mut lost_m = 0.0;
@@ -97,7 +128,7 @@ pub fn ice_ground(
         let g = G * mass / (r * r);
         let ve = m::sqrt(2.0 * G * mass / r);
         let age_s = b.age_gyr.max(0.0) * 1.0e9 * YR_JULIAN;
-        lost_m = ig::open_loss_m(p, t, mw, g, ve, d_au, age_s, ri, ig::PHOTO_RATE_1AU);
+        lost_m = ig::open_loss_m(p, t, mw, g, ve, d_au, age_s, ri, photo_lifetime_1au::H2O);
         let keeps = lost_m < shell_m;
         why.push(if keeps {
             format!("at {t:.0} K open ice sublimes so slowly that only about {lost_m:.0} m of its {:.0} km is lost to starlight and to space over its age, so its ground is ice", shell_m / 1000.0)

@@ -30,7 +30,7 @@ export interface ChartTrack {
   born: { t: number; a: number };
   segs: TrackSeg[];
   /** How the track ends: it runs on to the foot of the chart, joins another track, leaves at the right, or stops. */
-  end: { how: "lasts"; t: number; a: number } | { how: "merged"; t: number; a: number; into: string; into_a: number } | { how: "ejected"; t: number; a: number } | { how: "shattered"; t: number; a: number };
+  end: { how: "lasts"; t: number; a: number } | { how: "merged"; t: number; a: number; into: string; into_a: number } | { how: "ejected"; t: number; a: number } | { how: "shattered"; t: number; a: number } | { how: "engulfed"; t: number; a: number };
   /** Its mass at the foot of the chart (or when it went), in Earth masses. */
   m_end: number;
 }
@@ -91,6 +91,8 @@ export interface FormationChart {
   inherited: InheritedRow[];
   worked_at: InheritedRow[];
   model: ReplayModel;
+  /** The star's end and the system after it, once the look-ahead has answered (formation-fate.ts). */
+  fate?: import("./formation-fate.ts").ChartFate;
 }
 
 const MYR_S = sheetUnitFactor("myr");

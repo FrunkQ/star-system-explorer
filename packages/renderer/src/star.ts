@@ -262,6 +262,12 @@ export interface StarDraw {
    */
   granuleContrast?: number;
   /**
+   * The larger cells (star-churn.ts `churningBigCells`, the kernel's supergranule scale) and their temperature contrast
+   * as a share of the surface temperature (`bigCellContrast`): on a red supergiant a few cells as wide as the star.
+   * Drawn in visible light over the granules; left out, none.
+   */
+  bigCells?: { granules: Granules; dt: number } | null;
+  /**
    * How far the cells lift and drop the limb, in stellar radii per standard deviation of the pattern (star-churn.ts
    * `limbLumps`, from the pressure scale height). Seen only where it reaches a pixel: on giants. Left out, a round limb.
    */
@@ -323,6 +329,7 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
   // disc's mean light is the plain disc's.
   const gran = s.light === "visible" ? (s.granules ?? null) : null;
   const contrast = Math.max(0, Math.min(1, s.granuleContrast ?? 1));
+  const big = s.light === "visible" && s.bigCells && s.bigCells.dt > 0 ? s.bigCells : null;
   const lump = gran ? Math.min(LUMP_MAX, Math.max(0, s.lumps ?? 0)) : 0;
   const lumpy = lump * R >= 0.25;
   const slope = RGB_M.map((l) => {
@@ -362,9 +369,10 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
         const mu = Math.sqrt(1 - b2);
         const ld = limbDarkening(mu);
         let f = [1, 1, 1];
-        if (gran) {
+        if (gran || big) {
           const [sx, sy, sz] = toStar(x, y, mu, s.lat_deg, s.lon_deg);
-          const dT = contrast * granuleDeltaT(gran, s.teff_k, sx, sy, sz);
+          let dT = gran ? contrast * granuleDeltaT(gran, s.teff_k, sx, sy, sz) : 0;
+          if (big) dT += ((granulePattern(big.granules, sx, sy, sz) - big.granules.mean) / big.granules.rms) * big.dt * s.teff_k;
           f = slope.map((k) => Math.max(0, 1 + k * dT));
         }
         const fg = f;

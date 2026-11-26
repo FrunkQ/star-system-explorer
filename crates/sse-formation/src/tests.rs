@@ -141,7 +141,7 @@ fn every_life_line_stays_inside_real_stars() {
                 let s = l.state_at(&f, t);
                 let at = format!("{mass:.2} M_sun, Z {z}, {t:.4e} Myr ({:?})", s.phase);
                 // No measured star is wider than about 2,000 R_sun; the radius
-                // law runs about a quarter large on the red side (F-S33).
+                // law runs about a quarter large on the red side (F-S34).
                 assert!(s.radius < 3000.0, "{at}: {} R_sun", s.radius);
                 // Cool giants sit on the Hayashi line, never below about 2,900 K.
                 assert!(s.teff > 2900.0, "{at}: {} K", s.teff);

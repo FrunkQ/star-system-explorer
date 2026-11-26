@@ -109,6 +109,8 @@ Status key: verified / corrected-metadata / corrected-physics / unverified / tex
 | web_light.rs (V9w3) | Hearin and Watson 2013, MNRAS 435, 1313, doi:10.1093/mnras/stt1374: age matching | a galaxy read ahead or behind on the median history by its halo's half-mass time | unverified | the idea only; no number from the paper |
 | fudges.md web light row | Hoyle et al. 2005, ApJ 620, 618, doi:10.1086/427176: void galaxies fainter and bluer | named as the next step, not used | unverified | |
 | galaxies-nearby.ts `zeroVelocityRadius` (GZ6) | Sandage 1986, ApJ 307, 1, doi:10.1086/164387: the zero-velocity radius of a bound group, R0³ = 8GMt²/π² (pressureless sphere, no dark energy) | the edge of our group on Galaxies nearby | unverified (from memory; Consensus out of allowance until 1 Dec 2026) | test checks the arithmetic by hand (3e12 suns at 13.8 Gyr gives 1.28 Mpc) |
+| renderer galaxy-types.ts (GZ5 part 2) | Sersic 1963, BAAA 6, 41: the Sersic light law | type pictures' bulge (n = 4) and disc (n = 1) light | textbook | |
+| renderer galaxy-types.ts `sersicB` (GZ5 part 2) | Ciotti and Bertin 1999, A&A 352, 447, arXiv:astro-ph/9911078: b_n = 2n - 1/3 + 4/(405n) + 46/(25515n²) | R_e holds half the light | unverified (from memory; Consensus out until 1 Dec 2026) | test: b_1 = 1.678, b_4 = 7.669, and half an elliptical's light falls inside R_e when integrated |
 
 ## Counts
 Rows: 83. Read at source this session: 9 rows (Planck table 2 ×3, CPT section, EH98, ST99 ×2, FMBK, HS96 equation number and journal), plus paper and DOI identity from search results for Correa I/II and Muratov.

@@ -12335,6 +12335,16 @@
         }
        }
       }
+     },
+     "photochemistry": {
+      "lifetime_1au": {
+       "v": 83000.0,
+       "unit": "s",
+       "src": "huebner1992",
+       "check": "unverified",
+       "at_place": "1 au from a quiet Sun; scales as the distance squared",
+       "note": "quiet Sun, all branches (mostly H2O to H + OH); about a day. The active Sun's is about half"
+      }
      }
     },
     {
@@ -12572,6 +12582,16 @@
        "unit": "K",
        "src": "oberg2011",
        "check": "unverified"
+      }
+     },
+     "photochemistry": {
+      "lifetime_1au": {
+       "v": 500000.0,
+       "unit": "s",
+       "src": "huebner1992",
+       "check": "unverified",
+       "at_place": "1 au from a quiet Sun; scales as the distance squared",
+       "note": "quiet Sun, all branches (mostly CO2 to CO + O)"
       }
      }
     },
@@ -14398,6 +14418,16 @@
        "unit": "K",
        "src": "oberg2011",
        "check": "unverified"
+      }
+     },
+     "photochemistry": {
+      "lifetime_1au": {
+       "v": 1300000.0,
+       "unit": "s",
+       "src": "huebner1992",
+       "check": "unverified",
+       "at_place": "1 au from a quiet Sun; scales as the distance squared",
+       "note": "quiet Sun, all branches (dissociation and ionisation to CO+)"
       }
      }
     },
@@ -19689,6 +19719,12 @@
      "text": "Huber, M. L., Perkins, R. A. and Lemmon, E. W. 2024, Int. J. Thermophys. 45, 146: reference correlation for the viscosity of nitrogen from the triple point to 1000 K and pressures up to 2200 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
      "doi": "10.1007/s10765-024-03440-1"
+    },
+    {
+     "id": "huebner1992",
+     "text": "Huebner, W. F., Keady, J. J. and Lyon, S. P. 1992, Astrophysics and Space Science 195, 1: solar photo rates for planetary atmospheres and atmospheric pollutants (quiet- and active-Sun rate coefficients at 1 au for every photodissociation and photoionisation branch)",
+     "status": "unverified",
+     "doi": "10.1007/BF00644558"
     },
     {
      "id": "hui2017",

@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { orbitBodies, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -61,9 +61,10 @@
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
-  import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
+  import { CampaignClock, Segmented, ToolButton, ViewControls, defaultCalendar, formatYears, fromPackCalendar } from "../../chart-grammar/src/index.ts";
   import PlaceLine from "./nav/PlaceLine.svelte";
   import Rail from "./nav/Rail.svelte";
+  import RailMenu from "./nav/RailMenu.svelte";
   import Stage from "./chart/Stage.svelte";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
@@ -674,6 +675,9 @@
   // The rail at the scale in view, for this desk (TM2, three desks design section 5): an entry not listed on the desk
   // in front is left off; Find and the desk switch still reach it.
   const rail = $derived(railOf(SCREENS, railScale, stackHas, desk));
+  // On Run the rail folds to one button naming the instrument in view (design 3.1, question 6).
+  const railFolded = $derived(!partShows("rail-open", desk));
+  const railLabel = $derived(rail.flatMap((g) => g.lines).find((l) => l.screen === ws.screen)?.label ?? SCREENS[ws.screen]?.label ?? "Instruments");
   $effect(() => {
     ws.players_online = share?.state.players ?? 0;
     ws.sendLanding = (show) => {
@@ -779,6 +783,8 @@
   // to each host). Views draw from the scene, so the phases go onto it and the chart, 3D view and sound move together.
   // A fixture scene sends its own elements, with its drawn phases as their places at the campaign's start.
   let phases = $state<Map<string, number> | null>(null);
+  // And where each is in three dimensions, for shadows and eclipses in True (renderer eclipse.ts).
+  let places = $state<Map<string, [number, number, number]> | null>(null);
   // Play asks ten times a second: one call at a time, and only the latest time waits.
   let orbitsFor = "";
   let orbitsBusy = false;
@@ -790,7 +796,7 @@
     orbitsBusy = true;
     w.s.orbitsAt(w.sc.system, [w.at], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) phases = phasesFrom(r.bodies);
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)));
       pumpOrbits();
     });
   }
@@ -801,7 +807,7 @@
     const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null));
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null));
     orbitsWant = { s, sc, at, epoch, key };
     pumpOrbits();
   });
@@ -812,7 +818,7 @@
     if (!s) return;
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
-  const timed = $derived(withPhases(scene, phases));
+  const timed = $derived(withPhases(scene, phases, places));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
   let layerLabels = $state.raw<Map<string, string>>(new Map());
   $effect(() => {
@@ -871,6 +877,13 @@
   // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
   // so stepping and playing through days does not call the kernel's derivations at every frame.
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
+  // The Run desk's clock (TM3a): the pack's calendar, as the ruler reads it; a step moves the campaign's now and the time
+  // in view together, as stepping on the ruler does while it sits at now.
+  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  function stepCampaign(yr: number) {
+    ws.setTime(yr);
+    ws.setCampaignNow?.(yr);
+  }
   /** Move the campaign's clock to another system's present, keeping the time elapsed in the campaign. */
   function shiftCampaign(present: number) {
     const elapsed = (ws.campaign_now_yr ?? ws.now_yr) - (ws.campaign_epoch_yr ?? ws.now_yr);
@@ -1799,8 +1812,9 @@
   {:else if !session}
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
   {:else}
-    <div class="middle">
-      <!-- How (2.2): every way of looking at the place in view, in words, built from the screens' own rail entries. -->
+    <!-- How (2.2): every way of looking at the place in view, in words, built from the screens' own rail entries. On the
+         Run desk the same rail is folded into one button at the head of the view controls (three desks design 3.1). -->
+    {#snippet railNav(inMenu: boolean)}
       <Rail
         {railScale}
         {rail}
@@ -1815,7 +1829,12 @@
         toGalaxy={() => toScale("galaxy")}
         {toWorkshop}
         workshopDoor={partShows("workshop-door", desk)}
+        folded={railFolded && !inMenu}
+        {inMenu}
       />
+    {/snippet}
+    <div class="middle" data-rail-folded={railFolded ? "" : undefined}>
+      {@render railNav(false)}
       {#key ws.screen}
       <Stage
         {ws}
@@ -1839,15 +1858,21 @@
         {cutBody}
         openKeys={() => openHelp("keys")}
       >
+        {#snippet viewLead()}{#if railFolded}<RailMenu label={railLabel}>{#snippet children()}{@render railNav(true)}{/snippet}</RailMenu>{/if}{/snippet}
         {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} postcard={makePostcard} />{/snippet}
       </Stage>
       {/key}
     </div>
     <footer class="area-ruler" aria-label="Time" bind:offsetHeight={rulerH}>
-      {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
-      <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. -->
+      {#if partShows("ruler", desk)}
+        {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
+      {:else}
+        <!-- The Run desk's clock in the ruler's place (three desks design 7.3): the campaign's now in human time. Above the system nothing moves in human time, so it shows the date only. -->
+        <div class="ruler-view"><CampaignClock campaignNow={ws.campaign_now_yr ?? ws.now_yr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} /></div>
+      {/if}
+      <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. On Run only Sound stays, beside the clock; a what-if left open elsewhere still shows, so it can be kept or thrown away. -->
       <div class="ruler-side" aria-label="Time tools" role="group">
-        <span class="whatif" data-branch={ws.branch?.id}>
+        {#if partShows("ruler", desk) || ws.branch}<span class="whatif" data-branch={ws.branch?.id}>
           {#if ws.branch}
             <b>{ws.branch.label}</b>
             <span data-whatif-edits={ws.branch.edits.length}>{ws.branch.edits.length} {ws.branch.edits.length === 1 ? "change" : "changes"}</span>
@@ -1860,9 +1885,9 @@
             <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
           {/if}
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
-        </span>
+        </span>{/if}
         <span class="strip">
-          <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />
+          {#if partShows("light", desk)}<LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />{/if}
           <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
         </span>
       </div>
@@ -2154,6 +2179,10 @@
     display: grid;
     grid-template-columns: 172px minmax(0, 1fr);
     min-height: 0;
+  }
+  /* The Run desk's rail is folded into the view controls: the picture gets the width. */
+  .middle[data-rail-folded] {
+    grid-template-columns: minmax(0, 1fr);
   }
   /* When the bar is full the kicker gives way first, then the place's name ends in "…"; nothing overlaps. */
   .kicker {
