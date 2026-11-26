@@ -7,6 +7,8 @@
 -->
 <script lang="ts">
   import {
+    deskKeeps,
+    deskTries,
     boxAt,
     epochMeanFor,
     mirrorAngle,
@@ -54,7 +56,6 @@
     swept = [],
     commit,
     pause,
-    ontry,
     onclose,
   }: {
     ctx: ViewContext;
@@ -75,7 +76,6 @@
     commit: (h: Handle, si: number, how: How, shown?: string, at?: string) => Promise<string | null>;
     /** The held value's exact answer on a pause (the box's own strip). */
     pause?: (h: Handle, si: number) => Promise<string | null>;
-    ontry?: () => void;
     onclose: () => void;
   } = $props();
 
@@ -225,7 +225,7 @@
 </script>
 
 <div class="box" data-box={handle.id}>
-  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} marks={swept} walls={wall ? [wall] : []} fromTime={fromYear} onpause={pause ? (si) => pause(handle, si) : undefined} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
+  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} trying={editable && !ws.branch && deskTries(ws.desk)} marks={swept} walls={wall ? [wall] : []} fromTime={fromYear} onpause={pause ? (si) => pause(handle, si) : undefined} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
   {#if pair}
     <div class="pair" data-pair={`${pair.primary} ${pair.secondary}`}>
       <p class="pair-says" data-pair-says>{pairSays}</p>
@@ -272,7 +272,7 @@
     {/if}
     {#if chipProblem || chipSaid}<p class="chip-said" class:problem={!!chipProblem} aria-live="polite" data-chip-said>{chipProblem ?? chipSaid}</p>{/if}
   {/if}
-  {#if handle.reach?.length && !ws.branch && editable && scene.system && num(handle.part.field) !== null}
+  {#if handle.reach?.length && !ws.branch && editable && !!ws.desk && deskKeeps(ws.desk) && scene.system && num(handle.part.field) !== null}
     <Reach {ctx} system={scene.system} address={subject.address} {handle} value={handleValue(handle, mine)!} results={kernelSays} {cls} {depth} {commit} />
   {/if}
   {#if ws.branch && box.results.length}<p class="chip-said" data-box-branch>The year and the verdict follow once it is kept.</p>{/if}
