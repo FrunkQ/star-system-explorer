@@ -8,7 +8,7 @@ import { cubeDirection } from "../../ui-contract/src/index.ts";
 import { Session } from "../../ui-contract/src/session.ts";
 import { gmSeat } from "../../ui-contract/src/seat.ts";
 import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
-import { bracket, cellOf, eventsBetween, iceAgeAt, iceAges, iceAgeWords, layerColour, layersFor, narrateFrame, onPlateEdge, pickAt, readFrames, recolour, seaLevelAt, underSea, valueAt, type RawFrames } from "../src/timelapse.ts";
+import { bracket, cellOf, drawnCellOf, eventsBetween, iceAgeAt, iceAges, iceAgeWords, layerColour, layersFor, narrateFrame, onPlateEdge, pickAt, readFrames, recolour, seaLevelAt, underSea, valueAt, type RawFrames } from "../src/timelapse.ts";
 
 const N = 8;
 function fixture(b64 = false): RawFrames {
@@ -128,6 +128,32 @@ test("recolour: every sample takes the layer's colour; past frames are flat-lit;
   assert.match(words, /500 million years ago, ice and glaciers: land \d+% of the surface/);
   assert.doesNotMatch(words, /\.\.|\.,/);
   assert.match(words, /Ice age begins/);
+});
+
+test("natural outlines: the shared warp keeps each cell's centre, bends the grid's blocks, and holds still between frames", () => {
+  const tl = readFrames(fixture());
+  // Every cell's own centre is still drawn as that cell (the warp is under a cell).
+  for (let c = 0; c < tl.cells; c++) assert.equal(drawnCellOf(tl, [tl.dirs[c * 3]!, tl.dirs[c * 3 + 1]!, tl.dirs[c * 3 + 2]!]), c, `cell ${c}`);
+  // Fine samples near cell edges move to a neighbour somewhere: the outline is no longer the cube grid's.
+  const s = 64;
+  let moved = 0;
+  for (let j = 0; j < s; j++)
+    for (let i = 0; i < s; i++) {
+      const d = cubeDirection(0, -1 + ((i + 0.5) * 2) / s, -1 + ((j + 0.5) * 2) / s);
+      if (drawnCellOf(tl, d) !== cellOf(tl, d[0], d[1], d[2])) moved++;
+    }
+  assert.ok(moved > s * s * 0.05 && moved < s * s * 0.6, `${moved} of ${s * s} samples drawn from a neighbouring cell`);
+  // Frame to frame: the fixture's land and sea never change, so the land layer's coast is drawn the same at every
+  // time, sample for sample (the warp is keyed on direction only, never on time).
+  const f = 32;
+  const face = () => ({ s: f, rgb: new Uint8ClampedArray(f * f * 3), normal: new Float32Array(f * f * 3), cover: new Uint8Array(f * f) });
+  const p = { faces: [face(), face(), face(), face(), face(), face()] };
+  const coast = (t: number) => recolour(p, tl, "land", t, cubeDirection).faces.map((x) => Array.from(x!.rgb, (v, k) => (k % 3 === 2 ? (v > x!.rgb[k - 2]! ? 1 : 0) : 0)).join("")).join("|");
+  const a = coast(3000);
+  assert.equal(coast(3000), a, "the same time draws the same");
+  assert.equal(coast(3001), a, "a moment later, the coast holds still");
+  // And the same again from a fresh read (no state kept between calls).
+  assert.equal(drawnCellOf(readFrames(fixture()), [0.6, 0.7, 0.38]), drawnCellOf(tl, [0.6, 0.7, 0.38]));
 });
 
 test("a dry world has no sea, and ice ages get a window of their own with the kernel's cells", () => {

@@ -786,6 +786,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-light",
+ "sse-reference",
 ]
 
 [[package]]

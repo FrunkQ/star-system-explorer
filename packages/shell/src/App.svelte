@@ -100,6 +100,7 @@
   import { RUN_SCREENS } from "./run/screens.run.ts";
   import { ATLAS_SCREENS } from "./atlas/screens.atlas.ts";
   import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
+  import { packFolder } from "./rollcall/feed.ts";
   import Bookmarks from "./run/Bookmarks.svelte";
   import OnAir from "./run/OnAir.svelte";
   import { tablePort } from "./run/table-port.ts";
@@ -1201,7 +1202,18 @@
     ws.screen = "system";
     showSystem(SOL);
   }
-  let startOpen = $state(typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
+  // The spaceflight front door (SH8 part 1, spaceflight history design section 7): an address with ?spaceflight=<a
+  // "Sol today" folder> opens the Solar System and lands in Roll call, with no start sheet. A linked place (#...) wins.
+  const spaceflightDoor = packFolder() !== null && typeof location !== "undefined" && !parsePlaceHash(location.hash);
+  let startOpen = $state(!spaceflightDoor && typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
+  let spaceflightOpened = false;
+  $effect(() => {
+    if (!spaceflightDoor || spaceflightOpened || !session) return;
+    spaceflightOpened = true;
+    void openSol().then(() => {
+      if (viewing?.system === SOL) ws.screen = "rollcall";
+    });
+  });
   const keptSave = readStored(`u:${base.universe.id}`).save;
   const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
   /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
@@ -1616,7 +1628,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, ...(minervaHost ? { describe } : {}) }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, adopted: (sys, note, hash) => adopted([...sys], note, hash), ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {

@@ -162,6 +162,8 @@ mod gh3_tests;
 #[cfg(test)]
 mod gh4_tests;
 #[cfg(test)]
+mod gz0_tests;
+#[cfg(test)]
 mod web_light_tests;
 #[cfg(test)]
 mod y1_tests;

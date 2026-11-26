@@ -1652,8 +1652,8 @@ pub(crate) fn evidence_of(ch: &Chronicle, system: &Address, at_s: i64) -> serde_
     serde_json::to_value(who).expect("plain data")
 }
 
-/// The systems of a universe (addresses `<root>/sys:*` with facts at or
-/// under them), with where each came from and a name if one is known.
+/// The systems of a universe (the outermost `sys:*` under the root, at any
+/// depth, with facts at or under them), with where each came from and a name if one is known.
 pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Value> {
     let mut st = ch.state_at(UniverseTime::seconds(i64::MAX));
     crate::withdraw::drop_withdrawn(&mut st.facts);
@@ -1662,16 +1662,18 @@ pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Valu
         if !root.contains(a) || a.segments().len() <= root.segments().len() {
             continue;
         }
-        let mut sys = a.clone();
-        while sys.segments().len() > root.segments().len() + 1 {
-            match sys.parent() {
-                Some(p) => sys = p,
-                None => break,
+        // The outermost `sys` at any depth under the root: a system grown
+        // from a drawn star sits at `<root>/halo:…/cell:…/sys:…`.
+        let mut chain = vec![a.clone()];
+        while let Some(p) = chain.last().and_then(|x| x.parent()) {
+            if p.segments().len() <= root.segments().len() {
+                break;
             }
+            chain.push(p);
         }
-        if sys.last().kind() != "sys" {
+        let Some(sys) = chain.into_iter().rev().find(|x| x.last().kind() == "sys") else {
             continue;
-        }
+        };
         *found.entry(sys).or_insert(0) += 1;
     }
     found

@@ -3,7 +3,7 @@
 // globe into a small equirectangular picture for a lit sphere. Nothing is invented: a world whose tiles are not read
 // yet, or that has none (a giant, until cloud colours come), is drawn plain and says so.
 import { stainPrepared, type StainHue } from "./stain-look.ts";
-import { planck, type Globe, type SurfaceTile } from "../../ui-contract/src/index.ts";
+import { naturalDirection, planck, type Globe, type SurfaceTile } from "../../ui-contract/src/index.ts";
 import { starRgb } from "./sky.ts";
 import { fastFace, lookupFast, prepare, type Prepared } from "./surface.ts";
 import { composeFaces, type Composite, type PatchPicture } from "./texture-ladder.ts";
@@ -28,6 +28,8 @@ export interface TrueTexture {
  */
 export function equirect(p: Prepared, width = 128, height = 64): TrueTexture {
   const data = new Uint8Array(width * height * 4);
+  const first = p.faces.find((f) => !!f);
+  const cell = first ? (Math.PI / 2 / first.s) * 0.72 : 0;
   let r = 0;
   let g = 0;
   let b = 0;
@@ -40,7 +42,9 @@ export function equirect(p: Prepared, width = 128, height = 64): TrueTexture {
       const u = (i + 0.5) / width;
       const x = -Math.cos(2 * Math.PI * u) * s;
       const y = -Math.sin(2 * Math.PI * u) * s;
-      const k = lookupFast(p, x, y, z);
+      // Natural outlines (ui-contract globe.ts): the cell looked up at a nudged direction, so coasts are not steps.
+      const w = cell > 0 ? naturalDirection([x, y, z], cell) : [x, y, z];
+      const k = lookupFast(p, w[0]!, w[1]!, w[2]!);
       const o = (j * width + i) * 4;
       // A face with no tile stays mid grey: shown, not invented.
       const f = k >= 0 ? lastFace(p) : null;

@@ -287,3 +287,52 @@ test("V5: a player's request becomes an event only after the GM approves it", as
     await Promise.all(kernels.map((k) => k.close()));
   }
 });
+
+// Record writes (a ship made, a note, a kept tank level, a flight log entry) travel as `record` intents, so players stay
+// in step with the GM's state hash through them and through the changes after (party run-through, 24 Nov).
+test("record writes travel to players: a ship made, its tanks and its flight log keep the replica in step", async () => {
+  const ks: ReturnType<typeof nodeKernel>[] = [];
+  const kernel = () => {
+    const k = nodeKernel();
+    ks.push(k);
+    return k;
+  };
+  try {
+    const manifest: PackDoc = json("packs/base-manifest/pack.json");
+    const rpg: PackDoc = json("tests/fixtures/packs/rpg-templates.json");
+    const room = memoryRoom();
+    const gk = kernel();
+    const packs = [base, playerData, manifest, rpg];
+    const gm = await Session.open(gk.client, gmSeat(), universe, packs, gk.scratch);
+    const version = await gm.kernelVersion();
+    const host = new GmHost(gm, room.hub("gm"), { run: "run-rec", kernel: version, app: "test-app", universe, packs, opening_hash: await gm.stateHash(), clock_yr: facts.at_yr });
+    assert.equal(await enterFacts(gm, facts), null);
+    const open = async (m: Manifest) => {
+      const k = kernel();
+      return Session.open(k.client, tableSeat(), m.universe, m.packs, k.scratch);
+    };
+    const p = new PlayerReplica(room.hub("phone"), open, { kernel: version, app: "test-app", now: () => 0, offlineAfterMs: 6000 });
+    p.join();
+    await until(() => p.status.state === "live", "phone live");
+    const made = await gm.createFrom({ template: "freighter", under: "u:kestrel/sys:1", name: "Beowulf", at_s: 0 });
+    assert.ok(made.ok, JSON.stringify(made));
+    const ship = (made as { ok: true; result: { address: string } }).result.address;
+    // Sent together, as Voyages does: they apply one at a time, in order.
+    const [kept, log] = await Promise.all([
+      gm.setKept!({ address: ship, kind: "fuel.propellant_t", value: 1, reason: "voyage to Tarn", at_s: 0 }),
+      gm.logFlight({ construct: ship, at_s: 0, event: { at_s: 0, kind: "stop", type: "depart", place_id: "u:kestrel/sys:1", mark: "planned" } }),
+    ]);
+    assert.ok(kept.ok, JSON.stringify(kept));
+    assert.ok(log.ok, JSON.stringify(log));
+    assert.ok((await gm.addNote!({ address: ship, text: "the crew renamed the galley", audience: "gm", at_s: 0 })).ok);
+    // A field change after them still replays to the same state.
+    assert.equal((await gm.send({ kind: "set_value", address: TARN, field: "a_au", value: 0.6, at_yr: facts.at_yr })).status, "applied");
+    await until(() => p.status.state === "live" && (p.status as { seq: number }).seq === host.state().seq, "phone caught up");
+    assert.equal(await p.session!.stateHash(), await gm.stateHash(), "in step after record writes");
+    // A player seat cannot send one.
+    const t = await p.session!.send({ kind: "record", op: "set_kept", ask: { address: ship, kind: "fuel.propellant_t", value: 9, at_s: 0 } });
+    assert.equal(t.status, "refused");
+  } finally {
+    for (const k of ks) await k.close();
+  }
+});
