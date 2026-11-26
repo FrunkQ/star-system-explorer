@@ -2,7 +2,6 @@
 // uses (true-body.ts `trueLook`), drawn alone on an off-screen canvas, straight on and lit from the upper left as the
 // size comparison lights it, through the shared finish (VP1), its running mean of jittered frames sharpening the
 // edges. Presentation only: it never touches the kernel or the state hash.
-import { createGpu } from "./gpu.ts";
 import { trueLook, type TrueBody } from "./true-body.ts";
 import { globeFrame } from "./lineup-3d.ts";
 import { halton } from "./photograph.ts";
@@ -25,6 +24,8 @@ const nextFrame = () => new Promise<void>((r) => (typeof requestAnimationFrame =
 export async function trueStill(b: Omit<TrueBody, "pole">, o: { size: number; tilt_rad?: number; frames?: number; budget_ms?: number; warm_ms?: number }): Promise<TrueStill | null> {
   const t0 = performance.now();
   const gl = document.createElement("canvas");
+  // three.js stays a lazily loaded chunk (shell vite.config.ts): gpu.ts is fetched only when a still is drawn.
+  const { createGpu } = await import("./gpu.ts");
   const gpu = await createGpu(gl);
   if (!gpu) return null;
   try {
