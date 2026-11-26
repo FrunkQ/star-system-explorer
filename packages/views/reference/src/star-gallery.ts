@@ -10,7 +10,7 @@
 // and `star.sample_feh`. Until that scheme is on the stack, STAND_IN lists a star per family, aged to the middle of
 // the phase that makes it that family.
 import { constant, roundTo, sayNumber, type AtlasClass, type AtlasScheme, type Json, type StarDescription, type StarPhase } from "../../../ui-contract/src/index.ts";
-import { bigCellContrast, STAR_SECONDS_PER_SECOND, type LiveStar } from "../../../renderer/src/index.ts";
+import { bigCellContrast, type LiveStar } from "../../../renderer/src/index.ts";
 
 /** The families the star scheme groups by (agreed with "Classify every star and remnant", 26 Nov). */
 export type StarFamily = "pre-main-sequence" | "main-sequence" | "subgiant" | "giant" | "bright-giant" | "supergiant" | "brown-dwarf" | "white-dwarf" | "neutron-star" | "black-hole";
@@ -148,6 +148,13 @@ export const CELL_LIFE_ON_SCREEN_S = 4;
 export const TURN_ON_SCREEN_S = 30;
 
 /**
+ * The gallery's stars stand outside any campaign and its clock (CLK1), so each runs on a clock of its own, chosen so
+ * the tile shows what the star does and said on its card: an explicit, labelled choice. This is the rate for a star
+ * with neither cells nor a known spin: six hours a second.
+ */
+const STILL_STAR_CLOCK = DAY / 4;
+
+/**
  * Read one tile's star: the life line's answer at its age, then its activity (spin, spots, flares, cells) from the
  * star's own mass, radius, light and temperature. A remnant not drawn yet comes back with its description and why.
  */
@@ -160,7 +167,7 @@ export async function readGalleryStar(session: Reader, tile: StarTile): Promise<
   if (!r.ok) return r.message;
   const desc = r.star;
   const n = desc.now;
-  const base = { tile, ask, desc, clock: STAR_SECONDS_PER_SECOND, clockWhy: "six hours a second, as the system's True", cells: null };
+  const base = { tile, ask, desc, clock: STILL_STAR_CLOCK, clockWhy: "six hours a second", cells: null };
   const notYet = NOT_DRAWN[n.phase];
   if (notYet) return { ...base, live: null, why: notYet };
   if (!(n.teff_k > 0 && n.radius_m > 0 && n.mass_kg > 0)) return { ...base, live: null, why: "the life line gives it no surface to draw" };
@@ -182,7 +189,7 @@ export async function readGalleryStar(session: Reader, tile: StarTile): Promise<
   const spin = num(one.activity.rotation_period_s);
   // Each star on its own clock, so every tile shows what it does: a cell rises and fades in a few seconds, or, with no
   // cells, it turns in half a minute. The clock is said on the card.
-  const clock = cells ? cells.life_s / CELL_LIFE_ON_SCREEN_S : spin && spin > 0 ? spin / TURN_ON_SCREEN_S : STAR_SECONDS_PER_SECOND;
+  const clock = cells ? cells.life_s / CELL_LIFE_ON_SCREEN_S : spin && spin > 0 ? spin / TURN_ON_SCREEN_S : STILL_STAR_CLOCK;
   const clockWhy = cells ? `one cell's life (${span(cells.life_s)}) every ${CELL_LIFE_ON_SCREEN_S} seconds` : spin && spin > 0 ? `one turn (${span(spin)}) every ${TURN_ON_SCREEN_S} seconds` : "six hours a second";
   const without = DRAWN_WITHOUT[n.phase];
   return { ...base, live, clock, clockWhy, cells, ...(without ? { without } : {}) };
