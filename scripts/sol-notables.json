@@ -1,5 +1,5 @@
 {
- "about": "Small bodies flagged notable in the Solar System catalogues (format flag 1: shown whatever the Detail cut, design 7.3). Authored list: bodies a spacecraft has flown past, orbited or landed on, and named comets people expect. The build checks each designation's name against JPL's row and fails on a mismatch, so a wrong designation cannot slip in. Moons are not listed: every moon with a size is in base-sol or the moon files, and Phobos and Deimos are base-sol bodies.",
+ "about": "Small bodies flagged notable in the Solar System catalogues (format flag 1: shown whatever the Detail cut, design 7.3). Authored list: bodies a spacecraft has flown past, orbited or landed on, and named comets people expect. Names are JPL's own (JPL names 9P, 81P and 103P without the number). The build checks each designation's name against JPL's row and fails on a mismatch, so a wrong designation cannot slip in. Moons are not listed: every moon with a size is in base-sol or the moon files, and Phobos and Deimos are base-sol bodies.",
  "small_bodies": [
   {"pdes": "1", "name": "Ceres", "why": "orbited by Dawn"},
   {"pdes": "4", "name": "Vesta", "why": "orbited by Dawn"},
@@ -20,12 +20,12 @@
   {"pdes": "162173", "name": "Ryugu", "why": "sampled by Hayabusa2"},
   {"pdes": "486958", "name": "Arrokoth", "why": "flown past by New Horizons"},
   {"pdes": "1P", "name": "Halley", "why": "flown past by Giotto and the Vega probes; the best-known comet"},
-  {"pdes": "9P", "name": "Tempel 1", "why": "struck by Deep Impact"},
+  {"pdes": "9P", "name": "Tempel", "why": "struck by Deep Impact"},
   {"pdes": "19P", "name": "Borrelly", "why": "flown past by Deep Space 1"},
   {"pdes": "21P", "name": "Giacobini-Zinner", "why": "flown through by ICE"},
   {"pdes": "26P", "name": "Grigg-Skjellerup", "why": "flown past by Giotto"},
   {"pdes": "67P", "name": "Churyumov-Gerasimenko", "why": "orbited and landed on by Rosetta and Philae"},
-  {"pdes": "81P", "name": "Wild 2", "why": "sampled by Stardust"},
-  {"pdes": "103P", "name": "Hartley 2", "why": "flown past by EPOXI"}
+  {"pdes": "81P", "name": "Wild", "why": "sampled by Stardust"},
+  {"pdes": "103P", "name": "Hartley", "why": "flown past by EPOXI"}
  ]
 }

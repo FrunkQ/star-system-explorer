@@ -74,13 +74,18 @@ STEPS_KM = [(100.0, "100 km"), (30.0, "30 km"), (10.0, "10 km"), (3.0, "3 km"), 
 H_TO_D_KM = 1329.0
 # A class needs this many measured albedos before its median is used.
 MIN_ALBEDOS = 30
+# Below that, a class's own median is still used if it has this many: a
+# class's albedo differs more from another class's than a small sample's
+# median does from the class's true one (the distant TNOs are far brighter
+# than the main belt's dark bodies). Fewer than this, the kind's median.
+MIN_FEW_ALBEDOS = 5
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
           "September", "October", "November", "December"]
 
 
 def sheet_value(cid):
-    for c in json.load(open(SHEET))["provides"]["reference"]["constants"]:
+    for c in json.load(open(SHEET, encoding="utf-8"))["provides"]["reference"]["constants"]:
         if c["id"] == cid:
             return c["value"]["v"]
     raise SystemExit("base-reference has no constant %r" % cid)
@@ -135,7 +140,7 @@ def fetch(cache):
         with open(os.path.join(cache, name), "wb") as f:
             f.write(get(url))
     got["urls"] = {"sbdb": SBDB, "sats_elem": SATS_ELEM, "sats_phys": SATS_PHYS}
-    with open(os.path.join(cache, "retrieved.json"), "w") as f:
+    with open(os.path.join(cache, "retrieved.json"), "w", encoding="utf-8") as f:
         json.dump(got, f, indent=1)
     print("saved in %s" % cache)
 
@@ -191,7 +196,7 @@ def notables():
     """Bodies flagged notable (shown whatever the Detail cut, design 7.3)."""
     if not os.path.exists(NOTABLE):
         return {}
-    return {n["pdes"]: (n["name"], n["why"]) for n in json.load(open(NOTABLE))["small_bodies"]}
+    return {n["pdes"]: (n["name"], n["why"]) for n in json.load(open(NOTABLE, encoding="utf-8"))["small_bodies"]}
 
 
 def norm(s):
@@ -201,7 +206,7 @@ def norm(s):
 def base_sol():
     """base-sol's bodies by plain name: a catalogue row for one of them is that
     body, not another, so the join (RW4) must not count it twice."""
-    sol = json.load(open(BASE_SOL))["provides"]["other"]["sol"]["bodies"]
+    sol = json.load(open(BASE_SOL, encoding="utf-8"))["provides"]["other"]["sol"]["bodies"]
     return {norm(b["name"]): b for b in sol}
 
 
@@ -216,8 +221,12 @@ def build_small_bodies(cache, got, out, min_size):
     recs = []
     for kind in ("a", "c"):
         for name in got["sbdb"][kind]["pages"]:
-            doc = json.load(open(os.path.join(cache, name)))
-            recs += [dict(zip(doc["fields"], r)) for r in doc["data"]]
+            doc = json.load(open(os.path.join(cache, name), encoding="utf-8"))
+            for row in doc["data"]:
+                r = dict(zip(doc["fields"], row))
+                # JPL sends spkid as a JSON number and everything else as text.
+                r["spkid"] = None if r["spkid"] is None else str(r["spkid"])
+                recs.append(r)
     k_km = H_TO_D_KM
     # Medians of measured albedo per JPL orbit class, and per kind, from this download.
     by_class, by_kind = {}, {}
@@ -226,7 +235,8 @@ def build_small_bodies(cache, got, out, min_size):
         if p and p > 0:
             by_class.setdefault(r["class"], []).append(p)
             by_kind.setdefault(r["kind"][0], []).append(p)
-    class_p = {c: median(v) for c, v in sorted(by_class.items()) if len(v) >= MIN_ALBEDOS}
+    class_p = {c: median(v) for c, v in sorted(by_class.items()) if len(v) >= MIN_FEW_ALBEDOS}
+    class_n = {c: len(v) for c, v in sorted(by_class.items())}
     kind_p = {k: median(v) for k, v in sorted(by_kind.items())}
     flagged, known = notables(), base_sol()
     rows, left_out, ids, mismatched = [], {}, set(), []
@@ -282,6 +292,14 @@ def build_small_bodies(cache, got, out, min_size):
         twin = known.get(norm(row["name"]))
         if twin is not None and twin["kind"] != "moon":
             row["base_sol"] = twin["id"]
+            # The same body measured in base-sol (Pluto: NSSDCA) beats a size
+            # estimated from brightness; a JPL-measured diameter is kept.
+            radius = twin["values"].get("body.radius")
+            if dg == "estimated" and radius:
+                grades["estimated"] -= 1
+                grades["measured"] += 1
+                row.update(diameter_km=2 * radius["v"] / 1000.0, diameter_grade="measured",
+                           diameter_source="base-sol", size_from=None)
         rows.append({k: v for k, v in row.items() if v is not None})
     rows.sort(key=lambda x: (-x["diameter_km"], x["id"]))
     jpl = "jpl-sbdb"
@@ -333,6 +351,10 @@ def build_small_bodies(cache, got, out, min_size):
              "licence": "NASA/JPL data; only a citation is asked",
              "credit": credit(got["retrieved_utc"], "Small-Body Database Query"),
              "link": "https://ssd.jpl.nasa.gov/tools/sbdb_query.html", "retrieved": got["retrieved_utc"]},
+            {"id": "base-sol", "name": "SSE4 base-sol pack, from the NASA NSSDCA Planetary Fact Sheets", "version": "1",
+             "kind": "downloaded", "licence": "US government work; no licence stated",
+             "credit": "NASA Space Science Data Coordinated Archive, Planetary Fact Sheets, D. R. Williams",
+             "link": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"},
             {"id": "rw7-build", "name": "SSE4 catalogue build (scripts/build-sol-catalogues.py)", "version": "1",
              "kind": "authored", "licence": "Apache-2.0",
              "credit": "Sizes and albedos marked estimated were worked out by SSE4 from JPL's absolute magnitudes: "
@@ -355,7 +377,7 @@ def build_small_bodies(cache, got, out, min_size):
     }
     return write(out, "sol-small-bodies", header, rows), {
         "rows": len(rows), "grades": grades, "left_out": left_out, "class_albedo": class_p,
-        "steps": {lbl: sum(1 for r in rows if r["diameter_km"] >= s) for s, lbl in STEPS_KM},
+        "class_n": class_n, "steps": {lbl: sum(1 for r in rows if r["diameter_km"] >= s) for s, lbl in STEPS_KM},
         "classes": count_by(rows, "orbit_class"), "notables": sum(1 for r in rows if r["flags"] & 1),
         "notables_missing": sorted(set(flagged) - {r["id"] for r in rows if r["flags"] & 1}),
         "notables_mismatched": mismatched,
@@ -373,30 +395,49 @@ def count_by(rows, key):
 # --- moons ------------------------------------------------------------------
 
 class Tables(html.parser.HTMLParser):
-    """Every <table> on a page as rows of cell text."""
+    """Every <table> on a page as rows of cell text. JPL's pages leave some
+    <td> cells unclosed, so a new cell or row closes the open one; a heading
+    with colspan counts once for each column it spans, so the headings line up
+    with the data cells under them."""
 
     def __init__(self):
         super().__init__()
-        self.tables, self.row, self.cell, self.depth = [], None, None, 0
+        self.tables, self.row, self.cell, self.span, self.depth = [], None, None, 1, 0
+
+    def end_cell(self):
+        if self.cell is not None and self.row is not None:
+            text = " ".join("".join(self.cell).split())
+            self.row.extend([text] * self.span)
+        self.cell, self.span = None, 1
+
+    def end_row(self):
+        self.end_cell()
+        if self.row:
+            self.tables[-1].append(self.row)
+        self.row = None
 
     def handle_starttag(self, tag, attrs):
         if tag == "table":
             self.tables.append([])
             self.depth += 1
         elif tag == "tr" and self.depth:
+            if self.row is not None:
+                self.end_row()
             self.row = []
         elif tag in ("td", "th") and self.row is not None:
+            self.end_cell()
             self.cell = []
+            span = dict(attrs).get("colspan")
+            self.span = int(span) if span and span.isdigit() and tag == "th" else 1
 
     def handle_endtag(self, tag):
-        if tag in ("td", "th") and self.cell is not None and self.row is not None:
-            self.row.append(" ".join("".join(self.cell).split()))
-            self.cell = None
+        if tag in ("td", "th"):
+            self.end_cell()
         elif tag == "tr" and self.row is not None:
-            if self.row:
-                self.tables[-1].append(self.row)
-            self.row = None
-        elif tag == "table":
+            self.end_row()
+        elif tag == "table" and self.depth:
+            if self.row is not None:
+                self.end_row()
             self.depth -= 1
 
     def handle_data(self, data):
@@ -431,15 +472,22 @@ def build_moons(cache, got, out, min_size, au_km):
     phys = {}
     for r in prows:
         if len(r) > i_code and r[i_code].strip().isdigit():
-            phys[r[i_code].strip()] = (num(r[i_r]), num(r[i_gm]), num(r[i_rho]))
+            gm = num(r[i_gm])
+            # A printed GM of 0 (Nereid's 0.00000 +/- 0.00000) is no measurement:
+            # every moon has a mass.
+            phys[r[i_code].strip()] = (num(r[i_r]), gm if gm else None, num(r[i_rho]))
     eh, erows = table_with(os.path.join(cache, "sats-elem.html"), "satellite", "frame", "epoch")
     ix = moon_columns(eh)
     known = base_sol()
-    files, left_out, by_plane = {}, {}, {}
+    files, left_out, by_plane, seen = {}, {}, {}, set()
     for r in erows:
         if len(r) < len(eh):
             continue
         code = r[ix["code"]].strip()
+        if code in seen:
+            left_out.setdefault("a second row for the same NAIF code (the first is kept)", []).append(r[ix["sat"]])
+            continue
+        seen.add(code)
         rad = phys.get(code, (None, None, None))[0]
         why = None
         if rad is None:
@@ -562,7 +610,7 @@ def write(out, cid, header, rows):
 
 
 def build(cache, out, min_size):
-    got = json.load(open(os.path.join(cache, "retrieved.json")))
+    got = json.load(open(os.path.join(cache, "retrieved.json"), encoding="utf-8"))
     os.makedirs(out, exist_ok=True)
     au_km = sheet_value("au") / 1000.0
     sb_file, sb = build_small_bodies(cache, got, out, min_size)
@@ -572,7 +620,9 @@ def build(cache, out, min_size):
              "| Down to | Rows |", "|---|---|"] + ["| %s | %d |" % kv for kv in sb["steps"].items()] + [
              "", "By JPL orbit class: " + ", ".join("%s %d" % kv for kv in sb["classes"].items()), "",
              "Left out: " + (", ".join("%s %d" % kv for kv in sorted(sb["left_out"].items())) or "none"), "",
-             "Class median albedos: " + ", ".join("%s %.3f" % kv for kv in sorted(sb["class_albedo"].items())), "",
+             "Class median albedos (measured count): " + ", ".join("%s %.3f (%d)" % (c, v, sb["class_n"][c]) for c, v in sorted(sb["class_albedo"].items())), "",
+             "Classes under %d measured albedos, whose median is used anyway: " % MIN_ALBEDOS
+             + (", ".join(c for c in sorted(sb["class_albedo"]) if sb["class_n"][c] < MIN_ALBEDOS) or "none"), "",
              "Notables flagged: %d; on the list but not flagged: %s" % (sb["notables"], ", ".join(sb["notables_missing"]) or "none"), "",
              "Name mismatches (not flagged): " + ("; ".join(sb["notables_mismatched"]) or "none"), "",
              "Rows that are base-sol bodies: " + (", ".join(sb["base_sol"]) or "none"), "",

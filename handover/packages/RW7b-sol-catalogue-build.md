@@ -18,7 +18,20 @@ Thread "Add every Solar System body", 26 Nov 2026. Track RW, package RW7 (`desig
 - The size estimate is checked as an absolute value, not a ratio. With `H_TO_D_KM` changed, the test fails.
 - The name check: fixture designation 433 carries a different name, and the test fails when the check is bypassed.
 
+## First real run, on AC-ProArt, 26 Nov 2026
+JPL accepted pages of 50,000. Asteroids came in 32 pages, 1,589,842 rows, the count JPL gave. Comets came in one page, 4,089 rows. The cache came to 516 MB. The packed small-body file is 333 MB (891 MB as text). There are 1,590,628 rows: 139,688 measured and 1,450,940 estimated. Rows by stop: 100 km 6,719; 30 km 10,094; 10 km 21,145; 3 km 211,519; 1 km 1,089,881. 3,303 rows were left out because they have no size and no magnitude. 46 moons have a JPL mean radius; the other 415 are left out (fudge RW7-moon-sizes).
+
+The run found these, each fixed in the script and covered by the fixture test (seen red against the old script):
+- Windows read the JSON files as cp1252, so every file is now opened as UTF-8.
+- JPL sends spkid as a JSON number, so it is now turned into text.
+- JPL's physical-parameters page leaves `<td>` cells unclosed and uses colspan headings. The old parser read the Moon's radius as a footnote number.
+- Nereid's printed GM of 0 means no measurement, so it now reads as absent.
+- Puck has two rows on the elements page. The first row is kept and the second is reported.
+- JPL names 9P, 81P and 103P without their numbers, so the notable list now uses JPL's names.
+- The dwarf planets came out about 3.6 times too big. SBDB has no diameter for them, and the TNO class had too few measured albedos, so they fell back to the all-asteroid median of 0.078. A class's own median is now used with as few as 5 measured albedos. Pluto takes base-sol's measured size. The large TNOs are brighter than their class, so their measured sizes still need putting on record (next part).
+
 ## Not done yet (later RW7 parts)
+- Measured sizes for the dwarf planets and large TNOs (Eris, Makemake, Haumea, Gonggong, Quaoar, Sedna, Orcus), read at source, as base-sol bodies.
 - **The real run on Alex's PC.** The output files and their sizes, and which of them ship in the app and which go to the store (RW8).
 - Base-sol's full orbits at a date for its moons, from JPL's mean elements (the planets and the Moon are RW17's series).
 - Belt masses by group, which need cited totals (the paper search is back on 1 Dec).

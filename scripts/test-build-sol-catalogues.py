@@ -41,7 +41,16 @@ def main(argv):
         assert by["1P"]["flags"] == 1 and by["4"]["flags"] == 1 and by["101"]["flags"] == 0
         assert by["433"]["flags"] == 0, "a designation whose JPL name differs is not flagged"
         assert by["1"]["base_sol"] == "ceres"
-        report = open(os.path.join(out, "report.md")).read()
+        # A base-sol body's measured size beats an estimate from brightness (JPL gives Pluto none).
+        assert by["134340"]["diameter_grade"] == "measured" and by["134340"]["diameter_source"] == "base-sol", by["134340"]
+        assert by["1"]["spkid"] == "2000001", "spkid comes as a JSON number and is kept as text"
+        moons = json.load(open(os.path.join(out, "sol-moons-ecliptic-j2000.catalogue.json"), encoding="utf-8"))["rows"]
+        nereid = [m for m in moons if m["name"] == "Nereid"]
+        assert len(nereid) == 1, "a repeated NAIF code is kept once"
+        assert nereid[0]["diameter_km"] == 356.0 and "gm_km3_s2" not in nereid[0], nereid
+        laplace = json.load(open(os.path.join(out, "sol-moons-laplace.catalogue.json"), encoding="utf-8"))["rows"]
+        assert laplace[0]["diameter_km"] == 22.16 and laplace[0]["density_g_cm3"] == 1.86, laplace
+        report = open(os.path.join(out, "report.md"), encoding="utf-8").read()
         assert "Fakemoon" in report, "a moon with no radius is reported, not filled in"
         # The reader accepts every file and every credit is carried.
         for f in sorted(os.listdir(out)):
