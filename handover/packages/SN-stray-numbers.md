@@ -64,3 +64,18 @@ numbers to where they belong. Values are kept as they were unless a part below s
 - `sse-weather/rules.rs`: the zonal cloud drawing's numbers (optical depth 2 + 18 x rain share, towers from 0.45 over
   0.3, the cover and depth shares, 1.5 wind rise per layer, thin air's 0.3) move to base-weather `weather.clouds`
   with a source note; written so every value computes bit for bit as before. Fudge W-clouds.
+
+## SN5: the typed-number lint reads value and unit
+
+`scripts/audit-matter.py` (the MP22 `--closed` check in check.sh):
+- new catalogue rows: G in pc, kpc and Mpc (km/s)^2 per solar mass, the Gaussian constant and its square, G in
+  au^3 per solar mass per year^2 (4 pi^2), water's refractive index 1.333, water's photolysis rate 1.2e-5 per second
+  and lifetime 8.3e4 s; the parsec also matched in km and in kpc or Mpc metres.
+- by value and unit: a row in `UNIT_HINTS` is matched even below three figures, but only where its unit or name is
+  written beside it (the line, its doc comment, or a pack value's neighbouring lines), so a bare 1.2e-5 tolerance or
+  a 1.333 ratio is not flagged and "1.2e-5 per second" is.
+- `scripts/test-audit-matter.py` gains six cases; with the lint change removed, four of them fail (checked).
+- It found three typed copies, now read from the sheet: `sse-cosmos` haloes.rs's G in Mpc units (4.300917e-9) and
+  its Mpc in km (3.0857e19), from `GM_SUN` and `PC`; `ui-contract` galaxies-nearby.ts's G in Mpc^3 per solar mass
+  per Gyr^2, from `GM_sun`, `pc` and `yr_julian` (it moves by 2e-6 of itself, the old km/s-to-Mpc/Gyr factor's
+  rounding). **Golden:** `tests/golden/haloes.json`'s digest moves (the neighbours' fall times in their last digits).

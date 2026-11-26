@@ -478,7 +478,9 @@ impl Haloes<'_> {
     /// Each halo's nearest more massive halo within the search radius, with a two-body sketch.
     fn link_neighbours(&self, haloes: &mut [Halo]) {
         let r = self.params.neighbour_mpc;
-        let g_mpc = 4.300_917e-9; // G in Mpc (km/s)^2 / Msun
+        // G in Mpc (km/s)^2 per solar mass, from the sheet's GM_sun and parsec.
+        let mpc_m = sse_core::sheet::PC * 1.0e6;
+        let g_mpc = sse_core::sheet::GM_SUN / mpc_m / 1.0e6;
         let h0 = self.cosmo.p.h0;
         let snapshot: Vec<(String, f64, [f64; 3])> = haloes
             .iter()
@@ -508,7 +510,7 @@ impl Haloes<'_> {
                 let approach = bound.then(|| {
                     // Radial free fall from rest at d: t = (pi / 2) sqrt(d^3 / (2 G M)).
                     let t_s =
-                        0.5 * m::PI * m::sqrt(d * d * d / (2.0 * g_mpc * mt)) * 3.085_677_581e19;
+                        0.5 * m::PI * m::sqrt(d * d * d / (2.0 * g_mpc * mt)) * (mpc_m / 1.0e3);
                     t_s / YEAR_S / 1.0e9
                 });
                 h.neighbour = Some(Neighbour {

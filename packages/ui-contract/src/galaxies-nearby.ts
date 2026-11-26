@@ -2,6 +2,7 @@
 // as the sky sees them (`sky_from_here` with galaxies and no stars: `galaxies_seen` and `satellites_seen`), and lays
 // them out in space around our galaxy. Each galaxy's place is its direction from home times its distance, so this
 // view and the night sky agree. Nothing is invented: a galaxy has the type, size, tilt and colour the kernel gave it.
+import { constant } from "./sheet.ts";
 import { starColour } from "./compare.ts";
 import type { Json } from "./json.ts";
 
@@ -198,8 +199,12 @@ export function satelliteStateWords(p: Pick<SatellitePath, "fate" | "infall_gyr"
 /** The first infall among the paths: where Play starts. */
 export const firstInfall = (ps: readonly Pick<SatellitePath, "infall_gyr">[]): number | null => (ps.length ? Math.min(...ps.map((p) => p.infall_gyr)) : null);
 
-/** G in Mpc^3 per solar mass per Gyr^2 (4.30091e-9 Mpc (km/s)^2 per solar mass; 1 km/s = 1.022712e-3 Mpc/Gyr). */
-const G_MPC_GYR = 4.30091e-9 * 1.022712e-3 * 1.022712e-3;
+/** G in Mpc^3 per solar mass per Gyr^2, from the sheet's GM_sun, parsec and Julian year. */
+const G_MPC_GYR = (() => {
+  const mpc = constant("pc") * 1e6;
+  const gyr = constant("yr_julian") * 1e9;
+  return (constant("GM_sun") * gyr * gyr) / (mpc * mpc * mpc);
+})();
 
 /**
  * The zero-velocity radius of a mass at a time: the sphere inside which matter has stopped moving apart with the
