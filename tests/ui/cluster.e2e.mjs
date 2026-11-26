@@ -154,6 +154,8 @@ try {
     // Bound pairs under HUD, from the cells' own neighbours (read in the background, one cell at a time).
     await gm.waitForFunction(() => document.querySelectorAll(".clu [data-bound-pair]").length > 0, null, { timeout: 120000 });
     const pairsSeen = await clu.locator("[data-bound-pair]").count();
+    // GZ6 part 3: the web's threads under HUD, on our disc's plane, from a web slice through home.
+    await clu.locator("[data-web-threads]").waitFor({ timeout: 60000 });
     await shot(gm, "gz5-nearby-neighbourhood");
     await clu.locator("[data-galaxy]").last().click({ force: true });
     await gm.waitForFunction(() => !!document.querySelector(".clu [data-galaxy-card]")?.getAttribute("data-galaxy-card"), null, { timeout: 10000 });
@@ -168,10 +170,19 @@ try {
     await clu.locator("[data-reach='group']").click();
     await vgroup("View style", "True").click();
     await clu.locator("[data-nearby-true]").waitFor({ timeout: 10000 });
-    await gm.waitForFunction(() => document.querySelectorAll(".clu [data-type-picture]").length > 0, null, { timeout: 30000 });
-    const typePictures = await clu.locator("[data-type-picture]").count();
+    // Drawn as pictures: a type picture by rule, or (for the biggest neighbours, once read) the real face.
+    await gm.waitForFunction(() => document.querySelectorAll(".clu [data-type-picture], .clu [data-real-face]").length > 0, null, { timeout: 60000 });
+    const typePictures = await clu.locator("[data-type-picture], [data-real-face]").count();
     await clu.locator("[data-home-face]").waitFor({ timeout: 60000 });
     await shot(gm, "gz5-nearby-true");
+    // GZ6 part 3: in the neighbourhood the three biggest neighbours' real charts are read in the background and
+    // their real faces replace their type pictures.
+    await clu.locator("[data-reach='neighbourhood']").click();
+    await gm.waitForFunction(() => document.querySelector(".clu [data-histories-read]")?.getAttribute("data-histories-read") === "3", null, { timeout: 120000 });
+    const realFaces = await clu.locator("[data-real-face]").count();
+    assert.ok(realFaces >= 1, `real faces drawn (${realFaces})`);
+    await shot(gm, "gz6-nearby-real-faces");
+    await clu.locator("[data-reach='group']").click();
     await vgroup("Seen from", "Free").click();
     const map = clu.locator("svg[data-nearby-turn]");
     assert.equal(await map.getAttribute("data-nearby-turn"), "0 60", "Free starts as Tilted");
@@ -186,7 +197,7 @@ try {
     await vgroup("Seen from", "Tilted").click();
     await vgroup("View style", "Chart").click();
     await clu.locator("[data-halo-dot]").first().waitFor({ timeout: 30000 });
-    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs, the group's edge at ${edgeMpc} Mpc, ${streamsNow} streams, Play with ${midGhosts} satellites halfway, True with ${typePictures} type pictures and our real face, Free turned to ${turned}`;
+    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs, the group's edge at ${edgeMpc} Mpc, ${streamsNow} streams, Play with ${midGhosts} satellites halfway, True with ${typePictures} pictures and our real face, ${realFaces} neighbours' real faces, web threads, Free turned to ${turned}`;
 
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);

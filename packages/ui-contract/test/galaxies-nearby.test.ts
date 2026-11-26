@@ -188,3 +188,13 @@ test("Free turning: starts as Tilted, a quarter turn of yaw swings x into y, a f
   assert.deepEqual(turnOf("above"), { yaw_deg: 0, tilt_deg: 0 });
   assert.equal(FREE_START.tilt_deg, 60);
 });
+
+test("the biggest neighbours whose real charts are read: biggest in stars within the reach, never our satellites", async () => {
+  const { biggestNeighbours, REAL_FACES } = await import("../src/galaxies-nearby.ts");
+  const r = readNearby(withPaths)!;
+  assert.deepEqual(r.home_mpc, null, "no home place given in this fixture");
+  assert.deepEqual(readNearby({ ...(sky as object), galaxy_walk: { home_mpc: [4, 4, 4], satellites: {} } } as unknown as Json)!.home_mpc, [4, 4, 4]);
+  assert.deepEqual(biggestNeighbours(r.galaxies, 12).map((g) => g.address), ["u:k/cell:0.0.-1/halo:1"]);
+  assert.deepEqual(biggestNeighbours(r.galaxies, 1.5), [], "the only galaxy in the group is our satellite");
+  assert.equal(REAL_FACES, 3);
+});

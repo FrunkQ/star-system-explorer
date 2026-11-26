@@ -47,6 +47,8 @@ export interface NearbyRead {
   centre_mpc: [number, number, number];
   /** The time the sky was read at, Gyr after the Big Bang (the campaign's date). */
   t_gyr: number;
+  /** Home's place in the web, Mpc (the web's frame shares the galactic frame's axes; F37). */
+  home_mpc: [number, number, number] | null;
 }
 
 /** GZ6: one of home's satellites from infall to now, as the kernel followed it in our galaxy's growing pull. */
@@ -144,6 +146,7 @@ export function readNearby(sky: Json): NearbyRead | null {
     paths,
     centre_mpc: c ? [c[0] / 1000, c[1] / 1000, c[2] / 1000] : [0, 0, 0],
     t_gyr: (num(s!.t_myr) ?? 13800) / 1000,
+    home_mpc: vec(walk.home_mpc),
   };
 }
 
@@ -366,6 +369,19 @@ export function boundPairs(cells: readonly { haloes: readonly { address: string;
       if (!out.has(`${a}|${b}`)) out.set(`${a}|${b}`, { a, b, distance_mpc: n.distance_mpc, approach_gyr: n.approach_gyr });
     }
   return [...out.values()].sort((x, y) => x.distance_mpc - y.distance_mpc || (x.a < y.a ? -1 : 1));
+}
+
+/** How many of the biggest neighbours have their real history read in the background (design 7.3: "two or three"). */
+export const REAL_FACES = 3;
+
+/**
+ * The neighbours whose real charts are read (design 7.3): the biggest in stars within the reach, not home's own
+ * satellites (they are not catalogued haloes and have no chart of their own), biggest first.
+ */
+export function biggestNeighbours(gs: readonly NearGalaxy[], reach_mpc: number, n = REAL_FACES): NearGalaxy[] {
+  return withinReach(gs, reach_mpc)
+    .filter((g) => !g.satellite)
+    .slice(0, n);
 }
 
 /** "meet in about 4 Gyr", or "already meeting" when the kernel says now. */
