@@ -54,9 +54,11 @@ test("the shell's parts say which desks each is on now", () => {
     assert.deepEqual(checkDesks(p.desks, p.id), []);
     for (const c of p.controls ?? []) assert.deepEqual(checkDesks(c.desks, `${p.id}.${c.id}`), []);
   }
-  // The eyes are Build's and Run's (the SV ruling); the depth dial and the Workshop door are off Run (TM2b, design 3.1).
+  // The eyes are Build's and Run's (the SV ruling); the depth dial and the Workshop door are off Run (TM2b) and the rail
+  // folds there (TM2c, design 3.1).
   assert.deepEqual(SHELL_PARTS.filter((p) => p.desks).map((p) => [p.id, p.desks]), [
     ["depth", ["explore", "build"]],
+    ["rail-open", ["explore", "build"]],
     ["workshop-door", ["explore", "build"]],
     ["eyes", ["build", "run"]],
   ]);

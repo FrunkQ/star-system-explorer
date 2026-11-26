@@ -503,3 +503,36 @@ export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, str
   const line = `A leading arm, from ${pass} ${when}: ${live ? "it still winds against the spin" : "the rotation has wound it back into the trailing sense"}.`;
   return { made: made.length, line, live, strength };
 }
+
+/**
+ * The cell our galaxy sits in. The sky puts home at (4, 4, 4) Mpc in the web (F37) and a cell is 8 Mpc a side, so home
+ * is in cell 0.0.0; if GZ12 moves home, this follows it.
+ */
+export const HOME_CELL: readonly [number, number, number] = [0, 0, 0];
+
+const NAME_START = ["Ar", "Bel", "Cor", "Dra", "El", "Fen", "Gal", "Hal", "Ir", "Kel", "Lor", "Mor", "Ner", "Or", "Pel", "Quor", "Ras", "Sel", "Tor", "Ul", "Vel", "Wyr", "Xan", "Zer"] as const;
+const NAME_MID = ["a", "e", "i", "o", "u", "ae", "ia", "on", "en", "ar"] as const;
+const NAME_END = ["dis", "mar", "nor", "thas", "rin", "vex", "lune", "dor", "ris", "nae", "thil", "ra"] as const;
+
+/**
+ * A stand-in name for a galaxy nobody has named yet (Alex, 26 Nov: "until something is named we can use a random
+ * one"). Keyed on the halo's address, so the same galaxy always gets the same name in the same universe. The naming
+ * track replaces it.
+ */
+export function placeholderGalaxyName(address: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < address.length; i++) h = Math.imul(h ^ address.charCodeAt(i), 0x01000193) >>> 0;
+  const a = NAME_START[h % NAME_START.length]!;
+  const b = NAME_MID[Math.floor(h / NAME_START.length) % NAME_MID.length]!;
+  const c = NAME_END[Math.floor(h / (NAME_START.length * NAME_MID.length)) % NAME_END.length]!;
+  return a + b + c;
+}
+
+/**
+ * A cell is named after the most important galaxy in it: ours where we live ("Milky Way neighbourhood"), otherwise its
+ * biggest halo's galaxy, by its stand-in name until it has a real one. A cell with no halo drawn keeps its number.
+ */
+export function cellName(index: readonly [number, number, number], biggestAddress: string | null | undefined): string {
+  if (index.every((v, i) => v === HOME_CELL[i])) return "Milky Way neighbourhood";
+  return biggestAddress ? `${placeholderGalaxyName(biggestAddress)} neighbourhood` : `Cell ${index.join(" · ")}`;
+}
