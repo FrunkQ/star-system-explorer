@@ -1,6 +1,6 @@
 # SSE4: the orbit side of tidal heat (track HF, package HF6)
 
-Status: **PROPOSED, 26 Nov 2026. Not yet accepted by Alex.** Started at the coordinator's word as a proposal, ahead of Alex's answer to question 3 of `SSE4-melt-and-heat-design.md`. Design only; nothing here is built. Four questions for Alex are in section 10, routine choices for the coordinator in section 11. HF is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 26 Nov 2026 ("Yes to all, make sense!", 23:33 UTC).** His answers and two notes are in section 10A and win where they differ from the text. Written as a proposal at the coordinator's word earlier the same day. Design only; nothing here is built. HF is a code only, never shown in the product.
 
 Read with: `SSE4-melt-and-heat-design.md` (sections 4.4 and 4.5, which this note completes), `SSE4-time-scales-design.md` (sections 6 to 8; PR 651, proposed), the measured-motion work of RW17 part 1 (PR 649; section 4.2 here says how the two live together), `SSE4-system-formation-design.md` (package F7, "long life: slow orbital change, tides", which this note is the moons' part of), `SSE4-ring-and-belt-editing-design.md` ("more ring mass = destroy a moon"), `crates/sse-formation/src/leftovers.rs` (how moons are made), `crates/sse-surface/src/lib.rs` (`tidal_flux`, `lock_time_gyr`, `TidalSpan`).
 
@@ -132,6 +132,27 @@ e_i = √( H_i / ( (21/2) Im k2_i · G M² R_i⁵ n_i / a_i⁶ ) )
 
 Formation already keeps planets' resonant chains. The same rounding-off (3.2) and the same response apply, and a chain forces a small eccentricity on its members, so close-in chains (the TRAPPIST-1 kind) are tidally heated. The difference: nothing feeds them. The heat comes out of the orbits, which slowly spread apart (Lithwick and Wu 2012; Batygin and Morbidelli 2013). That needs the forced eccentricity as a function of how far the pair has spread, which I cannot write from memory. It is package HF6.5, specified after the sources are read. Until then a planet's eccentricity from formation stands, with 3.2's decay applied where nothing forces it.
 
+### 3.8 A moon that falls in
+
+Asked by Alex on acceptance: would a moon hitting its planet show on the timeline? Yes. It is one of the march's marks, and the physics is already in 3.1.
+
+A moon inside the distance where its orbit matches the host's spin, or orbiting backwards, is pulled inward (Phobos, Triton). What ends it is read off two distances:
+
+- **The Roche limit lies outside the host's surface** (the usual case for a rubble or ice moon): the moon is pulled apart there and becomes a ring, at a date. The ring's inner part then rains down over a time the ring model gives.
+- **The moon holds together down to the surface** (a small moon held by its own strength, or a dense moon of a low-density host, where the limit lies inside the host): it reaches the surface whole. That is an impact at close to the orbital speed there, shallow and along the equator.
+
+Either way the march publishes a mark with its date and its `why` from the numbers: the moon's mass, its speed, the energy, and which of the two it was. A whole-moon fall is handed to the impact machinery as one more impactor (crater or basin, the heat it leaves in the host's thermal line, what it does to air and sea), with no special case. Onto a giant it is an entry into the air and a mark, and no crater.
+
+How it reaches the timeline: the mark is published through the time design's `happenings` op (its package TP6) with a rank from the sifter, so the timeline view, "what you passed" on a jump and the Run desk's "what is due" all get it from the one list. A moon falling onto a lived-on world ranks at the top. Until TP6 is on main the mark sits in the system's kept table and in `tidal_history`.
+
+Honest limits:
+
+- For a real system the backward sum cannot see a moon that is no longer there, so past falls appear only in generated systems. Future ones appear for both: Phobos in some tens of millions of years (from memory, **unverified**), Triton far later.
+- Whether a moon breaks up or holds together is a stand-in (density and size against a strength figure on the sheet), in the fudge register until the sources are read.
+- Collisions while worlds are forming (the one that made the Moon) are formation's events, already on the same list, and not this.
+
+Package: HF6.3 for real systems' futures, HF6.4 for generated systems.
+
 ---
 
 ## 4. Time, and which way the sum runs
@@ -152,7 +173,7 @@ Per `SSE4-time-scales-design.md`.
 
 The backward sum fills `Body.tidal_history` with worked-out spans where today only Ganymede has an authored one. It cannot see a resonance that has since broken; an authored span still wins where a pack gives one.
 
-**Marks**, each with a `why` from its numbers: caught in step; passed through a resonance (heat pulse); a set breaks; a moon crosses the Roche limit and becomes a ring; a moon is lost past the edge of the host's hold; the host's day reaches a round length; a moon's orbit rounds off ("the tides stopped").
+**Marks**, each with a `why` from its numbers: caught in step; passed through a resonance (heat pulse); a set breaks; a moon crosses the Roche limit and becomes a ring; a moon falls onto its host (section 3.8); a moon is lost past the edge of the host's hold; the host's day reaches a round length; a moon's orbit rounds off ("the tides stopped").
 
 
 ### 4.1 One leg or many: the same answer
@@ -262,9 +283,10 @@ Owner: proposed as its own builder thread ("Build moon orbits and tides"), since
 |---|---|---|---|---|
 | **HF6.1** the balance for real moons | The blocks of section 7 except the march; resonant sets read off period ratios; the balance published beside the measured heat for Io, Europa, Ganymede, Enceladus, Dione; the Moon's drift and its rounding time as facts. Nothing reads them for physics yet | the melt design's HF4c.1 for Im k2 (or the shared constant until then) | area only | S |
 | **HF6.2** lone moons round off | 3.2 applied: a moon with no partner has its eccentricity and heat decayed to its age. Sol's lone moons barely move (their measured `e` is the fact); fixtures with authored heat do not move | HF6.1 | core, one slot | S |
-| **HF6.3** the moon march | The Big Block of section 4 for real systems, run backward: reconstructed distances, capture dates, `tidal_history` spans, the host's day as a line, the marks | HF6.2; TP1 for dates; TP5's two-legs harness; PR 649 on main (section 4.2) | core, one slot | M |
+| **HF6.3** the moon march | The Big Block of section 4 for real systems, run backward: reconstructed distances, capture dates, `tidal_history` spans, the host's day as a line, the marks | HF6.2; TP1 for dates; TP5's two-legs harness; TP6 for marks on the timeline (kept in the table until then); PR 649 on main (section 4.2) | core, one slot | M |
 | **HF6.4** generated moons | The march run forward from formation: captures, heated sets, moons lost to rings; formation's moon eccentricities become birth values; generated moons handed to the surface code | HF6.3; Alex's yes to question 1 | **core, one slot; changes generated systems** | M |
 | **HF6.5** planets in step | 3.7, after the sources are read | HF6.2; 1 Dec | core | M |
+| **HF6.6** ocean tides worked out | A sea's tide from the world's own depth map and liquid, in place of the table (section 10A). **Later; not queued** | depth maps and liquid types | | |
 
 Red-first tests: a lone moon's heat falls to nothing over many rounding times (fails today); energy and angular momentum of host plus moons conserved over a march to 1 part in 10⁶ (the absolute check); the march read at a date equals stepped there in two legs, to the bit (section 4.1); PR 649's eclipse tests unchanged and no added jump at a span's edge (section 4.2); the Moon's drift within a tenth of 3.8 cm/yr; the three-moon sum of section 5 reproduced.
 
@@ -290,6 +312,20 @@ Red-first tests: a lone moon's heat falls to nothing over many rounding times (f
 3. **Earth's tides from a cited table?** Ocean tides depend on the shape of the ocean basins, which is out of reach. A table (today's value and the long-run mean) keeps the Moon's past honest. This is your "worked examples and tables" ruling applied. *Recommend yes.*
 
 4. **Its own builder thread?** The work is in formation and orbits; the heat flow thread is deep in interiors. *Recommend yes: "Build moon orbits and tides", opened when the melt design's HF4c.1 is on main.*
+
+## 10A. Alex's answers, 26 Nov 2026 (23:33 UTC)
+
+"Yes to all, make sense!" All four recommendations of section 10 are rulings:
+
+1. Generated moons may be changed by this. Existing generated systems change.
+2. One drift law for giant planets, registered as a stand-in for the theory; measured values still win for Jupiter and Saturn.
+3. Earth's tides come from a cited table for now.
+4. Its own builder thread, "Build moon orbits and tides", opened when the melt design's HF4c.1 is on main.
+
+His two notes:
+
+- **"Would moon impacts with planets appear on the timeline view?"** Yes: section 3.8, added in answer.
+- **Ocean tides worked out, later.** "We will have depth maps of the whole planet and liquid types defined - so potentially we can get that at some point. It's a nice to have.. but sounds a bit early here." So the table of answer 3 is the stand-in, in the fudge register, and a worked-out ocean tide from a world's own depth map and liquid is a later package (named HF6.6 here so it is not lost). It is not queued and nothing waits on it. When built it would serve any world with a sea, not only Earth.
 
 ## 11. Routine choices, for the coordinator
 

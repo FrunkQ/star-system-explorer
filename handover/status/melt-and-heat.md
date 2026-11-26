@@ -1,7 +1,7 @@
 # Status: melting inside worlds (design for HF4b, track HF)
 
 Owner thread: "Design melting inside worlds" (Fable, design only, 26 Nov 2026) for the note. The build belongs to the thread "Fix low heat flow in worlds", which keeps `status/heat-flow.md`; this file only tracks the design and its questions.
-Design: `design/SSE4-melt-and-heat-design.md`, **PROPOSED 26 Nov 2026, not yet accepted by Alex.** Four questions for him are in its section 13; seven routine choices for the coordinator in its section 14.
+Design: `design/SSE4-melt-and-heat-design.md`, **ACCEPTED by Alex 26 Nov 2026 ("Yes to all, make sense!", 23:33 UTC).** His four answers are in its section 13A; the coordinator's seven in its section 14A.
 
 What it is, in one line: one melt mechanism for any solid world (melt share between solidus and liquidus, melt leaving by its own buoyancy and taking heat, water and the heat-making elements with it, rock softened while melt is in it), with the lid as its own kept state, volcanism as the melt that leaves, and tidal heat read from that state each step.
 
@@ -15,8 +15,9 @@ Honest state, 26 Nov 2026:
 |---|---|
 | The note in `handover/design/`, this file, the row in START-HERE | done, 26 Nov |
 | Scratch model in project files `sse4/melt-proto/` | done, 26 Nov |
-| Alex's answers to questions 1 to 4 | waiting |
-| Coordinator's answers to C1 to C7 | waiting |
+| Alex's answers to questions 1 to 4 | yes to all, 26 Nov 23:33 UTC (section 13A) |
+| Coordinator's answers to C1 to C7 | all agreed 26 Nov (section 14A); C4 holds now that Alex has accepted |
+| Published heat names and mark kinds agreed with the heat-flows screen thread | done 26 Nov (sections 7 and 6.3) |
 | Read the sources at source and correct the sheet rows | from 1 Dec 2026, citations thread (C7) |
 | HF6 the orbit side (host's tide, resonance partners, eccentricity that dies away): its own design | written as a proposal 26 Nov at the coordinator's word: `design/SSE4-tidal-orbits-design.md`, state in `status/tidal-orbits.md` |
 | HF4d ice shells: a short note from its builder | after HF4c.2 |

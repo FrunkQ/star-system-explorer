@@ -1,7 +1,7 @@
 # Status: the orbit side of tidal heat (design for HF6, track HF)
 
 Owner thread: "Design melting inside worlds" (Fable, design only, 26 Nov 2026) for the note. No builder yet; the note proposes its own builder thread, "Build moon orbits and tides" (its question 4).
-Design: `design/SSE4-tidal-orbits-design.md`, **PROPOSED 26 Nov 2026, not yet accepted by Alex.** Started at the coordinator's word as a proposal, ahead of Alex's answer to question 3 of `design/SSE4-melt-and-heat-design.md`. Four questions for him are in its section 10; routine choices for the coordinator in its section 11 (D1 to D7 all agreed by the coordinator 26 Nov).
+Design: `design/SSE4-tidal-orbits-design.md`, **ACCEPTED by Alex 26 Nov 2026 ("Yes to all, make sense!", 23:33 UTC).** His four answers and two notes are in its section 10A; the coordinator agreed D1 to D7 the same day.
 
 What it is, in one line: a moon's tidal heat is paid for by its host's spin through the orbit, so the orbit is marched with the heat: the host's tide pushes each moon outward, the moon's own tide rounds its orbit off, and only moons held in step with a partner stay stretched and hot.
 
@@ -15,7 +15,7 @@ Honest state, 26 Nov 2026:
 | Item | State |
 |---|---|
 | The note in `handover/design/`, this file, the row in START-HERE | done, 26 Nov |
-| Alex's answers to questions 1 to 4 | waiting |
+| Alex's answers to questions 1 to 4 | yes to all, 26 Nov 23:33 UTC (section 10A). His notes: a moon falling onto its planet shows on the timeline (section 3.8, added); ocean tides worked out from depth maps and liquids is a later nice-to-have (HF6.6, not queued), the table stands for now |
 | Coordinator's answers to D1 to D5 | agreed 26 Nov as recommended; core-lane turns go through the coordinator; HF6.1 may start before Alex answers |
 | Coordinator's answers to D6, D7 | agreed 26 Nov. D6 (a measured orbit's own date as a third fixed anchor) was put to the time design's thread the same day, to go into `design/SSE4-time-scales-design.md` |
 | How it lives with the time design (PR 651) and measured motion (PR 649) | written 26 Nov: the note's sections 4.1 and 4.2. Inside a motion model's span the series is the whole answer; outside it the march scales the edge fit. HF6.3 needs PR 649 on main and the two-legs harness of TP5 |

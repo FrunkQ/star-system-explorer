@@ -1,6 +1,6 @@
 # SSE4: melting inside worlds, and the heat it carries (track HF, package HF4b)
 
-Status: **PROPOSED, 26 Nov 2026. Not yet accepted by Alex.** Design only; nothing here is built. Four questions for Alex are in section 13, each with a recommendation; routine choices for the coordinator are in section 14. HF is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 26 Nov 2026 ("Yes to all, make sense!", 23:33 UTC).** His answers are in section 13A. Design only; nothing here is built by this note. The coordinator's answers to section 14 are in section 14A. HF is a code only, never shown in the product.
 
 Asked for by the thread "Fix low heat flow in worlds" through the coordinator (26 Nov 2026, 20:46 UTC). That thread builds from this note.
 
@@ -547,7 +547,7 @@ Each leaves main green. Sizes: S under a day, M one to two days. The heat flow t
 | **HF2** readers read heat lost | As the heat flow thread planned it, on `heat_lost`, regimes marched with the history | HF4b.2 | surface goldens, core | M |
 | **HF5** volcanism reads lava | The readers of section 7 move from `q_ref` to `melt_erupted` | HF2 | surface goldens (many) | M |
 | **HF4d** ice shells | 3.10, from its own short note | HF4c.2 | surface goldens (icy moons) | M |
-| **HF6** the orbit side | **Design first** (question 3) | HF4c.1 | | |
+| **HF6** the orbit side | Its own design, `SSE4-tidal-orbits-design.md` (packages HF6.1 to HF6.5) | HF4c.1 | | |
 | **HF7** mantle water budget; **HF8** what erupts (magma's head) | Later; each replaces a registered stand-in | HF4b.2 | | |
 
 Order: HF4b.0, HF4b.1, HF4b.2, HF4c.1, then HF2 and HF4c.2 side by side, then HF5, then HF4d.
@@ -614,6 +614,15 @@ Order: HF4b.0, HF4b.1, HF4b.2, HF4c.1, then HF2 and HF4c.2 side by side, then HF
 
 4. **"Heat pipe" as a label: should it mean "lava carries more than half the heat" in place of "more than 1 W/m²"?** It is the physical meaning (Moore and Webb 2013). It would also label the first few hundred million years of Mars, the Moon and Venus as heat-pipe worlds, which is what that paper argues but changes what a GM sees for young worlds. *Recommend yes, in HF5, not before.*
 
+## 13A. Alex's answers, 26 Nov 2026 (23:33 UTC)
+
+"Yes to all, make sense!" All four recommendations of section 13 are rulings:
+
+1. This is the mechanism: one melt model for every solid world, the lid as its own kept state, volcanism as the melt that leaves. Lid worlds erupting 2 to 5 times too much for a while is accepted, honestly logged, until the two older stand-ins upstream are replaced.
+2. For a real body with a measured heat flow the measurement sets the heat, with the model's own figure shown beside it. Generated worlds always use the model.
+3. The orbit side (HF6) is designed: `SSE4-tidal-orbits-design.md`, accepted the same evening.
+4. "Heat pipe" means lava carries more than half the heat, from HF5 and not before.
+
 ## 14. Routine choices, for the coordinator
 
 - **C1** Sub-package names HF4b.0 to HF4c.2 as in section 9, three core-lane turns (HF4b.1, HF4b.2, HF4c.1). *Recommend as written.*
@@ -623,6 +632,10 @@ Order: HF4b.0, HF4b.1, HF4b.2, HF4c.1, then HF2 and HF4c.2 side by side, then HF
 - **C5** `sse.heat.active_geology_lifetime` and its `q_crit` give way to the history's "last lavas" date, in HF5. *Recommend yes.*
 - **C6** A thermal-line chart (the view for these blocks) goes to the screen thread that owns body cards, after HF2. *Recommend yes.*
 - **C7** On 1 Dec, one pass by the citations thread over section 15 before any of these rows loses its `unverified` flag.
+
+## 14A. The coordinator's answers, 26 Nov 2026
+
+C1, C2, C3, C5, C6 and C7 agreed as recommended (21:09 UTC). C4 was agreed on condition that Alex accepts the mechanism, which he did at 23:33 UTC, so it holds: tests of calibrated lid-world behaviour follow this design, each change listed in its package log; tests of measured facts and the guarded ranges of section 10 stay limits. C6's chart is being built by the thread "Show a planet's heat flows over time" from the fields of section 7.
 
 ---
 
