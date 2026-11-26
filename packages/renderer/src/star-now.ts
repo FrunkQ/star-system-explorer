@@ -6,6 +6,7 @@ import { coronaScaleHeight, drawStar, granulesShow, type Convection, type StarDr
 import { spotsAt, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
 import { churningGranules, granuleBlur, limbLumps, narrateLumps } from "./star-churn.ts";
 import { addEjections, ejectionsAt, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares, type EjectionNow, type ShownFlare } from "./star-events.ts";
+import { addProminences, narrateProminences, prominencesAt, type ProminenceNow } from "./star-prominences.ts";
 import { drawGlow, glareProfile, GLOW_REACH_DEG, narrateGlow } from "./star-glow.ts";
 
 export interface StarNowAsk {
@@ -31,6 +32,9 @@ export interface StarNowAsk {
 export interface StarNow {
   shown: ShownFlare[];
   ejections: EjectionNow[];
+  /** Prominences standing now (SG6), and how many of them show at the limb. */
+  prominences: ProminenceNow[];
+  limb: number;
   /** The star's light now over its quiet light. */
   boost: number;
   /** The halo's half-width in stellar radii (GLOW_REACH_DEG over the disc's angular radius). */
@@ -88,18 +92,23 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   const discDeg = Math.max(1e-4, ask.disc_deg ?? 0.25);
   const reach = GLOW_REACH_DEG / discDeg;
   const ejections = ejectionsAt(s, ask.t, reach, ask.calm);
+  const prominences = prominencesAt(s, ask.t, reach, ask.calm);
+  let limb = 0;
   const words: string[] = [];
   if (halo && light === "visible") {
     const profile = profileFor(discDeg);
     drawGlow(halo, { teff_k: s.teff, disc_deg: discDeg, exposure: ask.exposure ?? 1, boost, profile });
     const rgb = (thermalColour(s.teff).match(/[0-9a-f]{2}/gi) ?? ["ff", "ff", "ff"]).map((h) => decode(parseInt(h, 16) / 255)) as [number, number, number];
     addEjections(halo, ejections, reach, rgb, lat);
+    limb = addProminences(halo, prominences, s.radius, reach, lat);
     words.push(narrateGlow(profile, ask.exposure ?? 1));
   }
   const lumpWords = light === "visible" && granules ? narrateLumps(lumps, discPx) : "";
   if (lumpWords) words.push(lumpWords);
   words.push(narrateEvents(s, shown, light === "visible" ? ejections : [], !!ask.calm));
-  return { shown, ejections, boost, reach, words };
+  const promWords = light === "visible" && halo ? narrateProminences(s, prominences, limb) : "";
+  if (promWords) words.push(promWords);
+  return { shown, ejections, prominences, limb, boost, reach, words };
 }
 
 /** Face sizes in pixels: drawn at about the size the disc shows, in steps so the texture is not remade at each zoom. */
@@ -119,7 +128,7 @@ export function liveFace(key: string, s: LiveStar, ask: StarNowAsk & { px: numbe
   let f = faces.get(key);
   if (!f || f.width !== width) {
     if (faces.size > 64) faces.clear();
-    f = { width, data: new Uint8ClampedArray(width * width * 4), version: 0, drawn: "", now: { shown: [], ejections: [], boost: 1, reach: 0, words: [] } };
+    f = { width, data: new Uint8ClampedArray(width * width * 4), version: 0, drawn: "", now: { shown: [], ejections: [], prominences: [], limb: 0, boost: 1, reach: 0, words: [] } };
     faces.set(key, f);
   }
   if (f.drawn !== drawn) {

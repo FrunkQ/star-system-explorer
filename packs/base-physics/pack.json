@@ -7229,6 +7229,20 @@
         "range": null
       },
       {
+        "description": "reach of a star's closed magnetic field, in stellar radii",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.closed_corona_extent",
+        "range": null
+      },
+      {
         "description": "time for the churning outer layer of a cool star to turn over once",
         "dim": [
           0,
@@ -7240,6 +7254,34 @@
           0
         ],
         "id": "star.convective_turnover_time",
+        "range": null
+      },
+      {
+        "description": "particles per cubic metre at the foot of a star's corona",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.corona_base_density",
+        "range": null
+      },
+      {
+        "description": "mean temperature of a star's corona",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "star.corona_temperature",
         "range": null
       },
       {
@@ -7366,6 +7408,20 @@
           0
         ],
         "id": "star.rossby_number",
+        "range": null
+      },
+      {
+        "description": "mean magnetic field strength over a star's surface",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "star.surface_field",
         "range": null
       },
       {

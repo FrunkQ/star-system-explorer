@@ -57,13 +57,15 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
 export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
-export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
+export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, PROMINENCE_WINDOW_S, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
 export { CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
 export { addEjections, capFlashes, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
 export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
 export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
+export { addProminences, narrateProminences, PROMINENCE_REFERENCES, PROMINENCE_SCALE, prominenceColour, prominencePoints, prominenceShown, prominencesAt } from "./star-prominences.ts";
+export type { Prominence, ProminenceNow } from "./star-prominences.ts";
 export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, drawnCellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, plateCellAngle, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
