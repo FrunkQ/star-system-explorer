@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `views/black-hole/src/picture.ts` `layersFor` exposure | Visible in natural colour is exposed as True is (a white surface in the Sun's light at 1 au shows at 1) and dimmed only by as much as the brightest point is brighter, the dimming said in a chip; every other band is mapped to its own brightest. The finish's glare is off in this view | A fed disc is tens of thousands of times the Sun's surface; glare spread over a degree-wide field washes the whole frame | Glare scaled to the field of view in the shared finish | presentation, XO4 |

@@ -1,0 +1,26 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.black-hole",
+  "label": "Black holes",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "description": "A black hole drawn from the real bending of light: the shadow, the thin ring, the far side of the disc bent over the top, the side coming towards you brighter, in every band (XO4).",
+  "items": [
+    {
+      "view": "sse.view.black-hole",
+      "area": "chart"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "galaxy",
+      "group": "look",
+      "label": "Black holes",
+      "order": 3,
+      "hint": "A fed stellar black hole, a quasar and the galaxy's starved centre, drawn from the bending of light"
+    }
+  ]
+}
