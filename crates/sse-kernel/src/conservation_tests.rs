@@ -107,14 +107,14 @@ fn history(seed: u64) -> (Kernel, Vec<i64>, std::collections::BTreeMap<String, u
             2 | 3 => json!({"op":"release_construct","address":a,"at_s":t}),
             4 => {
                 let mut q = json!({"op":"split_construct","address":a,"at_s":t});
-                if d.next() % 2 == 0 {
+                if d.next().is_multiple_of(2) {
                     q["parts"] = json!([format!("p{}", d.next() % 3)]);
                 } else {
                     q["mass_kg"] = ((d.next() % 20_000) as f64 + 0.25).into();
                 }
                 q
             }
-            5 if !docks.is_empty() && d.next() % 2 == 0 => {
+            5 if !docks.is_empty() && d.next().is_multiple_of(2) => {
                 let (h, w): (String, String) = d.pick(&docks).clone();
                 json!({"op":"join_constructs","address":h,"with":w,"how":"undock","at_s":t})
             }
