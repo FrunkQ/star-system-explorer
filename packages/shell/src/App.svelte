@@ -1354,11 +1354,14 @@
   $effect(() => {
     if (solNow === null && adoptedSystems.some((x) => x.system === SOL)) solSheet().catch(() => {});
   });
+  // A door entering a system holds the stage's heavy reads until it is in (ws.held).
+  let entering = $state(false);
   async function openSol() {
     const s = session;
     if (!s) return;
     if (!adoptedSystems.some((x) => x.system === SOL)) {
       whatNote = "Entering the Solar System from its catalogue…";
+      entering = true;
       try {
         const sheet = await solSheet();
         for (const b of solBatches(sheet, SOL).batches) {
@@ -1367,6 +1370,8 @@
         }
       } catch (e) {
         return void (whatNote = `Could not open the Solar System: ${e instanceof Error ? e.message : String(e)}`);
+      } finally {
+        entering = false;
       }
       solEntered = solNow;
       adoptedSystems = [...adoptedSystems, { system: SOL, title: SOL_TITLE }];
@@ -1381,6 +1386,9 @@
   // "Sol today" folder> opens the Solar System and lands in Roll call, with no start sheet. A linked place (#...) wins.
   const spaceflightDoor = packFolder() !== null && typeof location !== "undefined" && !parsePlaceHash(location.hash);
   let startOpen = $state(!spaceflightDoor && typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
+  $effect(() => {
+    ws.held = startOpen || entering;
+  });
   let spaceflightOpened = false;
   $effect(() => {
     if (!spaceflightDoor || spaceflightOpened || !session) return;

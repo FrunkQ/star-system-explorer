@@ -28,6 +28,21 @@ try {
     const browser = await { chromium, firefox, webkit }[name].launch();
     const errors = [];
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+    // The kernel calls the page makes, by op (AF3): none of the True view's heavy reads while the start sheet covers it.
+    await context.addInitScript(() => {
+      window.__ops = [];
+      const post = Worker.prototype.postMessage;
+      Worker.prototype.postMessage = function (m, ...rest) {
+        try {
+          const d = typeof m === "string" ? JSON.parse(m) : m;
+          const r = d && typeof d.request === "string" ? JSON.parse(d.request) : d?.request;
+          if (r && typeof r === "object") window.__ops.push(String(r.op ?? "") + (r.tiles ? "+tiles" : ""));
+        } catch {
+          /* not a kernel call */
+        }
+        return post.call(this, m, ...rest);
+      };
+    });
     const gm = await context.newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
     const store = () => gm.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter((k) => k.startsWith("sse4.")).map((k) => [k, localStorage.getItem(k)])));
@@ -37,6 +52,11 @@ try {
     await gm.goto(base);
     await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
     assert.ok(await gm.locator("[data-start-fresh]").isVisible(), "the start sheet offers Start fresh");
+    await gm.waitForTimeout(3000);
+    const ops = await gm.evaluate(() => window.__ops);
+    assert.ok(ops.length > 0, "kernel calls are seen");
+    const heavy = ops.filter((op) => op === "resolved_system+tiles" || op === "weather" || op === "sky_from_here");
+    assert.deepEqual(heavy, [], "no True faces or sky are read behind the start sheet (they held the Solar System door up to 27 s)");
     await shot(gm, "af1-start-sheet");
 
     // Open the Solar System: the kept campaign names the sheet it entered Sol from.
