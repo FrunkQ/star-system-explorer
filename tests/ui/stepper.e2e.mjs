@@ -5,6 +5,7 @@
 // its name. On Explore the place line is as it was, without Out and In.
 // Fill the screen (F) on Run: the picture alone, the bar back at the top edge, Esc brings everything back.
 // The phone's Run frame: the stepper as its own row, the rail folded, the clock one row, the card a sheet on a press.
+// See as on Run: Game master, the table and each role only.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -35,6 +36,22 @@ try {
     const nav = page.locator("nav.place");
     const scale = () => nav.getAttribute("data-scale");
     const atScale = (s) => page.waitForFunction((s) => document.querySelector("nav.place")?.getAttribute("data-scale") === s, s, { timeout: 15000 });
+
+    // See as (design 3.1): Explore offers every lens and Make your own; Run three kinds only, Game master first.
+    const lensSel = page.locator("select[aria-label='Lens']");
+    const lensOpts = () => lensSel.locator("option").evaluateAll((os) => os.map((o) => o.value));
+    await desk(page, "Explore");
+    const exploreOpts = await lensOpts();
+    assert.ok(exploreOpts.includes("basic") && exploreOpts.includes("building") && exploreOpts.includes("__make"), `Explore: every lens (${exploreOpts})`);
+    await desk(page, "Run");
+    const runOpts = await lensOpts();
+    assert.equal(runOpts[0], "running");
+    assert.ok(runOpts.slice(1).every((v) => v === "players" || v.startsWith("players.")), `Run: Game master, the table, each role (${runOpts})`);
+    assert.match(await lensSel.locator("option").first().innerText(), /^Game master/);
+    await lensSel.selectOption("players");
+    await page.waitForFunction(() => document.querySelector("main.stage")?.getAttribute("data-lens") === "players");
+    await lensSel.selectOption("running");
+    await page.waitForFunction(() => document.querySelector("main.stage")?.getAttribute("data-lens") === "running");
 
     // Explore: the place line as it was.
     await desk(page, "Explore");

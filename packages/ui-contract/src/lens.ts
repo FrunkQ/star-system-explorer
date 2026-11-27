@@ -140,6 +140,16 @@ export function playerLenses(setup: ObserveSetup | undefined, plan?: SeatPlan): 
   return out;
 }
 
+/**
+ * See as on the Run desk (three desks design section 3.1): three kinds only, because "What do they see?" is the one lens
+ * question asked at the table. The game master (the Running lens, named for who it is), the table, and each role that
+ * keeps its own knowledge. Data views, the other job lenses, packs' and your own stay on Explore and Build.
+ */
+export function tableLenses(all: readonly Lens[]): Lens[] {
+  const gm = all.find((l) => l.id === "running");
+  return [...(gm ? [{ ...gm, label: "Game master" }] : []), ...all.filter((l) => l.id === "players" || l.id.startsWith("players."))];
+}
+
 export function hasLayer(l: Lens | undefined, id: LayerId): boolean {
   return !l || l.layers.includes(id);
 }

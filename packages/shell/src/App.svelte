@@ -55,7 +55,7 @@
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
-  import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, allLenses, tableLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { OBJECT_ACTIONS, actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
@@ -739,7 +739,9 @@
     const st = s?.stack();
     return allLenses(mine, st ? [...st.base, ...st.added] : [], st ? observeOf(st.base)?.setup : undefined, share?.state.plan);
   });
-  const lens = $derived(lenses.find((l) => l.id === lensId) ?? lenses.find((l) => l.id === deskLensDefault(desk)) ?? lenses.find((l) => l.id === defaultLens(session?.device()?.tier))!);
+  // On Run, See as offers three kinds only (design 3.1): an override kept from before that is not one of them gives way.
+  const lensChoices = $derived(partShows("see-as", desk, "every-lens") ? lenses : tableLenses(lenses));
+  const lens = $derived(lensChoices.find((l) => l.id === lensId) ?? lensChoices.find((l) => l.id === deskLensDefault(desk)) ?? lenses.find((l) => l.id === defaultLens(session?.device()?.tier))!);
   $effect(() => {
     ws.lens = lens;
   });
@@ -1800,8 +1802,8 @@
       "]": () => cycle(1),
       "[": () => cycle(-1),
       l: () => {
-        const i = lenses.findIndex((x) => x.id === lens.id);
-        chooseLens(lenses[(i + 1) % lenses.length]!.id);
+        const i = lensChoices.findIndex((x) => x.id === lens.id);
+        chooseLens(lensChoices[(i + 1) % lensChoices.length]!.id);
       },
       b: () => document.querySelector<HTMLElement>("[data-bookmarks] > button")?.click(),
       f: () => canFill && setFilled(!filled),
@@ -1862,10 +1864,10 @@
         <span class="lens-k">See as</span>
         <select value={lens.id} onchange={(e) => { chooseLens(e.currentTarget.value); e.currentTarget.value = lens.id; }} aria-label="Lens" data-lens={lens.id}>
           {#each [["shipped", "For the job"], ["mine", "Your own"], ["pack", "From packs"], ["players", "As players see it"]] as [o, group] (o)}
-            {@const ls = lenses.filter((x) => x.origin === o)}
+            {@const ls = lensChoices.filter((x) => x.origin === o)}
             {#if ls.length}<optgroup label={group}>{#each ls as l (l.id)}<option value={l.id}>{l.label}{l.id === deskLensDefault(desk) ? " (this desk)" : ""}</option>{/each}</optgroup>{/if}
           {/each}
-          <option value="__make">{lens.origin === "mine" ? "Change this lens…" : "Make your own…"}</option>
+          {#if partShows("see-as", desk, "make")}<option value="__make">{lens.origin === "mine" ? "Change this lens…" : "Make your own…"}</option>{/if}
         </select>
       </label>
     {/if}
