@@ -8,7 +8,7 @@ import { gmSeat } from "../src/seat.ts";
 import { readSol, solBatches, solSourceText } from "../src/sol.ts";
 import { resultsOf } from "../src/handles.ts";
 import { commitFields } from "../src/edit.ts";
-import { STAR_KINDS, birthMass, kindMass, readMassStrip, spectralLetter, starEdits, systemAgeYr, type Describe } from "../src/star-chooser.ts";
+import { STAR_KINDS, birthMass, kindMass, letterOf, readMassStrip, starEdits, systemAgeYr, type Describe } from "../src/star-chooser.ts";
 import { plainWorkspace } from "./workspace.ts";
 import { nodeKernel } from "./node-kernel.ts";
 
@@ -16,12 +16,24 @@ const root = new URL("../../../", import.meta.url);
 const text = (p: string) => readFileSync(new URL(p, root), "utf8");
 const kind = (id: string) => STAR_KINDS.find((k) => k.id === id)!;
 
-test("spectral letters from the temperature; none for a remnant", () => {
-  assert.equal(spectralLetter(5772), "G");
-  assert.equal(spectralLetter(3500), "M");
-  assert.equal(spectralLetter(25000), "B");
-  assert.equal(spectralLetter(40000), "O");
-  assert.equal(spectralLetter(20000, "white-dwarf"), null);
+test("spectral letters are the kernel's class; none for a remnant", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" });
+    const sun = await s.describeStar(1, 4.5673e9);
+    assert.ok(sun.ok);
+    assert.match(sun.star.now.class.code, /^G\d V$/, "a sun-like star at the Sun's age is a G dwarf");
+    assert.equal(sun.star.now.class.family, "main-sequence");
+    assert.equal(letterOf(sun.star), "G");
+    const red = await s.describeStar(0.3, 4.5673e9);
+    assert.ok(red.ok && letterOf(red.star) === "M");
+    const wd = await s.describeStar(1, 1.3e10);
+    assert.ok(wd.ok && wd.star.now.phase === "white-dwarf");
+    assert.equal(letterOf(wd.star), null);
+    assert.equal(wd.star.now.class.family, "white-dwarf");
+  } finally {
+    await k.close();
+  }
 });
 
 test("the strip and the kinds at the Sun's age, and a young system's", async () => {

@@ -15,10 +15,10 @@ Eighteen `ship.*` quantity kinds described in `sse-atoms` `KIND_DESCRIPTIONS`. A
 
 ## Golden
 
-Changes on purpose, in the core lane (coordinator's order): `tests/golden/contract-reach.txt` gains four `follows` lines, one per block; `packs/base-physics/pack.json` regenerated (`SSE_BLESS=1 cargo test -p sse-atoms`). `contract.jsonl` does not move: the contract runs on the frozen fixture `tests/fixtures/packs/base-physics.json`, which is left alone. No world's values change. First-wave atom count 182 to 186 (`handover/packages/P1.md`).
+Changes on purpose, in the core lane (coordinator's order): `tests/golden/contract-reach.txt` gains four `follows` lines, one per block; `packs/base-physics/pack.json` regenerated (`SSE_BLESS=1 cargo test -p sse-atoms`). `contract.jsonl` does not move: the contract runs on the frozen fixture `tests/fixtures/packs/base-physics.json`, which is left alone. No world's values change.
 
 ## What it does not do yet
 
 - No op reads them yet: the builder (CM14) asks them for each tank and dish it shows, and the palette's generic tanks and dish name them under `to_read` once part 1 is on main.
 - Boil-off itself (heat leak through the insulation, then latent heat) and insulation mass per area are not blocks yet; the split block gives the surface they scale with.
-- Book addresses are Open Library ISBN pages, not checked from this container (no outbound access); the three new papers are on the citation master list, unchecked.
+- Book addresses are Open Library ISBN pages, not checked from this container (no outbound access); the three new papers are in `handover/citations/papers/`, unchecked.

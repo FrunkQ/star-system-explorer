@@ -1,0 +1,1 @@
+{"key": "kasting1993", "citation": "Kasting 1993", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/early_tests.rs"], "claims": ["// inventory (Kasting 1993; Venus: Pioneer Venus and Venera)."], "tier": 3}

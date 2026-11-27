@@ -8,7 +8,7 @@ use sse_weather::{Conditions, Date, Pin, WeatherBlock};
 
 type Out = Result<Response, Response>;
 
-/// What `want` may be, as the refusal names them (kept as the core golden has it; `glint` is also taken).
+/// What `want` may be, as the refusal names them.
 const WANTS: &str = "climate, systems, field, patch, glint, report, column or sound";
 
 fn to_json<T: serde::Serialize>(t: &T) -> serde_json::Value {

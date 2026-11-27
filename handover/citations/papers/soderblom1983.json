@@ -1,0 +1,1 @@
+{"key": "soderblom1983", "citation": "Soderblom 1983", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-weather/src/aerosols.rs"], "claims": ["//!   Soderblom 1983)."], "tier": 3}
