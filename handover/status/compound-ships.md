@@ -7,4 +7,4 @@ Only the owner thread edits this file. No package is started until Alex answers.
 | Package | State | Log |
 |---|---|---|
 | CM0 make Sol today installable | proposed | |
-| CM1 to CM15 | proposed (design section 13) | |
+| CM1 to CM18 | proposed (design section 13) | |

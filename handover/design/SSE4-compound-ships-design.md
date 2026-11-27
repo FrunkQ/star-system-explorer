@@ -355,6 +355,42 @@ Every primitive carries **the year it first flew** (or was first built at workin
 
 So the palette runs continuously from 1957 to far future, which is the bridge Alex named: the same mounts, the same budgets and the same canvas, with the figures moving from flown to predicted to the setting's own tech.
 
+## 8B. One builder for every ship, a part editor, and parts in the shop (Alex, 27 Nov 00:40)
+
+Alex: "we will replace the existing ship generation system with this. I think this is a really good avenue for the shop to be able to provide additional parts and sets. Somehow provide the 3D imagery and clip-on points, maybe a separate editor for them, so people can create them, upload them, texture them, and have compound constructs, packs of them, as they construct their favourite universes using the snap-together tools. So effectively allowing them to build their own Lego blocks and put them on the store alongside some ships made using them."
+
+### 8B.1 The builder replaces the generator
+
+Today `designShip` invents a layout from a ship's needs (tanks from propellant, radiators from waste heat, shields, legs) in a style. After CM, **every ship is parts clipped at connection points**, and the generator's job changes rather than vanishing:
+
+- **"Build it for me"** is the generator rewritten as an assembler: from the same needs and style it picks parts from the palette (for the setting's era and tech) and clips them together, then hands the result to the builder like any hand-built ship. Packs, Orac, procedural NPC fleets and a GM in a hurry all use it, so a fleet of a hundred ships still costs one press.
+- **What it keeps:** sizing by physics (capabilities drive form), styles per culture, the saved recipe and seed, remix. **What goes:** layouts no part library could build. Old saves keep their old recipe and draw as before until the GM presses "Rebuild from parts", which is offered, never forced (steer, never stop).
+- Stations follow (the station designer becomes modules from the palette).
+
+### 8B.2 The part editor
+
+A separate Edit-desk tool for making one part, the "Lego block". A part is:
+
+| Piece | What it holds | Rule |
+|---|---|---|
+| **Figures** | mass, volume, what it does (tank of a substance, engine, habitat volume, power, radiator area, shield), with each figure's source and mark (cited, authored, predicted) | The physics reads only these. A part with no figures is a decoration and says so |
+| **Connection points** | each with a place it offers (front, behind, hull, bay mouth, port), size, what lines it can carry (propellant, power, air, people), and which way it faces | Clipping is bounded by these (8A.4) |
+| **Shape** | either built from the shape hints (lathe profile, panel, truss, dish, box; RS6) or an uploaded 3D model | One shape, drawn the same in 3D and as the 2D picture's outline |
+| **Surface** | textures and finishes, paint areas, decal areas (name and logo, 8A.4) | Paint is a real coating (absorptance and emittance) |
+| **Year and maker** | first flown or built, the civilisation, and for predicted parts the series it came from | Feeds the era control (8A.5) |
+
+Physics checks the shape against the figures and **warns, never refuses**: a tank whose model cannot hold its stated volume of its substance, an engine whose nozzle is smaller than its thrust needs, a habitat smaller than its berths. The warning says which number disagrees and offers to resize the model or the figure.
+
+**Uploads.** People can upload a 3D model (glTF only, the one open standard the renderer already reads) and its textures for a part's shape. Uploads are untrusted files: size limits (a pack value), parsed in a worker with no script, and stripped to geometry, materials and textures. This revisits the 23 Nov choice "physics hulls now, uploads later (until packs can carry files)": packs now carry files, so uploads move from later to this package, and the physics still makes the figures.
+
+### 8B.3 Parts packs and ship packs in the shop
+
+- A **parts pack** is a set of parts (figures, connection points, shapes, surfaces) and, optionally, **ships and stations built from them** as compound templates. It is an ordinary `sse.pack/1` on Explorers, stacked like any other.
+- Parts in one pack can clip to parts in another, because connection points are described by place, size and lines, never by pack. A size standard (port sizes as a short list of pack values, the station designer's docking sizes as the start) keeps parts from different makers fitting.
+- **Paid packs** use the paid packs design (Stripe Connect, Alex keeps 20%). Its licence rule applies unchanged: a price is refused while any asset is non-commercial, uncredited or "used with permission" without a commercial statement. Real parts built from GCAT figures are CC BY 4.0, which allows sale with the credit; anything with Gaia or Hipparcos values in it is non-commercial and cannot be sold (the 26 Nov finding).
+- A ship built from a paid pack's parts can be shared: someone without the pack sees the ship's picture and figures as adopted, and a line saying which pack its parts come from, exactly as the paid packs design already handles a campaign export.
+- The base app ships a free set: the real parts of every decade (8A.5) from the spaceflight pack's sources, plus a small generic far-future set.
+
 ## 9. The real craft, from the one mechanism
 
 None of these needs a special. The left column is what the pack needs (RS feasibility sections 6 and 8); the right is how CM gives it.
@@ -400,7 +436,7 @@ Phone: the Carried fold is a list; the sequence strip scrolls sideways; the 2D p
 | The staging block and the sequence, the planner flying it (CM5, CM6) | Damage that breaks a mount (4.2) |
 | The designer's placement, bays, ports and the 2D sequence strip (CM7, CM8) | Interior views of bays (Alex: no deck plans) |
 | The real pack's showcase craft as compounds, and the "SSE4 says" line for them (CM9, CM10; with RS5 and RS7) | Economy autopilots running carriers and shuttles (4.1) |
-| Stations and depots, the palette, the 2D builder, parts by decade (CM12 to CM15) | Building from parts in play, at a shipyard, over time (4.1 economy) |
+| Stations and depots, the palette, the builder, parts by decade, the generator as assembler, the part editor, parts packs (CM12 to CM18) | Building from parts in play, at a shipyard, over time (4.1 economy) |
 | Making the pack installable (CM0) | Launch-and-recovery tactics in combat (4.2) |
 
 **Game-pack features, flagged for Alex** (4.0's only game pack is Traveller): carriers, small craft, drop tanks and launch tubes are common in Traveller's ship rules (from memory, unverified). The **mechanism** (mounts, bays, releases, capture, drop tanks as a propellant line behind) is base and general. Any **Traveller rule** on top (hangar capacity in displacement tons, launch and recovery rates per combat round, the cost of a docking clamp, drop tank prices) is a game-pack feature and goes to Alex before it is built (question 10). It never carries the TAS logo.
@@ -433,8 +469,11 @@ Phone: the Carried fold is a list; the sequence strip scrolls sideways; the 2D p
 | **CM13** | The palette: primitives from the reference and spaceflight packs with real figures, first-flight year and source; splitting a tank into N with its cited wall and surface blocks | CM1, RS2 | pack thread with the data sheet thread | none |
 | **CM14** | The builder on the Edit desk, 2D and freely rotating 3D over one recipe: parts clip at connection points and turn about them, promote to construct, paint and finishes feeding the heat balance, name and logo decals, markings from the record, live totals, fit notes, recipe save; phone sheet | CM7, CM8, CM13 | renderer | none |
 | **CM15** | Parts by decade and predicted: the era control; trend fits per figure toward the future-tech ceilings, marked `predicted`, as one cited editable block | CM13, FT1 | future-tech owner with the kernel | none |
+| **CM16** | "Build it for me": the ship generator rewritten as an assembler that picks and clips palette parts from needs, era and style; old recipes kept with "Rebuild from parts" offered; stations the same | CM13, CM14 | renderer | none |
+| **CM17** | The part editor: figures, connection points, shape from hints or an uploaded glTF, surfaces and decal areas, year and maker; shape-against-figures warnings; upload limits and safe parsing | CM13, RS6 | renderer with the pack thread | none |
+| **CM18** | Parts packs on Explorers: parts and compound templates as pack content, the port size standard, paid listings under the existing licence check, sharing ships whose parts are in a paid pack | CM17, PP (paid packs) | Explorers and pack threads | none (Explorers storage; any change touching published worlds goes to Alex) |
 
-Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (the three that join up what exists), then CM3 to CM6, then CM8 to CM11, then CM12 to CM15 (CM13 can start early, since it is pack data). RS5 (ascent) stays its own package in the travel thread and should be designed after CM5, because the ascent block reads the compound's mass table.
+Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (the three that join up what exists), then CM3 to CM6, then CM8 to CM11, then CM12 to CM15 (CM13 can start early, since it is pack data), then CM16 to CM18. RS5 (ascent) stays its own package in the travel thread and should be designed after CM5, because the ascent block reads the compound's mass table.
 
 ## 14. Questions for Alex, each with a recommendation
 
@@ -456,6 +495,9 @@ Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (
 16. **Parts by decade:** every primitive carries its first-flight year; future decades are predicted from the flown series bent toward the future-tech ceilings, marked `predicted`. Recommended: yes; it is the bridge from tin cans to far-future ships with no hand-typed future figures.
 17. **ANSWERED yes, 27 Nov 00:31 UTC ("Yes on all! If we can get the right shader this could look so cool").** **Name and logo on the hull,** the name kept in step with the construct's name and a logo from the starter set, the civilisation or the GM's own pictures. Recommended: yes, in CM14.
 18. **ANSWERED yes, same message.** **The extra ideas:** markings read from the record (registry, flag, first-flight date), wear from the ship's own history (shield darkening per entry, sun fading), and lights driven by who is aboard and the power ledger. Recommended: yes to markings and lights in CM14; wear later, after the renderer's merged drawing path, and never in the real pack where the record does not show it.
+19. **Replace the ship generator with the builder,** keeping the generator as "Build it for me", an assembler of palette parts, so procedural fleets still cost one press; old saves draw as before until rebuilt. Recommended: yes.
+20. **A separate part editor,** with uploads of glTF models and textures for a part's shape, while the physics reads only the part's figures and warns when the shape disagrees. Recommended: yes; it brings forward the 23 Nov "uploads later" now that packs carry files.
+21. **Parts packs and ship packs in the shop,** free or paid under the existing licence check, with a shared port size standard so parts from different makers fit. Recommended: yes; the base app ships the real parts of every decade free.
 
 ## 15. Not in this design
 
