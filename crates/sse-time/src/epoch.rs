@@ -457,11 +457,15 @@ impl<'a> Ageing<'a> {
                     Phase::WhiteDwarf => ("planetary_nebula", format!(
                         "{} throws off its remaining envelope as a planetary nebula; the {:.3} solar-mass carbon-oxygen core is left as a white dwarf (Cummings et al. 2018). With {:.3} of its {:.3} solar masses gone, every surviving orbit has widened by {:.2} times. The giant reached {:.2} au at its largest. The newborn white dwarf is at {:.0} K and glows {}",
                         self.spec.name, l.remnant_mass, m0 - l.remnant_mass, m0, m0 / l.remnant_mass, r_max, sn.teff, sn.colour)),
+                    Phase::WolfRayet => ("stripped", format!(
+                        "{} has grown brighter than any cool supergiant can be ({:.0} times the Sun, the Humphreys-Davidson limit); eruptions and winds strip its hydrogen envelope and it burns on as a small, hot Wolf-Rayet star (Humphreys and Davidson 1979)",
+                        self.spec.name, sse_formation::lifeline::L_HD)),
                     _ => ("phase", format!("{} is now a {}", self.spec.name, sn.phase)),
                 };
                 let at = match ph {
                     Phase::HertzsprungGap => l.t_tms,
                     Phase::Giant => l.t_bgb,
+                    Phase::WolfRayet => l.t_strip,
                     _ => l.t_end,
                 };
                 ev(

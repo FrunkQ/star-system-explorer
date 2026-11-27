@@ -19,7 +19,7 @@
   import { onDestroy, untrack } from "svelte";
   import { galaxyFace, glowPicture, SPACE_CSS } from "../../../renderer/src/index.ts";
   import { galaxyTypePicture } from "../../../renderer/src/galaxy-types.ts";
-  import { FREE_START, NEARBY_REACHES, biggestNeighbours, foamCells, turnOf, firstInfall, groupEdge, pathAt, satelliteStateWords, streamArc, boundPairs, meetWords, cellHalo, galaxyDistanceWords, galaxyColour, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, sci, withinReach, type HaloCell, type NearGalaxy, type NearbyRead, type NearbyReach, type NearbySeen, type NearbyTurn, type SatellitePath, type GalaxyChart, type ViewSession } from "../../../ui-contract/src/index.ts";
+  import { FREE_START, NEARBY_REACHES, biggestNeighbours, foamCells, turnOf, firstInfall, pathAt, satelliteStateWords, streamArc, boundPairs, meetWords, cellHalo, galaxyDistanceWords, galaxyColour, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, sci, withinReach, type HaloCell, type NearGalaxy, type NearbyRead, type NearbyReach, type NearbySeen, type NearbyTurn, type SatellitePath, type GalaxyChart, type ViewSession } from "../../../ui-contract/src/index.ts";
 
   let { session, seen, scale, hud, look = "3d", onchart }: { session: ViewSession; seen: NearbySeen; scale: "real" | "readable"; hud: boolean; look?: "3d" | "true"; onchart: (address: string) => void } = $props();
 
@@ -192,8 +192,8 @@
     }
     return { inn, torn, merged };
   });
-  // The group's edge (HUD): the zero-velocity sphere of the mass inside it, around home.
-  const edge = $derived(read && read.home_halo_msun ? groupEdge(read.home_halo_msun, read.galaxies, read.t_gyr) : null);
+  // The group's edge (HUD): the zero-velocity sphere of the mass inside it, around home, worked out by the kernel.
+  const edge = $derived(read?.group_edge ?? null);
   // Drawing coordinates to a tenth of a page unit (an SVG path, not a figure shown).
   const px = (v: number) => Math.round(v * 10) / 10;
   const gyrWords = (t: number) => `${Math.round(t * 10) / 10} Gyr after the Big Bang`;

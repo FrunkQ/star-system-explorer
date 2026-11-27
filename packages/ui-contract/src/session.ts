@@ -184,6 +184,8 @@ export interface ViewSession {
   surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
+  /** A world's heat books over its life (track HF's screen): the quick survey's envelope with its core history, the same numbers that drive the world; GM only. */
+  surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
@@ -839,6 +841,15 @@ export class Session implements ViewSession {
     if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const c = (r as unknown as { survey?: { climate?: import("./climate.ts").ClimateSummary } }).survey?.climate;
     return c ? { ok: true, climate: c } : { ok: false, code: "no_climate", message: "this world has no climate in its survey" };
+  }
+
+  async surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
+    // The same quick survey the climate reads (cached by the kernel): its envelope carries the core history.
+    const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit: 1 });
+    if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const e = (r as unknown as { survey?: { envelope?: import("./heat-flow.ts").HeatEnvelope } }).survey?.envelope;
+    return e ? { ok: true, envelope: e } : { ok: false, code: "no_envelope", message: "this world has no envelope in its survey" };
   }
 
   /** The open universe as a document to keep (kernel `export_chronicle`, `sse.chronicle-export/1`); GM only. Open branches are not in it. */

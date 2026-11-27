@@ -25,6 +25,7 @@ sheet is filled, and each sheet row records that check.
 | hitran2020 | Gordon, I. E. et al. 2022, JQSRT 277, 107949: The HITRAN2020 molecular spectroscopic database. doi:10.1016/j.jqsrt.2021.107949 | gas absorption bands | verified (metadata) | ODU Digital Commons record chemistry_fac_pubs/219 |
 | adams2008 | Adams, F. C. 2008, JCAP 08, 010: Stars in other universes, stellar structure with different fundamental constants. doi:10.1088/1475-7516/2008/08/010 | which blocks follow a changed constant (design section 7A) | verified (metadata) | arXiv 0807.3697 abstract page, which gives the DOI |
 | nist-webbook | NIST Chemistry WebBook, SRD 69. https://webbook.nist.gov/chemistry/ | gas phase points, formation enthalpies | textbook | standard reference database; per-substance pages checked when each row is filled |
+| stephan2021-ice | Stephan, K., Ciarniello, M., Poch, O., Schmitt, B., Haack, D. and Raponi, A. 2021, Minerals 11, 1328: VIS-NIR/SWIR spectral properties of H2O ice depending on particle size and surface temperature. doi:10.3390/min11121328; data SSHADE/CSS doi:10.26302/SSHADE/EXPERIMENT_OP_20201223_001 | `water-ice-fine` and `water-ice-coarse` reflectance, 450 to 1000 nm at 100 K (MP37) | verified (metadata) | DOI resolves to the MDPI article (vol. 11, issue 12, article 1328, CC BY); numbers copied from SSHADE's plot files for spectra SPECTRUM_OP_20201223_301 and _304, 26 Nov 2026; viewing geometry (i 0, e 30) read from the SSHADE spectrum page |
 
 ## A2. Further sources the first-wave sheet cites
 

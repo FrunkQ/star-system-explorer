@@ -30,6 +30,7 @@
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
   import BodyMag from "./BodyMag.svelte";
+  import BodyHeat from "./BodyHeat.svelte";
   import { decksKept, isDecks, loadDecks, loadSurface, surfaceKept, type Decks, type Surface } from "./surface.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -420,8 +421,10 @@
       // Only a turn the runtime made itself (its spin) comes back: a late echo of any turn this view sent must not undo
       // a newer one (two quick key presses lost the second). The runtime can repeat its last status after a newer turn
       // is sent but before it is drawn, so every sent turn not yet seen back is remembered, not only the last.
+      // The newest echo seen is kept too: the runtime can repeat it while a newer turn is still on its way, and that
+      // repeat must not undo the newer turn either (seen on CI: two Shift+ArrowRight presses read 45, not 90).
       const echo = sentLons.indexOf(st.lon);
-      if (echo >= 0) sentLons = sentLons.slice(echo + 1);
+      if (echo >= 0) sentLons = sentLons.slice(echo);
       else if (st.lon !== lon) lon = st.lon;
     });
     run = r;
@@ -741,6 +744,10 @@
     <div class="cut">
       <Cutaway {ctx} {scene} {params} />
     </div>
+  {/if}
+  {#if params.heat !== false && subject && subject.kind !== "star"}
+    <!-- Energy flow (track HF's screen): the world's heat books over its life, from its core history, in the Power card's grammar. -->
+    <BodyHeat session={ctx.session} system={scene.system} address={subject.address} label={subject.label} depth={ws.depth ?? "science"} />
   {/if}
 </div>
 
