@@ -583,6 +583,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         lon: Option<f64>,
+        /// `want: "patch"`: half the patch's width, km, round `lat`, `lon`.
+        #[serde(default)]
+        #[ts(optional)]
+        half_km: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
@@ -776,7 +780,9 @@ pub enum Request {
     /// activity level, cycle, spots and coronal X-rays, the state at `at_s`
     /// (default: the star's age), and, with `window`, its flares and mass
     /// ejections as keyed events, each ejection hitting or missing the
-    /// star's `targets` by geometry.
+    /// star's `targets` by geometry. With `prominences` ({from_s, to_s}),
+    /// each star's field and corona and the prominences alive in that window
+    /// (SG6): cool gas held in its loops, or slung round a fast spinner.
     ReadActivity {
         #[ts(type = "unknown[]")]
         stars: Vec<serde_json::Value>,
@@ -789,6 +795,9 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         window: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        prominences: Option<serde_json::Value>,
     },
     /// What stops the wind at each body (MF6 part 1): for each of `bodies`
     /// (radius, dipole moment, air, the star's wind there, the host for a
