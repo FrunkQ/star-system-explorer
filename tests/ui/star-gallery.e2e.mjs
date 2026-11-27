@@ -74,6 +74,39 @@ try {
     await g.locator('[data-star-class="star/giant/K"]').click();
     await card.locator('[data-zoom="2"]').click();
     await shot(gm, `stars-red-giant-x2-${vp}`);
+
+    // One star's life (Alex, 26 Nov): the red giant followed back to its birth, its stages in the life line's order,
+    // Earth's orbit to the same scale; then a heavy star, whose remnant is not drawn yet.
+    await card.locator("[data-star-follow]").click();
+    const life = gm.locator("[data-star-life]");
+    await life.waitFor();
+    await gm.waitForFunction(() => document.querySelector("[data-star-life]")?.getAttribute("data-read") === "done", null, { timeout: 60000 });
+    const phases = await life.locator("[data-life-stage]").evaluateAll((els) => els.map((e) => e.dataset.lifeStage));
+    console.log(vp, "life of 1 solar mass", JSON.stringify(phases));
+    assert.ok(phases.length >= 4 && phases[0] === "pre-main-sequence" && phases.includes("main-sequence") && phases.at(-1) === "white-dwarf", phases.join(","));
+    await life.locator('[data-life-stage="main-sequence"]').click();
+    assert.match(await life.locator("[data-life-now]").innerText(), /main sequence/);
+    await shot(gm, `life-sun-main-${vp}`);
+    await life.locator('[data-fit="star"]').click();
+    await shot(gm, `life-sun-main-star-${vp}`);
+    await life.locator('[data-fit="life"]').click();
+    await life.locator('[data-life-stage="giant"]').click();
+    await life.locator("input[type=range]").nth(1).evaluate((el, v) => ((el.value = String(v)), el.dispatchEvent(new Event("input", { bubbles: true }))), phases.indexOf("giant") + 0.97);
+    // The giant's tip is the giant's own size, never blended towards the white dwarf after it.
+    assert.match(await life.locator("[data-life-scale]").innerText(), /Its radius is 0\.[5-9]/);
+    await shot(gm, `life-sun-giant-tip-${vp}`);
+    await life.locator('[data-fit="earth"]').click();
+    await shot(gm, `life-sun-giant-earth-${vp}`);
+    await life.locator("[data-life-mass]").evaluate((el) => ((el.value = String(Math.log10(20))), el.dispatchEvent(new Event("input", { bubbles: true })), el.dispatchEvent(new Event("change", { bubbles: true }))));
+    await gm.waitForFunction(() => document.querySelector("[data-star-life]")?.getAttribute("data-read") === "done" && document.querySelector('[data-life-stage="neutron-star"],[data-life-stage="black-hole"]'), null, { timeout: 60000 });
+    await life.locator('[data-fit="life"]').click();
+    await life.locator('[data-life-stage="giant"]').click();
+    await shot(gm, `life-20-giant-${vp}`);
+    await life.locator("[data-life-stage]").last().click();
+    await life.locator("[data-not-drawn]").first().waitFor();
+    await life.locator("[data-life-play]").click();
+    await shot(gm, `life-20-playing-${vp}`);
+    await gm.locator('[data-star-view="kinds"]').click();
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "looking never changes the universe");
 
     // The gallery as the star picker (Alex, 26 Nov): Make a system › Grow a new system › Choose the star.

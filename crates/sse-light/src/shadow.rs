@@ -65,12 +65,9 @@ pub struct ShadowLight {
     pub references: Vec<Reference>,
 }
 
-fn block(id: &str) -> Result<&'static dyn Atom, String> {
-    sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .map(|a| a as &dyn Atom)
-        .ok_or_else(|| format!("base formula block {id} is missing"))
+fn block(id: &str) -> Result<std::sync::Arc<dyn Atom>, String> {
+    // ER2: the block in force, with the settings this universe gives it.
+    sse_physics::block(id).ok_or_else(|| format!("base formula block {id} is missing"))
 }
 
 fn run(id: &str, inputs: &[f64]) -> Result<f64, String> {

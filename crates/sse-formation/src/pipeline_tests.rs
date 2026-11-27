@@ -90,3 +90,40 @@ fn golden() {
         &crate::scenario::pipeline_golden(),
     );
 }
+
+/// ER2: the planet-heat flow is compiled against the blocks in force and
+/// kept with the physics in force, so a pack that edits the radiogenic
+/// heating block's potassium setting moves every solid world's heat, and the
+/// shipped answer is unchanged outside it.
+#[test]
+fn a_block_edit_in_force_reaches_the_heat_flow() {
+    let root = concat!(env!("CARGO_MANIFEST_DIR"), "/../..");
+    let read = |p: &str| {
+        sse_pack::PackManifest::from_json(&std::fs::read_to_string(format!("{root}/{p}")).unwrap())
+            .unwrap()
+    };
+    let packs = [
+        read("packs/base-physics/pack.json"),
+        read("tests/fixtures/packs/block-edit-wind-and-heat.json"),
+    ];
+    let physics = std::sync::Arc::new(sse_physics::Physics::build(
+        &packs,
+        None,
+        std::sync::Arc::default(),
+        std::sync::Arc::new(Default::default()),
+    ));
+    let (h, shipped) = histories(6)
+        .into_iter()
+        .map(|h| (h.clone(), run(h, Block::Modern)))
+        .find(|(_, r)| !r.heat.is_empty())
+        .expect("a system with a solid world");
+    let edited = sse_physics::with(&physics, physics.constants(), || {
+        run(h.clone(), Block::Modern)
+    });
+    let again = run(h, Block::Modern);
+    assert!(!shipped.heat.is_empty());
+    for ((a, b), c) in shipped.heat.iter().zip(&edited.heat).zip(&again.heat) {
+        assert!(b.radiogenic_power_w > a.radiogenic_power_w, "{a:?} {b:?}");
+        assert_eq!(a.radiogenic_power_w, c.radiogenic_power_w);
+    }
+}

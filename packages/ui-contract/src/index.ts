@@ -239,3 +239,4 @@ export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markW
 export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Sculptor, ZoneCause } from "./profile.ts";
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
+export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";

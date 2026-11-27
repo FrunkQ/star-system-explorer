@@ -9,6 +9,7 @@ authors.workspace = true
 [dependencies]
 sse-core.workspace = true
 sse-atoms.workspace = true
+sse-physics.workspace = true
 sse-flow.workspace = true
 sse-reference.workspace = true
 sse-field = { path = "../sse-field" }
