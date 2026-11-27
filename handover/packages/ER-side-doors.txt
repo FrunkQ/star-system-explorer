@@ -59,7 +59,7 @@ sheet crates/sse-nebula/src/lib.rs 2
 sheet crates/sse-place/src/model.rs 7
 sheet crates/sse-small/src/figure.rs 3
 sheet crates/sse-small/src/member.rs 4
-sheet crates/sse-surface/src/climate.rs 5
+sheet crates/sse-surface/src/climate.rs 4
 sheet crates/sse-surface/src/composition.rs 4
 sheet crates/sse-surface/src/core.rs 4
 sheet crates/sse-surface/src/cover.rs 5
