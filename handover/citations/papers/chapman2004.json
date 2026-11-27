@@ -1,0 +1,1 @@
+{"key": "chapman2004", "citation": "Chapman 2004", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["packages/renderer/src/comet.ts"], "claims": ["* Chapman 2004). Taken from the line list where the line is there, else from the wavelength."], "tier": 3}

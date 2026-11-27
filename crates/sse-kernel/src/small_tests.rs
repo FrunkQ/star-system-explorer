@@ -119,3 +119,86 @@ fn notables_list_resolves_and_made_bodies_follow_their_pins() {
     );
     assert_eq!(bad["type"], "error");
 }
+
+/// A formation seed whose system has a ringed giant (found by search: kernel-form-81, cloud 2).
+fn open_ringed() -> crate::Kernel {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["base-physics"].clone()]}),
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"small","seed":"small"}),
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"adopt","formation":{"seed":"kernel-form-81","system":SYS,"star_pins":{"primary_mass":1.0}}}),
+    );
+    assert_ne!(r["type"], "error", "{r}");
+    k
+}
+
+#[test]
+fn a_formed_ring_is_one_ring_with_zones_hung_on_its_world() {
+    let mut k = open_ringed();
+    let cs = clouds(&mut k);
+    let ring = cs.iter().find(|c| c["kind"] == "ring").expect("a ring");
+    let world = ring["around_address"]
+        .as_str()
+        .expect("the ring names its world by address");
+    assert!(world.starts_with(SYS), "{world}");
+    let cloud = ring["address"].as_str().unwrap();
+    let a = send(
+        &mut k,
+        serde_json::json!({"op":"ring_structure","system":SYS,"cloud":cloud,"samples":256}),
+    );
+    assert_eq!(a["type"], "ring_structure_is", "{a}");
+    let r = &a["ring"];
+    let zones = r["zones"].as_array().unwrap();
+    assert!(zones.len() >= 2, "{r}");
+    // The zones hold the cloud's mass, and the profile is the asked size.
+    let sum: f64 = zones.iter().map(|z| z["mass_kg"].as_f64().unwrap()).sum();
+    assert!((sum / r["mass_kg"].as_f64().unwrap() - 1.0).abs() < 1e-9);
+    assert_eq!(r["profile"]["tau"].as_array().unwrap().len(), 256);
+    // The same ask is the same ring; another variant is another ring with the same marks.
+    let b = send(
+        &mut k,
+        serde_json::json!({"op":"ring_structure","system":SYS,"cloud":cloud,"samples":256}),
+    );
+    assert_eq!(a, b);
+    let c = send(
+        &mut k,
+        serde_json::json!({"op":"ring_structure","system":SYS,"cloud":cloud,"samples":256,"variant":1}),
+    );
+    assert_eq!(a["ring"]["marks"], c["ring"]["marks"]);
+    assert_ne!(a["ring"]["profile"], c["ring"]["profile"]);
+}
+
+#[test]
+fn a_ring_from_its_stated_inputs_answers_and_a_bad_one_says_why() {
+    let mut k = open();
+    let ask = serde_json::json!({
+        "key": "saturn", "host": {"mass_kg": 5.683e26, "radius_m": 6.0268e7},
+        "sculptors": [{"name": "Pan", "a_m": 1.33584e8, "mass_kg": 4.95e15}],
+        "ring": {"inner_m": 1.2234e8, "outer_m": 1.3678e8, "zones": [{"name": "A", "inner_m": 1.2234e8, "outer_m": 1.3678e8, "tau": 0.7, "albedo": 0.5}]}
+    });
+    let a = send(
+        &mut k,
+        serde_json::json!({"op":"ring_structure","ask":ask,"samples":64}),
+    );
+    assert_eq!(a["type"], "ring_structure_is", "{a}");
+    assert!(a["ring"]["marks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|m| m["kind"] == "gap"));
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op":"ring_structure","ask":{"key":"x","host":{"mass_kg":0.0,"radius_m":1.0},"ring":{"inner_m":1.0,"outer_m":2.0}}}),
+    );
+    assert_eq!(bad["type"], "error", "{bad}");
+    let neither = send(&mut k, serde_json::json!({"op":"ring_structure"}));
+    assert_eq!(neither["code"], "bad_request", "{neither}");
+}

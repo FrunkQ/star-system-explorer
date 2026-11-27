@@ -4,12 +4,18 @@
 use crate::disc_table::{self, SHIFT_BLOCK};
 use crate::paths::{self, LightPaths};
 use crate::*;
+use sse_flow::Atom;
 use sse_formula::FormulaAtom;
+use std::sync::Arc;
 use sse_physics::table::{Size, Table};
 
-fn blocks() -> &'static [FormulaAtom] {
-    // The blocks in force for a bare physics: the shipped library until ER3.
-    sse_physics::Physics::bare(std::sync::Arc::new(sse_reference::Reference::default())).blocks()
+fn blocks() -> Vec<Arc<dyn Atom>> {
+    // The blocks in force for a bare physics: the shipped library, as shipped.
+    sse_physics::Physics::bare(Arc::new(sse_reference::Reference::default()))
+        .blocks()
+        .iter()
+        .map(|(_, a)| a.clone())
+        .collect()
 }
 
 fn fixtures() -> Vec<LightPaths> {
@@ -29,8 +35,12 @@ fn subject(lp: &LightPaths) -> serde_json::Value {
     })
 }
 
-fn seal(s: serde_json::Value, size: Size, blocks: &[FormulaAtom]) -> Table {
-    let b = disc_table::bake(&s, size, blocks).unwrap();
+fn lookup(blocks: &[Arc<dyn Atom>]) -> impl Fn(&str) -> Option<Arc<dyn Atom>> + '_ {
+    move |id: &str| blocks.iter().find(|a| a.decl().id == id).cloned()
+}
+
+fn seal(s: serde_json::Value, size: Size, blocks: &[Arc<dyn Atom>]) -> Table {
+    let b = disc_table::bake(&s, size, &lookup(blocks)).unwrap();
     Table::seal(disc_table::ID, s, size, None, "test".into(), b).unwrap()
 }
 
@@ -41,7 +51,7 @@ fn every_fixture_samples_within_its_bound_at_every_size() {
             continue;
         }
         for size in [Size::Small, Size::Medium, Size::Large] {
-            let t = seal(subject(&lp), size, blocks());
+            let t = seal(subject(&lp), size, &blocks());
             assert!(
                 t.sampling.within,
                 "{} at {size:?}: {:?}",
@@ -62,7 +72,7 @@ fn the_table_gives_the_traced_points_their_shift_and_temperature() {
         let (Some(img), Some(_)) = (lp.image.as_ref(), lp.feed.as_ref()) else {
             continue;
         };
-        let t = seal(subject(&lp), Size::Medium, blocks());
+        let t = seal(subject(&lp), Size::Medium, &blocks());
         let (z, t4) = (t.channel("redshift").unwrap(), t.channel("t4").unwrap());
         let bound = disc_table::bounds(Size::Medium);
         for s in [&img.brightest, &img.approaching, &img.receding] {
@@ -89,7 +99,7 @@ fn the_table_gives_the_traced_points_their_shift_and_temperature() {
     assert!(checked >= 6, "checked {checked} points");
 }
 
-fn edited(formula_from: &str, formula_to: &str, face_on_g: f64) -> Vec<FormulaAtom> {
+fn edited(formula_from: &str, formula_to: &str, face_on_g: f64) -> Vec<Arc<dyn Atom>> {
     let text = sse_atoms::formulas::FILES
         .iter()
         .find(|(f, _)| *f == "light")
@@ -107,14 +117,14 @@ fn edited(formula_from: &str, formula_to: &str, face_on_g: f64) -> Vec<FormulaAt
     assert!(f.contains(formula_from), "{f}");
     entry["equation"]["formula"] = f.replace(formula_from, formula_to).into();
     entry["equation"]["examples"] = serde_json::json!([{"rg": 1.0, "r": 6.0, "b": 0.0, "i": 0.0, "al": 0.0, "g": face_on_g, "tolerance": 1e-12}]);
-    let mine = FormulaAtom::from_json(&entry).unwrap();
+    let mine: Arc<dyn Atom> = Arc::new(FormulaAtom::from_json(&entry).unwrap());
     blocks()
-        .iter()
+        .into_iter()
         .map(|a| {
-            if sse_flow::Atom::decl(a).id == SHIFT_BLOCK {
+            if a.decl().id == SHIFT_BLOCK {
                 mine.clone()
             } else {
-                a.clone()
+                a
             }
         })
         .collect()
@@ -127,7 +137,7 @@ fn edited(formula_from: &str, formula_to: &str, face_on_g: f64) -> Vec<FormulaAt
 #[test]
 fn editing_the_shift_block_changes_the_table() {
     let lp = &fixtures()[0];
-    let base = seal(subject(lp), Size::Small, blocks());
+    let base = seal(subject(lp), Size::Small, &blocks());
     let mine = edited("/ sqrt(1 - 3 / x)", "/ 1", 1.0);
     let changed = seal(subject(lp), Size::Small, &mine);
     assert_ne!(base.hash, changed.hash);
@@ -176,7 +186,7 @@ fn a_block_the_indexing_does_not_hold_for_is_named() {
 #[test]
 fn a_disc_inside_the_horizon_s_double_is_refused() {
     let s = serde_json::json!({"gravitational_radius_m": 1.0, "rate_kg_s": 1.0, "inner_m": 1.5, "outer_m": 10.0});
-    assert!(disc_table::bake(&s, Size::Small, blocks()).is_err());
+    assert!(disc_table::bake(&s, Size::Small, &lookup(&blocks())).is_err());
 }
 
 /// The picture asks with the hole's feed as `read_light_paths` gives it; the
@@ -190,7 +200,7 @@ fn a_feed_gives_the_same_table_as_its_numbers() {
         "feed": serde_json::to_value(lp.feed.as_ref().unwrap()).unwrap(),
     });
     assert_eq!(
-        seal(by_feed, Size::Small, blocks()).hash,
-        seal(subject(lp), Size::Small, blocks()).hash
+        seal(by_feed, Size::Small, &blocks()).hash,
+        seal(subject(lp), Size::Small, &blocks()).hash
     );
 }

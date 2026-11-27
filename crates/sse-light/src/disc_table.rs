@@ -32,7 +32,7 @@
 
 use crate::m;
 use serde::Deserialize;
-use sse_formula::FormulaAtom;
+use sse_flow::Atom;
 use sse_physics::table::{Axis, Baked, Channel, Read, Size, Spacing};
 use std::sync::Arc;
 
@@ -77,28 +77,23 @@ impl DiscSubject {
     }
 }
 
-fn block(blocks: &[FormulaAtom], id: &str) -> Result<FormulaAtom, String> {
-    let a = blocks
-        .iter()
-        .find(|a| sse_flow::Atom::decl(*a).id == id)
-        .ok_or_else(|| format!("the block {id} is not in force"))?;
-    if !sse_flow::Atom::decl(a).params.is_empty() {
-        // Settings in force come with ER2's block door; this block has none.
-        return Err(format!(
-            "{id} has settings, which a table cannot read until ER2"
-        ));
-    }
-    Ok(a.clone())
+/// A block in force by id (the kernel passes the physics in force's
+/// `Blocks::get`; its settings in force are its defaults, so running it with
+/// no settings runs it as this universe has it).
+pub type BlockLookup<'a> = &'a dyn Fn(&str) -> Option<Arc<dyn Atom>>;
+
+fn block(get: BlockLookup, id: &str) -> Result<Arc<dyn Atom>, String> {
+    get(id).ok_or_else(|| format!("the block {id} is not in force"))
 }
 
-fn run(a: &FormulaAtom, inputs: &[f64]) -> Result<f64, String> {
-    sse_flow::Atom::eval(a, inputs, &[])
+fn run(a: &Arc<dyn Atom>, inputs: &[f64]) -> Result<f64, String> {
+    a.eval(inputs, &[])
         .map(|v| v[0])
-        .map_err(|e| format!("{}: {}", sse_flow::Atom::decl(a).id, e.0))
+        .map_err(|e| format!("{}: {}", a.decl().id, e.0))
 }
 
-fn version(a: &FormulaAtom) -> String {
-    sse_flow::Atom::decl(a).version.to_string()
+fn version(a: &Arc<dyn Atom>) -> String {
+    a.decl().version.to_string()
 }
 
 /// Nodes along each axis, by size.
@@ -122,12 +117,12 @@ pub fn bounds(size: Size) -> [f64; 2] {
 pub fn bake(
     subject: &serde_json::Value,
     size: Size,
-    blocks: &[FormulaAtom],
+    blocks: BlockLookup,
 ) -> Result<Baked, String> {
     let s: DiscSubject = serde_json::from_value(subject.clone())
         .map_err(|e| format!("a disc subject is {{mass_kg or gravitational_radius_m, and rate_kg_s, inner_m, outer_m or a feed}}: {e}"))?;
     let (rate_kg_s, inner_m, outer_m) = s.disc()?;
-    let shift = Arc::new(block(blocks, SHIFT_BLOCK)?);
+    let shift = block(blocks, SHIFT_BLOCK)?;
     let rg_block = block(blocks, RG_BLOCK)?;
     let rg = match (s.gravitational_radius_m, s.mass_kg) {
         (Some(rg), _) => rg,

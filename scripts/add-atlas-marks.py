@@ -66,6 +66,7 @@ RINGS = {"physical/ringed": "planet/ringed"}
 NOT_DRAWN = {
     "air": "a world's air is read on its card and in the air lens, not drawn as its mark",
     "habitability": "who can breathe there is the habitability tag's colour (colour-coded's first match), not a class mark",
+    "star": "a star is drawn by the chart's star mark in its own light colour; its class (G2 V, DX 5) is read on its card",
 }
 CLASS_CHANNELS = ("shape", "fill_pattern", "colour", "glyph")
 

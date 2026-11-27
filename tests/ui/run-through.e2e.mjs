@@ -118,8 +118,15 @@ try {
 
   // 4. Land on Mars with the party's ship; the GM picks a landmark, still private.
   await gm.waitForSelector("[data-surface] [data-landmark-row]", { timeout: 40000 });
-  await gm.locator("[data-landmark-row]").nth(5).click();
-  await gm.waitForSelector("[data-surface]:not([data-verdict=''])", { timeout: 40000 });
+  // The first plains landmark the kernel judges Beowulf can land on. Mars's terrain is generated from its physics,
+  // so which plain that is moves when the physics does (PR 417's measured core share turned the sixth landmark rough).
+  const plains = await gm.locator("[data-landmark-row]", { hasText: /plains/ }).evaluateAll((rs) => rs.map((r) => r.getAttribute("data-landmark-row")));
+  assert.ok(plains.length > 0, "Mars offers plains landmarks");
+  for (const id of plains) {
+    await gm.locator(`[data-landmark-row="${id}"]`).click();
+    await gm.waitForFunction((i) => document.querySelector(`[data-landmark-row="${i}"]`)?.classList.contains("on") && document.querySelector("[data-surface]")?.getAttribute("data-verdict"), id, { timeout: 40000 });
+    if ((await gm.locator("[data-surface]").getAttribute("data-verdict")) === "landed") break;
+  }
   assert.equal(await gm.locator("[data-lander]").inputValue(), "party", "the party's ship is offered first as the lander");
   const verdict = await gm.locator("[data-surface]").getAttribute("data-verdict");
   // LR1: a far trader can hold itself up at Mars, so it flies down on its drive from orbit and lands.

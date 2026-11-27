@@ -25,6 +25,7 @@
 #![forbid(unsafe_code)]
 
 pub mod intents;
+pub mod mount;
 pub mod programs;
 pub mod split;
 pub mod templates;

@@ -48,7 +48,11 @@ fn produce(
     physics: &sse_physics::Physics,
 ) -> Result<sse_physics::table::Baked, String> {
     match id {
-        sse_light::disc_table::ID => sse_light::disc_table::bake(subject, size, physics.blocks()),
+        sse_light::disc_table::ID => {
+            let blocks = physics.blocks().clone();
+            let get = move |id: &str| blocks.get(id).cloned();
+            sse_light::disc_table::bake(subject, size, &get)
+        }
         _ => Err(format!(
             "no table {id}; the kernel bakes: {}",
             TABLES

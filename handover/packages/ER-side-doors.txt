@@ -1,29 +1,6 @@
 # ER side-door ledger (scripts/audit-side-doors.py). It may only shrink.
 # kind  file  sites. Convert a file's sites to the physics in force, then
 # run `python3 scripts/audit-side-doors.py --shrink`. Never add a line.
-block crates/sse-codes/src/plan.rs 1
-block crates/sse-field/src/glow.rs 1
-block crates/sse-flow/src/flow.rs 1
-block crates/sse-formation/src/pipeline.rs 1
-block crates/sse-hazard/src/lib.rs 1
-block crates/sse-import-v3/src/lib.rs 3
-block crates/sse-kernel/src/adopt.rs 2
-block crates/sse-kernel/src/atmos.rs 2
-block crates/sse-kernel/src/composition.rs 2
-block crates/sse-kernel/src/fields.rs 2
-block crates/sse-kernel/src/lib.rs 1
-block crates/sse-kernel/src/nav.rs 2
-block crates/sse-kernel/src/sea.rs 2
-block crates/sse-kernel/src/stability.rs 2
-block crates/sse-light/src/colour.rs 1
-block crates/sse-light/src/emit.rs 2
-block crates/sse-light/src/shadow.rs 1
-block crates/sse-nebula/src/forbidden.rs 2
-block crates/sse-nebula/src/outflow.rs 1
-block crates/sse-place/src/model.rs 1
-block crates/sse-sense/src/fog.rs 1
-block crates/sse-sense/src/reach.rs 1
-block crates/sse-world/src/lib.rs 2
 sheet crates/sse-activity/src/lib.rs 1
 sheet crates/sse-climate/src/conditions.rs 3
 sheet crates/sse-climate/src/ebm.rs 6

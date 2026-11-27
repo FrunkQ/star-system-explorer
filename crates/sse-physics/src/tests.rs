@@ -107,7 +107,9 @@ fn with_puts_the_physics_and_its_two_views_in_force_and_restores_them() {
     assert!(has_sheet);
     assert!(now().is_none());
     assert_eq!(sse_core::constants::g(), sse_core::sheet::G);
-    let r = std::panic::catch_unwind(|| with(&p, c, || panic!("boom")));
+    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        with(&p, c, || panic!("boom"))
+    }));
     assert!(r.is_err());
     assert!(now().is_none());
     assert!(sse_flow::sheet::now().is_none());
@@ -120,7 +122,7 @@ fn bare_physics_has_no_sheet_door_and_no_settings() {
     assert!(p.sheet_door().is_none());
     assert_eq!(p.settings_keys().count(), 0);
     assert!(p.flows().is_empty());
-    assert!(!p.blocks().is_empty());
+    assert!(p.blocks().iter().next().is_some());
 }
 
 mod table_tests {

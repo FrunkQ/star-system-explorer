@@ -14,7 +14,7 @@
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
   /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
-  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept; flatten?: number };
+  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept; flatten?: number; sea?: SeaGlint };
   const trueAirs = new Map<string, TrueAir>();
   /** Lays finer tiles (VP3 part 2) over the ground under a world's clouds; the new entry, or null when nothing changed. */
   function finerGround(key: string, fine: Parameters<typeof withFiner>[1]): TrueAir | null {
@@ -38,8 +38,9 @@
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
-  import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readSmallSample, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
-  import { readUmbras, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readRings, readSmallSample, type RingReader, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
+  import type { KernelRing } from "../../../renderer/src/index.ts";
+  import { readSeaGlint, readUmbras, type GlintReader, type SeaGlint, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -498,7 +499,11 @@
           const shape = await readTrueShape(ctx.session as unknown as ShapeReader, sys, s.address);
           if (typeof shape !== "string") trueSaid.set(key, [...(trueSaid.get(key) ?? []), `${label(s)}: ${shape.said}.`]);
           const flat = typeof shape === "string" ? {} : { flatten: shape.f };
-          if (typeof f !== "string" && (f.clouds || f.air || "flatten" in flat)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}), ...flat });
+          // Its seas' glint, from the kernel (EC2): only a face that shows liquid ground asks.
+          const wet = typeof f !== "string" && !!(f.ground ?? f.tex).faces?.faces.some((x) => !!x && x.liquid.some((v) => v > 0));
+          const sea = wet ? await readSeaGlint(ctx.session as unknown as GlintReader, sys, s.address) : null;
+          const seaOf = sea ? { sea } : {};
+          if (typeof f !== "string" && (f.clouds || f.air || "flatten" in flat || sea)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}), ...flat, ...seaOf });
           // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
           const kept = trueSurfaces.get(key);
           if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
@@ -672,9 +677,32 @@
       })(),
     );
   });
+  // One ring per world (VP-R3): each ringed world's ring asked of the kernel whole, once per system and its rings, in
+  // True only (system-3d ring-read.ts). Until it answers, a ring is drawn from its bands as before.
+  let kernelRings = $state<{ key: string; list: Map<string, KernelRing> } | null>(null);
+  const ringsKept = new Map<string, Map<string, KernelRing>>();
+  let ringsAsking = "";
+  const ringKey = $derived(`${scene.system}|${JSON.stringify(scene.subjects.filter((s) => s.ring).map((s) => [s.address, s.parent, s.ring]))}`);
+  $effect(() => {
+    const key = ringKey;
+    if (!looksTrue || dims !== "3d" || kernelRings?.key === key || ringsAsking === key) return;
+    const plain = untrack(() => fromSystemScene(scene, ctx.mark));
+    if (!plain.some((b) => b.rings?.length)) return;
+    ringsAsking = key;
+    untrack(() =>
+      void (async () => {
+        const list = ringsKept.get(key) ?? (await readRings(ctx.session as unknown as RingReader, plain, () => ringKey === key && looksTrue));
+        ringsAsking = "";
+        if (ringKey !== key || !looksTrue) return;
+        ringsKept.set(key, list);
+        kernelRings = { key, list };
+      })(),
+    );
+  });
   const bodies3d = $derived.by(() => {
     if (dims !== "3d") return [];
-    const out = fromSystemScene(scene, ctx.mark);
+    const kr = looksTrue && kernelRings?.key === ringKey ? kernelRings.list : null;
+    const out = fromSystemScene(scene, ctx.mark).map((b) => (kr?.has(b.id) ? { ...b, ring_kernel: kr.get(b.id)! } : b));
     const star = out.find((b) => b.parent === null)?.id;
     return looksTrue && star && smalls?.key === scene.system ? [...out, ...smalls.list.map((s) => fromSmallSample(s, star))] : out;
   });
@@ -749,7 +777,7 @@
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined} data-true-read={reading ? `${reading.done}/${reading.of}` : undefined}>
   {#if dims === "3d"}
     {#snippet in3d(band: string, base: boolean)}
-      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {umbras} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} />
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {umbras} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} clock={ctx.workspace.clock ?? null} />
     {/snippet}
     {#if viewed.composite}
       <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->

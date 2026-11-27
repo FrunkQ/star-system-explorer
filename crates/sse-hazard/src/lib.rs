@@ -49,12 +49,9 @@ const POINTS: usize = 400;
 /// Steps along a fall-through, in true anomaly.
 const PASS_STEPS: usize = 2000;
 
-fn block(id: &str) -> &'static dyn Atom {
-    sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .map(|a| a as &dyn Atom)
-        .unwrap_or_else(|| panic!("base formula block {id} is missing"))
+fn block(id: &str) -> std::sync::Arc<dyn Atom> {
+    // ER2: the block in force, with the settings this universe gives it.
+    sse_physics::block(id).unwrap_or_else(|| panic!("base formula block {id} is missing"))
 }
 
 fn run(id: &str, inputs: &[f64], params: &[f64]) -> Result<f64, String> {

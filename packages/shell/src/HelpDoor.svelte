@@ -96,6 +96,8 @@
       <dt>B</dt><dd>Bookmarks: keep where you are and how you are looking, or go back to one</dd>
       <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
       <dt>V, E, R</dt><dd>Desk: Explore (look), Build (change), Run (the table)</dd>
+      <dt>Page Up, Page Down (Run desk)</dt><dd>Out and In along the place line: up a level, or down onto what is selected</dd>
+      <dt>F (Run desk)</dt><dd>Fill the screen: the picture alone; the bar comes back at the top edge, and F or Esc brings everything back</dd>
       <dt>D</dt><dd>Depth: Curious, Science, Engine (how much every card and number says)</dd>
       <dt>N</dt><dd>Chart room or Night chart</dd>
       <dt>L</dt><dd>See the desk through the next lens (Basic, Advanced, Building, Running, as players see it)</dd>

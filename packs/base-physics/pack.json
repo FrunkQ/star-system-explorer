@@ -3929,6 +3929,34 @@
         "range": null
       },
       {
+        "description": "age of the universe when a group's edge is found (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.age",
+        "range": null
+      },
+      {
+        "description": "radius round a group inside which galaxies have stopped moving apart and fall together (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.zero_velocity_radius",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,
@@ -4422,6 +4450,20 @@
         "range": null
       },
       {
+        "description": "shear modulus of a world's rock or ice: how stiffly it resists being bent",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.rigidity",
+        "range": null
+      },
+      {
         "description": "how far a world separated into metal and silicate, 0 to 1",
         "dim": [
           0,
@@ -4447,6 +4489,20 @@
           0
         ],
         "id": "interior.silicate_mass",
+        "range": null
+      },
+      {
+        "description": "dynamic viscosity of a world's insides over long times: how slowly the solid rock or ice creeps",
+        "dim": [
+          -1,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.viscosity",
         "range": null
       },
       {
@@ -4909,6 +4965,20 @@
           0
         ],
         "id": "light.minnaert_k",
+        "range": null
+      },
+      {
+        "description": "share of light a surface reflects straight back at normal incidence",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.normal_reflectance",
         "range": null
       },
       {
@@ -5637,6 +5707,20 @@
           0
         ],
         "id": "ocean.significant_wave_height",
+        "range": null
+      },
+      {
+        "description": "mean square slope of the waves on a sea, which sets how far the sun's glint spreads",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ocean.slope_variance",
         "range": null
       },
       {
@@ -7523,6 +7607,20 @@
         "range": null
       },
       {
+        "description": "reach of a star's closed magnetic field, in stellar radii",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.closed_corona_extent",
+        "range": null
+      },
+      {
         "description": "time for the churning outer layer of a cool star to turn over once",
         "dim": [
           0,
@@ -7534,6 +7632,34 @@
           0
         ],
         "id": "star.convective_turnover_time",
+        "range": null
+      },
+      {
+        "description": "particles per cubic metre at the foot of a star's corona",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.corona_base_density",
+        "range": null
+      },
+      {
+        "description": "mean temperature of a star's corona",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "star.corona_temperature",
         "range": null
       },
       {
@@ -7660,6 +7786,20 @@
           0
         ],
         "id": "star.rossby_number",
+        "range": null
+      },
+      {
+        "description": "mean magnetic field strength over a star's surface",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "star.surface_field",
         "range": null
       },
       {
@@ -7845,6 +7985,20 @@
         "range": null
       },
       {
+        "description": "how fast a tide flexes a world, as an angular rate: the orbit's mean motion for a locked moon",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.frequency",
+        "range": null
+      },
+      {
         "description": "tidal heating power",
         "dim": [
           2,
@@ -7856,6 +8010,20 @@
           0
         ],
         "id": "tides.heating_power",
+        "range": null
+      },
+      {
+        "description": "imaginary part of a world's tidal Love number k2: the share of a tide's work turned to heat, the k2/Q of the heating law",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.im_k2",
         "range": null
       },
       {
@@ -7926,6 +8094,20 @@
           0
         ],
         "id": "tides.raiser_period",
+        "range": null
+      },
+      {
+        "description": "real part of a world's tidal Love number k2: how far its shape follows a tide",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.re_k2",
         "range": null
       },
       {
