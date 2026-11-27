@@ -250,8 +250,9 @@ fn dilution(r: f64) -> f64 {
 /// height, over a line `width` wide), and its surface brightness in the eye's
 /// band over the disc's mean, the other lines adding their share.
 fn radiance(teff_k: f64, gas_t_k: f64, r: f64, p: &ProminenceSettings) -> (f64, f64) {
+    // Thermal width of hydrogen, its atom taken as one atomic mass unit (0.8 % light).
     let doppler =
-        H_ALPHA_M / C * m::sqrt(2.0 * sse_core::sheet::K_B * gas_t_k / sse_core::sheet::M_P);
+        H_ALPHA_M / C * m::sqrt(2.0 * sse_core::constants::k_b() * gas_t_k / sse_atoms::air::AMU);
     let width = p.line_doppler_widths * doppler;
     let ha = dilution(r) * sse_light::planck(H_ALPHA_M, teff_k) * width;
     let (lo, hi) = (p.band_m[0], p.band_m[1]);
@@ -438,7 +439,7 @@ pub fn prominences(
                     }
                 };
                 let volume = length * height.min(length) * thick;
-                let mass = gas_n * p.gas_mu * sse_core::sheet::M_U * volume;
+                let mass = gas_n * p.gas_mu * sse_atoms::air::AMU * volume;
                 let erupt_share = match kind {
                     "active" => p.erupt_share_active,
                     "quiescent" => p.erupt_share_quiescent,
