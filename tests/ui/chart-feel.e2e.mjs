@@ -6,6 +6,7 @@
 import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
+import { pinClock } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -22,7 +23,7 @@ const boxes = (page, sel) => page.locator(sel).evaluateAll((es) => es.map((e) =>
 const hit = (a, b, m = 0) => a.x + m < b.x + b.w && b.x + m < a.x + a.w && a.y + m < b.y + b.h && b.y + m < a.y + a.h;
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const errors = [];
   for (const [vp, size] of [["desktop", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
     const page = await browser.newPage({ viewport: size, deviceScaleFactor: screens ? 2 : 1, ...(vp === "phone" ? { isMobile: true, hasTouch: true } : {}) });
@@ -62,7 +63,9 @@ try {
 
     // Framed on the worlds: Neptune is well out from the Sun, not huddled in the middle of the Oort cloud.
     const chart = (await boxes(page, ".area-chart svg"))[0];
-    const sun = (await boxes(page, ".area-chart .body:first-of-type .hit"))[0] ?? null;
+    // The Sun is the first body drawn (":first-of-type" never matched it: the name-hit group is the first <g>).
+    const sun = (await boxes(page, ".area-chart .body .hit"))[0] ?? null;
+    assert.match((await page.locator(".area-chart .body").first().getAttribute("aria-label")) ?? "", /^Sun/, `${vp}: the first body drawn is the Sun`);
     const nep = (await boxes(page, '.area-chart .body[aria-label^="Neptune"] .hit'))[0];
     const centre = sun ? [sun.x + sun.w / 2, sun.y + sun.h / 2] : [chart.x + chart.w / 2, chart.y + chart.h / 2];
     const out = Math.hypot(nep.x + nep.w / 2 - centre[0], nep.y + nep.h / 2 - centre[1]);

@@ -762,30 +762,52 @@ fn adopted_v3(ch: &Chronicle, system: &Address) -> bool {
         .any(|e| e.body.kind == ADOPT_V3 && e.body.subject.contains(system))
 }
 
+/// A Julian year in whole seconds (the sheet's, exact).
+use sse_core::time::YEAR_S;
+
+/// The real-sky anchor on a star's row (`time.j2000_s`, RW17), whole seconds.
+fn anchor_s(row: &BTreeMap<String, Value>) -> Option<i64> {
+    match row.get(crate::motion::ANCHOR_FIELD)? {
+        Value::Int(i) => i64::try_from(*i).ok(),
+        _ => None,
+    }
+}
+
+/// The universe second a system was born (time design section 4,
+/// `system.birth_s`; TP2's first slice, reported, not yet a written fact):
+/// its spec's birth year in whole seconds. A screen that counts a system's
+/// time from its star's birth draws universe second `birth_s + age`.
+pub(crate) fn birth_s(spec: &SystemSpec) -> Option<i64> {
+    spec.birth_year.checked_mul(YEAR_S)
+}
+
 /// A `SystemSpec` from facts: the star is the body with a temperature and a
 /// mass and no host; planets are the bodies whose `orbit.host` is that star.
-/// Universe time "now" is `system.now_year` (else the origin), birth is now
-/// minus `system.age` unless `system.birth_year` is set.
+/// Universe time "now" is `system.now_year`, else the year of the real-sky
+/// anchor its star carries (`time.j2000_s`: a measured system's `system.age`
+/// is its age at that date), else the origin; birth is now minus
+/// `system.age` unless `system.birth_year` is set.
 pub(crate) fn spec_from_facts(facts: &Facts, system: &Address) -> Option<SystemSpec> {
     let row = facts.get(system)?;
     let age_s = row.get("system.age").and_then(as_f64)?;
     let age_myr = age_s / JULIAN_YEAR / 1.0e6;
-    let now_year = row
-        .get("system.now_year")
-        .and_then(as_f64)
-        .map(|y| y as i64)
-        .unwrap_or(0);
-    let birth_year = row
-        .get("system.birth_year")
-        .and_then(as_f64)
-        .map(|y| y as i64)
-        .unwrap_or(now_year - m::round(age_myr * 1.0e6) as i64);
     let (star, star_row) = facts.iter().find(|(a, r)| {
         system.contains(a)
             && r.contains_key("star.effective_temperature")
             && r.contains_key("body.mass")
             && !r.contains_key("orbit.host")
     })?;
+    let now_year = row
+        .get("system.now_year")
+        .and_then(as_f64)
+        .map(|y| y as i64)
+        .or_else(|| anchor_s(star_row).map(|s| s.div_euclid(YEAR_S)))
+        .unwrap_or(0);
+    let birth_year = row
+        .get("system.birth_year")
+        .and_then(as_f64)
+        .map(|y| y as i64)
+        .unwrap_or(now_year - m::round(age_myr * 1.0e6) as i64);
     let star_mass = as_f64(&star_row["body.mass"])? / M_SUN_KG;
     let z = row
         .get("star.metallicity_z")
@@ -1200,6 +1222,7 @@ pub(crate) struct Resolved {
     pub at_s: Option<i64>,
     pub facts: serde_json::Value,
     pub spec: Option<serde_json::Value>,
+    pub birth_s: Option<i64>,
     pub surfaces: Vec<serde_json::Value>,
     pub tiles: Vec<serde_json::Value>,
     pub refused: Vec<serde_json::Value>,
@@ -1277,7 +1300,7 @@ pub(crate) fn worlds_at(
     let now_s = all
         .get(system, "system.now_year")
         .and_then(as_f64)
-        .map(|y| y as i64 * (sse_core::sheet::YR_JULIAN as i64));
+        .map(|y| y as i64 * YEAR_S);
     // Once the one clock has moved this system (its own age shift, or campaign
     // time elapsed), "now" is its present on its own dates, not the latest
     // event: a kept look-ahead's future must not read as the present.
@@ -1641,6 +1664,7 @@ pub(crate) fn resolved_system(
         source: source.into(),
         at_s: (at_s != i64::MAX).then_some(at_s),
         facts: serde_json::Value::Object(facts_json),
+        birth_s: spec.as_ref().and_then(birth_s),
         spec: spec.map(|x| serde_json::to_value(x).expect("plain data")),
         // Each world's surface record, with its vapour plumes when it has
         // any (third audit R10: drawn above the limb in True), and how its

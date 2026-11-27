@@ -587,6 +587,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         half_km: Option<f64>,
+        /// `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+        #[serde(default)]
+        #[ts(optional)]
+        span_days: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
@@ -4600,6 +4604,12 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         spec: Option<serde_json::Value>,
+        /// The universe second the system was born (time design section 4,
+        /// `system.birth_s`): a screen counting time from the star's birth
+        /// draws universe second `birth_s + age`. Absent with no spec.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        birth_s: Option<i64>,
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]

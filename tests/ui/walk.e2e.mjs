@@ -9,7 +9,7 @@
 import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
-import { view } from "./nav.mjs";
+import { view, pinClock } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -238,7 +238,7 @@ async function walk(browser, vp) {
 }
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const all = {};
   for (const vp of ["desktop", "phone"]) all[vp] = await walk(browser, vp);
   await browser.close();

@@ -13,7 +13,7 @@ import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { depth, desk } from "./nav.mjs";
+import { depth, desk, pinClock } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -31,7 +31,7 @@ const shot = async (page, n) => {
 
 try {
   for (const [vp, viewport] of [["desk", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
-    const browser = await chromium.launch();
+    const browser = pinClock(await chromium.launch());
     const gm = await (await browser.newContext({ viewport })).newPage();
     const errors = [];
     gm.on("pageerror", (e) => (errors.push(e.message), console.log("PAGEERROR", e.stack?.slice(0, 600))));

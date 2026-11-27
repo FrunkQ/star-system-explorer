@@ -35,8 +35,8 @@ use std::collections::BTreeMap;
 const G: f64 = sse_core::sheet::G;
 const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const DAY_S: f64 = sse_core::sheet::DAY;
-const YEAR_D: f64 = sse_core::sheet::YR_JULIAN / sse_core::sheet::DAY;
-const DEG: f64 = 180.0 / m::PI;
+pub(crate) const YEAR_D: f64 = sse_core::sheet::YR_JULIAN / sse_core::sheet::DAY;
+pub(crate) const DEG: f64 = 180.0 / m::PI;
 
 /// Keyed stream for storms (ovals, strings, dark spots, outbreaks).
 pub const STORMS_STREAM: &str = "weather.giants.storms.v1";
@@ -235,7 +235,24 @@ pub struct GiantSettings {
     pub dark_spots: Family,
     pub outbreaks: Outbreaks,
     pub clouds: GiantClouds,
+    pub stirring: Stirring,
     pub references: Vec<Reference>,
+}
+
+/// How a giant's eddies are drawn (WS2, `weather_giants.stirring`). Their speed comes from the blocks
+/// `sse.weather.eddy_power` and `sse.weather.cascade_speed`, their fate in shear from `sse.weather.torn_by_shear`.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Stirring {
+    /// Pressure at the base of the weather layer, bar: the layer whose mass the heat stirs.
+    pub weather_layer_bar: f64,
+    /// Share of a band's area covered by eddies of each doubling of size.
+    pub eddy_area_share_per_octave: f64,
+    /// How many of its own turns an eddy that the shear does not tear lives.
+    pub eddy_life_turns: f64,
+    /// A deck's particle radius where the pack holds none, µm (WS3, the renewal time).
+    pub fallback_particle_um: f64,
+    pub source: String,
 }
 
 impl GiantSettings {
@@ -344,7 +361,7 @@ fn is_false(b: &bool) -> bool {
 
 /// +1 for a world spinning forwards, -1 backwards: the sign of f = 2Ω sin φ
 /// in the northern hemisphere, which every wind and vortex sense follows.
-fn spin_sign(l: &GiantLayout) -> f64 {
+pub(crate) fn spin_sign(l: &GiantLayout) -> f64 {
     if l.retrograde {
         -1.0
     } else {
@@ -352,7 +369,7 @@ fn spin_sign(l: &GiantLayout) -> f64 {
     }
 }
 
-fn draws(c: &Conditions, stream: &str) -> Draws {
+pub(crate) fn draws(c: &Conditions, stream: &str) -> Draws {
     Draws::new(
         Seed::from_text(&c.address.to_string()),
         c.address.clone(),
@@ -666,12 +683,7 @@ pub fn sheared_aspect(
     let h = if lat >= 0.0 { 1.0 } else { -1.0 };
     let sense = if cyclonic { 1.0 } else { -1.0 };
     let omega = sense * h * spin_sign(l) * 2.0 * m::exp(0.5) * strength / r;
-    let q = zonal_vorticity(gs, l, a_m, lat) / omega;
-    let disc = q * q + 6.0 * q + 1.0;
-    if q < 0.0 && disc < 0.0 {
-        return m::sqrt(2.0) - 1.0;
-    }
-    ((1.0 + q) + m::sqrt(disc.max(0.0))) / 2.0
+    crate::eddies::torn_by_shear(zonal_vorticity(gs, l, a_m, lat), omega).aspect
 }
 
 /// The jets by latitude, for drawing the curls and drift (visual polish
@@ -726,7 +738,7 @@ pub fn jet_profile(gs: &GiantSettings, c: &Conditions, l: &GiantLayout) -> JetPr
 /// The heat-capacity ratio κ = R / c_p of the gas mix: monatomic gases
 /// c_p = 5/2 R, diatomic 7/2 R, others 4 R (ideal gases near room
 /// temperature).
-fn kappa(c: &Conditions) -> f64 {
+pub(crate) fn kappa(c: &Conditions) -> f64 {
     let (mut x, mut cp) = (0.0, 0.0);
     for (g, f) in &c.gases {
         let k = match g.as_str() {
@@ -829,7 +841,7 @@ pub fn drift_lon(u: f64, a_m: f64, lat: f64, lon0: f64, born: f64, day: f64) -> 
     wrap(lon0 + u * (day - born) * DAY_S / r * DEG)
 }
 
-fn wrap(lon: f64) -> f64 {
+pub(crate) fn wrap(lon: f64) -> f64 {
     let x = m::fmod(lon + 180.0, 360.0);
     (if x < 0.0 { x + 360.0 } else { x }) - 180.0
 }
@@ -1185,15 +1197,19 @@ fn systems_for(
 pub struct GiantPrepared {
     pub layout: GiantLayout,
     pub systems: Vec<WeatherSystem>,
+    /// Plumes rising on the day (WS3): counted by the heat from inside, not named.
+    pub plumes: Vec<crate::eddies::Plume>,
     pub day: f64,
 }
 
 pub fn prepare(gs: &GiantSettings, c: &Conditions, date: Date) -> GiantPrepared {
     let l = layout(gs, c);
     let systems = systems_for(gs, c, &l, date);
+    let plumes = crate::eddies::plumes_between(gs, c, &l, date.day, date.day);
     GiantPrepared {
         layout: l,
         systems,
+        plumes,
         day: date.day,
     }
 }
@@ -1212,32 +1228,101 @@ pub fn distance_km(a_m: f64, lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 
     m::acos(dot(unit(lat1, lon1), unit(lat2, lon2)).clamp(-1.0, 1.0)) * a_m / 1000.0
 }
 
-/// Eastward and northward components of the unit direction from a storm
-/// centre to the cell, in the cell's tangent plane; None at the centre or a pole.
-fn radial(lat: f64, lon: f64, lat_s: f64, lon_s: f64) -> Option<(f64, f64)> {
-    let p = unit(lat, lon);
-    let s = unit(lat_s, lon_s);
-    let q = [p[0] - s[0], p[1] - s[1], p[2] - s[2]];
-    let k = dot(q, p);
-    let qt = [q[0] - k * p[0], q[1] - k * p[1], q[2] - k * p[2]];
-    let (fl, ll) = (lat / DEG, lon / DEG);
-    let e = [-m::sin(ll), m::cos(ll), 0.0];
-    let n = [
-        -m::sin(fl) * m::cos(ll),
-        -m::sin(fl) * m::sin(ll),
-        m::cos(fl),
-    ];
-    let (re, rn) = (dot(qt, e), dot(qt, n));
-    let len = m::sqrt(re * re + rn * rn);
-    (len > 1e-12 && m::cos(fl) > 1e-9).then(|| (re / len, rn / len))
-}
-
 /// Distance from the pole to the polygon's edge along longitude `lon`, km.
 /// Vertices sit on the jet circle (azimuthal equidistant).
 pub fn polygon_edge_km(r_jet_km: f64, n: u32, orient_deg: f64, lon: f64) -> f64 {
     let seg = 2.0 * m::PI / n as f64;
     let t = m::fmod(((lon - orient_deg) / DEG).rem_euclid(2.0 * m::PI), seg);
     r_jet_km * m::cos(m::PI / n as f64) / m::cos(t - m::PI / n as f64)
+}
+
+/// How fast the polygon's edge moves outward with longitude, km per radian:
+/// d(polygon_edge_km)/d(lon).
+pub fn polygon_edge_slope_km(r_jet_km: f64, n: u32, orient_deg: f64, lon: f64) -> f64 {
+    let seg = 2.0 * m::PI / n as f64;
+    let t = m::fmod(((lon - orient_deg) / DEG).rem_euclid(2.0 * m::PI), seg) - m::PI / n as f64;
+    let c = m::cos(t);
+    r_jet_km * m::cos(m::PI / n as f64) * m::sin(t) / (c * c)
+}
+
+/// The winds of the bands and the circumpolar jet from one stream function (WS1, design 3.1), m/s
+/// [east, north]. ψ = h Ψ(ρ), with Ψ' the zonal wind at the latitude whose polar distance is ρ, and u = −(1/a)
+/// ∂ψ/∂φ, v = (1/(a cos φ)) ∂ψ/∂λ, which has no divergence whatever ρ is. With no polygon ρ is the distance
+/// from the pole and this is `zonal_wind`. With one, ρ = r + (r_jet − E(λ)) T, E the polygon's edge along this
+/// longitude and T a taper that is 1 on the edge (so the jet's contour is the polygon and its wind runs along the
+/// sides), falls to nothing at the pole as (2x² − x⁴), x = r / E, and outside over two jet deformation radii as a
+/// Gaussian, the reach of the jet's pull on the cloud.
+#[allow(clippy::too_many_arguments)]
+fn banded_wind(
+    gs: &GiantSettings,
+    l: &GiantLayout,
+    a_m: f64,
+    lat: f64,
+    r_jet: f64,
+    r: f64,
+    edge: f64,
+    slope: f64,
+) -> [f64; 2] {
+    if slope == 0.0 && edge == r_jet {
+        return [zonal_wind(gs, l, a_m, lat), 0.0];
+    }
+    let h = if lat >= 0.0 { 1.0 } else { -1.0 };
+    let a_km = a_m / 1000.0;
+    let ln = 2.0 * l.jet_deformation_km.max(1.0);
+    let (t, t_r, t_e) = if r < edge {
+        let x = r / edge;
+        let q = 1.0 - x * x;
+        let t_r = 4.0 * x * q / edge;
+        (1.0 - q * q, t_r, -x * t_r)
+    } else {
+        let z = (r - edge) / ln;
+        let t = m::exp(-z * z);
+        let t_r = -2.0 * z / ln * t;
+        (t, t_r, -t_r)
+    };
+    let off = r_jet - edge;
+    let rho = r + off * t;
+    let rho_r = 1.0 + off * t_r;
+    let rho_l = -slope * t + off * t_e * slope;
+    let lat_rho = h * (90.0 - (rho / a_km * DEG).clamp(0.0, 180.0));
+    let u = zonal_wind(gs, l, a_m, lat_rho);
+    [
+        u * rho_r,
+        h * u * rho_l / (a_km * m::cos(lat / DEG).max(1e-9)),
+    ]
+}
+
+/// A place in a storm's own frame, km east and north of its centre along the great circle (azimuthal
+/// equidistant about the storm), so the frame is one function of place and its axes are the storm's.
+fn storm_xy(a_m: f64, lat: f64, lon: f64, lat_s: f64, lon_s: f64) -> (f64, f64) {
+    let p = unit(lat, lon);
+    let c = unit(lat_s, lon_s);
+    let (fl, ll) = (lat_s / DEG, lon_s / DEG);
+    let e = [-m::sin(ll), m::cos(ll), 0.0];
+    let n = [
+        -m::sin(fl) * m::cos(ll),
+        -m::sin(fl) * m::sin(ll),
+        m::cos(fl),
+    ];
+    let (pe, pn) = (dot(p, e), dot(p, n));
+    let len = m::sqrt(pe * pe + pn * pn);
+    if len < 1e-15 {
+        return (0.0, 0.0);
+    }
+    let d = m::acos(dot(p, c).clamp(-1.0, 1.0)) * a_m / 1000.0;
+    (d * pe / len, d * pn / len)
+}
+
+/// A storm's distance in its own radii, measured in its ellipse (east-west over north-south `aspect`, same area).
+fn storm_r(a_m: f64, s: &WeatherSystem, lat: f64, lon: f64) -> f64 {
+    let rr = 0.5 * s.size_km.max(1.0);
+    let k = if s.aspect > 0.0 {
+        m::sqrt(s.aspect)
+    } else {
+        1.0
+    };
+    let (x, y) = storm_xy(a_m, lat, lon, s.lat_deg, s.lon_deg);
+    m::sqrt((x / k) * (x / k) + (y * k) * (y * k)) / rr
 }
 
 fn add_cover(l: &mut Layer, g: f64, tau: f64) {
@@ -1265,11 +1350,12 @@ pub fn giant_cell(
     let pole = l.poles.iter().find(|q| q.north == north);
     let r_jet = (90.0 - l.polar_jet_lat_deg) / DEG * a / 1000.0;
     let r_pole = (90.0 - lat.abs()) / DEG * a / 1000.0;
-    let edge = match pole {
-        Some(q) if q.polygon_sides > 0 => {
-            polygon_edge_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon)
-        }
-        _ => r_jet,
+    let (edge, slope) = match pole {
+        Some(q) if q.polygon_sides > 0 => (
+            polygon_edge_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon),
+            polygon_edge_slope_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon),
+        ),
+        _ => (r_jet, 0.0),
     };
     let w = {
         let ld = l.jet_deformation_km.max(1.0);
@@ -1305,9 +1391,7 @@ pub fn giant_cell(
         ly[2].cloud_cover = ly[2].cloud_cover.min(cl.belt_cover);
         ly[2].optical_depth = ly[2].optical_depth.min(cl.belt_tau);
     }
-    let jet_dist = (r_pole - edge).abs();
-    let u = spin_sign(l) * blend_jet(l, band_wind(gs, l, lat), jet_dist);
-    let mut wind = [u, 0.0];
+    let mut wind = banded_wind(gs, l, a, lat, r_jet, r_pole, edge, slope);
     let mut turb = 0.1 + 0.15 * (1.0 - w);
     let mut aerosols = vec![];
     // The chromophore: more over belts (w 0) than zones (w 1).
@@ -1324,29 +1408,32 @@ pub fn giant_cell(
     let mut precip = "none";
     let turn = spin_sign(l);
     for s in &p.systems {
-        let dist = distance_km(a, lat, lon, s.lat_deg, s.lon_deg);
         let rr = 0.5 * s.size_km.max(1.0);
-        // A sheared vortex is an ellipse of the same area, longer along the wind.
-        let r = if s.aspect > 0.0 {
-            let k = m::sqrt(s.aspect);
-            match radial(lat, lon, s.lat_deg, s.lon_deg) {
-                Some((re, rn)) => m::sqrt((re / k) * (re / k) + (rn * k) * (rn * k)) * dist / rr,
-                None => dist / rr,
-            }
-        } else {
-            dist / rr
-        };
+        let r = storm_r(a, s, lat, lon);
         let g = m::exp(-r * r);
+        // The vortex's winds from its own stream function written in its ellipse (WS1, design 3.1):
+        // Φ = −q v R exp((1 − r²) / 2) has radial slope q v r exp((1 − r²) / 2), the Gaussian vortex's speed, and
+        // the wind u = −(1/a) ∂Φ/∂φ, v = (1/(a cos φ)) ∂Φ/∂λ runs along the ellipse with no divergence. The slopes
+        // are taken across a hundred-thousandth of the storm's radius.
         let spin = |sense: f64, wind: &mut [f64; 2]| {
             if r > 3.0 {
                 return;
             }
-            if let Some((re, rn)) = radial(lat, lon, s.lat_deg, s.lon_deg) {
-                let h = if s.lat_deg >= 0.0 { 1.0 } else { -1.0 };
-                let vt = s.strength * r * m::exp(0.5 * (1.0 - r * r));
-                wind[0] += sense * h * turn * vt * -rn;
-                wind[1] += sense * h * turn * vt * re;
+            let h = if s.lat_deg >= 0.0 { 1.0 } else { -1.0 };
+            let q = sense * h * turn * s.strength * rr * 1000.0;
+            let phi = |la: f64, lo: f64| {
+                let x = storm_r(a, s, la, lo);
+                -q * m::exp(0.5 * (1.0 - x * x))
+            };
+            let dd = 1e-5 * rr * 1000.0 / a * DEG;
+            let cp = m::cos(lat / DEG);
+            if cp < 1e-6 {
+                return;
             }
+            let dphi = (phi(lat + dd, lon) - phi(lat - dd, lon)) / (2.0 * dd / DEG);
+            let dlam = (phi(lat, lon + dd / cp) - phi(lat, lon - dd / cp)) / (2.0 * dd / cp / DEG);
+            wind[0] += -dphi / a;
+            wind[1] += dlam / (a * cp);
         };
         match s.kind.as_str() {
             "oval" => {
@@ -1413,6 +1500,20 @@ pub fn giant_cell(
             }
             _ => {}
         }
+    }
+    // Plumes from inside (WS3): fresh bright cloud on the top deck, as an outbreak's head, at their own size.
+    for pl in &p.plumes {
+        let lon_p = pl.lon_at(a, p.day);
+        let dd = distance_km(a, lat, lon, pl.lat_deg, lon_p) / (0.5 * pl.size_km.max(1.0));
+        if dd > 3.0 {
+            continue;
+        }
+        let g = m::exp(-dd * dd) * pl.fade_at(p.day);
+        if g > 0.05 {
+            ly[2].cloud_type = "cumulonimbus".into();
+        }
+        add_cover(&mut ly[2], g, 15.0);
+        turb += 0.5 * g;
     }
     for (k, layer) in ly.iter_mut().enumerate() {
         // Deep winds on a giant: a little weaker below the top layer.
