@@ -8,7 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { desk, go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -40,6 +40,19 @@ try {
     await go(gm, "cluster");
     await gm.waitForSelector(".clu [data-halo-dot]", { timeout: 30000 });
     const clu = gm.locator(".clu");
+    // GZ12: the map opens on home's own cell with home picked; that cell is "Milky Way neighbourhood" wherever it is.
+    await clu.locator("[data-is-home]").waitFor({ timeout: 30000 });
+    const ourCell = await clu.getAttribute("data-cell");
+    assert.equal(await clu.locator(".ledger h3").innerText(), "Our galaxy");
+    await gm.waitForFunction((c) => window.__places.at(-1)?.id === `cell:${c}`, ourCell, { timeout: 30000 });
+    assert.equal((await gm.evaluate(() => window.__places.at(-1))).name, "Milky Way neighbourhood");
+    assert.equal(await clu.locator("[data-cell-name]").innerText(), "Milky Way neighbourhood");
+    assert.equal(await clu.locator("[data-make-home]").count(), 0, "Make this home is on the Edit desk only");
+    // Then to the middle cell, which is named after its own biggest galaxy unless home is there.
+    for (const [axis, v] of ourCell.split(".").map((x, i) => [i, Number(x)]))
+      for (let k = 0; k < Math.abs(v); k++) await clu.locator(`[data-move='${"xyz"[axis]}${v > 0 ? "-" : "+"}']`).click();
+    await gm.waitForFunction(() => document.querySelector(".clu")?.getAttribute("data-cell") === "0.0.0", null, { timeout: 30000 });
+    await gm.waitForFunction(() => window.__places.at(-1)?.id === "cell:0.0.0", null, { timeout: 30000 });
     assert.equal(await clu.getAttribute("data-cell"), "0.0.0");
     const n = await clu.locator("[data-halo-dot]").count();
     assert.ok(n >= 5, `haloes drawn (${n})`);
@@ -51,7 +64,7 @@ try {
       const p = await gm.evaluate(() => window.__places.at(-1));
       assert.equal(p.scale, "cluster");
       assert.equal(p.id, "cell:0.0.0");
-      assert.equal(p.name, "Milky Way neighbourhood");
+      assert.match(p.name, ourCell === "0.0.0" ? /^Milky Way neighbourhood$/ : /^[A-Z][a-z]+ neighbourhood$/);
       assert.ok(p.children.length >= 5 && p.children.length <= 24, `galaxies below (${p.children.length})`);
       assert.match(p.children[0].id, /cell:0\.0\.0\/halo:\d+$/);
       assert.equal(p.children[0].name, `Halo ${top}`, "the biggest first");
@@ -199,6 +212,21 @@ try {
     await clu.locator("[data-halo-dot]").first().waitFor({ timeout: 30000 });
     const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs, the group's edge at ${edgeMpc} Mpc, ${streamsNow} streams, Play with ${midGhosts} satellites halfway, True with ${typePictures} pictures and our real face, ${realFaces} neighbours' real faces, web threads, Free turned to ${turned}`;
 
+    // Make this home (GZ12 set_home), on the Build desk only: another halo becomes home, and its cell takes the name.
+    await desk(gm, "Build");
+    const dots = await clu.locator("[data-halo-dot]").evaluateAll((ds) => ds.map((d) => d.getAttribute("data-halo-dot")));
+    const fresh = dots.find((k) => k !== null);
+    await clu.locator(`[data-halo-dot='${fresh}']`).dispatchEvent("click");
+    await gm.waitForFunction((k) => document.querySelector(".clu [data-halo-ledger]")?.getAttribute("data-halo-ledger") === k, fresh);
+    const madeHome = (await clu.locator("[data-is-home]").count()) === 0;
+    if (madeHome) {
+      await clu.locator("[data-make-home]").click();
+      await clu.locator("[data-is-home]").waitFor({ timeout: 30000 });
+      assert.match(await clu.locator("[data-is-home]").innerText(), /chosen with Make this home/);
+    }
+    assert.equal(await clu.locator("[data-cell-name]").innerText(), "Milky Way neighbourhood");
+    await desk(gm, "Explore");
+
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);
     await shot(gm, "v9-cluster-night");
@@ -216,7 +244,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: cluster map from halo_cell: haloes over the web, biggest picked, ledger, mass function, neighbour cell, floor, find a home (${mw}), chart this galaxy, ${nearbyNote}, night chart, phone`);
+    console.log(`${name}: cluster map from halo_cell: haloes over the web, biggest picked, ledger, mass function, neighbour cell, floor, find a home (${mw}), chart this galaxy, ${nearbyNote}, Make this home, night chart, phone`);
   }
 } finally {
   server.kill();

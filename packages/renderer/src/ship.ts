@@ -85,7 +85,8 @@ export function driveFacts(s: ShipRecord): DriveFacts {
   // gamma - 1 without cancellation at chemical speeds.
   const gm1 = (sq(beta) * sq(gamma)) / (gamma + 1);
   const thrust = m0 * s.accel_g * constant("g0");
-  const mdot = thrust / (gamma * ve);
+  // A ship with no exhaust (a build with no drive yet, a sail) has no mass flow.
+  const mdot = ve > 0 ? thrust / (gamma * ve) : 0;
   const power = mdot * gm1 * sq(c);
   const dv = m1 > 0 && m0 > m1 ? c * Math.tanh(beta * Math.log(m0 / m1)) : 0;
   const ePerU = gm1 * constant("m_u") * sq(c);

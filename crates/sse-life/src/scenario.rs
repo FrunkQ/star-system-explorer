@@ -108,7 +108,7 @@ pub fn archean_with_hydrogen(h2_mol_yr: f64) -> HabitatGraph {
 }
 
 /// Earth's fixture with extra ocean supplies (mol per year).
-fn earth_with(extra: &[(&str, f64)]) -> HabitatGraph {
+pub(crate) fn earth_with(extra: &[(&str, f64)]) -> HabitatGraph {
     let (_, s) = WORLDS.iter().find(|(n, _)| *n == "earth").expect("earth");
     let mut v: serde_json::Value = serde_json::from_str(s).expect("earth json");
     for sh in v["shells"].as_array_mut().expect("shells") {
@@ -200,6 +200,7 @@ pub fn earth_timeline() -> crate::history::WorldTimeline {
         from_myr: from,
         graph,
         facts: [("o2_fraction".to_string(), o2)].into_iter().collect(),
+        graph_while: vec![],
     };
     let deep = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
     let shelter = deep(&["deep-crust", "sea-floor", "ocean-interior", "soil", "cave"]);
@@ -277,6 +278,7 @@ pub fn europa_timeline() -> crate::history::WorldTimeline {
             from_myr: 0.0,
             graph: Some(g),
             facts: BTreeMap::new(),
+            graph_while: vec![],
         }],
         catastrophes: vec![],
     }
