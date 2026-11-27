@@ -1,0 +1,1 @@
+{"key": "seiff1985", "citation": "Seiff et al. 1985", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/cover_tests.rs"], "claims": ["// Venus International Reference Atmosphere (Seiff et al. 1985): about 1 bar"], "tier": 3}

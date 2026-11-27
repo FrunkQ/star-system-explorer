@@ -25,6 +25,7 @@ sheet is filled, and each sheet row records that check.
 | hitran2020 | Gordon, I. E. et al. 2022, JQSRT 277, 107949: The HITRAN2020 molecular spectroscopic database. doi:10.1016/j.jqsrt.2021.107949 | gas absorption bands | verified (metadata) | ODU Digital Commons record chemistry_fac_pubs/219 |
 | adams2008 | Adams, F. C. 2008, JCAP 08, 010: Stars in other universes, stellar structure with different fundamental constants. doi:10.1088/1475-7516/2008/08/010 | which blocks follow a changed constant (design section 7A) | verified (metadata) | arXiv 0807.3697 abstract page, which gives the DOI |
 | nist-webbook | NIST Chemistry WebBook, SRD 69. https://webbook.nist.gov/chemistry/ | gas phase points, formation enthalpies | textbook | standard reference database; per-substance pages checked when each row is filled |
+| stephan2021-ice | Stephan, K., Ciarniello, M., Poch, O., Schmitt, B., Haack, D. and Raponi, A. 2021, Minerals 11, 1328: VIS-NIR/SWIR spectral properties of H2O ice depending on particle size and surface temperature. doi:10.3390/min11121328; data SSHADE/CSS doi:10.26302/SSHADE/EXPERIMENT_OP_20201223_001 | `water-ice-fine` and `water-ice-coarse` reflectance, 450 to 1000 nm at 100 K (MP37) | verified (metadata) | DOI resolves to the MDPI article (vol. 11, issue 12, article 1328, CC BY); numbers copied from SSHADE's plot files for spectra SPECTRUM_OP_20201223_301 and _304, 26 Nov 2026; viewing geometry (i 0, e 30) read from the SSHADE spectrum page |
 
 ## A2. Further sources the first-wave sheet cites
 
@@ -57,6 +58,8 @@ sheet is filled, and each sheet row records that check.
 | nssdca-venus, -mars | NASA NSSDCA Venus and Mars fact sheets | atmosphere recipes by volume | unverified | fact sheet figures from memory; Mars CO2 taken as 95.25% so the recipe sums to one |
 | niemann2005 | Niemann, H. B. et al. 2005, Nature 438, 779. doi:10.1038/nature04122 | Titan's near-surface methane 5.65% | unverified | from memory |
 | huebner1992 | Huebner, W. F., Keady, J. J. and Lyon, S. P. 1992, Astrophys. Space Sci. 195, 1: solar photo rates for planetary atmospheres and atmospheric pollutants. doi:10.1007/BF00644558 | `photochemistry.lifetime_1au` of h2o (8.3e4 s), co2 (5.0e5 s), co (1.3e6 s), quiet Sun at 1 au; read by the ice ground block and the comets | unverified | recalled survey values at two figures, as the ice ground (rate 1.2e-5 per second) and small-bodies pack had them; the paper's tables not read (Consensus closed until 1 Dec 2026) |
+| storey2014, storey-nlevel, sii-aa2025, verner1996, badnell2015, nist-asd-ion | as written on the sheet's sources (moved from `packs/base-light`, PR 588) | `optical.emission` on rows `o+2` ([O III] 495.9 and 500.7 nm) and `s+` ([S II] 671.6 and 673.1 nm): collision strengths, weights, Einstein A, decay shares, ion energies and the S II balance fit, read by the nebula block | unverified | moved unchanged from the light pack (SN2); values as PR 588 read them |
+| brandt-chapman2004 | Brandt, J. C. and Chapman, R. D. 2004, Introduction to Comets, 2nd edn, CUP. doi:10.1017/CBO9781139165327 | `optical.emission` on rows `co+` (about 426 nm) and `h2o+` (about 615 nm), the colour of a comet's ion tail | unverified | textbook figures at three places, as the renderer had typed them |
 
 ## A3. Where each element was made (origin shares and stories)
 

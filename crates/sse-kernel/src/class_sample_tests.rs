@@ -105,6 +105,7 @@ fn the_whole_atlas_samples() {
         .as_array()
         .unwrap()
         .iter()
+        .filter(|c| c["scheme"] != "star")
         .map(|c| c["id"].clone())
         .collect();
     let r = send(
@@ -151,5 +152,25 @@ fn each_call_names_its_own_samples() {
     assert_ne!(
         a["samples"][0]["system"], b["samples"][0]["system"],
         "{a} {b}"
+    );
+}
+
+/// A star class is not placed as a world: it is refused, pointing at
+/// describe_star and the class's own sample star.
+#[test]
+fn a_star_class_is_drawn_from_the_life_line_not_sampled() {
+    let mut k = kernel();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"class_sample","packs":[pack("packs/base-atlas/pack.json")],
+            "classes":["star/main-sequence/G"]}),
+    );
+    assert_eq!(r["type"], "class_sampled", "{r}");
+    assert!(
+        r["refused"][0]["why"]
+            .as_str()
+            .unwrap()
+            .contains("describe_star"),
+        "{r}"
     );
 }

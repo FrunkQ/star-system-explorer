@@ -1,0 +1,1 @@
+{"key": "davidson2006", "citation": "Davidson and Janssens 2006", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/soil.rs"], "claims": ["/// decomposition (Davidson and Janssens 2006)."], "tier": 3}

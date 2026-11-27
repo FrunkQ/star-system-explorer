@@ -1,0 +1,1 @@
+{"key": "linder2005", "citation": "Linder 2005", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/dm2_tests.rs"], "claims": ["/// −1 and 0.55 + 0.02 (1 + w(z = 1)) below (Linder 2005,"], "tier": 3}

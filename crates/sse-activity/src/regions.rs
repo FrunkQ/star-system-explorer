@@ -274,7 +274,10 @@ fn born_between(
             if born < t0 || born > t1 {
                 continue;
             }
-            if dr.unit(i + 1) * pl.peak > cycle_factor(a, born, set) {
+            // Still a double date, like prominences (TP1 follow-up).
+            let born_at = sse_core::time::Instant::from_seconds_f64(born)
+                .unwrap_or(sse_core::time::Instant::ORIGIN);
+            if dr.unit(i + 1) * pl.peak > cycle_factor(a, born_at, set) {
                 continue;
             }
             let msh = pl.scale * log_between(dr.unit(i + 2), r.area_msh);

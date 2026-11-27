@@ -188,7 +188,9 @@
       }
      }
     },
+    "mounts": {"push_m_s": 0.5, "capture_reach_m": 10.0, "capture_speed_m_s": 0.3, "rendezvous_tof_fractions": [0.25, 0.5, 0.75, 1.0, 1.5]},
     "sources": {
+     "mounts": "Compound ships design (CM, 27 Nov 2026) sections 4.1 and 6.3: estimated defaults, unverified. The separation push stands for springs or small rockets at a release; the reach and speed for a docking or berthing capture. The rendezvous flight times are a search grid, not physics.",
      "lambert": "Curtis, H. D. 2014, Orbital Mechanics for Engineering Students, 3rd ed., Elsevier, algorithms 3.4 and 5.2. doi:10.1016/C2011-0-69685-1",
      "kepler": "Vallado, D. A. 2013, Fundamentals of Astrodynamics and Applications, 4th ed., Microcosm Press, algorithm 8. https://celestrak.org/software/vallado-sw.php",
      "hohmann": "Hohmann, W. 1925, Die Erreichbarkeit der Himmelskörper (The Attainability of Heavenly Bodies), NASA TT F-44, 1960. https://ntrs.nasa.gov/citations/19980230631",

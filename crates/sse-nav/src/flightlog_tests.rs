@@ -11,7 +11,7 @@ const T0: i64 = 63_115_200_000; // Sol fixture's own epoch.
 /// The first day Mars leads Earth by the Hohmann phase angle (44°), so the solved arc is the short way round.
 fn window(sys: &NavSystem) -> i64 {
     let ang = |n: &str, t: i64| {
-        let (r, _) = sys.at(sys.body(n).unwrap(), t as f64);
+        let (r, _) = sys.at_date(sys.body(n).unwrap(), sse_core::time::Instant::seconds(t));
         sse_core::math::atan2(r[1], r[0]).to_degrees()
     };
     (2..800)
@@ -64,7 +64,10 @@ fn rewinding_reads_each_piece_of_a_mars_voyage() {
     );
     // Parked: within a few thousand km of Earth.
     let parked = l.at(leave - 86_400, &sys);
-    let (re, _) = sys.at(sys.body("Earth").unwrap(), (leave - 86_400) as f64);
+    let (re, _) = sys.at_date(
+        sys.body("Earth").unwrap(),
+        sse_core::time::Instant::seconds(leave - 86_400),
+    );
     let off = norm(crate::kepler::sub(parked.r_m.unwrap(), re));
     assert!(off > 6.5e6 && off < 6.8e6, "{off}");
     // Halfway: between the two orbits, around the star.
@@ -74,7 +77,10 @@ fn rewinding_reads_each_piece_of_a_mars_voyage() {
     assert!(d > 1.0 && d < 1.67, "{d} au");
     // The solved arc meets Mars on time.
     let just = l.at(arrive - 1, &sys);
-    let (rm, _) = sys.at(sys.body("Mars").unwrap(), (arrive - 1) as f64);
+    let (rm, _) = sys.at_date(
+        sys.body("Mars").unwrap(),
+        sse_core::time::Instant::seconds(arrive - 1),
+    );
     let miss = norm(crate::kepler::sub(just.r_m.unwrap(), rm));
     assert!(miss < 1.0e5, "missed Mars by {} km", miss / 1e3);
     assert_eq!(
@@ -145,12 +151,22 @@ fn the_star_answers_to_the_systems_own_address() {
     use crate::flightlog::Ephemeris;
     let sys = sol();
     assert_eq!(
-        Ephemeris::body(&sys, "u:sol/sys:sun", 0.0).map(|b| b.0),
+        Ephemeris::body(&sys, "u:sol/sys:sun", sse_core::time::Instant::ORIGIN).map(|b| b.0),
         Some([0.0; 3])
     );
-    assert!(Ephemeris::body(&sys, "u:sol/sys:sun/body:earth", 0.0).is_some());
+    assert!(Ephemeris::body(
+        &sys,
+        "u:sol/sys:sun/body:earth",
+        sse_core::time::Instant::ORIGIN
+    )
+    .is_some());
     assert!(
-        Ephemeris::body(&sys, "u:sol/sys:sun/body:earth/body:moon", 0.0).is_none(),
+        Ephemeris::body(
+            &sys,
+            "u:sol/sys:sun/body:earth/body:moon",
+            sse_core::time::Instant::ORIGIN
+        )
+        .is_none(),
         "Sol's NAV fixture has no Moon yet"
     );
 }
@@ -180,7 +196,8 @@ fn voyager_2_rewinds_through_four_flybys() {
         // A second before: arriving at the planet (the arc ends at its centre).
         let just = l.at(t - 1, &sys);
         assert_eq!(just.kind, "course", "{body}");
-        let b = crate::flightlog::Ephemeris::body(&sys, body, *t as f64).unwrap();
+        let b = crate::flightlog::Ephemeris::body(&sys, body, sse_core::time::Instant::seconds(*t))
+            .unwrap();
         let miss = norm(crate::kepler::sub(just.r_m.unwrap(), b.0));
         assert!(miss < 1.0e6, "missed {body} by {} km", miss / 1e3);
         // Each flyby is further out than the last.
@@ -193,4 +210,73 @@ fn voyager_2_rewinds_through_four_flybys() {
     let out = l.at(t2020, &sys);
     let d = norm(out.r_m.unwrap()) / AU;
     assert!(d > 100.0 && d < 140.0, "{d} au");
+}
+
+/// TP1b: a world in the flight log's ephemeris moves every second at a
+/// star's age, even with the elements dated far back. Before, the date went
+/// through a double and the Earth jumped 30 s of orbit at a time.
+#[test]
+fn worlds_move_every_second_at_a_stars_age() {
+    use crate::flightlog::Ephemeris;
+    use sse_core::time::{Instant, YEAR_S};
+    let mut sys = sol();
+    let age = 4_610_000_000 * YEAR_S;
+    for t0 in [sys.t0_s, age as f64] {
+        sys.t0_s = t0;
+        let p = |k: i64| {
+            Ephemeris::body(&sys, "Earth", Instant::seconds(age + k))
+                .unwrap()
+                .0
+        };
+        for k in 0..64 {
+            let d = norm([
+                p(k + 1)[0] - p(k)[0],
+                p(k + 1)[1] - p(k)[1],
+                p(k + 1)[2] - p(k)[2],
+            ]);
+            assert!(
+                (d - 2.98e4).abs() < 1.0e3,
+                "t0 {t0}: moved {d:.1} m in a second at {k}"
+            );
+        }
+    }
+}
+
+/// CM2: a state turned into elements and back is the same state, for an
+/// ellipse, a circle, an equatorial orbit, a retrograde one and a hyperbola.
+#[test]
+fn elements_from_a_state_give_the_state_back() {
+    use crate::flightlog::{elements_from_state, OrbitElements};
+    let mu = 3.986004418e14;
+    let cases = [
+        (7.0e6, 0.1, 28.5, 40.0, Some(60.0), Some(10.0)),
+        (6.778e6, 0.0, 51.6, 300.0, None, None),
+        (4.2164e7, 0.01, 0.0, 0.0, Some(90.0), Some(200.0)),
+        (8.0e6, 0.2, 150.0, 10.0, Some(250.0), Some(300.0)),
+        (-2.0e7, 1.5, 20.0, 70.0, Some(30.0), Some(15.0)),
+    ];
+    for (a, e, i, node, peri, m0) in cases {
+        let el = OrbitElements {
+            a_m: a,
+            e,
+            i_deg: i,
+            node_deg: node,
+            peri_deg: peri,
+            m0_deg: m0,
+            varpi_deg: None,
+            mean_longitude_deg: None,
+            epoch_s: 0,
+        };
+        let (r, v) = el.state(mu, 1234.0);
+        let back = elements_from_state(r, v, mu, 1234).expect("not parabolic");
+        assert!((back.a_m - a).abs() < 1e-6 * a.abs(), "{back:?}");
+        assert!((back.e - e).abs() < 1e-9, "{back:?}");
+        for dt in [0.0, 600.0, 5000.0] {
+            let (r1, v1) = el.state(mu, 1234.0 + dt);
+            let (r2, v2) = back.state(mu, dt);
+            let d = norm([r1[0] - r2[0], r1[1] - r2[1], r1[2] - r2[2]]);
+            let dv = norm([v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]]);
+            assert!(d < 1e-3 && dv < 1e-6, "{a} {e} {i}: {d} m, {dv} m/s off");
+        }
+    }
 }

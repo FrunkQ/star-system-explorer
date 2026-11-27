@@ -511,6 +511,14 @@ pub mod molar_mass {
     pub const C2H6: f64 = 0.03007;
     /// c3h8.
     pub const C3H8: f64 = 0.044097000000000004;
+    /// o+2.
+    pub const O_2: f64 = 0.015999;
+    /// s+.
+    pub const S_: f64 = 0.032060000000000005;
+    /// co+.
+    pub const CO_: f64 = 0.028009999999999997;
+    /// h2o+.
+    pub const H2O_: f64 = 0.018015;
 }
 
 /// Triple point temperature, K, by substance (the sheet's `phases.triple_point_k`).
@@ -966,6 +974,12 @@ pub mod mixture_yield_strength {
     pub const NIOBIUM_C103: f64 = 275800000.0;
     /// inconel-718 (smc-inconel718).
     pub const INCONEL_718: f64 = 1034200000.0;
+}
+
+/// Thermal conductivity, W/m/K, by mixture (the sheet's mixtures).
+pub mod mixture_thermal_conductivity {
+    /// crust-rock (turcotte2014).
+    pub const CRUST_ROCK: f64 = 2.5;
 }
 
 /// Each unit's factor to SI, by unit id (the sheet's units table).

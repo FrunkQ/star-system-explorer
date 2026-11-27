@@ -1,0 +1,1 @@
+{"key": "jimenez2014", "citation": "Jimenez 2014", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["packages/renderer/src/finish.ts"], "claims": ["// Interleaved gradient noise (Jimenez 2014), under half a step of 8-bit output either way."], "tier": 3}

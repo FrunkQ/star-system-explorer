@@ -47,6 +47,25 @@ pub fn cell_dirs(key: TileKey, n: u32) -> Vec<[f64; 3]> {
     out
 }
 
+/// The direction `x_km` east and `y_km` north of a centre on a sphere of
+/// radius `a_m`, on the azimuthal equidistant plane round it: the point the
+/// great circle reaches after √(x² + y²) along the bearing atan2(x, y). Its
+/// east and north are the centre's; at a pole, north is the direction of
+/// longitude `lon_deg` + 180° (so east is longitude `lon_deg` + 90°).
+pub fn patch_dir(a_m: f64, lat_deg: f64, lon_deg: f64, x_km: f64, y_km: f64) -> [f64; 3] {
+    let (p, l) = (lat_deg * m::PI / 180.0, lon_deg * m::PI / 180.0);
+    let c = [m::cos(p) * m::cos(l), m::cos(p) * m::sin(l), m::sin(p)];
+    let e = [-m::sin(l), m::cos(l), 0.0];
+    let nn = [-m::sin(p) * m::cos(l), -m::sin(p) * m::sin(l), m::cos(p)];
+    let d = m::hypot(x_km, y_km) * 1000.0 / a_m;
+    if d <= 0.0 {
+        return c;
+    }
+    let (sx, sy) = (x_km * 1000.0 / a_m / d, y_km * 1000.0 / a_m / d);
+    let (cd, sd) = (m::cos(d), m::sin(d));
+    [0, 1, 2].map(|k| cd * c[k] + sd * (sx * e[k] + sy * nn[k]))
+}
+
 /// Fraction of the year since northern spring.
 pub fn year_phase(c: &Conditions, date: Date) -> f64 {
     let f = date.day / c.year_days.max(1e-9);
@@ -240,6 +259,56 @@ impl RuleBlock {
         FieldTile { key, n, cells }
     }
 
+    /// The field over a patch round a place (`FieldPatch`), cell by cell as
+    /// the tiles are: a closer look at a storm or a pole.
+    #[allow(clippy::too_many_arguments)]
+    pub fn patch(
+        &self,
+        c: &Conditions,
+        date: Date,
+        lat_deg: f64,
+        lon_deg: f64,
+        half_km: f64,
+        n: u32,
+        pins: &[Pin],
+    ) -> FieldPatch {
+        let p = self.prepare(c, date);
+        let dirs: Vec<[f64; 3]> = (0..n)
+            .flat_map(|j| (0..n).map(move |i| (i, j)))
+            .map(|(i, j)| {
+                let at = |k: u32| half_km * (-1.0 + (2.0 * k as f64 + 1.0) / n as f64);
+                patch_dir(c.radius_m, lat_deg, lon_deg, at(i), at(j))
+            })
+            .collect();
+        let cells = if Self::is_giant(&p) {
+            let gp = giants::prepare(&self.giants, c, date);
+            let l = giants::layout(&self.giants, c);
+            dirs.into_iter()
+                .map(|d| {
+                    let (lat, lon) = lat_lon(d);
+                    let mut cell = giants::giant_cell(&self.giants, c, &gp, lat, lon);
+                    giants::set_heights(&self.giants, &self.settings.climate, c, &l, &mut cell);
+                    cell
+                })
+                .collect()
+        } else {
+            let systems = self.systems_at(c, &p, date, pins);
+            dirs.into_iter()
+                .map(|d| {
+                    let (lat, lon) = lat_lon(d);
+                    self.cell_at(c, &p, date, &systems, None, lat, lon)
+                })
+                .collect()
+        };
+        FieldPatch {
+            lat_deg,
+            lon_deg,
+            half_km,
+            n,
+            cells,
+        }
+    }
+
     /// A plain weather report for one place and date.
     pub fn report(
         &self,
@@ -307,7 +376,7 @@ impl RuleBlock {
             l.base_m = bands[k].0 * 1000.0;
             l.top_m = bands[k].1 * 1000.0;
             // Winds strengthen with height toward the jets.
-            l.wind_m_s = [u * (1.0 + 1.5 * k as f64), 0.0];
+            l.wind_m_s = [u * (1.0 + s.clouds.wind_rise_per_layer * k as f64), 0.0];
         }
         // kg m⁻² s⁻¹ of liquid to mm a day.
         let mut precip =
@@ -316,25 +385,27 @@ impl RuleBlock {
         if let Some(cd) = &p.cond {
             let deck = circulation::deck_cover(s, c);
             let cover = at(&sea.cover).clamp(0.0, 1.0);
-            let tau = 2.0 + 18.0 * rel;
+            let cl = &s.clouds;
+            let tau = cl.tau_floor + cl.tau_rise * rel;
             // Rising air: deep towers; sinking air: low cloud only. The towers grow in
             // over a span of rising, so a belt's edge is a gradient, not a seam.
             let deep = if p.climate.precip_mean_m_yr > 0.0 && p.circ.regime != "thin-air" {
-                ((rel - 0.45) / 0.3).clamp(0.0, 1.0)
+                ((rel - cl.towers_from) / cl.towers_span).clamp(0.0, 1.0)
             } else {
                 0.0
             };
             if p.circ.regime == "thin-air" {
-                layers[1] = layer(cover, "cirrus", &cd.substance, 0.3, &layers[1]);
+                layers[1] = layer(cover, "cirrus", &cd.substance, cl.thin_air_tau, &layers[1]);
             } else {
                 let low_kind = if deep > 0.5 {
                     "cumulus"
                 } else {
                     "stratocumulus"
                 };
-                let low_tau = tau * (0.3 * deep + 0.4 * (1.0 - deep));
+                let low_tau =
+                    tau * (cl.low_tau_share[1] * deep + cl.low_tau_share[0] * (1.0 - deep));
                 layers[0] = layer(
-                    cover * (0.6 * deep + 0.8 * (1.0 - deep)),
+                    cover * (cl.low_cover_share[1] * deep + cl.low_cover_share[0] * (1.0 - deep)),
                     low_kind,
                     &cd.substance,
                     low_tau,
@@ -342,7 +413,7 @@ impl RuleBlock {
                 );
                 if deep > 0.0 {
                     layers[1] = layer(
-                        cover * 0.5 * deep,
+                        cover * cl.towers_cover_share * deep,
                         "cumulonimbus",
                         &cd.substance,
                         tau,
@@ -350,10 +421,10 @@ impl RuleBlock {
                     );
                 }
                 layers[2] = layer(
-                    cover * (0.5 * deep + 0.3 * (1.0 - deep)),
+                    cover * (cl.high_cover_share[1] * deep + cl.high_cover_share[0] * (1.0 - deep)),
                     "cirrus",
                     &cd.substance,
-                    0.5 + 0.5 * deep,
+                    cl.high_tau[0] + (cl.high_tau[1] - cl.high_tau[0]) * deep,
                     &layers[2],
                 );
             }

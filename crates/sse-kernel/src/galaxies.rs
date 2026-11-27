@@ -1,7 +1,8 @@
 //! Y4 part 1: other galaxies in the sky (night sky design section 6).
 //!
-//! Our galaxy (the campaign's median halo) sits at a home point of the
-//! cosmic web, and the region cells within reach give the other galaxies.
+//! Our galaxy is the universe's home halo (GZ12), one of the web's own
+//! catalogued haloes, and the region cells within reach of its place give
+//! the other galaxies.
 //! Each is grown by G3 (`galaxy::evolve`), the same growth `galaxy_chart`
 //! shows, and read at the epoch its light left: the comoving distance on the
 //! light cone gives the scale factor. Its light is its star formation
@@ -165,7 +166,8 @@ pub(crate) fn galaxies_seen(
     ask: GalaxyAsk,
 ) -> Result<(Vec<(f64, serde_json::Value)>, serde_json::Value), Response> {
     let ssp = Ssp::of(&st.params);
-    let home = sky.home_mpc;
+    // GZ12: home is our own halo's place in the web.
+    let home = host.position;
     let side = hs.params.cell_mpc;
     let reach = sky.galaxy_reach_mpc;
     let lo = |v: f64| m::floor((v - reach) / side) as i64;
@@ -201,6 +203,10 @@ pub(crate) fn galaxies_seen(
                 let cell = hs.cell([x, y, z]);
                 for h in &cell.haloes {
                     haloes += 1;
+                    // Our own halo is us, not a galaxy in our sky.
+                    if h.address == host.address {
+                        continue;
+                    }
                     if let Some(v) = seen(
                         c, gp, st, sky, &ssp, h, home, pc_m, now_gyr, t_obs_gyr, &ask,
                     )? {
@@ -217,10 +223,63 @@ pub(crate) fn galaxies_seen(
         a.0.total_cmp(&b.0)
             .then_with(|| a.1["address"].as_str().cmp(&b.1["address"].as_str()))
     });
-    Ok((
-        out,
-        serde_json::json!({"cells": cells, "haloes": haloes, "reach_mpc": reach, "home_mpc": home, "satellites": sat_walk}),
-    ))
+    let mut walk = serde_json::json!({"cells": cells, "haloes": haloes, "reach_mpc": reach, "home_mpc": home, "satellites": sat_walk});
+    // The edge needs the sheet's Sun (no stack, no sheet: left out).
+    if let (true, Some(m_sun)) = (ask.paths, sse_physics::constant("M_sun")) {
+        let host_msun = walk["satellites"]["host_mass_msun"].as_f64().unwrap_or(0.0);
+        walk["group_edge"] = group_edge(host_msun, m_sun, &out, t_obs_gyr)?;
+    }
+    Ok((out, walk))
+}
+
+/// The block that finds a group's edge (Sandage 1986), reading G through Look up.
+pub(crate) const ZERO_VELOCITY_BLOCK: &str = "sse.gravity.zero_velocity_radius";
+
+/// GZ6 (design 7.2): the edge of our group, the zero-velocity sphere round
+/// home of the mass inside it. It is widened until it holds what it needs:
+/// home's halo, then each galaxy's halo inside it, nearest first, which
+/// widens it again (it only grows, so it settles in a few steps). Satellites
+/// are inside home's halo already, so are not counted twice.
+fn group_edge(
+    home_halo_msun: f64,
+    m_sun: f64,
+    seen: &[(f64, serde_json::Value)],
+    t_gyr: f64,
+) -> Result<serde_json::Value, Response> {
+    // Through the physics in force: the block by the block door (ER2), with
+    // the settings in force, and the Sun's mass from the sheet in force
+    // (`m_sun`).
+    let t_s = t_gyr * 1.0e9 * sse_core::quantity::consts::JULIAN_YEAR;
+    let radius_mpc = |msun: f64| -> Result<f64, Response> {
+        let kg = msun.max(0.0) * m_sun;
+        let r = sse_physics::run(ZERO_VELOCITY_BLOCK, &[kg, t_s])
+            .map_err(|x| err("eval", format!("{ZERO_VELOCITY_BLOCK}: {x}")))?;
+        Ok(r.first().copied().unwrap_or(0.0) / MPC_M)
+    };
+    let mut others: Vec<(f64, f64, &str)> = seen
+        .iter()
+        .filter(|(_, v)| v["satellite"].as_bool() != Some(true))
+        .map(|(_, v)| {
+            (
+                v["distance_mpc"].as_f64().unwrap_or(f64::INFINITY),
+                v["halo_mass_msun"].as_f64().unwrap_or(0.0),
+                v["address"].as_str().unwrap_or(""),
+            )
+        })
+        .collect();
+    others.sort_by(|a, b| a.0.total_cmp(&b.0).then_with(|| a.2.cmp(b.2)));
+    let mut mass = home_halo_msun;
+    let mut r = radius_mpc(mass)?;
+    let mut n = 0;
+    while n < others.len() && others[n].0 <= r {
+        mass += others[n].1;
+        n += 1;
+        r = radius_mpc(mass)?;
+    }
+    Ok(serde_json::json!({
+        "radius_mpc": r, "mass_msun": mass, "members": n, "t_gyr": t_gyr,
+        "block": ZERO_VELOCITY_BLOCK,
+    }))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -245,7 +304,7 @@ fn seen(
     ];
     let d_pc = m::sqrt(dot(rel, rel));
     let d_mpc = d_pc / 1.0e6;
-    // Inside our own halo: that is us (fudge F37).
+    // Inside our own halo's reach: taken to be part of us (fudge F37).
     if d_mpc < sky.home_exclusion_mpc || d_mpc > sky.galaxy_reach_mpc {
         return Ok(None);
     }
@@ -268,6 +327,7 @@ fn seen(
             address: &h.address,
             halo_mass: h.mass,
             stars_kept: 1.0,
+            return_fraction: gp.return_fraction,
         },
         pc_m,
         now_gyr,
@@ -286,6 +346,8 @@ struct Look<'a> {
     halo_mass: f64,
     /// GH2: the share of its stars still bound (tidal stripping).
     stars_kept: f64,
+    /// G3's share of a formed mass handed back by dying stars.
+    return_fraction: f64,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -327,9 +389,22 @@ fn look(
         return Ok(None);
     }
     let kept = lk.stars_kept;
-    let born: Vec<(f64, f64)> = births(g, t_stop)
+    let formed = births(g, t_stop);
+    // Stars brought in by mergers and smooth accretion (G3's ex-situ stars)
+    // are in `then.stars` but not in its own star formation history, so the
+    // history alone leaves them dark: a group's central elliptical, mostly
+    // ex-situ, read M/L_V 13 (found by GZ12). They are lit as if they formed
+    // like the galaxy's own stars (fudge F37): the history is scaled so the
+    // stars it leaves match the galaxy's.
+    let own: f64 = formed.iter().map(|(_, mm)| mm).sum::<f64>() * (1.0 - lk.return_fraction);
+    let lit = if own > 0.0 {
+        (then.stars / own).max(1.0)
+    } else {
+        1.0
+    };
+    let born: Vec<(f64, f64)> = formed
         .into_iter()
-        .map(|(age, mass)| (age + (t_emit - t_stop), mass * kept))
+        .map(|(age, mass)| (age + (t_emit - t_stop), mass * kept * lit))
         .collect();
     // Rest-frame L_λ (W per m).
     let l_rest = |lam: f64| -> f64 {
@@ -541,6 +616,7 @@ pub(crate) fn satellites_seen(
                 address: &halo.address,
                 halo_mass: p.mass_at_infall_msun,
                 stars_kept: fate.stars_kept,
+                return_fraction: gp.return_fraction,
             },
             pc_m,
             now_gyr,

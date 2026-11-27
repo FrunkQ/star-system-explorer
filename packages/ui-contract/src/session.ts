@@ -184,8 +184,8 @@ export interface ViewSession {
   surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
-  /** A world's heat books over its life (track HF's screen): the quick survey's envelope with its core history, the same numbers that drive the world; GM only. */
-  surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope } | { ok: false; code: string; message: string }>;
+  /** A world's heat books over its life (track HF's screen): the quick survey's envelope with its core history, the same numbers that drive the world, and the climate's sunlight books (HV2b); GM only. */
+  surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope; sunlight: import("./heat-flow.ts").Sunlight | null } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
@@ -253,6 +253,10 @@ export interface ViewSession {
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
   /** What a ship's sensor sees from beside a body (V8 Window, kernel `window_view`). Read only; any seat, on the system it knows. */
   windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }>;
+  /** The universe's home galaxy, one of the web's own (GZ12, kernel `home_galaxy`). Read only; GM only. */
+  homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
+  /** "Make this home" (GZ12, kernel `set_home`): a catalogued halo's address, or null for the web's own choice. GM only. */
+  setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
   /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
   haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
   /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
@@ -318,6 +322,9 @@ export interface ViewSession {
    * or `cloud` and `rank` (1 the largest); with neither, the notable bodies formation made. `r_au` sets where an icy
    * body's activity is worked out (perihelion when left out). Nothing is stored; the same body comes back every time. */
   smallBody(ask: { system: string; member?: string; cloud?: string; rank?: number; r_au?: number }): Promise<{ ok: true; body: Json | null; notables: Json[] } | { ok: false; code: string; message: string }>;
+  /** VP-R3: one ring, whole (kernel `ring_structure`): its zones, the marks its moons leave, optical depth across it
+   * and its grains' colour. Give `ask` (sse-small RingAsk), or `system` and `cloud` for a ring formation made. Read only. */
+  ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }>;
   /** XO18: the Hazard map's reading (kernel `hazard_map`): a measured Solar System body by `fixture` and `body`, or
    * handed `asks`; along `line` ("equator" or "poles"); with `ship`, or the stated stock ship. Read only. */
   hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }>;
@@ -839,13 +846,15 @@ export class Session implements ViewSession {
     return c ? { ok: true, climate: c } : { ok: false, code: "no_climate", message: "this world has no climate in its survey" };
   }
 
-  async surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope } | { ok: false; code: string; message: string }> {
+  async surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope; sunlight: import("./heat-flow.ts").Sunlight | null } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
     // The same quick survey the climate reads (cached by the kernel): its envelope carries the core history.
     const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit: 1 });
     if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
-    const e = (r as unknown as { survey?: { envelope?: import("./heat-flow.ts").HeatEnvelope } }).survey?.envelope;
-    return e ? { ok: true, envelope: e } : { ok: false, code: "no_envelope", message: "this world has no envelope in its survey" };
+    const sv = (r as unknown as { survey?: { envelope?: import("./heat-flow.ts").HeatEnvelope; climate?: { sunlight?: import("./heat-flow.ts").Sunlight } } }).survey;
+    const e = sv?.envelope;
+    // The climate's sunlight books (HV2a) are the outside half; a world with no climate has none.
+    return e ? { ok: true, envelope: e, sunlight: sv?.climate?.sunlight ?? null } : { ok: false, code: "no_envelope", message: "this world has no envelope in its survey" };
   }
 
   /** The open universe as a document to keep (kernel `export_chronicle`, `sse.chronicle-export/1`); GM only. Open branches are not in it. */
@@ -971,6 +980,11 @@ export class Session implements ViewSession {
     return r.type === "small_body_is" ? { ok: true, body: o.body ?? null, notables: o.notables ?? [] } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "ring_structure", ...ask } as Json);
+    return r.type === "ring_structure_is" ? { ok: true, ring: (r as unknown as { ring: Json }).ring } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_field", ...ask } as Json);
     return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
@@ -1012,6 +1026,18 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the galaxy's history is the game master's chart; players see it through data views" };
     const r = await this.#call({ op: "galaxy_chart", ...ask });
     return r.type === "galaxy_charted" ? { ok: true, chart: (r as unknown as { chart: import("./galaxy.ts").GalaxyChart }).chart } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the universe's galaxies are charted on the game master's machine" };
+    const r = await this.#call({ op: "home_galaxy" });
+    return r.type === "home_galaxy" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master chooses the universe's home" };
+    const r = await this.#call(halo ? { op: "set_home", halo } : { op: "set_home" });
+    return r.type === "home_set" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }> {

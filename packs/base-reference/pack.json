@@ -15534,6 +15534,212 @@
        "note": "saturated liquid just above the triple point"
       }
      }
+    },
+    {
+     "id": "o+2",
+     "formula": {
+      "o": 1
+     },
+     "charge": 2,
+     "names": {
+      "physics": "doubly ionised oxygen (O III)",
+      "plain": "oxygen stripped of two electrons",
+      "story": "oxygen stripped of two electrons"
+     },
+     "optical": {
+      "emission": [
+       {
+        "id": "oiii-4959",
+        "kind": "forbidden",
+        "lambda_nm": 495.891,
+        "medium": "air",
+        "src": "storey2014",
+        "also": [
+         "storey-nlevel",
+         "nist-asd-ion"
+        ],
+        "check": "unverified",
+        "nebular": {
+         "makes_ev": 35.12112,
+         "strips_ev": 54.93554,
+         "upsilon": 2.26177,
+         "lower_weight": 9,
+         "upper_weight": 5,
+         "upper_cm": 20065.5,
+         "share": 0.25
+        },
+        "note": "Collision strengths 0.24917, 0.75062 and 1.26198 from 3P0, 3P1 and 3P2 to 1D2, summed over the 3P term (weight 9); 1D2 lies 20273.27 cm-1 above 3P0 (table 5), 20065.5 above the term's weighted centre. The 500.7 and 495.9 nm lines share the 1D2 level's decays about three to one; the exact ratio from Storey and Zeippen 2000 (MNRAS 312, 813) is a stand-in until checked (fudge register F64). De-excitation not worked: 1D2's critical density is far above nebular densities."
+       },
+       {
+        "id": "oiii",
+        "kind": "forbidden",
+        "lambda_nm": 500.684,
+        "medium": "air",
+        "src": "storey2014",
+        "also": [
+         "storey-nlevel",
+         "nist-asd-ion"
+        ],
+        "check": "unverified",
+        "nebular": {
+         "makes_ev": 35.12112,
+         "strips_ev": 54.93554,
+         "upsilon": 2.26177,
+         "lower_weight": 9,
+         "upper_weight": 5,
+         "upper_cm": 20065.5,
+         "share": 0.75
+        },
+        "note": "Collision strengths 0.24917, 0.75062 and 1.26198 from 3P0, 3P1 and 3P2 to 1D2, summed over the 3P term (weight 9); 1D2 lies 20273.27 cm-1 above 3P0 (table 5), 20065.5 above the term's weighted centre. The 500.7 and 495.9 nm lines share the 1D2 level's decays about three to one; the exact ratio from Storey and Zeippen 2000 (MNRAS 312, 813) is a stand-in until checked (fudge register F64). De-excitation not worked: 1D2's critical density is far above nebular densities."
+       }
+      ]
+     }
+    },
+    {
+     "id": "s+",
+     "formula": {
+      "s": 1
+     },
+     "charge": 1,
+     "names": {
+      "physics": "singly ionised sulphur (S II)",
+      "plain": "sulphur stripped of one electron",
+      "story": "sulphur stripped of one electron"
+     },
+     "optical": {
+      "emission": [
+       {
+        "id": "sii",
+        "kind": "forbidden",
+        "lambda_nm": 671.644,
+        "medium": "air",
+        "src": "sii-aa2025",
+        "also": [
+         "nist-asd-ion"
+        ],
+        "check": "unverified",
+        "nebular": {
+         "makes_ev": 10.36001,
+         "strips_ev": 23.33788,
+         "upsilon": 3.83,
+         "lower_weight": 4,
+         "upper_weight": 6,
+         "rate_s": 0.0002019,
+         "balance": {
+          "fit": {
+           "e0_ev": 8.787,
+           "sigma0_m2": 3.136e-20,
+           "ya": 3.442,
+           "p": 12.81,
+           "yw": 0.7354,
+           "y0": 2.782,
+           "y1": 0.1788,
+           "max_ev": 184.6
+          },
+          "recombination_m3_s": 4.48e-18,
+          "src": "verner1996",
+          "also": [
+           "badnell2015"
+          ],
+          "check": "unverified",
+          "note": "Once- and twice-ionised sulphur balance where they are: S+ stripped by starlight with Verner et al.'s cross-section fit (table 1, row S II), S2+ rejoined at 4.48e-12 cm3 s-1 at 10,000 K, the sum of the dielectronic 2.94e-12 and radiative 1.54e-12 of Badnell et al. 2015, table 6."
+         }
+        },
+        "note": "[S II] 671.6 nm, 2D5/2 to 4S3/2."
+       },
+       {
+        "id": "sii-6731",
+        "kind": "forbidden",
+        "lambda_nm": 673.082,
+        "medium": "air",
+        "src": "sii-aa2025",
+        "also": [
+         "nist-asd-ion"
+        ],
+        "check": "unverified",
+        "nebular": {
+         "makes_ev": 10.36001,
+         "strips_ev": 23.33788,
+         "upsilon": 2.56,
+         "lower_weight": 4,
+         "upper_weight": 4,
+         "rate_s": 0.000684,
+         "balance": {
+          "fit": {
+           "e0_ev": 8.787,
+           "sigma0_m2": 3.136e-20,
+           "ya": 3.442,
+           "p": 12.81,
+           "yw": 0.7354,
+           "y0": 2.782,
+           "y1": 0.1788,
+           "max_ev": 184.6
+          },
+          "recombination_m3_s": 4.48e-18,
+          "src": "verner1996",
+          "also": [
+           "badnell2015"
+          ],
+          "check": "unverified",
+          "note": "Once- and twice-ionised sulphur balance where they are: S+ stripped by starlight with Verner et al.'s cross-section fit (table 1, row S II), S2+ rejoined at 4.48e-12 cm3 s-1 at 10,000 K, the sum of the dielectronic 2.94e-12 and radiative 1.54e-12 of Badnell et al. 2015, table 6."
+         }
+        },
+        "note": "[S II] 673.1 nm, 2D3/2 to 4S3/2."
+       }
+      ]
+     }
+    },
+    {
+     "id": "co+",
+     "formula": {
+      "c": 1,
+      "o": 1
+     },
+     "charge": 1,
+     "names": {
+      "physics": "carbon monoxide ion",
+      "plain": "carbon monoxide stripped of one electron",
+      "story": "carbon monoxide stripped of one electron"
+     },
+     "optical": {
+      "emission": [
+       {
+        "id": "co+",
+        "kind": "band",
+        "lambda_nm": 426.0,
+        "medium": "air",
+        "src": "brandt-chapman2004",
+        "check": "unverified",
+        "note": "CO+ comet-tail bands (A-X), the blue of a CO-driven ion tail; about 426 nm, three figures as the textbook gives them"
+       }
+      ]
+     }
+    },
+    {
+     "id": "h2o+",
+     "formula": {
+      "h": 2,
+      "o": 1
+     },
+     "charge": 1,
+     "names": {
+      "physics": "water ion",
+      "plain": "water stripped of one electron",
+      "story": "water stripped of one electron"
+     },
+     "optical": {
+      "emission": [
+       {
+        "id": "h2o+",
+        "kind": "band",
+        "lambda_nm": 615.0,
+        "medium": "air",
+        "src": "brandt-chapman2004",
+        "check": "unverified",
+        "note": "H2O+ bands (A-X), the orange of a water-driven ion tail; about 615 nm, three figures as the textbook gives them"
+       }
+      ]
+     }
     }
    ],
    "mixtures": [
@@ -15750,6 +15956,13 @@
       "unit": "kg m-3",
       "src": "turcotte2014",
       "check": "unverified"
+     },
+     "thermal_conductivity": {
+      "v": 2.5,
+      "unit": "W m-1 K-1",
+      "src": "turcotte2014",
+      "check": "unverified",
+      "note": "typical of the continental crust's granites and gneisses near the surface (about 2 to 3); read by the life suite's deep-crust warming"
      }
     },
     {
@@ -18965,6 +19178,112 @@
        "note": "real index only, 360 to 702 nm, where the paper prints no k"
       }
      }
+    },
+    {
+     "id": "water-ice-fine",
+     "names": {
+      "physics": "water ice, fine grains (~70 micron)",
+      "plain": "fresh frost",
+      "story": "hoarfrost"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "fresh water ice of fine grains, as frost, new snow or freshly broken ice: the brightest ground there is, white with a faint blue",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        800.0,
+        850.0,
+        900.0,
+        950.0,
+        1000.0
+       ],
+       "r": [
+        1.020175,
+        0.982685,
+        0.982494,
+        0.975033,
+        0.960795,
+        0.955426,
+        0.952003,
+        0.940339,
+        0.937319,
+        0.915876,
+        0.91107,
+        0.860197
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 0.0,
+       "e_deg": 30.0,
+       "at_k": 100.0,
+       "grain_um": 70.0,
+       "grain_shape": "spherical",
+       "src": "stephan2021-ice",
+       "check": "unverified",
+       "note": "laboratory spectrum of pure water ice grains at 100 K in vacuum (SSHADE SPECTRUM_OP_20201223_301), relative to a Lambertian surface; the file starts at 450 nm, and its 450 nm point is noisy; values above 1 are real for bright grains seen at this geometry; interpolate linearly, hold the ends"
+      }
+     }
+    },
+    {
+     "id": "water-ice-coarse",
+     "names": {
+      "physics": "water ice, coarse grains (~680 micron)",
+      "plain": "coarse old ice",
+      "story": "old ice"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "water ice of coarse grains, as sintered or recrystallised old ice: light travels further inside each grain, so it absorbs more and is a little greyer and bluer than frost",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        800.0,
+        850.0,
+        900.0,
+        950.0,
+        1000.0
+       ],
+       "r": [
+        0.795823,
+        0.790779,
+        0.813512,
+        0.814476,
+        0.825094,
+        0.804172,
+        0.799499,
+        0.789402,
+        0.790782,
+        0.77332,
+        0.769907,
+        0.700926
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 0.0,
+       "e_deg": 30.0,
+       "at_k": 100.0,
+       "grain_um": 680.0,
+       "grain_shape": "irregular",
+       "src": "stephan2021-ice",
+       "check": "unverified",
+       "note": "laboratory spectrum of pure water ice grains at 100 K in vacuum (SSHADE SPECTRUM_OP_20201223_304), relative to a Lambertian surface; the file starts at 450 nm, and its 450 nm point is noisy; values above 1 are real for bright grains seen at this geometry; interpolate linearly, hold the ends"
+      }
+     }
     }
    ],
    "reactions": [
@@ -19483,6 +19802,12 @@
      "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
     },
     {
+     "id": "badnell2015",
+     "text": "Badnell, N. R. et al. 2015: dielectronic and radiative recombination rate coefficients (table 6)",
+     "status": "unverified",
+     "url": "https://arxiv.org/abs/1503.05905"
+    },
+    {
      "id": "bisterzo2014",
      "text": "Bisterzo, S. et al. 2014, ApJ 787, 10: Galactic chemical evolution and solar s-process abundances, dependence on the 13C-pocket structure (s-process percentages per isotope, Kr to Bi)",
      "status": "verified",
@@ -19499,6 +19824,12 @@
      "text": "Boran, S. et al. 2018, Phys. Rev. D 97, 041501: GW170817 falsifies dark matter emulators",
      "status": "verified",
      "doi": "10.1103/PhysRevD.97.041501"
+    },
+    {
+     "id": "brandt-chapman2004",
+     "text": "Brandt, J. C. and Chapman, R. D. 2004, Introduction to Comets, 2nd edition, Cambridge University Press: ion tails glow in CO+ near 426 nm and H2O+ near 615 nm",
+     "status": "unverified",
+     "doi": "10.1017/CBO9781139165327"
     },
     {
      "id": "buecker-wagner2006",
@@ -20059,6 +20390,12 @@
      "doi": "10.1038/nature04122"
     },
     {
+     "id": "nist-asd-ion",
+     "text": "NIST Atomic Spectra Database ionisation energies (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team)",
+     "status": "unverified",
+     "url": "https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+    },
+    {
      "id": "nist-cccbdb",
      "text": "NIST Computational Chemistry Comparison and Benchmark Database, Release 22 (May 2022), list of experimental static dipole polarizabilities (in cubic angstroms; most from Olney, Cann, Cooper and Brion 1997, Chem. Phys. 223, 59)",
      "status": "verified",
@@ -20420,6 +20757,12 @@
      "doi": "10.1063/1.555958"
     },
     {
+     "id": "sii-aa2025",
+     "text": "Astronomy and Astrophysics 694, A133 (2025), table B.5: [S II] effective collision strengths at 10,000 K and Einstein A, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32)",
+     "status": "unverified",
+     "doi": "10.1051/0004-6361/202451865"
+    },
+    {
      "id": "smc-inconel718",
      "text": "Special Metals Corporation 2007, INCONEL alloy 718, publication SMC-045: melting range 2300-2437 F, density 0.296 lb/in3 (annealed), used from -423 F to 1300 F; AMS 5596 sheet minimum 180 ksi ultimate and 150 ksi yield; hot-rolled bar aged, at 1200 F, 164.5 ksi ultimate and 145.0 ksi yield",
      "status": "unverified",
@@ -20453,6 +20796,25 @@
      "id": "sse-light-bands",
      "text": "SSE4 nebulae and light design, the fixed band set (handover/design/SSE4-nebulae-and-light-design.md): band edges are conventions chosen for the renderer, not measurements; the ultraviolet and visible edges follow common astronomical usage",
      "status": "authored"
+    },
+    {
+     "id": "stephan2021-ice",
+     "text": "Stephan, K., Ciarniello, M., Poch, O., Schmitt, B., Haack, D. and Raponi, A. 2021, Minerals 11, 1328: VIS-NIR/SWIR spectral properties of H2O ice depending on particle size and surface temperature (CC BY). Pure ice grains (spherical ~70 um sprayed into liquid nitrogen; irregular ~300, ~680, ~1060, ~1360 um crushed and sieved from a slowly frozen slab) at 70 to 220 K under vacuum, behind sapphire windows, measured with the SHINE spectro-gonio radiometer (IPAG) at incidence 0, emergence 30, phase 30 degrees, calibrated against Spectralon (0.40 to 1.10 micron). Data: SSHADE/CSS experiment EXPERIMENT_OP_20201223_001 (Stephan, Ciarniello, Poch, Haack and Raponi 2019, doi 10.26302/SSHADE/EXPERIMENT_OP_20201223_001), spectra SPECTRUM_OP_20201223_301 (~70 um spherical, 100 K) and SPECTRUM_OP_20201223_304 (~680 um irregular, 100 K), read from SSHADE's plot files /plot/<spectrum>/1.micron.json.gz on 26 Nov 2026",
+     "status": "unverified",
+     "doi": "10.3390/min11121328",
+     "url": "https://www.sshade.eu/data/experiment/EXPERIMENT_OP_20201223_001"
+    },
+    {
+     "id": "storey-nlevel",
+     "text": "Storey, N-level atoms notes (University of Maryland): the [O III] 500.7 and 495.9 nm lines share the 1D2 level's decays about three to one",
+     "status": "unverified",
+     "url": "https://pages.astro.umd.edu/~jpha/N-level.pdf"
+    },
+    {
+     "id": "storey2014",
+     "text": "Storey, P. J., Sochi, T. and Badnell, N. R. 2014: collision strengths for nebular [O III] optical and infrared lines (table 6, effective collision strengths at 10,000 K; table 5, level energies)",
+     "status": "unverified",
+     "url": "https://arxiv.org/abs/1311.6517"
     },
     {
      "id": "taylor2001-lscc",
@@ -20520,6 +20882,12 @@
      "text": "U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)",
      "status": "verified",
      "url": "https://ntrs.nasa.gov/citations/19770009539"
+    },
+    {
+     "id": "verner1996",
+     "text": "Verner, D. A., Ferland, G. J., Korista, K. T. and Yakovlev, D. G. 1996, ApJ 465, 487: analytic fits for partial photoionisation cross-sections (table 1)",
+     "status": "unverified",
+     "doi": "10.1086/177435"
     },
     {
      "id": "vijaykumar2021",

@@ -19,6 +19,8 @@ mod caves;
 mod class_sample_tests;
 mod clock;
 mod composition;
+#[cfg(test)]
+mod conservation_tests;
 pub mod contract;
 mod conventions;
 #[cfg(test)]
@@ -42,6 +44,8 @@ mod from_star_tests;
 mod galaxies;
 mod glow;
 #[cfg(test)]
+mod home_tests;
+#[cfg(test)]
 mod hooks_tests;
 mod ice_ages;
 mod inventory;
@@ -53,6 +57,10 @@ mod life;
 mod life_tests;
 #[cfg(test)]
 mod matter_tests;
+#[cfg(test)]
+mod mount_log_tests;
+#[cfg(test)]
+mod mount_tests;
 mod names;
 #[cfg(test)]
 mod names_tests;
@@ -63,6 +71,8 @@ mod physics_tests;
 #[cfg(test)]
 mod power_books_tests;
 pub mod protocol;
+#[cfg(test)]
+mod reach_gate_tests;
 mod reference;
 mod sea;
 mod sky;
@@ -553,6 +563,15 @@ fn with_record(d: &sse_observe::Disclosure, r: &sse_record::Registry) -> sse_obs
 pub const TAG_FIELD: &str = "tag.";
 
 impl Universe {
+    /// GZ12: the GM's stored home halo ("Make this home"), if any; absent,
+    /// the web's own choice is the home.
+    fn home(&self) -> Option<String> {
+        cosmos::stored_home(
+            &self.chronicle.state_at(UniverseTime::seconds(i64::MAX)),
+            &self.root,
+        )
+    }
+
     fn manifest(&self) -> RunManifest {
         RunManifest::new(
             self.seed,
@@ -963,7 +982,7 @@ fn territory_world(
         let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
         let pins = cosmos::star_pins(&state)?;
         let start = clock::campaign_span_s(&u.chronicle).map(|(a, _)| a);
-        positions = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+        positions = cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
             let t_myr = match start {
                 Some(s0) if at.s != i64::MAX => {
                     now + (at.s - s0) as f64 / sse_core::sheet::YR_JULIAN / 1.0e6
@@ -1203,10 +1222,14 @@ fn bench_unit(i: u32) -> f64 {
 /// blocks (J2). Ids never clash: `toy.*`, `sse.*`, `logic.*`, `world.*`,
 /// `chance.*`.
 fn kernel_atoms() -> sse_flow::AtomRegistry {
+    kernel_atoms_in_force(&sse_physics::Blocks::shipped())
+}
+
+/// The same with the block library in force (ER2): each block with the
+/// settings the stack gives it, so a flow compiled against it follows them.
+fn kernel_atoms_in_force(blocks: &sse_physics::Blocks) -> sse_flow::AtomRegistry {
     let mut r = sse_flow::toy::registry();
-    for a in sse_atoms::atoms() {
-        r.insert(a);
-    }
+    blocks.insert_into(&mut r);
     // J2: the logic set (`logic.*`, `world.*`, `chance.*`).
     sse_logic::register(&mut r);
     r
@@ -1663,6 +1686,7 @@ impl Kernel {
             Some(cosmos::reconstruct_origin(
                 &u.seed,
                 &u.root,
+                cosmos::stored_home(&all, &u.root).as_deref(),
                 cosmos::OriginAt {
                     age_gyr: age_myr / 1000.0,
                     elapsed_gyr: clock::elapsed_myr(&u.chronicle) / 1000.0,
@@ -2172,11 +2196,50 @@ impl Kernel {
             .map_err(|e| err("bad_record", format!("{address}: {e}")))?;
         let u = self.universe()?;
         let elapsed_myr = clock::elapsed_myr(&u.chronicle);
-        let (seed, root) = (u.seed, u.root.clone());
+        let (seed, root, home) = (u.seed, u.root.clone(), u.home());
         // `with_stars` gives the galaxy's now in Myr; the birth reads Gyr.
-        cosmos::with_stars(&seed, &root, None, |st, now_myr| {
+        cosmos::with_stars(&seed, &root, home.as_deref(), None, |st, now_myr| {
             let b = serde_json::to_value(st.birth(&s)).expect("plain data");
             Ok((b, (now_myr + elapsed_myr) / 1000.0))
+        })
+    }
+
+    /// `set_home` (GZ12 "Make this home"): store the GM's home halo on the
+    /// universe's root, or clear it (null) to return to the web's choice.
+    fn set_home(&mut self, halo: Option<String>) -> Result<Response, Response> {
+        let u = self.universe()?;
+        // Checked first: it must be one of this universe's catalogued haloes.
+        if let Some(h) = &halo {
+            cosmos::home_galaxy(&u.seed, &u.root, Some(h))?;
+        }
+        let mut f = BTreeMap::new();
+        f.insert(
+            cosmos::HOME_HALO.to_string(),
+            halo.clone().map_or(Value::Null, Value::Text),
+        );
+        let e = clock::timeless_set(
+            &u.chronicle,
+            &u.root,
+            f,
+            Evidence::Authored,
+            vec![],
+            cosmos::HOME_KIND,
+            Publisher::new("sse.base-cosmology", "home", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        let home = cosmos::home_galaxy(&u.seed, &u.root, u.home().as_deref())?;
+        Ok(Response::HomeSet {
+            home,
+            event_id: id.hex(),
+            state_hash: u
+                .chronicle
+                .state_at(UniverseTime::seconds(i64::MAX))
+                .hash()
+                .hex(),
         })
     }
 
@@ -2202,7 +2265,7 @@ impl Kernel {
                 state_hash: hash(&u.chronicle),
             });
         }
-        let drawn = cosmos::with_stars(&u.seed, &u.root, None, |st, _| {
+        let drawn = cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, _| {
             let s = st
                 .draw_one(&a)
                 .map_err(|e| err("bad_address", e))?
@@ -2302,6 +2365,12 @@ impl Kernel {
                 );
                 continue;
             };
+            // A star class is drawn from the life line (describe_star with the
+            // class's sample star), not placed as a world.
+            if class.scheme == "star" {
+                refused.push(serde_json::json!({"class": id, "why": "a star class: draw it with describe_star from its first example's star.sample_mass_msun, star.sample_age_yr and star.sample_feh"}));
+                continue;
+            }
             let best = class
                 .examples
                 .iter()
@@ -3308,9 +3377,26 @@ impl Kernel {
                                 issues: clashes,
                             });
                         }
+                        // ER2: the block library in force, each block with
+                        // the settings this stack's `provides.blocks` give it.
+                        // Flows compile against it, so they follow an edit.
+                        let blocks = match sse_physics::Blocks::from_packs(&ms) {
+                            Ok(b) => std::sync::Arc::new(b),
+                            Err(es) => {
+                                let issues: Vec<sse_pack::StackIssue> = es
+                                    .into_iter()
+                                    .map(|(pack, message)| sse_pack::StackIssue { pack, message })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: issues.iter().map(|i| i.to_string()).collect(),
+                                });
+                            }
+                        };
+                        let atoms = kernel_atoms_in_force(&blocks);
                         let _sheet = sse_flow::sheet::Scope::new(sheet_of(&observe.reference));
                         let cx = Context {
-                            atoms: &self.atoms,
+                            atoms: &atoms,
                             kinds: &stack.kinds,
                             units: &stack.units,
                         };
@@ -3371,6 +3457,17 @@ impl Kernel {
                                 issues: problems,
                             });
                         }
+                        // The physics in force from here on: the rest of the
+                        // load (codes, adopting a universe) reads the new one.
+                        let flows = std::sync::Arc::new(flows);
+                        let physics = std::sync::Arc::new(sse_physics::Physics::build_with(
+                            &ms,
+                            Some(&stack),
+                            observe.reference.clone(),
+                            flows.clone(),
+                            blocks,
+                        ));
+                        let _in_force = sse_physics::Scope::new(&physics);
                         let codes = match sse_codes::Codes::load(&ms) {
                             Ok(c) => c,
                             Err(problems) => {
@@ -3398,13 +3495,8 @@ impl Kernel {
                             fictional_kinds: stack.fictional_kinds.iter().cloned().collect(),
                             adopted,
                         };
-                        let flows = std::sync::Arc::new(flows);
-                        self.physics = std::sync::Arc::new(sse_physics::Physics::build(
-                            &ms,
-                            Some(&stack),
-                            observe.reference.clone(),
-                            flows.clone(),
-                        ));
+                        self.physics = physics;
+                        self.atoms = atoms;
                         self.stack = Some((stack, flows));
                         self.reports = reports;
                         self.observe = observe;
@@ -3941,6 +4033,7 @@ impl Kernel {
                 n,
                 lat,
                 lon,
+                half_km,
                 pins,
                 sources,
                 block,
@@ -3973,6 +4066,7 @@ impl Kernel {
                         n,
                         lat: lat.unwrap_or(0.0),
                         lon: lon.unwrap_or(0.0),
+                        half_km,
                         pins: pins.unwrap_or_default(),
                         sources,
                         block,
@@ -4166,6 +4260,56 @@ impl Kernel {
                     rank,
                     r_au,
                 )?
+            }
+            Request::RingStructure {
+                system,
+                cloud,
+                ask,
+                variant,
+                samples,
+                window,
+            } => {
+                let u = self.universe()?;
+                let ask = match (ask, system, cloud) {
+                    (Some(a), None, None) => {
+                        let mut a: sse_small::ring::RingAsk = serde_json::from_value(a)
+                            .map_err(|e| err("bad_request", format!("ring ask: {e}")))?;
+                        if let Some(v) = variant {
+                            a.variant = v;
+                        }
+                        if samples.is_some() {
+                            a.samples = samples.map(|n| n as usize);
+                        }
+                        if window.is_some() {
+                            a.window = window;
+                        }
+                        a
+                    }
+                    (None, Some(system), Some(cloud)) => {
+                        let sa = in_universe(&u.root, &system)?;
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &sa) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        small::ring_ask_from_run(
+                            u.runs.get(&system),
+                            &cloud,
+                            variant.unwrap_or(0),
+                            samples.map(|n| n as usize),
+                            window,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give an ask, or a system and its ring's cloud",
+                        ))
+                    }
+                };
+                let seed = u.seed;
+                small::ring_structure(&ask, &seed, &self.observe.reference)?
             }
             Request::MakeSmallBody {
                 system,
@@ -4487,8 +4631,10 @@ impl Kernel {
                     .map(serde_json::from_value)
                     .collect::<Result<_, _>>()
                     .map_err(|e| err("bad_edit", format!("history edit: {e}")))?;
+                let home = u.home();
                 let chart = cosmos::galaxy_chart(cosmos::GalaxyAsk {
                     cell,
+                    home: home.as_deref(),
                     edits: &edits,
                     seed: &u.seed,
                     root: &u.root,
@@ -6517,6 +6663,147 @@ impl Kernel {
                     state_hash: latest_hash(&u.chronicle),
                 }
             }
+            Request::MountConstruct {
+                address,
+                on,
+                place,
+                port,
+                own_port,
+                bay,
+                along_m,
+                clock_deg,
+                stand_off_m,
+                bond,
+                lines,
+                push_m_s,
+                authored,
+                fixture,
+                nav,
+                system,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let h = in_universe(&u.root, &on)?;
+                let at = UniverseTime::seconds(at_s);
+                let eph = ephemeris(u, fixture.as_deref(), nav.as_ref(), system.as_deref())?;
+                let mut log_notes = vec![];
+                flights::check_capture(
+                    &u.record,
+                    &u.root,
+                    &h,
+                    &a,
+                    at_s,
+                    eph.as_ref()
+                        .map(|s| s as &dyn sse_nav::flightlog::Ephemeris),
+                    authored.unwrap_or(false),
+                    &mut log_notes,
+                )?;
+                let d = sse_trigger::mount::mount(
+                    &mut u.chronicle,
+                    &u.root,
+                    &sse_trigger::mount::MountAsk {
+                        carried: &a,
+                        carrier: &h,
+                        place: Some(place),
+                        port: port.as_deref(),
+                        own_port: own_port.as_deref(),
+                        bay: bay.as_deref(),
+                        along_m,
+                        clock_deg,
+                        stand_off_m,
+                        bond,
+                        lines: lines.as_deref().unwrap_or(&[]),
+                        push_m_s,
+                        at,
+                    },
+                    &Publisher::new("gm", "mount", "1"),
+                )
+                .map_err(|e| err("mount_refused", e))?;
+                let root = u.root.clone();
+                let logged = flights::on_capture(
+                    &mut u.record,
+                    &root,
+                    &h,
+                    &a,
+                    d.mount.place.word(),
+                    d.mount.port.as_deref(),
+                    at_s,
+                )?;
+                let st = u.chronicle.state_at(at);
+                let mut notes = d.notes;
+                if !logged.is_empty() {
+                    notes.extend(log_notes);
+                }
+                Response::ConstructMounted {
+                    address: a.to_string(),
+                    mount: d.mount.to_json(),
+                    compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
+                    notes,
+                    logged,
+                    event_id: d.event.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::ReleaseConstruct {
+                address,
+                from,
+                push_m_s,
+                fixture,
+                nav,
+                system,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let eph = ephemeris(u, fixture.as_deref(), nav.as_ref(), system.as_deref())?;
+                let a = in_universe(&u.root, &address)?;
+                let from = from.map(|f| in_universe(&u.root, &f)).transpose()?;
+                let at = UniverseTime::seconds(at_s);
+                let d = sse_trigger::mount::release(
+                    &mut u.chronicle,
+                    &u.root,
+                    &a,
+                    from.as_ref(),
+                    push_m_s,
+                    at,
+                    &Publisher::new("gm", "release", "1"),
+                )
+                .map_err(|e| err("release_refused", e))?;
+                let root = u.root.clone();
+                let carrier: Address = d
+                    .mount
+                    .on
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let (logged, log_notes) = flights::on_release(
+                    &mut u.record,
+                    &root,
+                    &carrier,
+                    &a,
+                    d.mount.place.word(),
+                    d.mount.push_m_s,
+                    at_s,
+                    eph.as_ref()
+                        .map(|s| s as &dyn sse_nav::flightlog::Ephemeris),
+                )?;
+                let st = u.chronicle.state_at(at);
+                let mut notes = d.notes;
+                if logged.is_empty() {
+                    notes.extend(log_notes.into_iter().filter(|n| n.contains("give it")));
+                } else {
+                    notes.retain(|n| !n.contains("the flight log uses the pack's"));
+                    notes.extend(log_notes);
+                }
+                Response::ConstructReleased {
+                    address: a.to_string(),
+                    mount: d.mount.to_json(),
+                    compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
+                    notes,
+                    logged,
+                    event_id: d.event.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
             Request::Sift {
                 sifters,
                 audience,
@@ -6853,7 +7140,7 @@ impl Kernel {
                                 return Ok(Response::FlightLogIs {
                                     log: serde_json::to_value(&log).expect("plain"),
                                     entries: es.iter().map(flights::entry_json).collect(),
-                                    at: Some(flights::where_at(&log, t, &s)),
+                                    at: Some(flights::where_at(&u.record, &u.root, &log, t, &s)),
                                 });
                             }
                             _ => {
@@ -6864,7 +7151,7 @@ impl Kernel {
                             }
                         };
                         let (s, _) = nav::nav_system(source)?;
-                        Some(flights::where_at(&log, t, &s))
+                        Some(flights::where_at(&u.record, &u.root, &log, t, &s))
                     }
                 };
                 Response::FlightLogIs {
@@ -7422,6 +7709,12 @@ impl Kernel {
                     skipped,
                 }
             }
+            Request::HomeGalaxy => {
+                let u = self.universe()?;
+                let home = cosmos::home_galaxy(&u.seed, &u.root, u.home().as_deref())?;
+                Response::HomeGalaxy { home }
+            }
+            Request::SetHome { halo } => self.set_home(halo)?,
             Request::HaloCell {
                 cell,
                 min_mass_msun,
@@ -7447,9 +7740,10 @@ impl Kernel {
                 let pins =
                     cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
-                let cell = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
-                    cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
-                })?;
+                let cell =
+                    cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
+                        cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
+                    })?;
                 Response::StarCelled { cell }
             }
             Request::SkyFromHere {
@@ -7469,27 +7763,33 @@ impl Kernel {
                 let pins =
                     cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
-                let sky = cosmos::with_world(&u.seed, &u.root, None, |st, world, now| {
-                    sky::sky_from_here(
-                        st,
-                        world,
-                        &pins,
-                        &cosmos::sky_params()?,
-                        sky::Ask {
-                            observer: observer.as_deref(),
-                            position_pc,
-                            t_myr: t_myr.unwrap_or(now + elapsed),
-                            limit_mag: limit_mag.unwrap_or(6.5),
-                            band: band.as_deref().unwrap_or("V"),
-                            bands: bands.unwrap_or_default(),
-                            cone,
-                            max_stars: max_stars.unwrap_or(20_000) as usize,
-                            galaxies: galaxies.unwrap_or(true),
-                            stars: stars.unwrap_or(true),
-                            satellite_paths: satellite_paths.unwrap_or(false),
-                        },
-                    )
-                })?;
+                let sky = cosmos::with_world(
+                    &u.seed,
+                    &u.root,
+                    u.home().as_deref(),
+                    None,
+                    |st, world, now| {
+                        sky::sky_from_here(
+                            st,
+                            world,
+                            &pins,
+                            &cosmos::sky_params()?,
+                            sky::Ask {
+                                observer: observer.as_deref(),
+                                position_pc,
+                                t_myr: t_myr.unwrap_or(now + elapsed),
+                                limit_mag: limit_mag.unwrap_or(6.5),
+                                band: band.as_deref().unwrap_or("V"),
+                                bands: bands.unwrap_or_default(),
+                                cone,
+                                max_stars: max_stars.unwrap_or(20_000) as usize,
+                                galaxies: galaxies.unwrap_or(true),
+                                stars: stars.unwrap_or(true),
+                                satellite_paths: satellite_paths.unwrap_or(false),
+                            },
+                        )
+                    },
+                )?;
                 Response::Sky { sky }
             }
             Request::SkyGlow {
@@ -7502,20 +7802,21 @@ impl Kernel {
             } => {
                 let u = self.universe()?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
-                let glow = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
-                    glow::sky_glow(
-                        st,
-                        &cosmos::sky_params()?,
-                        glow::Ask {
-                            position_pc,
-                            t_myr: t_myr.unwrap_or(now + elapsed),
-                            limit_mag: limit_mag.unwrap_or(6.5),
-                            band: band.as_deref().unwrap_or("V"),
-                            bands: bands.unwrap_or_default(),
-                            nside: nside.unwrap_or(32),
-                        },
-                    )
-                })?;
+                let glow =
+                    cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
+                        glow::sky_glow(
+                            st,
+                            &cosmos::sky_params()?,
+                            glow::Ask {
+                                position_pc,
+                                t_myr: t_myr.unwrap_or(now + elapsed),
+                                limit_mag: limit_mag.unwrap_or(6.5),
+                                band: band.as_deref().unwrap_or("V"),
+                                bands: bands.unwrap_or_default(),
+                                nside: nside.unwrap_or(32),
+                            },
+                        )
+                    })?;
                 Response::SkyGlowed { glow }
             }
             Request::PlanVoyage {
@@ -7630,27 +7931,28 @@ impl Kernel {
                     (visited.unwrap_or_default(), surveyed.unwrap_or_default());
                 let known_fuel = known_fuel.unwrap_or_default();
                 let sensed_fuel = sensed_fuel.unwrap_or_default();
-                let voyage = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
-                    voyage::plan_voyage(
-                        st,
-                        now + elapsed,
-                        &pins,
-                        voyage::Ask {
-                            from: &from,
-                            to: to.as_deref(),
-                            home: home.as_deref(),
-                            ship: &ship,
-                            minimise: minimise.as_deref(),
-                            visited: &visited,
-                            known_fuel: &known_fuel,
-                            sensed_fuel: &sensed_fuel,
-                            surveyed: &surveyed,
-                            gambles: gambles.unwrap_or(false),
-                            links: &links,
-                            engines: &engines,
-                        },
-                    )
-                })?;
+                let voyage =
+                    cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
+                        voyage::plan_voyage(
+                            st,
+                            now + elapsed,
+                            &pins,
+                            voyage::Ask {
+                                from: &from,
+                                to: to.as_deref(),
+                                home: home.as_deref(),
+                                ship: &ship,
+                                minimise: minimise.as_deref(),
+                                visited: &visited,
+                                known_fuel: &known_fuel,
+                                sensed_fuel: &sensed_fuel,
+                                surveyed: &surveyed,
+                                gambles: gambles.unwrap_or(false),
+                                links: &links,
+                                engines: &engines,
+                            },
+                        )
+                    })?;
                 Response::VoyagePlanned { voyage }
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,
@@ -8022,4 +8324,46 @@ fn estimated_laws(atoms: &[String]) -> Option<Vec<String>> {
         .collect();
     out.dedup();
     (!out.is_empty()).then_some(out)
+}
+
+/// The system a flight log is read in: a NAV fixture, an inline NAV system,
+/// or an adopted universe system (formed once and kept); none when no
+/// source is given. Two sources at once are refused.
+fn ephemeris(
+    u: &mut Universe,
+    fixture: Option<&str>,
+    inline: Option<&serde_json::Value>,
+    system: Option<&str>,
+) -> Result<Option<sse_nav::NavSystem>, Response> {
+    let source = match (fixture, inline, system) {
+        (None, None, None) => return Ok(None),
+        (Some(f), None, None) => nav::Source::Fixture(f),
+        (None, Some(n), None) => nav::Source::Inline(n),
+        (None, None, Some(sys)) => {
+            let a = in_universe(&u.root, sys)?;
+            if !u.runs.contains_key(sys) {
+                if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                    let (_, run, _) = systems::form(req.into())?;
+                    u.runs.insert(sys.to_string(), run);
+                }
+            }
+            let (s, _) = nav::nav_system(nav::Source::System {
+                ch: &u.chronicle,
+                system: &a,
+                at_s: None,
+                run: u.runs.get(sys),
+                ports: &[],
+                air: false,
+            })?;
+            return Ok(Some(s));
+        }
+        _ => {
+            return Err(err(
+                "bad_request",
+                "give one of a fixture, a nav system or a universe system",
+            ))
+        }
+    };
+    let (s, _) = nav::nav_system(source)?;
+    Ok(Some(s))
 }

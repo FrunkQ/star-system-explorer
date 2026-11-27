@@ -30,7 +30,7 @@
     "atmosphere_top_m": 100000.0,
     "crust_depth_m": 30000.0,
     "pore_water_fraction": 0.01,
-    "warming_at_depth_k_per_w_m2": 2000.0,
+    "warming_depth_m": 5000.0,
     "dose_open_msv_yr": 500.0,
     "dose_column_kg_m2": 1760.0,
     "dose_floor_msv_yr": 1.0,
@@ -47,11 +47,12 @@
     },
     "air_reductant_mol_yr_per_w": 0.064,
     "reducing_above_h2": 0.1,
+    "reducing_hill": 4.0,
     "sources": {
      "band_edges_deg": "Five bands of latitude, tropics to 30 degrees and poles from 60: enough to separate a world's warm and cold lands without the 18 bands of the climate grid",
      "crust_depth_m": "A continental crust about 30 to 40 km thick (Christensen and Mooney 1995); the deep-crust habitat only reads its top 5 km",
      "pore_water_fraction": "As the Earth fixture: about 1% of the upper crust is water-filled pore space, the deep biosphere's home (Magnabosco et al. 2018)",
-     "warming_at_depth_k_per_w_m2": "5 km of rock with a thermal conductivity of about 2.5 W/m/K: each W/m² of heat flowing out warms the rock 2000 K at 5 km (Turcotte and Schubert 2014)",
+     "warming_depth_m": "The deep-crust habitat's depth: each W/m² of heat flowing out warms the rock there by this depth over the crust rock's thermal conductivity, read from the data sheet (about 2.5 W/m/K, Turcotte and Schubert 2014: 2000 K per W/m² at 5 km)",
      "dose_open_msv_yr": "About 1.37 mSv a day on the Moon's surface (Zhang et al. 2020, Chang'e 4 LND, Science Advances 6, eaaz1334)",
      "dose_column_kg_m2": "Calibrated so Earth's 10,300 kg/m² of air brings the open dose down to its 1.4 mSv/yr of cosmic and terrestrial radiation above the floor (UNSCEAR 2008: 2.4 mSv/yr in all); Mars then reads about 450 mSv/yr, about twice the measured 0.64 mSv a day (Hassler et al. 2014), so this is a sketch within a factor of two",
      "dose_floor_msv_yr": "Radiation from the ground itself, about 1 mSv/yr on Earth (UNSCEAR 2008)",
@@ -60,10 +61,11 @@
      "river_p_share": "Rivers and dust bring the ocean about 3e10 mol of new phosphorus a year (Benitez-Nelson 2000), a fifth of what land weathering releases: a world with no land has no new phosphorus from rivers",
      "vent_h2_mol_yr_per_w": "Hydrothermal hydrogen, about 3e11 mol a year (Kharecha et al. 2005; Sleep and Bird 2007), over Earth's 47 TW of internal heat (Davies and Davies 2010)",
      "anoxic_fe2_mol_yr_per_w": "Ferrous iron from vents into an ocean without oxygen: about 1e15 mol a year in the Archean (Canfield et al. 2006) over about three times today's heat flow",
-     "anoxic_below_o2": "Below this O2 mixing ratio the ocean is taken as anoxic and keeps its dissolved iron (the Archean ocean, Lyons et al. 2014)",
-     "vents_above_w_m2": "Hydrothermal vents need an interior hot enough to drive water through rock; a sketch threshold between Mars (about 0.02 W/m², no vents today) and Europa (about 0.05 W/m², tidal heat)",
+     "anoxic_below_o2": "The O2 mixing ratio at which the sea keeps half its vent iron: the iron supply is graded as 1 / (1 + O2 / this), the same blend the air box uses between oxic and anoxic chemistry (fudge F4); the Archean ocean was anoxic below about this (Lyons et al. 2014). Fudge L3-grades",
+     "vents_above_w_m2": "Hydrothermal vents need an interior hot enough to drive water through rock: a sketch threshold between Mars (about 0.02 W/m², no vents today) and Europa (about 0.05 W/m², tidal heat). Still a switch, not yet graded: fudge L3-vents",
      "recycling_gyr": "How long a surface lasts: about 0.8 Gyr under plate tectonics (the L1d fixture's Earth), about 50 Myr for an active ice shell (Europa's surface age, Zahnle et al. 2003); none for a stagnant lid",
-     "reducing_above_h2": "Air with a tenth or more hydrogen is reducing: methane is what its carbon becomes without life (a giant's air), so methane there is no sign of anything (Krissansen-Totton et al. 2018, Science Advances 4, eaao5747)",
+     "reducing_above_h2": "The H2 mixing ratio at which air counts half as reducing: in hydrogen air methane is what carbon becomes without life (a giant's air), so methane there is no sign of anything (Krissansen-Totton et al. 2018, Science Advances 4, eaao5747). Graded as x^n / (x^n + this^n); methane alone weighs as evidence by its likelihood ratio to the power (1 - that) times nothing-seen's to the power of that. Fudge L3-grades",
+     "reducing_hill": "How sharply air turns reducing with its hydrogen (the n above): 4 puts Earth's half a part per million at nothing and Jupiter's 86% at all but one in five thousand. Authored, fudge L3-grades",
      "air_reductant_mol_yr_per_w": "The air box's volcanic reducing gases, 3e12 mol O2-equivalent a year (life_feedback) over Earth's 47 TW: a world's volcanism scales with its heat"
     }
    },
@@ -454,6 +456,24 @@
     "transfer_efficiency": 0.1,
     "min_viable_g_m2_yr": 0.1,
     "low_power_levels": 2,
+    "maintenance": {
+     "about": "The keep-alive test (life-from-energy design section 4, LE1), shared by listed/1 and gradients/1: captured power below the starved maintenance of the smallest population closes a habitat; below the laboratory maintenance of the thinnest population life is found at, spread through the habitat, it is alive, barely (no feeding levels). Standing biomass is at most the captured power over the starved maintenance per gram. Baseline, refined per chemistry in 4.1 (LE10).",
+     "laboratory_w_per_cmol": 1.25,
+     "starved_w_per_cmol": 1.2e-05,
+     "ea_j_mol": 69400.0,
+     "ref_k": 298.15,
+     "min_population_cmol": 1e-09,
+     "thinnest_life_gc_m3": 1e-05,
+     "surface_layer_m": 1.0,
+     "sources": {
+      "laboratory_w_per_cmol": "Tijhuis, L., van Loosdrecht, M. C. M. and Heijnen, J. J. 1993, Biotechnology and Bioengineering 42, 509: a thermodynamically based correlation for maintenance Gibbs energy requirements in aerobic and anaerobic chemotrophic growth (4.5 kJ per C-mol per hour at 298 K, activation energy 69.4 kJ per mol). https://doi.org/10.1002/bit.260420415 (recalled, to verify)",
+      "starved_w_per_cmol": "Basal power of cells in deep marine sediment, about 1e-20 W per cell (LaRowe, D. E. and Amend, J. P. 2015, Frontiers in Microbiology 6, 718: power limits for microbial life; Hoehler, T. M. and Jorgensen, B. B. 2013, Nature Reviews Microbiology 11, 83: microbial life under extreme energy limitation), at about 1e-14 g C per cell: 1e-6 W per g C. Unverified (paper search out until 1 Dec 2026); measured maintenance spans about seven orders of magnitude between these two values",
+      "ea_j_mol": "Tijhuis et al. 1993, as above; applied to the starved value too (fudge register: one activation energy for both)",
+      "min_population_cmol": "Smallest population worth calling life: 1e-9 C-mol, about a million cells (a judgement, not a measurement; fudge register)",
+      "thinnest_life_gc_m3": "The thinnest living populations counted, about 1e3 cells per cubic centimetre in South Pacific Gyre sediment (D'Hondt, S. et al. 2009, PNAS 106, 11651; Kallmeyer, J. et al. 2012, PNAS 109, 16213), at about 1e-14 g C per cell. Unverified (paper search out until 1 Dec 2026)",
+      "surface_layer_m": "A surface habitat has an area and no volume; its living layer is taken as 1 m (soil and canopy). Baseline, refined in 4.1 (fudge register)"
+     }
+    },
     "metabolisms": [
      {
       "id": "oxygenic",
@@ -1527,10 +1547,6 @@
    "life_gradients": {
     "about": "The gradient catalogue (evolution design section 3, stage E1): what free energy each habitat offers, from light, from redox pairs it supplies and from organic carbon arriving from producers, with the three tests (energy per turnover, power against maintenance, materials). Used when life_budget.life_model is gradients/1; the listed model stays the default until the fidelity contract is reviewed.",
     "min_quantum_kj": 20.0,
-    "maintenance_w_per_cmol": 1.25,
-    "maintenance_ea_j_mol": 69400.0,
-    "maintenance_ref_k": 298.15,
-    "min_population_cmol": 1e-09,
     "growth_efficiency": 0.2,
     "supplies": {
      "h2_mol_yr": "h2_aq",
@@ -1770,7 +1786,7 @@
     "sources": {
      "reach": "E2 (evolution design 5.1): new chemical steps beyond a biosphere's existing ones. 0 for the oldest metabolisms (hydrogen-using methanogenesis and fermentation-like organic methanogenesis; Weiss et al. 2016, LUCA was a hydrogen-dependent anaerobe); 1 for one new pathway (anoxygenic photosynthesis by 3.4 Gyr ago, Tice and Lowe 2004; sulfate reduction by 3.47 Gyr ago, Shen et al. 2001; aerobic respiration and the aerobic chemolithotrophs, whose oxygen reductases descend from older nitric oxide reductases, Ducluzeau et al. 2014); 3 for oxygenic photosynthesis, which couples two photosystems to a water-splitting manganese cluster (Fischer, Hemp and Johnson 2016). The steps are counts judged from those sources, not measurements.",
      "min_quantum_kj": "Schink, B. 1997, Microbiology and Molecular Biology Reviews 61, 262: energetics of syntrophic cooperation in methanogenic degradation (about -20 kJ per mol per turnover). https://doi.org/10.1128/mmbr.61.2.262-280.1997 (recalled; Hoehler 2004 argues lower)",
-     "maintenance": "Tijhuis, L., van Loosdrecht, M. C. M. and Heijnen, J. J. 1993, Biotechnology and Bioengineering 42, 509: a thermodynamically based correlation for maintenance Gibbs energy requirements in aerobic and anaerobic chemotrophic growth (4.5 kJ per C-mol per hour at 298 K, activation energy 69.4 kJ per mol). https://doi.org/10.1002/bit.260420415 (recalled, to verify); natural settings run far lower (LaRowe and Amend 2015), so the power test uses a minimal population only",
+     "maintenance": "Moved to life_budget.maintenance (LE1), shared by both life models; the power test here uses its starved value and smallest population",
      "growth_efficiency": "Calibrated: 0.2 of the catabolic free energy built into biomass reproduces L1a's growth yields (about 0.1 C per H2 aerobically, 0.01 C per H2 for methanogens; McCollom and Amend 2005). Roden and Jin 2011 find yield rises in step with energy, which this assumes; their slope is to be read (fudge register)",
      "activities": "Typical modern seawater and pore water: dissolved O2 near air saturation, nanomolar H2, millimolar bicarbonate, 28 mM sulfate, micromolar reduced species; Fe2+ at Archean-ocean levels (about 50 micromolar). Assumptions to replace with world chemistry; a habitat may set activity.<species>",
      "export": "Ocean: about a fifth of sunlit production sinks out of the surface layer (biological pump, about 10 of 50 Gt C per year; Henson et al. 2011, https://doi.org/10.1029/2011GL046735, recalled); land: nearly all plant production reaches the soil as litter and roots (Schlesinger and Andrews 2000, https://doi.org/10.1023/A:1006247623877, recalled)",

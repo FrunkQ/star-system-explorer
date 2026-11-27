@@ -555,6 +555,7 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+ "sse-physics",
  "sse-sector-io",
  "sse-sift",
 ]
@@ -593,6 +594,7 @@ dependencies = [
  "sse-flow",
  "sse-nebula",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-resolve",
 ]
@@ -607,6 +609,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-light",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -633,6 +636,7 @@ dependencies = [
  "sse-cosmos",
  "sse-flow",
  "sse-pack",
+ "sse-physics",
  "sse-resolve",
 ]
 
@@ -667,6 +671,7 @@ dependencies = [
  "sse-core",
  "sse-field",
  "sse-flow",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -681,6 +686,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-formation",
+ "sse-physics",
 ]
 
 [[package]]
@@ -739,6 +745,7 @@ dependencies = [
  "sse-core",
  "sse-observe",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-suite",
  "sse-world",
@@ -754,6 +761,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -801,6 +809,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-light",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -831,6 +840,7 @@ dependencies = [
 name = "sse-physics"
 version = "0.1.0"
 dependencies = [
+ "semver",
  "serde",
  "serde_json",
  "sse-atoms",
@@ -853,6 +863,7 @@ dependencies = [
  "sse-flow",
  "sse-life",
  "sse-pack",
+ "sse-physics",
  "sse-sift",
  "sse-world",
 ]
@@ -910,6 +921,7 @@ dependencies = [
  "sse-flow",
  "sse-light",
  "sse-nav",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -1054,6 +1066,7 @@ dependencies = [
  "sse-atoms",
  "sse-core",
  "sse-flow",
+ "sse-physics",
 ]
 
 [[package]]

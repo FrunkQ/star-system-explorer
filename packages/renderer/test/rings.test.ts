@@ -79,3 +79,46 @@ test("a ring is lit as a layer of particles: brighter than a flat surface when t
   assert.ok(behind < lit && behind > 0, "the unlit face is dimmer but not black");
   assert.ok(ringLight(n, [1, 0, 0], [0, 1, 1]) < 0.01, "edge-on to the light, dark");
 });
+
+// ── VP-R2: the ring's light per pixel (ringLook) ──
+import { ringLook, RING_LOOK_SCALE, type RingLookData } from "../src/rings.ts";
+
+const PHASE = { back_g: -0.3, forward_g: 0.7, surge_b0: 0.33, surge_width_deg: 0.1 };
+/** Pixels of the given depths, all grey ice of reflectance 0.5, with the given dust share. */
+function strip(taus: number[], dust = 0.01): RingLookData {
+  return { tau: Float32Array.from(taus), rgb: Float32Array.from(taus.flatMap(() => [0.5, 0.5, 0.5])), dust: Float32Array.from(taus.map(() => dust)), phase: PHASE };
+}
+/** Linear brightness of pixel i as shown (premultiplied colour, times the scale the light puts back). */
+function shown(px: Uint8Array | Uint8ClampedArray, i: number): number {
+  const lin = (b: number) => { const v = b / 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return lin(px[i * 4]!) * RING_LOOK_SCALE;
+}
+const up: [number, number, number] = [0, 0, 1];
+const dir = (elev_deg: number, az_deg: number): [number, number, number] => {
+  const e = (elev_deg * Math.PI) / 180, a = (az_deg * Math.PI) / 180;
+  return [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)];
+};
+
+test("from the lit side the densest band is brightest; from below it goes dark and a middling one glows", () => {
+  const d = strip([0.05, 0.4, 2.5]);
+  const lit = ringLook(d, up, dir(20, 0), dir(30, 180));
+  assert.ok(shown(lit, 2) > shown(lit, 1) && shown(lit, 1) > shown(lit, 0));
+  const below = ringLook(d, up, dir(20, 0), dir(-30, 180));
+  // Sun at 20 degrees, eye at 30 below: transmitted light peaks near tau 0.41 (visual polish design touch 6).
+  assert.ok(shown(below, 1) > shown(below, 2) * 2, `${shown(below, 1)} vs ${shown(below, 2)}`);
+  assert.ok(shown(below, 1) > shown(below, 0));
+});
+
+test("the opposition surge brightens the ring by about a third at zero phase", () => {
+  const d = strip([1.5]);
+  const at0 = shown(ringLook(d, up, dir(20, 0), dir(20, 0)), 0);
+  const at2 = shown(ringLook(d, up, dir(20, 0), dir(20, 4)), 0);
+  assert.ok(at0 / at2 > 1.2 && at0 / at2 < 1.5, `${at0 / at2}`);
+});
+
+test("dusty rings flare when backlit and nearly vanish front-lit", () => {
+  const dust = strip([1e-4], 1);
+  const back = shown(ringLook(dust, up, dir(10, 0), dir(-10, 180 - 2)), 0); // looking toward the sun through the ring
+  const front = shown(ringLook(dust, up, dir(10, 0), dir(10, 5)), 0);
+  assert.ok(back > 10 * front, `${back} vs ${front}`);
+});

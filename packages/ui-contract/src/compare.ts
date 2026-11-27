@@ -152,6 +152,16 @@ export function itemFromSubject(s: SceneSubject, where: string, all: readonly Sc
   };
 }
 
+/**
+ * A colour temperature from a B−V colour (Ballesteros 2012, EPL 97, 34008):
+ * T = 4600 (1 / (0.92 (B−V) + 1.7) + 1 / (0.92 (B−V) + 0.62)). The one copy: the sky's stars, the chart's galaxies and
+ * True's type pictures all read it. A display rule (a colour index to a colour), fudge row GZ-F14.
+ */
+export function tempFromBV(bv: number): number {
+  const x = Math.max(-0.4, Math.min(2.5, bv));
+  return 4600 * (1 / (0.92 * x + 1.7) + 1 / (0.92 * x + 0.62));
+}
+
 /** A star's disc colour from its surface temperature: presentation only, a rough blackbody ramp. */
 export function starColour(teff_k: number | undefined): string {
   if (teff_k === undefined) return "#ffd27a";

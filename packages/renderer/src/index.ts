@@ -12,7 +12,7 @@ export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-c
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
 // R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
-export { flowFace, gasAbove, gasTint, readTrueAir, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
+export { flowFace, gasAbove, gasTint, readCloudRows, readTrueAir, readTrueFace, sheetColours, CLOUD_ROW_NAMES, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
 // VP-A3: the air's look-up tables (Hillaire 2020) for its rim and terminator in True.
 export { airLuts, airShapeOf, AIR_LUT_REFS, type AirLuts, type AirShape } from "./air-luts.ts";
 // VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
@@ -20,9 +20,9 @@ export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround
 // TA6: a world flattened by its spin (Darwin-Radau flow), true-shape.ts.
 export { flattenScale, readTrueShape, SHAPE_FLOW, type ShapeReader, type TrueShape } from "./true-shape.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
-export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
+export { BELT_DUST, beltAt, beltHaze, beltParticles, kernelProfile, poleOf, RING_FALLBACK, RING_LOOK_SCALE, ringLook, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
-export type { RingBand, RingProfile } from "./rings.ts";
+export type { KernelRing, RingBand, RingLookData, RingPhase, RingProfile } from "./rings.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
 export { checkRecipe, plan, estimateMs, pickRecipe, bestTier, maxLevel, stepsFrom, TIER_ORDER, DEFAULT_BUDGET_MS } from "./recipe.ts";
 export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan, RecipeCheck } from "./recipe.ts";
@@ -57,7 +57,7 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
 export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
-export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, PROMINENCE_WINDOW_S, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
+export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, PROMINENCE_WINDOW_S, readLiveStar, spotsOf, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
 export { BIG_CELL_DT_MAX, BIG_CELLS_LEAST, bigCellContrast, cellsAcross, churningBigCells, GAMMA_PHOTOSPHERE, CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
@@ -84,9 +84,11 @@ export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip,
 export type { DriveFacts, Hull, HullPart, HullPartKind, PlumeShape, PropellantPart, Propellants, ShipRecord, TankNeed } from "./ship.ts";
 // V3 gap item 14, stage 2: ships designed from their parts, in styles from the base-ships pack.
 export { designShip, narrateDesign, needsOf, remixes, shipViews } from "./ship-design.ts";
-export type { Callout, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
+export type { Callout, DesignBay, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
 // V3 gap item 14, stage 3: the 3D model from the same layout, with panel textures from the style's skin.
-export { panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export { compoundMesh, panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export { baysFromFacts, designCompound, mountFromFacts, placeCompound, portsFromFacts, reachOf, ringPoints, sizeBays } from "./compound-layout.ts";
+export type { BayFacts, CompoundLayout, CompoundMember, CompoundRules, MountFacts, MountPlace, PlacedMember, PortFacts, PortMark } from "./compound-layout.ts";
 export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
 // GH9: every collision leaves its mark: warps, ripples, rings, lopsided discs, drawn from the kernel's dated marks.
 export { brightnessAt, edgeOnPaths, faceOnPaths, heightAt, markStrengthAt, SCAR_SHAPES, scarsAt, scarWords } from "./galaxy-marks.ts";
@@ -148,8 +150,8 @@ export type { CaveOpening } from "./cave-mouths.ts";
 // Surface stains hued from the data sheet's optics (TRUE4).
 export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
 export type { GrainShare, IndexTable } from "./sheet-optics.ts";
-export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
-export type { StainFact, StainHue } from "./stain-look.ts";
+export { readStains, stainFacts, stainHue, stainNote, stainPrepared, stainTiles, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue, StainReader } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
 export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
@@ -168,8 +170,6 @@ export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
 export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";
 export { longGain, starsBehind, starTint, type SkyStar as BehindStar } from "./stars-behind.ts";
 export type { GpuStars } from "./gpu.ts";
-export { cutRings, ringMarks, RESONANCE_F, RING_VISCOSITY_M2_S, GAP_PER_ROOT_MU, EDGE_SLACK } from "./ring-structure.ts";
-export type { RingMark, RingMoon } from "./ring-structure.ts";
 // VP6: the detail ladder (rung table, bindings, seed and clock, HUD detail line). The GPU node is ladder-node.ts,
 // imported by GPU code directly so pages without 3D never load three.js.
 export { checkLayer, detailLine, profileShare, discScale, EDDY_EXPONENT, FLOW_REACH, LADDER_LAYERS, ladderAt, ladderLayer, ladderSeed, MAX_RUNGS, MAX_STRETCH, resolveLayer, RUNG_FADE, RUNG_MIN_PX, rungOrigin, rungs, sizeWords, TIER_RUNGS } from "./ladder.ts";

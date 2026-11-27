@@ -1,0 +1,1 @@
+{"key": "dasgupta2013", "citation": "Dasgupta 2013, Rev", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/early.rs"], "claims": ["/// Fraction of a rocky world's carbon taken into the core (Dasgupta 2013, Rev."], "tier": 3}

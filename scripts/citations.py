@@ -14,13 +14,19 @@ we confirm").
     python3 scripts/citations.py --score FILE        score a pasted Consensus reply back onto the list
     python3 scripts/citations.py --extra DIR         also read design notes from DIR (e.g. the project files)
 
-The list is handover/citations/master.jsonl (one paper per line, the source of truth;
-hand edits to status, checked, note and found are kept by --update). MASTER.md beside
-it is written from it. The procedure is handover/citations/README.md.
+The list is handover/citations/papers/, one small JSON file per paper (the source of
+truth; hand edits to status, checked, note and found are kept by --update). One file per
+paper means two pull requests that each add papers never edit the same file. MASTER.md
+beside it is written from it. The procedure is handover/citations/README.md.
+
+The list was one file, handover/citations/master.jsonl, until 27 Nov 2026. A branch that
+still carries it (from before the split) runs --add once: its rows are moved into papers/
+and the old file is deleted.
 """
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -29,7 +35,9 @@ import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LIST_DIR = os.path.join(ROOT, "handover", "citations")
-MASTER = os.path.join(LIST_DIR, "master.jsonl")
+PAPERS = os.path.join(LIST_DIR, "papers")
+# The single-file list from before 27 Nov 2026; read once by --add and then deleted.
+LEGACY = os.path.join(LIST_DIR, "master.jsonl")
 MASTER_MD = os.path.join(LIST_DIR, "MASTER.md")
 
 STATUSES = ["unchecked", "confirmed", "wrong citation", "says something else", "not found"]
@@ -379,10 +387,43 @@ def earlier_checks():
 # --- the master list --------------------------------------------------------------
 
 
-def load_master():
+def paper_file(key):
+    """The file name of one paper. An author-year key is its own name (``shakura1973.json``); a DOI key
+    is folded to safe characters, capped in length, and given a short hash of the whole key so that two
+    DOIs that fold alike never share a file."""
+    if re.fullmatch(r"[a-z0-9]+", key):
+        return key + ".json"
+    safe = re.sub(r"[^a-z0-9.\-]+", "-", key.lower()).strip("-.")[:80]
+    return f"{safe}-{hashlib.sha1(key.encode('utf-8')).hexdigest()[:8]}.json"
+
+
+class ListError(Exception):
+    pass
+
+
+def read_papers():
+    """Every row in papers/, by key. Fails on a file whose name is not its key's, and on a key in two files."""
+    rows = {}
+    if not os.path.isdir(PAPERS):
+        return rows
+    for name in sorted(os.listdir(PAPERS)):
+        if not name.endswith(".json"):
+            continue
+        with open(os.path.join(PAPERS, name), encoding="utf-8") as fh:
+            row = json.loads(fh.read())
+        key = row.get("key")
+        if not isinstance(key, str) or paper_file(key) != name:
+            raise ListError(f"citations: papers/{name} holds key {key!r}, whose file would be {paper_file(str(key))}")
+        if key in rows:
+            raise ListError(f"citations: key {key} is in two files")
+        rows[key] = row
+    return rows
+
+
+def read_legacy():
     rows = []
-    if os.path.exists(MASTER):
-        with open(MASTER, encoding="utf-8") as fh:
+    if os.path.exists(LEGACY):
+        with open(LEGACY, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
                 if line:
@@ -390,11 +431,51 @@ def load_master():
     return rows
 
 
+def load_master():
+    try:
+        return [r for _, r in sorted(read_papers().items())]
+    except ListError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+
+
+def absorb_legacy():
+    """Move a pre-split master.jsonl into papers/ and delete it. A key not yet in papers/ is added; a key in
+    both keeps the papers/ row, unless that row is still unchecked and the old one carries a score."""
+    old = read_legacy()
+    if not old and not os.path.exists(LEGACY):
+        return
+    rows = read_papers()
+    added = scored = 0
+    for r in old:
+        prev = rows.get(r["key"])
+        if prev is None:
+            rows[r["key"]] = r
+            added += 1
+        elif prev != r and prev.get("status") == "unchecked" and r.get("status") != "unchecked":
+            rows[r["key"]] = r
+            scored += 1
+    write_master([rows[k] for k in sorted(rows)])
+    os.remove(LEGACY)
+    print(f"citations: moved master.jsonl into papers/ ({added} new papers, {scored} scores kept) and deleted it")
+
+
+def paper_text(row):
+    return json.dumps(row, ensure_ascii=False, sort_keys=False) + "\n"
+
+
 def write_master(rows):
-    os.makedirs(LIST_DIR, exist_ok=True)
-    with open(MASTER, "w", encoding="utf-8") as fh:
-        for r in rows:
-            fh.write(json.dumps(r, ensure_ascii=False, sort_keys=False) + "\n")
+    """Write each row to its own file, touching only files whose text changes."""
+    os.makedirs(PAPERS, exist_ok=True)
+    for r in rows:
+        path = os.path.join(PAPERS, paper_file(r["key"]))
+        text = paper_text(r)
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                if fh.read() == text:
+                    continue
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
 
 
 def tier_of(row):
@@ -456,6 +537,7 @@ RESULT_FIELDS = ("status", "checked", "note", "found")
 
 def update(extra, only_add=False):
     """Refresh the list. only_add: leave every existing row untouched and add the new papers (builders use this)."""
+    absorb_legacy()
     now = computed_rows(extra)
     old = {r["key"]: r for r in load_master()}
     rows = {}
@@ -492,7 +574,7 @@ def write_md(rows):
     out = [
         "# Citation run-through: master list",
         "",
-        "Written by `scripts/citations.py --update` from `master.jsonl` (the source of truth; edit status there, or score a",
+        "Written by `scripts/citations.py --update` from `papers/` (the source of truth; edit status there, or score a",
         "Consensus reply with `--score`). Procedure: [README.md](README.md). Do not edit this file by hand.",
         "",
         f"**{len(live)} papers.** " + ", ".join(f"{s}: {counts[s]}" for s in STATUSES) + ".",
@@ -525,6 +607,15 @@ def order_key(r):
 
 
 def check(warn=False):
+    if os.path.exists(LEGACY):
+        # Not a warning: a branch from before the split would otherwise drop its new rows silently.
+        print(
+            "citations: handover/citations/master.jsonl is the old single-file list; the list is now "
+            "handover/citations/papers/. Run python3 scripts/citations.py --add (it moves the rows and deletes "
+            "the old file), then commit handover/citations/.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     rows = load_master()
     known = {r["key"] for r in rows} | {"doi:" + d for r in rows for d in r.get("doi", [])}
     bad = [r["key"] for r in rows if r.get("status") not in STATUSES]
@@ -542,8 +633,8 @@ def check(warn=False):
         print("citations: unknown status on " + ", ".join(bad) + f"; use one of {STATUSES}", file=sys.stderr)
     if missing:
         for k in missing:
-            print(f"citations: {k} cited at {code[k]['places'][0]} is not on handover/citations/master.jsonl", file=sys.stderr)
-        print("Run python3 scripts/citations.py --add and commit handover/citations/master.jsonl.", file=sys.stderr)
+            print(f"citations: {k} cited at {code[k]['places'][0]} is not in handover/citations/papers/", file=sys.stderr)
+        print("Run python3 scripts/citations.py --add and commit the new files in handover/citations/papers/.", file=sys.stderr)
     if bad or missing:
         if warn:
             print(f"citations: warning only: {len(missing)} new papers to add", file=sys.stderr)

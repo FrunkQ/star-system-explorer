@@ -9,6 +9,9 @@ cargo test --workspace -q
 python3 scripts/build-base-reference.py --check
 # The catalogued Solar System must match its sources and agree with the sheet.
 python3 scripts/build-base-sol.py --check
+# The Solar System catalogue build (RW7) on its invented fixture.
+cargo build -q -p sse-cli
+python3 scripts/test-build-sol-catalogues.py --sse target/debug/sse
 python3 scripts/build-base-starters.py --check
 python3 scripts/build-base-names.py --check
 # The class atlas reads the sheet and base-sol (its builder is what the MP22 audit reads).
@@ -17,6 +20,8 @@ python3 scripts/build-base-atlas.py --check
 python3 scripts/build-traveller-pack.py --check
 # The future tech base pack works its figures out from the sheet (FT1).
 python3 scripts/build-base-tech.py --check
+# The parts palette is generated from the Sol today pack's parts and craft (CM13).
+python3 scripts/build-base-parts.py --check
 # The Paper spacecraft store pack is generated from its studies (RK6).
 python3 scripts/build-paper-spacecraft.py --check
 # MP22 closed: no typed constant or material number anywhere outside the sheet.

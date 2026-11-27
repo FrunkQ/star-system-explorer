@@ -44,6 +44,7 @@ import liquid_rows  # noqa: E402
 import optical_rows  # noqa: E402
 import band_rows  # noqa: E402
 import photo_rows  # noqa: E402
+import emission_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -757,7 +758,8 @@ MIXTURES = [
      "yield_strength": val(5.6e6, "Pa", "lineweaver2010", "unverified", note="calibrated so ice rounds at about 200 km"),
      "melting_point": val(273.15, "K", NIST, note="at low pressure")},
     {"id": "crust-rock", "names": {"physics": "continental crust rock", "plain": "crust rock", "story": "rock"},
-     "recipe": {}, "by": "mass", "density": val(2700.0, "kg m-3", "turcotte2014", "unverified")},
+     "recipe": {}, "by": "mass", "density": val(2700.0, "kg m-3", "turcotte2014", "unverified"),
+     "thermal_conductivity": val(2.5, "W m-1 K-1", "turcotte2014", "unverified", note="typical of the continental crust's granites and gneisses near the surface (about 2 to 3); read by the life suite's deep-crust warming")},
     {"id": "mantle-rock", "names": {"physics": "upper mantle rock", "plain": "mantle rock", "story": "deep rock"},
      "recipe": {}, "by": "mass", "density": val(3300.0, "kg m-3", "turcotte2014", "unverified")},
     {"id": "sediment", "names": {"physics": "compacted sediment", "plain": "sediment", "story": "sediment"},
@@ -906,6 +908,14 @@ for _k, _v in photo_rows.SOURCES.items():
     assert _k not in SOURCES, _k
     SOURCES[_k] = _v
 photo_rows.apply(SUBSTANCES, val)
+# Lines ions give off: nebular forbidden lines and comet ion tails (scripts/emission_rows.py).
+for _k, _v in emission_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+emission_rows.apply(SUBSTANCES)
+# MP37: water ice ground, fine and coarse grains (scripts/optical_rows.py, ice_rows).
+for _m in optical_rows.ice_rows(MIXTURES):
+    MIXTURES.append(_m)
 
 
 def elements():
