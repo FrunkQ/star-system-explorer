@@ -23,6 +23,7 @@ use sse_flow::Reference;
 use sse_light::{LightDescription, Part};
 
 pub mod prominence;
+pub mod regions;
 #[cfg(test)]
 mod tests;
 
@@ -110,6 +111,8 @@ pub struct Settings {
     pub active_latitude_deg: f64,
     /// Most flares listed in one answer; smaller ones are summarised.
     pub max_flares: usize,
+    /// SG7: active regions.
+    pub regions: regions::RegionSettings,
     /// Surface convection blocks' parameters (`sse.convection.*`).
     pub photosphere_mu: f64,
     pub granule_factor: f64,
@@ -150,6 +153,7 @@ impl Default for Settings {
             cme_half_width_deg: 30.0,
             active_latitude_deg: 30.0,
             max_flares: 2000,
+            regions: regions::RegionSettings::default(),
             photosphere_mu: 1.3,
             granule_factor: 10.0,
             convective_v_sun: 2000.0,
@@ -546,6 +550,9 @@ pub struct Flare {
     pub light: LightDescription,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ejection: Option<Ejection>,
+    /// SG7: where on the star it goes off (its active region), in the star's frame at its peak.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site: Option<regions::Site>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -624,7 +631,7 @@ pub fn flares(
         stand_ins: vec![
             format!("flare durations scale as E^{} from {} s at 10²⁵ J; rise is a tenth of decay", set.decay_exponent, set.decay_at_1e25_s),
             format!("flare light is a {} K black body plus {} % extra in soft X-rays; no radio burst yet", set.flare_temperature_k, set.flare_xray_share * 100.0),
-            "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving within 30° of the star's equator; planets on circular orbits in that equator".into(),
+            "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving from over the flare's active region (anywhere within 30° of the equator in a spell with none); planets on circular orbits in that equator".into(),
             format!("largest possible flare {:.0e} J", set.max_flare_j),
         ],
         references: sse_atoms::decl_of("sse.activity.flare_rate_above").references,
@@ -647,6 +654,7 @@ pub fn flares(
     let d_hi = m::ceil(m::log10(set.max_flare_j)) as i32;
     let star = addr(&a.address)?;
     let mut listed_above = min_energy_j;
+    let mut unsited = 0usize;
     // From the largest flares down, so a cap on the list drops the smallest.
     let mut decade = d_hi - 1;
     while decade >= d_lo {
@@ -715,13 +723,23 @@ pub fn flares(
                 if e < min_energy_j {
                     continue;
                 }
+                // SG7: it goes off in an active region alive now, picked by its spot area.
+                let site = regions::site_at(seed, a, t, dr.unit(i + 6), set)?.map(|x| x.0);
+                if site.is_none() {
+                    unsited += 1;
+                }
                 out.flares
-                    .push(flare(a, t, e, &dr, i, targets, set, out.flares.len()));
+                    .push(flare(a, t, e, &dr, i, targets, set, out.flares.len(), site));
             }
         }
         decade -= 1;
     }
     out.listed_above_j = listed_above;
+    if unsited > 0 {
+        out.why.push(format!(
+            "{unsited} flares came when no active region was alive (a quiet spell): placed anywhere in the active belt."
+        ));
+    }
     out.flares.sort_by(|x, y| x.at_s.total_cmp(&y.at_s));
     for (n, f) in out.flares.iter_mut().enumerate() {
         f.address = format!("{}/flare:{}", a.address, n);
@@ -752,6 +770,7 @@ fn flare(
     targets: &[Target],
     set: &Settings,
     n: usize,
+    site: Option<regions::Site>,
 ) -> Flare {
     let decay = set.decay_at_1e25_s * m::pow(e / 1e25, set.decay_exponent);
     let rise = 0.1 * decay;
@@ -785,8 +804,18 @@ fn flare(
             let v = (set.cme_speed_km_s * m::pow(x, set.cme_speed_exponent)).min(set.cme_max_km_s)
                 * 1e3;
             let mass = set.cme_mass_kg * m::pow(x, set.cme_mass_exponent);
-            let lon = dr.uniform(i + 4, 0.0, m::TAU);
-            let lat = dr.uniform(i + 5, -1.0, 1.0) * set.active_latitude_deg * m::PI / 180.0;
+            // From its region: the place on the star turned into the frame fixed
+            // in space at the flare's peak (the star's frame turns once a spin).
+            let (lon, lat) = match &site {
+                Some(p) => (
+                    (p.lon_deg - regions::turn_deg(a.rotation_period_s, t)) * m::PI / 180.0,
+                    p.lat_deg * m::PI / 180.0,
+                ),
+                None => (
+                    dr.uniform(i + 4, 0.0, m::TAU),
+                    dr.uniform(i + 5, -1.0, 1.0) * set.active_latitude_deg * m::PI / 180.0,
+                ),
+            };
             let dir = [
                 m::cos(lat) * m::cos(lon),
                 m::cos(lat) * m::sin(lon),
@@ -829,5 +858,6 @@ fn flare(
         peak_w,
         light,
         ejection,
+        site,
     }
 }

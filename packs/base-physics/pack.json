@@ -7243,6 +7243,34 @@
         ]
       },
       {
+        "description": "latitude on a star's surface where its magnetic activity sits",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.active_latitude",
+        "range": null
+      },
+      {
+        "description": "tilt of a spot group's pair of opposite polarities from east to west",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.active_region_tilt",
+        "range": null
+      },
+      {
         "description": "length of a star's spot and activity cycle",
         "dim": [
           0,
@@ -7324,6 +7352,20 @@
           0
         ],
         "id": "star.corona_temperature",
+        "range": null
+      },
+      {
+        "description": "share of a star's activity cycle gone since its minimum",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.cycle_progress",
         "range": null
       },
       {
@@ -7450,6 +7492,48 @@
           0
         ],
         "id": "star.rossby_number",
+        "range": null
+      },
+      {
+        "description": "a star's surface spin rate at a latitude over its equator's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.rotation_rate_share",
+        "range": null
+      },
+      {
+        "description": "a spot group's peak area, millionths of a hemisphere",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spot_group_area",
+        "range": null
+      },
+      {
+        "description": "how long a spot group lives",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spot_group_life",
         "range": null
       },
       {

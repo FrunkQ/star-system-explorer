@@ -437,3 +437,146 @@ mod prominences {
         assert!(p.prominences.is_empty() && p.corona.is_none());
     }
 }
+
+mod active_regions {
+    use super::*;
+    use crate::regions::*;
+
+    fn sun_cycle() -> Star {
+        Star {
+            cycle_period_s: Some(11.0 * JULIAN_YEAR),
+            ..sun()
+        }
+    }
+
+    #[test]
+    fn the_suns_regions_cover_its_spots_and_follow_the_butterfly() {
+        let s = sun_cycle();
+        let set = Settings::default();
+        let a = activity(&seed(), &s, &set).unwrap();
+        let c = a.cycle.clone().expect("a Sun-like cycle");
+        let g = regions(&seed(), &a, s.age_s, s.age_s + 11.0 * JULIAN_YEAR, &set).unwrap();
+        // Absolute: a handful to a few dozen at once, lasting days to months.
+        assert!((3.0..40.0).contains(&g.mean_at_once), "{}", g.mean_at_once);
+        assert!(g.regions.len() > 100, "{}", g.regions.len());
+        for r in &g.regions {
+            assert!(
+                r.lat_deg.abs() <= 35.0 && r.lat_deg.abs() >= 2.0,
+                "{}",
+                r.lat_deg
+            );
+            assert!(r.life_s > 2.0 * DAY && r.life_s <= 200.0 * DAY + 1.0);
+            // Joy's law: the leader is nearer the equator.
+            assert!(
+                r.tilt_deg * r.lat_deg < 10.0 * r.lat_deg.abs(),
+                "{} at {}",
+                r.tilt_deg,
+                r.lat_deg
+            );
+        }
+        // Spörer: early in the cycle high, late low.
+        let progress = |t: f64| wrap(t / c.period_s + c.phase_offset - 0.75, 1.0);
+        let mean = |lo: f64, hi: f64| {
+            let v: Vec<f64> = g
+                .regions
+                .iter()
+                .filter(|r| (lo..hi).contains(&progress(r.born_s)))
+                .map(|r| r.lat_deg.abs())
+                .collect();
+            v.iter().sum::<f64>() / v.len().max(1) as f64
+        };
+        let (early, late) = (mean(0.05, 0.3), mean(0.7, 0.95));
+        assert!(early > 20.0 && late < 15.0, "{early} then {late}");
+        // Their spot area at any moment is the star's coverage, about.
+        let mut sum = 0.0;
+        let n = 200;
+        for k in 0..n {
+            let t = s.age_s + (k as f64 + 0.5) / n as f64 * 11.0 * JULIAN_YEAR;
+            sum += g.regions.iter().map(|r| r.share_at(t)).sum::<f64>();
+        }
+        let mean_cov = sum / n as f64;
+        assert!(
+            (0.5 * a.spot_coverage..1.6 * a.spot_coverage).contains(&mean_cov),
+            "{mean_cov} against {}",
+            a.spot_coverage
+        );
+    }
+
+    #[test]
+    fn flares_and_prominences_sit_in_the_regions() {
+        let s = ev_lac();
+        let set = Settings::default();
+        let a = activity(&seed(), &s, &set).unwrap();
+        let f = flares(&seed(), &a, s.age_s, s.age_s + 30.0 * DAY, 1e25, &[], &set).unwrap();
+        let sited: Vec<&Flare> = f.flares.iter().filter(|x| x.site.is_some()).collect();
+        assert!(!sited.is_empty() && sited.len() * 10 >= f.flares.len() * 9);
+        for x in sited {
+            let site = x.site.as_ref().unwrap();
+            let alive = alive_at(&seed(), &a, x.at_s, &set).unwrap();
+            let g = alive
+                .iter()
+                .find(|g| g.address == site.region)
+                .expect("its region is alive");
+            assert!((g.lat_deg - site.lat_deg).abs() < 1e-9);
+            // An ejection leaves from over its region.
+            if let Some(e) = &x.ejection {
+                let lat = m::asin(e.direction[2]) * 180.0 / m::PI;
+                assert!((lat - site.lat_deg).abs() < 1e-6, "{lat} {}", site.lat_deg);
+            }
+        }
+        let p = crate::prominence::prominences(
+            &seed(),
+            &sun_cycle(),
+            &activity(&seed(), &sun_cycle(), &set).unwrap(),
+            sun_cycle().age_s,
+            sun_cycle().age_s + 120.0 * DAY,
+            &crate::prominence::ProminenceSettings::default(),
+            &set,
+        )
+        .unwrap();
+        let sa = activity(&seed(), &sun_cycle(), &set).unwrap();
+        let active: Vec<_> = p
+            .prominences
+            .iter()
+            .filter(|x| x.kind == "active")
+            .collect();
+        assert!(!active.is_empty());
+        for x in &active {
+            let alive = alive_at(&seed(), &sa, x.born_s, &set).unwrap();
+            assert!(alive.iter().any(|g| Some(&g.address) == x.region.as_ref()));
+        }
+        assert!(p
+            .prominences
+            .iter()
+            .filter(|x| x.kind == "quiescent")
+            .all(|x| x.region.is_some()));
+    }
+
+    #[test]
+    fn overlapping_windows_and_single_moments_agree() {
+        let s = sun_cycle();
+        let set = Settings::default();
+        let a = activity(&seed(), &s, &set).unwrap();
+        let t = s.age_s + 40.0 * DAY;
+        let w = regions(&seed(), &a, s.age_s, s.age_s + 90.0 * DAY, &set).unwrap();
+        let v = regions(&seed(), &a, t, t + 5.0 * DAY, &set).unwrap();
+        let here: Vec<&str> = alive_at(&seed(), &a, t, &set)
+            .unwrap()
+            .iter()
+            .map(|g| g.address.as_str())
+            .collect::<Vec<_>>()
+            .into_iter()
+            .map(|x| {
+                w.regions
+                    .iter()
+                    .find(|g| g.address == x)
+                    .map(|g| g.address.as_str())
+                    .expect("in the long window")
+            })
+            .collect();
+        assert!(!here.is_empty());
+        for x in &here {
+            assert!(v.regions.iter().any(|g| g.address == *x));
+        }
+    }
+}

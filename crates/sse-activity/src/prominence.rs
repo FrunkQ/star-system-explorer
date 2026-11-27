@@ -20,7 +20,7 @@
 //! process laid out in fixed time bins per kind, like the flares, so any
 //! window of time gives the same prominences where windows overlap.
 
-use crate::{addr, cycle_factor, Activity, Settings, Star};
+use crate::{addr, cycle_factor, regions, Activity, Settings, Star};
 use serde::{Deserialize, Serialize};
 use sse_atoms::activity as act;
 use sse_core::draw::{Draws, Stream};
@@ -181,6 +181,9 @@ pub struct Prominence {
     pub light: LightDescription,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub eruption: Option<Eruption>,
+    /// SG7: the active region it lies in, or whose decayed channel holds it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub region: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -437,6 +440,34 @@ pub fn prominences(
                         )
                     }
                 };
+                // SG7: an active-region prominence lies along the line between its
+                // region's two polarities (across the pair's axis); a quiet one on the
+                // channel a decayed region left, drifted toward the pole. Neither
+                // forms without its region.
+                let (lat, lon, tilt, region) = match kind {
+                    "active" => match regions::site_at(seed, a, born, dr.unit(i + 3), set)? {
+                        Some((site, g)) => (
+                            site.lat_deg,
+                            site.lon_deg,
+                            g.tilt_deg + 90.0 + 0.5 * tilt,
+                            Some(site.region),
+                        ),
+                        None => continue,
+                    },
+                    "quiescent" => match regions::channel_at(
+                        seed,
+                        a,
+                        born,
+                        dr.unit(i + 3),
+                        s.radius_m,
+                        p.quiescent_max_lat_deg,
+                        set,
+                    )? {
+                        Some(site) => (site.lat_deg, site.lon_deg, tilt, Some(site.region)),
+                        None => continue,
+                    },
+                    _ => (lat, lon, tilt, None),
+                };
                 let volume = length * height.min(length) * thick;
                 let mass = gas_n * p.gas_mu * sse_core::sheet::M_U * volume;
                 let erupt_share = match kind {
@@ -492,6 +523,7 @@ pub fn prominences(
                     share_visible: share,
                     light,
                     eruption,
+                    region,
                 });
             }
         }

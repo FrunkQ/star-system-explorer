@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 181,
+        n, 185,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1671,4 +1671,42 @@ fn prominence_blocks_match_their_sums() {
     }
     let rk_abdor = a::corotation_radius(0.86 * M_SUN, 0.514 * day) / (0.96 * R_SUN);
     assert!(rk_abdor < a::closed_corona_radius(0.285, 2.5, 95.0, 1.0 / 3.0));
+}
+
+#[test]
+fn active_region_blocks_match_their_sums() {
+    use crate::activity as a;
+    for lat in [0.0, 0.3, -0.7, 1.2] {
+        let got = run("sse.activity.differential_rotation", &[lat])[0];
+        let want = a::differential_rotation(lat, 14.713, -2.396, -1.787);
+        assert!((got - want).abs() < 1e-12, "{lat}: {got} against {want}");
+        let got = run("sse.activity.joy_tilt", &[lat])[0];
+        let want = a::joy_tilt(lat, 32.1);
+        assert!((got - want).abs() < 1e-12, "{lat}: {got} against {want}");
+    }
+    for p in [-0.2, 0.0, 0.4, 1.0, 1.3] {
+        let got = run("sse.activity.butterfly_latitude", &[p])[0];
+        let want = a::butterfly_latitude(p, 28.0, 8.0);
+        assert!((got - want).abs() < 1e-12, "{p}: {got} against {want}");
+    }
+    for area in [30.0, 300.0, 3000.0] {
+        let got = run("sse.activity.spot_group_life", &[area])[0];
+        let want = a::spot_group_life(area, 10.0);
+        assert!(
+            (got - want).abs() <= 1e-9 * want,
+            "{area}: {got} against {want}"
+        );
+    }
+    // Absolute: the Sun's poles turn about a third slower than its equator; a cycle's
+    // spots start near 28 degrees and end near 8; a 1000 MSH group lives about 100 days
+    // and is tilted about 8 degrees at 15 degrees latitude.
+    let pole = a::differential_rotation(m::PI / 2.0, 14.713, -2.396, -1.787);
+    assert!((0.6..0.72).contains(&pole), "{pole}");
+    let deg = 180.0 / m::PI;
+    assert!((a::butterfly_latitude(0.0, 28.0, 8.0) * deg - 28.0).abs() < 1e-9);
+    assert!((a::butterfly_latitude(1.0, 28.0, 8.0) * deg - 8.0).abs() < 1e-9);
+    let d = a::spot_group_life(1000.0, 10.0) / sse_core::sheet::DAY;
+    assert!((99.0..101.0).contains(&d), "{d}");
+    let t = a::joy_tilt(15.0 / deg, 32.1) * deg;
+    assert!((7.0..10.0).contains(&t), "{t}");
 }

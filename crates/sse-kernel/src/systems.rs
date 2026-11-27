@@ -1030,6 +1030,10 @@ pub(crate) fn read_activity(
             )
             .map_err(|e| err("bad_activity", e))?;
             one["prominences"] = serde_json::to_value(p).expect("plain data");
+            // SG7: the active regions over the same span (the spots, and where flares and prominences sit).
+            let g = regions::regions(&seed, &a, w.from_s, w.to_s, &set)
+                .map_err(|e| err("bad_activity", e))?;
+            one["regions"] = serde_json::to_value(g).expect("plain data");
         }
         out.push(one);
     }
