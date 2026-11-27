@@ -29,6 +29,10 @@ G follows {"block":"sse.planet.bulk_density","reads":[],"uses_it":false}
 G follows {"block":"sse.planet.escape_velocity","reads":["G"],"uses_it":true}
 G follows {"block":"sse.planet.surface_gravity","reads":["G"],"uses_it":true}
 G follows {"block":"sse.reference.lookup","reads":[],"uses_it":false}
+G follows {"block":"sse.ship.dish_gain","reads":[],"uses_it":false}
+G follows {"block":"sse.ship.link_rate","reads":["k_B"],"uses_it":false}
+G follows {"block":"sse.ship.split_surface","reads":[],"uses_it":false}
+G follows {"block":"sse.ship.tank_wall_mass","reads":[],"uses_it":false}
 G follows {"block":"sse.star.effective_temperature","reads":["sigma_SB"],"uses_it":false}
 G follows {"block":"sse.star.ms_lifetime","reads":[],"uses_it":false}
 G follows {"block":"sse.star.ms_luminosity_at_age","reads":[],"uses_it":false}

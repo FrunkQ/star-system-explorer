@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 182,
+        n, 186,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1048,6 +1048,23 @@ fn formula_blocks_follow_a_changed_constant() {
     c.g *= 2.0;
     let after = sse_core::constants::with(c, || a.eval(&[6.0e24, 6.4e6], &[]).unwrap()[0]);
     assert_eq!(after, 2.0 * before);
+}
+
+/// CM13 part 2: the link rate reads k_B through the handle, so a doubled
+/// Boltzmann constant (twice the noise per kelvin) halves the rate.
+#[test]
+fn the_link_rate_follows_a_changed_boltzmann_constant() {
+    let a = formula_atom("sse.ship.link_rate");
+    let ins = [20.0, 5.8e4, 3.0e6, 0.0357, 1.0e12, 25.0, 2.5];
+    let before = a.eval(&ins, &[]).unwrap()[0];
+    let mut c = sse_core::constants::Constants::REAL;
+    c.k_b *= 2.0;
+    let after = sse_core::constants::with(c, || a.eval(&ins, &[]).unwrap()[0]);
+    assert!(
+        before > 1.0e4,
+        "a 20 W probe at 1e12 m sends {before} bit/s"
+    );
+    assert_eq!(after, before / 2.0);
 }
 
 #[test]
