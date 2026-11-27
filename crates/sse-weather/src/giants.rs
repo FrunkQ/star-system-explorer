@@ -1294,7 +1294,7 @@ fn banded_wind(
 
 /// A place in a storm's own frame, km east and north of its centre along the great circle (azimuthal
 /// equidistant about the storm), so the frame is one function of place and its axes are the storm's.
-fn storm_xy(a_m: f64, lat: f64, lon: f64, lat_s: f64, lon_s: f64) -> (f64, f64) {
+pub(crate) fn storm_xy(a_m: f64, lat: f64, lon: f64, lat_s: f64, lon_s: f64) -> (f64, f64) {
     let p = unit(lat, lon);
     let c = unit(lat_s, lon_s);
     let (fl, ll) = (lat_s / DEG, lon_s / DEG);
@@ -1315,6 +1315,34 @@ fn storm_xy(a_m: f64, lat: f64, lon: f64, lat_s: f64, lon_s: f64) -> (f64, f64) 
 
 /// A storm's distance in its own radii, measured in its ellipse (east-west over north-south `aspect`, same area).
 fn storm_r(a_m: f64, s: &WeatherSystem, lat: f64, lon: f64) -> f64 {
+    storm_r_at(a_m, &Vortex::of(s), lat, lon)
+}
+
+/// A storm's shape and place, as its winds need them: one for a storm where it stands on any date.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Vortex {
+    pub lat_deg: f64,
+    pub lon_deg: f64,
+    pub size_km: f64,
+    pub aspect: f64,
+    /// Peak wind, m/s.
+    pub strength: f64,
+}
+
+impl Vortex {
+    pub(crate) fn of(s: &WeatherSystem) -> Self {
+        Vortex {
+            lat_deg: s.lat_deg,
+            lon_deg: s.lon_deg,
+            size_km: s.size_km,
+            aspect: s.aspect,
+            strength: s.strength,
+        }
+    }
+}
+
+/// [`storm_r`] for a storm at any place.
+pub(crate) fn storm_r_at(a_m: f64, s: &Vortex, lat: f64, lon: f64) -> f64 {
     let rr = 0.5 * s.size_km.max(1.0);
     let k = if s.aspect > 0.0 {
         m::sqrt(s.aspect)
@@ -1323,6 +1351,113 @@ fn storm_r(a_m: f64, s: &WeatherSystem, lat: f64, lon: f64) -> f64 {
     };
     let (x, y) = storm_xy(a_m, lat, lon, s.lat_deg, s.lon_deg);
     m::sqrt((x / k) * (x / k) + (y * k) * (y * k)) / rr
+}
+
+/// Which way a storm kind turns: −1 anticyclones (ovals, dark spots), +1 cyclones and polar vortices; `None` for
+/// kinds with no winds of their own.
+pub(crate) fn spin_sense(kind: &str) -> Option<f64> {
+    match kind {
+        "oval" | "dark-spot" => Some(-1.0),
+        "cyclone" | "polar-vortex" => Some(1.0),
+        _ => None,
+    }
+}
+
+/// A storm's own winds at a place, m/s [east, north], from its stream function written in its ellipse (WS1, design
+/// 3.1): Φ = −q v R exp((1 − r²) / 2) has radial slope q v r exp((1 − r²) / 2), the Gaussian vortex's speed, and
+/// the wind u = −(1/a) ∂Φ/∂φ, v = (1/(a cos φ)) ∂Φ/∂λ runs along the ellipse with no divergence. The slopes are
+/// taken across a hundred-thousandth of the storm's radius. `None` beyond three radii.
+pub(crate) fn storm_wind(
+    a: f64,
+    s: &Vortex,
+    turn: f64,
+    sense: f64,
+    lat: f64,
+    lon: f64,
+) -> Option<[f64; 2]> {
+    let rr = 0.5 * s.size_km.max(1.0);
+    if storm_r_at(a, s, lat, lon) > 3.0 {
+        return None;
+    }
+    let h = if s.lat_deg >= 0.0 { 1.0 } else { -1.0 };
+    let q = sense * h * turn * s.strength * rr * 1000.0;
+    let phi = |la: f64, lo: f64| {
+        let x = storm_r_at(a, s, la, lo);
+        -q * m::exp(0.5 * (1.0 - x * x))
+    };
+    let dd = 1e-5 * rr * 1000.0 / a * DEG;
+    let cp = m::cos(lat / DEG);
+    if cp < 1e-6 {
+        return None;
+    }
+    let dphi = (phi(lat + dd, lon) - phi(lat - dd, lon)) / (2.0 * dd / DEG);
+    let dlam = (phi(lat, lon + dd / cp) - phi(lat, lon - dd / cp)) / (2.0 * dd / cp / DEG);
+    Some([-dphi / a, dlam / (a * cp)])
+}
+
+/// The pole's polygon edge and its slope along a longitude, or the jet circle where the pole has none: (km, km
+/// per radian).
+fn polygon_at(l: &GiantLayout, north: bool, r_jet: f64, lon: f64) -> (f64, f64) {
+    match l.poles.iter().find(|q| q.north == north) {
+        Some(q) if q.polygon_sides > 0 => (
+            polygon_edge_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon),
+            polygon_edge_slope_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon),
+        ),
+        _ => (r_jet, 0.0),
+    }
+}
+
+/// The bands' and the circumpolar jet's wind at a place, m/s [east, north], as [`giant_cell`] has it.
+pub(crate) fn band_wind_at(
+    gs: &GiantSettings,
+    l: &GiantLayout,
+    a: f64,
+    lat: f64,
+    lon: f64,
+) -> [f64; 2] {
+    let r_jet = (90.0 - l.polar_jet_lat_deg) / DEG * a / 1000.0;
+    let r_pole = (90.0 - lat.abs()) / DEG * a / 1000.0;
+    let (edge, slope) = polygon_at(l, lat >= 0.0, r_jet, lon);
+    banded_wind(gs, l, a, lat, r_jet, r_pole, edge, slope)
+}
+
+/// Where a place sits in the bands' stream function ψ = h Ψ(ρ) ([`banded_wind`]): the hemisphere h and ρ, km.
+pub(crate) fn band_rho_km(l: &GiantLayout, a: f64, lat: f64, lon: f64) -> (f64, f64) {
+    let h = if lat >= 0.0 { 1.0 } else { -1.0 };
+    let r_jet = (90.0 - l.polar_jet_lat_deg) / DEG * a / 1000.0;
+    let r = (90.0 - lat.abs()) / DEG * a / 1000.0;
+    let (edge, slope) = polygon_at(l, lat >= 0.0, r_jet, lon);
+    if slope == 0.0 && edge == r_jet {
+        return (h, r);
+    }
+    let ln = 2.0 * l.jet_deformation_km.max(1.0);
+    let t = if r < edge {
+        let x = r / edge;
+        let q = 1.0 - x * x;
+        1.0 - q * q
+    } else {
+        let z = (r - edge) / ln;
+        m::exp(-z * z)
+    };
+    (h, r + (r_jet - edge) * t)
+}
+
+/// How firmly a pole's polygon holds the cloud at a place: 1 inside its edge, falling as a Gaussian over two jet
+/// deformation radii outside (the taper of [`banded_wind`]); 0 at a pole with no polygon. The polygon stands still,
+/// so cloud it holds is not carried round with the rows.
+pub(crate) fn polygon_hold(l: &GiantLayout, a: f64, lat: f64, lon: f64) -> f64 {
+    let north = lat >= 0.0;
+    if !matches!(l.poles.iter().find(|q| q.north == north), Some(q) if q.polygon_sides > 0) {
+        return 0.0;
+    }
+    let r_jet = (90.0 - l.polar_jet_lat_deg) / DEG * a / 1000.0;
+    let r_pole = (90.0 - lat.abs()) / DEG * a / 1000.0;
+    let (edge, _) = polygon_at(l, north, r_jet, lon);
+    if r_pole < edge {
+        return 1.0;
+    }
+    let z = (r_pole - edge) / (2.0 * l.jet_deformation_km.max(1.0));
+    m::exp(-z * z)
 }
 
 fn add_cover(l: &mut Layer, g: f64, tau: f64) {
@@ -1350,13 +1485,7 @@ pub fn giant_cell(
     let pole = l.poles.iter().find(|q| q.north == north);
     let r_jet = (90.0 - l.polar_jet_lat_deg) / DEG * a / 1000.0;
     let r_pole = (90.0 - lat.abs()) / DEG * a / 1000.0;
-    let (edge, slope) = match pole {
-        Some(q) if q.polygon_sides > 0 => (
-            polygon_edge_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon),
-            polygon_edge_slope_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon),
-        ),
-        _ => (r_jet, 0.0),
-    };
+    let (edge, slope) = polygon_at(l, north, r_jet, lon);
     let w = {
         let ld = l.jet_deformation_km.max(1.0);
         let sgn = r_pole - edge;
@@ -1411,29 +1540,11 @@ pub fn giant_cell(
         let rr = 0.5 * s.size_km.max(1.0);
         let r = storm_r(a, s, lat, lon);
         let g = m::exp(-r * r);
-        // The vortex's winds from its own stream function written in its ellipse (WS1, design 3.1):
-        // Φ = −q v R exp((1 − r²) / 2) has radial slope q v r exp((1 − r²) / 2), the Gaussian vortex's speed, and
-        // the wind u = −(1/a) ∂Φ/∂φ, v = (1/(a cos φ)) ∂Φ/∂λ runs along the ellipse with no divergence. The slopes
-        // are taken across a hundred-thousandth of the storm's radius.
         let spin = |sense: f64, wind: &mut [f64; 2]| {
-            if r > 3.0 {
-                return;
+            if let Some(w) = storm_wind(a, &Vortex::of(s), turn, sense, lat, lon) {
+                wind[0] += w[0];
+                wind[1] += w[1];
             }
-            let h = if s.lat_deg >= 0.0 { 1.0 } else { -1.0 };
-            let q = sense * h * turn * s.strength * rr * 1000.0;
-            let phi = |la: f64, lo: f64| {
-                let x = storm_r(a, s, la, lo);
-                -q * m::exp(0.5 * (1.0 - x * x))
-            };
-            let dd = 1e-5 * rr * 1000.0 / a * DEG;
-            let cp = m::cos(lat / DEG);
-            if cp < 1e-6 {
-                return;
-            }
-            let dphi = (phi(lat + dd, lon) - phi(lat - dd, lon)) / (2.0 * dd / DEG);
-            let dlam = (phi(lat, lon + dd / cp) - phi(lat, lon - dd / cp)) / (2.0 * dd / cp / DEG);
-            wind[0] += -dphi / a;
-            wind[1] += dlam / (a * cp);
         };
         match s.kind.as_str() {
             "oval" => {

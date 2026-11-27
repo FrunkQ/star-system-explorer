@@ -18,7 +18,7 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Files: 
 | WS1 (stirred clouds, `design/SSE4-stirred-clouds-design.md`): a giant's winds from one stream function. The circumpolar jet's wind runs along its polygon's sides, and each storm's along its own ellipse, so neither piles cloud up | built, PR open | packages/WS1.md |
 | WS2: eddies from the heat. Blocks `sse.weather.eddy_power`, `cascade_speed` and `torn_by_shear` (the ovals' aspect now runs through it too); every giant's eddies drawn per window from the deformation radius to the band's width; the weather op's `want: "flow"` (jets, polar jet, storms, eddies over a span) | built, PR open | packages/WS2.md |
 | WS3: plumes numbered by the heat from below (`sse.weather.plume_count`), painted fresh on the top deck; cloud renewal time (`particle_fall_time`, Stokes with slip); both on the flow table | built, on the branch with WS1 and WS2 (held by the merge freeze) | packages/WS3.md |
-| WS4: the carrying in the kernel, `want: "stirred"` | after WS2 (WS3 for τ) | |
+| WS4: the carrying in the kernel, `want: "stirred"`: every giant's cloud followed back along bands, storms and eddies, area kept, storms turning as one body (design's blend replaced, see log) | built, on the branch after PR 706 | packages/WS4.md |
 | WS5: the stirred face on the GPU, off the clock; PR 646's winding and curls off where it runs | after WS3 and WS4 | |
 | WS5b: a stirred still on low-power devices, built unasked, cached in memory only (Alex, 27 Nov) | after WS5 | |
 | WS6a and WS6b: "why does it look like this here?" (`want: "look"`) and its line on the giant's card | after WS3 | |
