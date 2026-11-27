@@ -124,6 +124,20 @@ MOONS = [
     ("Titania", "titania", "uranus", 34.2e20, 788.9, 436.30e3, 0.0011, 0.08, 0.27, None, "nssdca-uranian-sats"),
     ("Oberon", "oberon", "uranus", 28.8e20, 761.4, 583.50e3, 0.0014, 0.07, 0.23, None, "nssdca-uranian-sats"),
     ("Titan", "titan", "saturn", 1345.5e20, 2575, 1221.87e3, 0.0292, 0.33, 0.22, None, "nssdca-saturnian-sats"),
+    # Saturn's small inner moons (read 26 Nov 2026, sheet last updated 22 Jul
+    # 2025; asked for by the ring structure work so Pan and Daphnis open the
+    # Encke and Keeler gaps and the shepherds and co-orbitals sculpt the
+    # rings). Radii are the mean of the three printed axis radii. Daphnis
+    # prints no albedo. Epimetheus and Janus are the co-orbital pair.
+    # Listed after Titan so the moon slots already in use (Titan is Saturn's
+    # slot 6) keep their addresses.
+    ("Pan", "pan", "saturn", 0.00005e20, (17 + 16 + 10) / 3, 133.583e3, 0.000, 0.0, 0.5, None, "nssdca-saturnian-sats"),
+    ("Daphnis", "daphnis", "saturn", 0.000001e20, (4.3 + 4.1 + 3.2) / 3, 136.500e3, 0.000, 0.0, None, None, "nssdca-saturnian-sats"),
+    ("Atlas", "atlas", "saturn", 0.00007e20, (20 + 18 + 9) / 3, 137.670e3, 0.000, 0.3, 0.8, None, "nssdca-saturnian-sats"),
+    ("Prometheus", "prometheus", "saturn", 0.0016e20, (68 + 40 + 30) / 3, 139.353e3, 0.00204, 0.0, 0.5, None, "nssdca-saturnian-sats"),
+    ("Pandora", "pandora", "saturn", 0.0014e20, (52 + 41 + 32) / 3, 141.700e3, 0.0042, 0.0, 0.7, None, "nssdca-saturnian-sats"),
+    ("Epimetheus", "epimetheus", "saturn", 0.0053e20, (65 + 57 + 53) / 3, 151.422e3, 0.009, 0.34, 0.8, None, "nssdca-saturnian-sats"),
+    ("Janus", "janus", "saturn", 0.0190e20, (102 + 93 + 76) / 3, 151.472e3, 0.007, 0.14, 0.9, None, "nssdca-saturnian-sats"),
     ("Triton", "triton", "neptune", 214e20, 1353.4, 354.76e3, 0.000016, 157.345, 0.72, None, "nssdca-neptunian-sats"),
     ("Charon", "charon", "pluto", 1.586e21, 606, 19596, 0.0, 0.00005, 0.42, 0.25, "nssdca-pluto"),
     # Round Pluto and Charon (the sheet's distances are barycentric, which
@@ -138,6 +152,13 @@ MOONS = [
 MOON_NOTES = {
     "phobos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
     "deimos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
+    "pan": "radius: the mean of the three axis radii printed; orbits in the Encke gap",
+    "daphnis": "radius: the mean of the three axis radii printed; orbits in the Keeler gap; no albedo printed",
+    "atlas": "radius: the mean of the three axis radii printed",
+    "prometheus": "radius: the mean of the three axis radii printed; inner shepherd of the F ring",
+    "pandora": "radius: the mean of the three axis radii printed; outer shepherd of the F ring",
+    "epimetheus": "radius: the mean of the three axis radii printed; co-orbital with Janus, the two swap orbits every four years",
+    "janus": "radius: the mean of the three axis radii printed; co-orbital with Epimetheus, the two swap orbits every four years",
     "triton": "retrograde orbit (inclination over 90 degrees)",
     "charon": "a is the mean distance from Pluto; radius is equatorial; the pair goes round a point outside Pluto",
     "styx": "a is barycentric (round Pluto and Charon); no mass printed",
@@ -207,6 +228,14 @@ MOON_SURFACE_SOURCES = [
 ]
 
 
+# The second zonal gravity harmonic J2, as printed (x 10^-6; read 26 Nov 2026,
+# Saturn sheet last updated 18 Mar 2025). The sheet names no reference radius
+# for it. Only Saturn's is kept so far
+# (asked for by the ring structure work, to place its resonances).
+J2 = {"saturn": 16298.0}
+J2_NOTE = "second zonal gravity harmonic; the sheet states no reference radius"
+
+
 def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
     src = "nssdca-" + pid
     values = {
@@ -219,6 +248,8 @@ def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
         "body.albedo": val(bond, "1", src, note="Bond albedo"),
         "body.albedo_geometric": val(geo, "1", src),
     }
+    if pid in J2:
+        values["body.j2"] = val(J2[pid] * 1e-6, "1", src, note=J2_NOTE)
     row = {"id": pid, "name": name, "kind": kind, "host": host, "values": values}
     values.update(surface_facts(pid, src))
     values.update(composition_facts(pid, src))

@@ -280,8 +280,23 @@ impl FormationHistory {
                 a,
                 "core hydrogen runs out".into(),
             ));
-            events.push(ev(l.t_bgb, "star.giant", a, "swells into a giant".into()));
+            let giant = l.t_end > l.t_bgb;
+            if giant {
+                events.push(ev(l.t_bgb, "star.giant", a, "swells into a giant".into()));
+            }
+            if l.t_strip < l.t_end {
+                events.push(ev(
+                    l.t_strip,
+                    "star.stripped",
+                    a,
+                    "grows brighter than any cool supergiant can be and sheds its hydrogen envelope: a hot Wolf-Rayet star".into(),
+                ));
+            }
             let end = match l.remnant {
+                Phase::WhiteDwarf if !giant => format!(
+                    "has burnt nearly all its hydrogen and settles, without ever swelling, as a {:.2} solar-mass helium white dwarf",
+                    l.remnant_mass
+                ),
                 Phase::WhiteDwarf => format!(
                     "sheds its envelope and leaves a {:.2} solar-mass white dwarf",
                     l.remnant_mass

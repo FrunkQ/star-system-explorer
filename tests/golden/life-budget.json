@@ -97,7 +97,7 @@
           null
         ]
       ],
-      "hash": "6fefa212ee411896579268d36660e872079b11d501dc1cbbf4a440c1c84d623b",
+      "hash": "9c2de424694c79f41b320ba98cfcd47dd8ebe4b9287e36bd4fc510926f5cf15b",
       "high_power": true,
       "power_w": 100936935526863.08,
       "production_gc_yr": 7.983276783414874e+16
@@ -199,7 +199,7 @@
           null
         ]
       ],
-      "hash": "1309d5161a441e6a41e178ad25eb1a55332a5b2e469a02aaf6f8e524181bee07",
+      "hash": "ca4bb2efdfa8e213a91dab55dea725107398b517543d8e9c39ade7478509355a",
       "high_power": false,
       "power_w": 3793064111339.265,
       "production_gc_yr": 3000000000000000.0
@@ -224,7 +224,7 @@
           null
         ]
       ],
-      "hash": "4045ee27562f445acac31f04e6fa12e27ac70efce750c09894ef4bab58f7d63a",
+      "hash": "33e3d2566772f17e3eb46bb171d4bca38a7c28c3d497a774ac279621894d5a67",
       "high_power": false,
       "power_w": 3034451.2890714123,
       "production_gc_yr": 2400000000.0

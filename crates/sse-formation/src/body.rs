@@ -77,7 +77,9 @@ pub fn self_light(
         let s = life.state_at(fits, age);
         let source = match s.phase {
             Phase::PreMainSequence => LightSource::Contraction,
-            Phase::MainSequence | Phase::HertzsprungGap | Phase::Giant => LightSource::Fusion,
+            Phase::MainSequence | Phase::HertzsprungGap | Phase::Giant | Phase::WolfRayet => {
+                LightSource::Fusion
+            }
             Phase::BrownDwarf if age < deuterium_myr(mass_msun) => LightSource::Deuterium,
             Phase::BrownDwarf | Phase::WhiteDwarf | Phase::NeutronStar => LightSource::Cooling,
             Phase::BlackHole => LightSource::None,
