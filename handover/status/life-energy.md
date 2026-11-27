@@ -20,4 +20,18 @@ In one line: free energy captured, set against the cost of staying alive, decide
 | LE-U1 Energy flow life branch | LE2, the Energy flow view (PR 670, HV) | none | built (log `handover/packages/HV2b.md`) |
 | LE-U2 Life screen card "Where the energy goes" | LE3, LE4 | none | not started |
 
+## The catalogued Earth on a correctly tilted Earth (27 Nov 2026)
+
+The chain, as found by this builder thread with the climate thread:
+
+1. **Tilt bug (test harness, fixed by the climate thread, patch `open-sol-radians`).** `sol_tests::open_sol` wrote Earth's 23.44 degrees into a radians field, so the kernel's life tests ran an Earth tilted about 97 degrees, with polar seas near 305 K and an ocean up to 322 K. The app's own loaders were right. On that Earth, `life_tests::catalogued_earth_grows_land_life_and_its_own_oxygen` passed; on the correct Earth (mean 288 K, equator 303 K, poles about 250 K) it fails: no oxygen photosynthesis.
+2. **Iron supply (a real fault, fixed: package L3-air, log `packages/L3-air.md`).** A chart world's habitats were built once from today's air, and vent iron reaches the ocean only if the ocean is anoxic. With today's 21% oxygen, Earth's early ocean got no ferrous iron for 4.5 Gyr. It read the oxygen life makes later. The Archean mats ran on vent hydrogen alone: 8e11 g C a year, against the fixture's 3e15. Now the history picks the ocean from its own air box each step (`Epoch::graph_while`). Mats reach 4.2e14, and on the correct Earth oxygen photosynthesis and complex cells arrive (4030 and 4415 Myr on seed "home").
+3. **Held heat (open, to design with the heat-flow thread).** The history holds today's heat flow (47 TW) for 4.5 Gyr. Vent hydrogen and iron scale with heat, and the Archean ran about three times hotter. An experiment at three times the supply gave oxygen photosynthesis at 3375 Myr, complex cells at 3760, multicellular life at 4145 and large bodies at 4160, but still no land by today. The principled step: epochs carrying the world's own heat flow at each age, read from the heat-flow thread's `CoreStep` series (read only). It is to be written up as a package before building.
+4. **Late origin on seed "home" (not a bug).** The origin hazard per habitat is as written (the sea floor had reached 1.76 of its keyed threshold 1.97 at 1205 Myr). This seed draws a late start at 1310 Myr, about a 3% tail (expected near 380 Myr). Life began in a polar land pool, which is legitimate.
+5. **The lottery (with Alex).** Oxygen photosynthesis is calibrated as about 95% likely on a fixture Earth, so a real Earth can lose the draw. The recommendation, with the coordinator for Alex: condition a catalogued world's history on what is observed today (21% oxygen, land plants), for example by redrawing with the next keyed attempt until the end agrees, and saying so in the view. Nothing is built for it.
+
+Until 3 and 5 are settled, the correct-tilt loader patch waits with this thread, unpushed. The Earth test cannot honestly pass on seed "home", and it is not loosened or skipped. LE5 and LE6a wait too, since they change the dated history.
+
+The V3 sample Sol's Earth (1 GW, "alive, barely") is the same chain. Its history never evolved oxygen photosynthesis, and its colder climate gives about a sixth of the opportunity.
+
 Only the owner thread edits this file. One row per package: update it in the same pull request as the package.

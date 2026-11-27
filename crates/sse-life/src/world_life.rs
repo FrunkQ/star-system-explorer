@@ -14,7 +14,7 @@
 //! a changing climate and the world's own catastrophes are not yet inputs,
 //! and the result says so in `held`.
 
-use crate::history::{Epoch, LifeHistory, WorldTimeline};
+use crate::history::{Epoch, GraphWhile, LifeHistory, WorldTimeline};
 use crate::HabitatGraph;
 use serde::{Deserialize, Serialize};
 use sse_climate::{Climate, ClimateSettings, Conditions};
@@ -216,6 +216,18 @@ pub fn stack(
     p: &FromWorldParams,
     cs: &ClimateSettings,
 ) -> (WorldStack, Vec<String>) {
+    let anoxic = gas(&r.conditions, "o2") < p.anoxic_below_o2;
+    stack_ocean(r, p, cs, anoxic)
+}
+
+/// As `stack`, with the ocean anoxic (keeping the iron vents bring) or not,
+/// whatever the air holds today: the history picks one by its own air.
+pub fn stack_ocean(
+    r: &WorldReading,
+    p: &FromWorldParams,
+    cs: &ClimateSettings,
+    anoxic: bool,
+) -> (WorldStack, Vec<String>) {
     let c = &r.conditions;
     let mut held: Vec<String> = vec![];
     let rad = c.radius_m.max(1.0);
@@ -234,7 +246,6 @@ pub fn stack(
     let q = r.heat_flow_w_m2.max(0.0);
     let heat_w = q * globe;
     let vents = q >= p.vents_above_w_m2;
-    let anoxic = gas(c, "o2") < p.anoxic_below_o2;
     let vent_supply = |extra: &mut Vec<(&'static str, f64)>| {
         if vents {
             extra.push(("material.h2_mol_yr", p.vent_h2_mol_yr_per_w * heat_w));
@@ -546,13 +557,31 @@ pub fn life(
             from_myr: 0.0,
             graph: None,
             facts: o2(0.0),
+            graph_while: vec![],
         });
+    }
+    // Today's air may hold oxygen life made: the history does not read it.
+    // While its own air box is still without oxygen, the ocean keeps the
+    // iron its vents bring (an anoxic ocean), whatever today's air says.
+    let mut graph_while = vec![];
+    if gas(c, "o2") >= p.anoxic_below_o2 {
+        let (ws_anoxic, _) = stack_ocean(r, &p, cs, true);
+        let g = HabitatGraph::derive(&ws_anoxic, &rules).map_err(|e| format!("{e:?}"))?;
+        if g != graph {
+            graph_while.push(GraphWhile {
+                fact: "o2_fraction".into(),
+                below: p.anoxic_below_o2,
+                graph: g,
+                why: "an ocean without oxygen keeps the iron its vents bring".into(),
+            });
+        }
     }
     epochs.push(Epoch {
         id: format!("{}.today-held", r.name),
         from_myr: r.habitable_from_myr.max(0.0),
         graph: Some(graph.clone()),
         facts: o2(0.0),
+        graph_while,
     });
     let world = WorldTimeline {
         body: graph.body.clone(),

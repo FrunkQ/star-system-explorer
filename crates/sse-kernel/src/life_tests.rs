@@ -222,3 +222,25 @@ fn life_view_shares_the_energy_and_reads_earths_pace() {
         .unwrap()
         .contains("Earth's pace"));
 }
+
+/// The catalogued Earth's early ocean keeps the iron its vents bring: today's
+/// oxygen is life's product, and the history does not read it before life
+/// makes it. Before oxygen-releasing photosynthesis the mats run on that
+/// iron, near Canfield et al. 2006's 1e14 to 1e15 g C a year, not on vent
+/// hydrogen alone (8e11).
+#[test]
+fn earths_early_ocean_keeps_its_iron() {
+    let mut k = open_sol(&[]);
+    let v = life(&mut k, "Earth")["view"].clone();
+    let mats = v["timeline"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|p| {
+            let caps = p["capabilities"].as_array().unwrap();
+            caps.iter().any(|c| c == "anoxygenic") && !caps.iter().any(|c| c == "oxygenic")
+        })
+        .map(|p| p["production_gc_yr"].as_f64().unwrap())
+        .fold(0.0, f64::max);
+    assert!(mats > 1.0e14, "{mats:e}");
+}

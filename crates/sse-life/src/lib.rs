@@ -252,6 +252,8 @@ mod feedback_tests;
 #[cfg(test)]
 mod gradients_tests;
 #[cfg(test)]
+mod history_air_tests;
+#[cfg(test)]
 mod history_e2_tests;
 #[cfg(test)]
 mod history_tests;
