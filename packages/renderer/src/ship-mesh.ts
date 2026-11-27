@@ -3,6 +3,7 @@
 // buffers (one per surface kind) that any device draws cheaply. Texture coordinates run in metres over the style's
 // panel size, so panels are the same real size on a 30 m courier and a 5 km torch. Pure data here; three.js only in
 // gpu-ship.ts.
+import { ringPoints, type PortMark } from "./compound-layout.ts";
 import type { Piece, ShipLayout, SystemKind } from "./ship-design.ts";
 
 /** Surface kinds: each gets one buffer and one material from the style's `skin`. */
@@ -22,6 +23,9 @@ export const SURFACE_OF: Record<SystemKind, Surface | null> = {
   legs: "spine",
   chute: "hull",
   scoop: "drive",
+  bay: "hull",
+  tether: "spine",
+  port: "drive",
 };
 
 export interface SurfaceBuffers {
@@ -97,8 +101,16 @@ function panelPiece(b: Builder, p: Piece, t: number, panel: number): void {
   const s = p.span ?? 0;
   const sw = p.sweep ?? 0;
   const corners: [number, number][] = [[p.x0, p.y], [p.x1, p.y], [p.x1 - sw, p.y + s], [p.x0 - sw, p.y + s]];
+  // A turned panel (CM7): offsets from its root line along the span and the face, turned by its roll.
+  const a = ((p.roll_deg ?? 0) * Math.PI) / 180;
+  const [ca, sa] = p.roll_deg ? [Math.cos(a), Math.sin(a)] : [1, 0];
   for (const face of [1, -1]) {
-    const q = corners.map(([x, y]) => b.vert(x, y, p.z + face * t, 0, 0, face, x / panel, y / panel));
+    const q = corners.map(([x, y]) => {
+      if (!p.roll_deg) return b.vert(x, y, p.z + face * t, 0, 0, face, x / panel, y / panel);
+      const u = y - p.y;
+      const w = face * t;
+      return b.vert(x, p.y + u * ca + w * sa, p.z - u * sa + w * ca, 0, face * sa, face * ca, x / panel, u / panel);
+    });
     // Keep both faces wound outward whichever way the panel reaches.
     const flip = face * Math.sign(s || 1) < 0;
     flip ? b.i.push(q[0]!, q[2]!, q[1]!, q[0]!, q[3]!, q[2]!) : b.i.push(q[0]!, q[1]!, q[2]!, q[0]!, q[2]!, q[3]!);
@@ -138,6 +150,51 @@ export function shipMesh(l: ShipLayout, o: { segments: number; panel_m: number }
     triangles += b.i.length / 3;
   }
   return { surfaces, triangles, bounds: [lo, hi], hull_bounds: [hlo, hhi], front_bounds: [flo, fhi] };
+}
+
+/** A compound's model (CM7): its constructs' pieces as for one ship, plus each port as a thin ring tube on the
+ * drive's metal, built from the same ring points the plans draw. */
+export function compoundMesh(l: ShipLayout & { ports?: readonly PortMark[] }, o: { segments: number; panel_m: number }): ShipMesh {
+  const m = shipMesh(l, o);
+  if (!l.ports?.length) return m;
+  const b = new Builder();
+  const was = m.surfaces.drive;
+  if (was) {
+    b.p.push(...was.positions);
+    b.n.push(...was.normals);
+    b.uv.push(...was.uvs);
+    b.i.push(...was.indices);
+  }
+  const before = b.i.length;
+  const sides = 8;
+  for (const port of l.ports) {
+    const ring = ringPoints(port, Math.max(12, o.segments));
+    const base = b.p.length / 3;
+    const t = Math.max(port.thick_m, 1e-3) / 2;
+    for (let k = 0; k <= ring.length; k++) {
+      const c = ring[k % ring.length]!;
+      // Out from the ring's centre, and its face's normal: the tube's cross-section lies in these two.
+      const out = [c[0] - port.at[0], c[1] - port.at[1], c[2] - port.at[2]];
+      const lo = Math.hypot(...out) || 1;
+      const u = out.map((v) => v / lo);
+      const w = port.normal;
+      for (let s = 0; s <= sides; s++) {
+        const a = (2 * Math.PI * s) / sides;
+        const nx = Math.cos(a) * u[0]! + Math.sin(a) * w[0];
+        const ny = Math.cos(a) * u[1]! + Math.sin(a) * w[1];
+        const nz = Math.cos(a) * u[2]! + Math.sin(a) * w[2];
+        b.vert(c[0] + t * nx, c[1] + t * ny, c[2] + t * nz, nx, ny, nz, (k * port.r_m) / o.panel_m, s / sides);
+      }
+    }
+    for (let k = 0; k < ring.length; k++)
+      for (let s = 0; s < sides; s++) {
+        const a = base + k * (sides + 1) + s;
+        const c = a + sides + 1;
+        b.i.push(a, c, a + 1, a + 1, c, c + 1);
+      }
+  }
+  m.surfaces.drive = b.done();
+  return { ...m, triangles: m.triangles + (b.i.length - before) / 3 };
 }
 
 export interface SurfaceLook {

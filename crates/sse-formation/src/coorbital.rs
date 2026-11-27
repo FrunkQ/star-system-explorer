@@ -11,7 +11,6 @@
 
 use crate::violent::World;
 use sse_core::math as m;
-use sse_flow::Atom;
 
 /// The only resonances that count as "simple": order (p - q) at most this.
 pub const MAX_ORDER: u32 = 3;
@@ -19,21 +18,9 @@ pub const MAX_ORDER: u32 = 3;
 /// together than the block's "near", so any pair that close is near one.
 pub const MAX_Q: u32 = 12;
 
-fn block(id: &str) -> &'static dyn Atom {
-    // A block run with its shipped settings (the edits-reach ledger's
-    // "block" kind): moves to the physics in force with ER2.
-    sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .map(|a| a as &dyn Atom)
-        .unwrap_or_else(|| panic!("base formula block {id} is missing"))
-}
-
 fn run(id: &str, inputs: &[f64]) -> Vec<f64> {
-    let b = block(id);
-    let p: Vec<f64> = b.decl().params.iter().map(|p| p.default).collect();
-    b.eval(inputs, &p)
-        .unwrap_or_else(|e| panic!("{id}: {}", e.0))
+    // The block door (ER2): the block with the settings in force.
+    sse_physics::run(id, inputs).unwrap_or_else(|e| panic!("{id}: {e}"))
 }
 
 /// A world's Trojan zone (`sse.coorbital.trojan_zone`).

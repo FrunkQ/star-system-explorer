@@ -2,7 +2,7 @@
 use crate::history::{FormationHistory, How, Manifest};
 use crate::hurley::Fits;
 use crate::inherit::InheritancePins;
-use crate::lifeline::{white_dwarf_mass, LifeLine, Phase};
+use crate::lifeline::{white_dwarf_mass, LifeLine, Phase, L_HD};
 use crate::scenario::{envelope, system};
 use crate::stars::{kroupa_quantile, multiplicity_fraction, roche_lobe_fraction, StarPins};
 
@@ -119,6 +119,64 @@ fn remnants_follow_the_initial_final_mass_relation() {
         b.luminosity
     );
     close(a.radius, 0.0125, 0.15, "white dwarf radius");
+}
+
+/// Every star's whole life stays inside what real stars do (26 Nov 2026 sweep):
+/// before, massive giants brightened ten times (a 25 M_sun star reached 7,200
+/// R_sun at 2,600 K, a 100 M_sun star 31,600 R_sun) and red dwarfs had a 2,500
+/// L_sun giant tip they can never grow a core for.
+#[test]
+fn every_life_line_stays_inside_real_stars() {
+    for z in [0.02, 0.001] {
+        let f = Fits::new(z);
+        for i in 0..=60 {
+            let mass = 0.1 * sse_core::math::pow(1000.0, f64::from(i) / 60.0);
+            let l = LifeLine::new(&f, mass).unwrap();
+            assert!(l.t_tms <= l.t_bgb && l.t_bgb <= l.t_strip && l.t_strip <= l.t_end);
+            for k in 0..=400 {
+                let t = l.t_tms + (l.t_end - l.t_tms) * f64::from(k) / 400.0 * 0.999_999;
+                if l.t_end <= l.t_tms {
+                    break;
+                }
+                let s = l.state_at(&f, t);
+                let at = format!("{mass:.2} M_sun, Z {z}, {t:.4e} Myr ({:?})", s.phase);
+                // No measured star is wider than about 2,000 R_sun; the radius
+                // law runs about a quarter large on the red side (F-S34).
+                assert!(s.radius < 3000.0, "{at}: {} R_sun", s.radius);
+                // Cool giants sit on the Hayashi line, never below about 2,900 K.
+                assert!(s.teff > 2900.0, "{at}: {} K", s.teff);
+                // Nothing cool is brighter than the Humphreys-Davidson limit.
+                if s.teff < 8000.0 {
+                    assert!(s.luminosity <= 1.001 * L_HD, "{at}: {} L_sun", s.luminosity);
+                }
+                if s.phase == Phase::WolfRayet {
+                    assert!(s.teff > 30_000.0 && s.radius < 30.0, "{at}");
+                }
+            }
+        }
+    }
+    let f = Fits::new(0.02);
+    // Red dwarfs below 0.25 M_sun never become giants: straight to a helium
+    // white dwarf of their whole mass.
+    let rd = LifeLine::new(&f, 0.15).unwrap();
+    assert_eq!(rd.t_end, rd.t_tms);
+    assert_eq!(rd.phase_at(rd.t_tms * 1.01), Phase::WhiteDwarf);
+    close(rd.remnant_mass, 0.15, 1e-12, "red dwarf remnant");
+    // A 0.3 M_sun star cannot grow the 0.47 M_sun flash core: its tip is set
+    // by its whole mass, far below 2,500 L_sun.
+    assert!(LifeLine::new(&f, 0.3).unwrap().l_tip < 500.0);
+    // A 25 M_sun star at 7.5 Myr is a red supergiant of about 2,000 R_sun,
+    // not the 6,090 R_sun at 2,650 K reported before the fix.
+    let s = LifeLine::new(&f, 25.0).unwrap().state_at(&f, 7.5);
+    assert_eq!(s.phase, Phase::Giant);
+    assert!((1500.0..2300.0).contains(&s.radius), "{}", s.radius);
+    // A 60 M_sun star never becomes a red supergiant: stripped to a Wolf-Rayet star.
+    let big = LifeLine::new(&f, 60.0).unwrap();
+    assert!(big.t_strip < big.t_end);
+    assert_eq!(
+        big.phase_at(0.5 * (big.t_strip + big.t_end)),
+        Phase::WolfRayet
+    );
 }
 
 #[test]

@@ -15,6 +15,10 @@
 //!   mass move across and the other is retired, `joined.into` naming where
 //!   it went). One `construct.join` event.
 //!
+//! A mount (CM1, `mount.rs`) is the general form of a dock: a dock is
+//! read as a latch on the hull, a mounted construct cannot also dock, and
+//! a merge refuses while the merged construct still carries anything.
+//!
 //! Nothing is deleted: moved facts are unset on the old construct in the
 //! same event, so the history still shows them where they were.
 //! The flight log (the travel thread's `record.flight`) writes its own
@@ -284,6 +288,17 @@ pub fn join(
             if let Some(d) = docked {
                 return Err(format!("{with} is already docked to {d}"));
             }
+            // A dock is a mount on the hull: no loops (CM4 found two craft docked to each other).
+            if crate::mount::carriers_of(&st, a).contains(with) {
+                return Err(format!(
+                    "{with} already carries {a}; a construct cannot dock to what is docked to it"
+                ));
+            }
+            if let Some(Value::Text(on)) = other.get(crate::mount::ON) {
+                return Err(format!(
+                    "{with} is already mounted on {on}; release it first"
+                ));
+            }
             set.insert(
                 with.clone(),
                 [(DOCKED.to_string(), Value::Text(here))].into(),
@@ -296,6 +311,12 @@ pub fn join(
             unset.insert(with.clone(), vec![DOCKED.to_string()]);
         }
         How::Merge => {
+            // What `with` carries would be left on a retired construct.
+            if let Some((x, _)) = crate::mount::carried_by(&st, with).first() {
+                return Err(format!(
+                    "{x} is carried by {with}; release it, or mount it on {a}, before the merge"
+                ));
+            }
             let ids = parts_of(other);
             if let Some(clash) = ids.iter().find(|id| !part_fields(host, id).is_empty()) {
                 return Err(format!(
@@ -327,6 +348,12 @@ pub fn join(
             if docked.is_some() {
                 gone.push(DOCKED.into());
             }
+            gone.extend(
+                crate::mount::ALL
+                    .iter()
+                    .filter(|k| other.contains_key(**k))
+                    .map(|k| k.to_string()),
+            );
             if !gone.is_empty() {
                 unset.insert(with.clone(), gone);
             }

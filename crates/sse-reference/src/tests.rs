@@ -1160,3 +1160,37 @@ fn fresh_moon_dust_is_brighter_than_mature() {
         );
     }
 }
+
+#[test]
+fn coarse_water_ice_is_darker_than_fine() {
+    // MP37: measured reflectance of pure ice grains at 100 K (Stephan et al.
+    // 2021): light travels further inside big grains, so ~680 micron ice is
+    // darker than ~70 micron ice at every band, and fine ice is near white.
+    let r = Reference::base();
+    let refl = |id: &str| {
+        let t = r
+            .row("mixtures", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("reflectance"))
+            .unwrap();
+        let col = |k: &str| -> Vec<f64> {
+            t.get(k)
+                .unwrap()
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|x| x.as_f64().unwrap())
+                .collect()
+        };
+        (col("lambda_nm"), col("r"))
+    };
+    let (lf, fine) = refl("water-ice-fine");
+    let (lc, coarse) = refl("water-ice-coarse");
+    assert_eq!(lf, lc);
+    assert!(lf[0] <= 450.0 && *lf.last().unwrap() >= 900.0);
+    for (f, c) in fine.iter().zip(&coarse) {
+        assert!(c < f);
+    }
+    let i550 = lf.iter().position(|x| (x - 550.0).abs() < 1e-9).unwrap();
+    assert!(fine[i550] > 0.95 && coarse[i550] < 0.85);
+}

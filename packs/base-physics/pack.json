@@ -3719,6 +3719,34 @@
         "range": null
       },
       {
+        "description": "age of the universe when a group's edge is found (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.age",
+        "range": null
+      },
+      {
+        "description": "radius round a group inside which galaxies have stopped moving apart and fall together (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.zero_velocity_radius",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,
@@ -7411,6 +7439,20 @@
         "range": null
       },
       {
+        "description": "reach of a star's closed magnetic field, in stellar radii",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.closed_corona_extent",
+        "range": null
+      },
+      {
         "description": "time for the churning outer layer of a cool star to turn over once",
         "dim": [
           0,
@@ -7422,6 +7464,34 @@
           0
         ],
         "id": "star.convective_turnover_time",
+        "range": null
+      },
+      {
+        "description": "particles per cubic metre at the foot of a star's corona",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.corona_base_density",
+        "range": null
+      },
+      {
+        "description": "mean temperature of a star's corona",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "star.corona_temperature",
         "range": null
       },
       {
@@ -7548,6 +7618,20 @@
           0
         ],
         "id": "star.rossby_number",
+        "range": null
+      },
+      {
+        "description": "mean magnetic field strength over a star's surface",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "star.surface_field",
         "range": null
       },
       {

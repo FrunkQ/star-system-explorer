@@ -33,4 +33,4 @@ Only the giant that stirred a belt caught Trojans, a fixed 7e-7 of the stirred m
 - No temporary Trojans (CO2), no swarms born in place (CO3), no survival against age (CO4), real catalogue entries (CO5).
 - The neighbour rule is judged, not derived (fudge CO-neighbour). Secular resonances and non-adjacent worlds are ignored.
 - Every figure in the blocks was read at source today except the replacement-physics pointers in the fudge rows marked unverified.
-- ER1 (PR 644) would count this file's block lookup as a new "block" side door. If ER1 merges first, move it to `sse_physics::now().blocks()` on rebase.
+- The blocks run through the block door `sse_physics::run` (ER2), so an edit to their settings reaches the Trojans; no side door was added.
