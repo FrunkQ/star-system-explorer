@@ -31,7 +31,7 @@ sheet crates/sse-formula/src/atom.rs 1
 sheet crates/sse-formula/src/lib.rs 1
 sheet crates/sse-import-v3/src/lib.rs 3
 sheet crates/sse-import-v3/src/reconstruct.rs 4
-sheet crates/sse-kernel/src/adopt.rs 8
+sheet crates/sse-kernel/src/adopt.rs 7
 sheet crates/sse-kernel/src/atmos.rs 6
 sheet crates/sse-kernel/src/descent.rs 1
 sheet crates/sse-kernel/src/ice_ages.rs 3
@@ -59,7 +59,7 @@ sheet crates/sse-nebula/src/lib.rs 2
 sheet crates/sse-place/src/model.rs 7
 sheet crates/sse-small/src/figure.rs 3
 sheet crates/sse-small/src/member.rs 4
-sheet crates/sse-surface/src/climate.rs 5
+sheet crates/sse-surface/src/climate.rs 4
 sheet crates/sse-surface/src/composition.rs 4
 sheet crates/sse-surface/src/core.rs 4
 sheet crates/sse-surface/src/cover.rs 5

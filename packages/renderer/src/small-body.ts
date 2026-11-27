@@ -206,15 +206,17 @@ export function smallBodyColour(f: SmallFigure): string {
 
 /**
  * The lump as a radius along any unit direction (+z the spin axis), in units of its largest radius so it fits where a
- * unit globe fits: the Body globe displaces its own mesh by it (RW16a). The same figure and seed as `smallBodyMesh`,
+ * unit globe fits: the Body globe displaces its own mesh by it (RW16a). `mean` gives it in its mean radius instead. The same figure and seed as `smallBodyMesh`,
  * so it is the same lump as in system True.
  */
-export function smallBodyShape(f: SmallFigure, seed: string): { key: string; at: (d: Vec3) => number } {
+export function smallBodyShape(f: SmallFigure, seed: string): { key: string; at: (d: Vec3) => number; mean: (d: Vec3) => number } {
   const R = meanRadius(f);
   const s = seedOf(seed);
   const m = smallBodyMesh(f, seed);
   let max = 0;
   for (let k = 0; k < m.positions.length; k += 3) max = Math.max(max, Math.hypot(m.positions[k]!, m.positions[k + 1]!, m.positions[k + 2]!));
   const top = max || 1;
-  return { key: m.key, at: (d) => ((figureRadius(f, d) / R) * (1 + f.relief * lumps(d, s))) / top };
+  const mean = (d: Vec3) => (figureRadius(f, d) / R) * (1 + f.relief * lumps(d, s));
+  // `at` fits the unit globe; `mean` is the same lump in its mean radius (Land lays the ground on it).
+  return { key: m.key, at: (d) => mean(d) / top, mean };
 }

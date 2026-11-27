@@ -6,6 +6,7 @@
 // "Wish you were here!" ready on the back. Going there turns the globe back to the kept camera. A postcard link opens
 // as a visit, read-only, marked as one; a damaged link is refused in plain words. A sent postcard that carries its world,
 // pasted on a fresh page, is drawn live from a visiting universe. On a phone the card fits.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";

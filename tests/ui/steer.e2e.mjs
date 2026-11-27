@@ -3,6 +3,7 @@
 // A screen joins; it is Theirs to begin with. Set Read only on the Switchboard, it says the GM is steering and takes
 // no input. Drive it: the GM's chart opens and, as the GM selects bodies, the screen follows. Let go: it stays where it
 // was left. Theirs again: the player has it back.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

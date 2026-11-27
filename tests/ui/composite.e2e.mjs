@@ -4,6 +4,7 @@
 // with presets and each band's colour; the legend lists every layer. In 3D and True the system and the galaxy are
 // drawn once per band and laid into one picture. Unticking a band takes its layer away; a preset sets the mix. The
 // flat chart lists Composite quiet with its reason. On a phone at most two bands are laid. Choosing writes nothing.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

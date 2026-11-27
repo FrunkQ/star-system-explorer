@@ -63,6 +63,9 @@ struct DeltaT {
 #[derive(Clone, Debug, Deserialize)]
 struct Doc {
     format: String,
+    /// The model's id, as a body's `spin.model` names it.
+    #[serde(default)]
+    id: String,
     era: Era,
     gmst_minus_era_arcsec: Poly,
     obliquity_j2000_arcsec: Value,
@@ -117,6 +120,11 @@ impl EarthOrientation {
             return Err(format!("earth orientation: format {}", d.format));
         }
         Ok(EarthOrientation { d })
+    }
+
+    /// The model's id, as a body's `spin.model` names it.
+    pub fn id(&self) -> &str {
+        &self.d.id
     }
 
     /// The decimal year of a Julian date.

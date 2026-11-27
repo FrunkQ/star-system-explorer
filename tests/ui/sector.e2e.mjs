@@ -5,6 +5,7 @@
 // the grid and each world's mark and strips numbers, names, glyphs and reach.
 // Then the pack's sector grid as an overlay on Voyages (V3 gap 18), placed on a star and taken off again.
 // Usage: node tests/ui/sector.e2e.mjs
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";

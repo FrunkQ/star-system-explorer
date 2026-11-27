@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why (as the code or log says) | Real physics to replace it | Status |
+|---|---|---|---|---|
+| sheet `sediment` hillslope `creep_diffusivity` 5e4 m²/Myr (while wet) and `air_creep_diffusivity` 100 m²/Myr per bar; pack `degrade_coeff` 0.016, `ghost_fraction` 0.05 | creep rates of block `sse.surface.creep_diffusivity`, read by crater degradation exp(-K t/(0.016 D²)) and by slope wear; the wet and air rates are tuned | "set so a 10 km crater on a wet world loses most of its relief in about 100 Myr" | solve the diffusion equation on the crater profile (Fassett and Thomson 2014 method), with K depending on crater scale; fluvial infill from S3 itself | documented tuned |

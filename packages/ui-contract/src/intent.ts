@@ -85,7 +85,7 @@ export type Intent =
 
 export type IntentKind = Intent["kind"];
 /** The record writes the `record` intent carries (each a kernel op). */
-export const RECORD_OPS = ["log_flight", "set_kept", "create", "retire", "add_actor", "add_note"] as const;
+export const RECORD_OPS = ["log_flight", "set_kept", "create", "retire", "add_actor", "add_note", "set_campaign_now"] as const;
 export type RecordOp = (typeof RECORD_OPS)[number];
 
 export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming", "set_known", "undo_known", "adopt", "record"];
@@ -129,6 +129,7 @@ export function checkIntent(i: Intent): string | null {
   if (i.kind === "record") {
     if (!(RECORD_OPS as readonly string[]).includes(i.op)) return `record writes are ${RECORD_OPS.join(" or ")}`;
     if (!i.ask || typeof i.ask !== "object" || Array.isArray(i.ask) || "op" in (i.ask as object)) return "a record write's ask is an object without its own op";
+    if (i.op === "set_campaign_now" && !(typeof (i.ask as { at_s?: Json }).at_s === "string" && /^-?\d+$/.test((i.ask as { at_s: string }).at_s))) return "the campaign's now is a whole universe second, written as digits";
     return null;
   }
   if (i.kind === "adopt") {
@@ -239,6 +240,8 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   if (i.kind === "rename") return { op: "rename" as const, address: i.address, layer: i.layer, ...(i.text !== null ? { text: i.text.trim() } : {}), at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "set_naming")
     return { op: "set_naming" as const, address: i.address, layer: i.layer, ...(i.scheme !== null ? { scheme: i.scheme } : {}), ...(i.of_kind ? { kind: i.of_kind } : {}), ...(i.rename_fixed ? { rename_fixed: true } : {}), at_s: yearsToSeconds(i.at_yr) };
+  // The campaign's now is a universe second past 2^53 at cosmic dates: it travels as exact digits, like undo_known's.
+  if (i.kind === "record" && i.op === "set_campaign_now") return { op: i.op, at_s: BigInt(String((i.ask as { at_s?: Json }).at_s)) };
   if (i.kind === "record") return { op: i.op, ...(i.ask as Record<string, Json>) };
   if (i.kind === "adopt") return { op: "adopt" as const, ...(i.source as Record<string, Json>), ...(i.occurred_at_s !== undefined ? { occurred_at_s: i.occurred_at_s } : {}) };
   if (i.kind === "undo_known") return { op: "undo_known" as const, undo: i.undo, at_s: i.at_s !== undefined ? BigInt(i.at_s) : yearsToSeconds(i.at_yr) };

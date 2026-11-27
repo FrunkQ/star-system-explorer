@@ -6,6 +6,7 @@
 // hash. Save campaign downloads it; Start fresh opens Kestrel Reach as
 // shipped; Open campaign… with the downloaded file brings it back. A file
 // that is not a save is refused and changes nothing.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

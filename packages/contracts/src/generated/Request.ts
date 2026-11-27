@@ -72,7 +72,11 @@ fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: 
 /**
  * `want: "patch"`: half the patch's width, km, round `lat`, `lon`.
  */
-half_km?: number, pins?: unknown[], 
+half_km?: number, 
+/**
+ * `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+ */
+span_days?: number, pins?: unknown[], 
 /**
  * Smoke, ash and smog sources (volcanoes, eruptions, impacts,
  * fires, industry), `sse_weather::aerosols::Sources`.
@@ -81,7 +85,7 @@ sources?: unknown,
 /**
  * Which weather block, `{id, version, level}`; default the rule block.
  */
-block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
+block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "read_light_paths", fixture?: string, bodies?: unknown[], table?: boolean, } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
 /**
  * The setting's range bands (a measure, RK11): each detection's
  * distance and range are labelled with them.

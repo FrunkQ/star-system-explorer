@@ -5,6 +5,7 @@
 // as an sse.perf-report/1 with the device and no universe in it, and the choice is remembered across a reload (which
 // then also times the start-up calls). × switches it off. On a phone it is a sheet along the foot, with no sideways
 // scroll; in the Night chart it draws with the night tokens. The players' page has the same switch (PF1b).
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

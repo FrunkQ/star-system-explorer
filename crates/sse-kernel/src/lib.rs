@@ -3297,6 +3297,7 @@ impl Kernel {
             facts: r.facts,
             evidence: r.evidence,
             spec: r.spec,
+            birth_s: r.birth_s,
             surfaces: r.surfaces,
             tiles: r.tiles,
             refused: r.refused,
@@ -4038,6 +4039,7 @@ impl Kernel {
                 lat,
                 lon,
                 half_km,
+                span_days,
                 pins,
                 sources,
                 block,
@@ -4071,6 +4073,7 @@ impl Kernel {
                         lat: lat.unwrap_or(0.0),
                         lon: lon.unwrap_or(0.0),
                         half_km,
+                        span_days: span_days.unwrap_or(0.0),
                         pins: pins.unwrap_or_default(),
                         sources,
                         block,
@@ -4084,6 +4087,11 @@ impl Kernel {
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }
+            Request::ReadLightPaths {
+                fixture,
+                bodies,
+                table,
+            } => systems::read_light_paths(fixture.as_deref(), bodies, table.unwrap_or(false))?,
             Request::ReadNebulae {
                 at_s,
                 seed,

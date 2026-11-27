@@ -7,11 +7,13 @@
 // because it is too big for local storage. Last, a fresh campaign fetches it from Explorers by itself (stack.json
 // `from_explorers`, Alex 27 Nov), checked against the listing's sha256, with no file opened.
 // Usage: node tests/ui/rollcall.e2e.mjs [chromium firefox] [--screens DIR]   (SSE_SHOTS=<dir> for screenshots)
+import "./chart-first.mjs";
 import { createHash } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pinClock } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { go, more } from "./nav.mjs";
@@ -44,7 +46,7 @@ async function servePack(page) {
 let failed = false;
 try {
   for (const engine of engines) {
-    const browser = await pw[engine].launch();
+    const browser = pinClock(await pw[engine].launch());
     const errors = [];
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: shots ? 2 : 1 });
     page.on("pageerror", (e) => errors.push(e.message));

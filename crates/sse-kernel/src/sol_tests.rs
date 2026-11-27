@@ -1300,6 +1300,67 @@ fn icy_moons_take_their_regime_from_their_ice() {
     );
 }
 
+/// WS2: the weather op's flow table for a giant of the catalogued Sol: its jets, storms and eddies, the eddies fed
+/// by the heat it sends out; a rocky world has none.
+#[test]
+fn a_giants_flow_table_carries_its_eddies() {
+    let mut k = open_sol(&[]);
+    let j = world(&mut k, "Jupiter");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"flow","system":SOL,"body":j["address"],"day":10.0,"span_days":2.0}),
+    );
+    let t = &w["data"];
+    assert_eq!(t["day0"], 10.0, "{w:.400}");
+    assert_eq!(t["day1"], 12.0);
+    assert_eq!(t["jet_lat_deg"].as_array().unwrap().len(), 721);
+    let eddies = t["eddies"].as_array().unwrap();
+    assert!(eddies.len() > 500, "{} eddies", eddies.len());
+    assert!(t["facts"]["eddy_power_w_kg"].as_f64().unwrap() > 0.0);
+    let earth = world(&mut k, "Earth");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"flow","system":SOL,"body":earth["address"]}),
+    );
+    assert_eq!(e["code"], "not_a_giant", "{e:.300}");
+}
+
+/// CS1: catalogued worlds take the Sun's measured light at their distance
+/// from it (a moon's is its planet's) and their own measured Bond albedo
+/// (NSSDCA: Earth 0.294, Moon 0.11), never a sun-like guess or the pack's
+/// default.
+#[test]
+fn catalogued_worlds_get_their_own_sunlight_and_albedo() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    for (name, albedo) in [("Earth", 0.294), ("Moon", 0.11)] {
+        let addr = r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap();
+        let s = send(
+            &mut k,
+            serde_json::json!({"op":"survey_surface","system":SOL,"body":addr,"limit":0}),
+        );
+        let c = &s["survey"]["climate"];
+        let assumed = c["assumed"].to_string();
+        assert!(!assumed.contains("sun-like"), "{name}: {assumed}");
+        assert!(!assumed.contains("Bond albedo"), "{name}: {assumed}");
+        // About 340 W/m² over the sphere at 1 AU (1361 / 4); the Moon's was
+        // its orbit round the Earth before HV2c, about 10^8 times too much.
+        let arriving = c["sunlight"]["arriving_w_m2"].as_f64().unwrap();
+        assert!((330.0..350.0).contains(&arriving), "{name}: {arriving}");
+        let bond = c["sunlight"]["bond_albedo"].as_f64().unwrap();
+        assert!((bond - albedo).abs() < 0.03, "{name}: albedo {bond}");
+    }
+}
+
 /// The Sol loader turns the sheet's degrees into radians, as the app does:
 /// Earth's tilt is 23.44° (0.409 rad), so its equator is warmer than its
 /// poles. Written raw, the tilt was 23.44 rad and Earth's climate ran
@@ -1344,4 +1405,30 @@ fn sol_loads_angles_in_radians_and_earths_equator_is_warmest() {
     // Measured: about 300 K at the equator, 228 to 255 K at the poles.
     assert!(equator > t[0] + 30.0, "{t:?}");
     assert!(equator > t[t.len() - 1] + 30.0, "{t:?}");
+}
+
+#[test]
+fn a_giants_stirred_patch_says_where_its_cloud_came_from() {
+    let mut k = open_sol(&[]);
+    let j = world(&mut k, "Jupiter");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"stirred","system":SOL,"body":j["address"],"day":10.0,"lat":-20.0,"lon":30.0,"half_km":2000.0,"n":2}),
+    );
+    let t = &w["data"];
+    assert!(t["renewal_days"].as_f64().unwrap() > 0.0, "{w:.400}");
+    let cells = t["cells"].as_array().unwrap();
+    assert_eq!(cells.len(), 4);
+    for c in cells {
+        let g = c.as_array().unwrap();
+        let sum = g[0]["weight"].as_f64().unwrap() + g[1]["weight"].as_f64().unwrap();
+        assert!((sum - 1.0).abs() < 1e-12);
+        assert!((g[1]["area"].as_f64().unwrap() - 1.0).abs() < 0.01);
+    }
+    let earth = world(&mut k, "Earth");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"stirred","system":SOL,"body":earth["address"],"half_km":100.0}),
+    );
+    assert_eq!(e["code"], "not_a_giant", "{e:.300}");
 }
