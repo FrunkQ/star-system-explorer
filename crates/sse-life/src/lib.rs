@@ -23,6 +23,7 @@ pub mod feedback;
 pub mod gradients;
 pub mod habitat;
 pub mod history;
+pub mod ledger;
 pub mod scenario;
 pub mod sift;
 pub mod signatures;
@@ -253,6 +254,8 @@ mod gradients_tests;
 mod history_e2_tests;
 #[cfg(test)]
 mod history_tests;
+#[cfg(test)]
+mod ledger_tests;
 #[cfg(test)]
 mod signatures_tests;
 #[cfg(test)]
