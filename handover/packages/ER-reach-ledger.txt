@@ -1,0 +1,146 @@
+# ER1b reach gate ledger (crates/sse-kernel/src/reach_gate_tests.rs). It only shrinks.
+# still <op>: reads physics and does not follow a nudged stack (a side door).
+# quiet <op>: reads no physics, so it should not move (say why after a #).
+# untested <op>: no area contract case runs it yet.
+still adopt
+still atmosphere_advice
+quiet branch # opens a story branch of the record
+still class_sample
+still describe_star
+still elements_in
+still expects
+still formation_record
+quiet hold # records who holds a thing
+quiet holdings_in # lists what a holder holds
+quiet join_constructs # docks or merges constructs in the record
+still light_through_gas
+still mount_construct # with a system, reads its orbits to check a capture (the NAV fixture or the universe system, not the stack)
+still preview_tree
+quiet read_catalogue # reads a catalogue file as published
+still read_scattering
+still rehost
+still release_construct # with a system, reads its orbits to seed the released log (the NAV fixture or the universe system, not the stack)
+quiet set_authored_batch # writes authored facts to the record
+quiet set_tech # records a tech level
+quiet split_construct # moves parts to a new construct in the record
+still start_job
+still step_job
+quiet tech_of # reads the tech level recorded
+still weather
+quiet who_holds # reads the record
+quiet withdraw # withdraws a record entry
+untested add_actor
+untested add_note
+untested adopt_dressing
+untested atoms
+untested attach_program
+untested branch_set
+untested branch_state_hash
+untested calendar
+untested campaign_now
+untested campaign_tags
+untested cancel_job
+untested classify_preview
+untested codes
+untested commit
+untested commit_look_ahead
+untested create
+untested derive
+untested detach_program
+untested detect
+untested discard
+untested disclosures
+untested draw
+untested dressing
+untested effect_at_range
+untested explain
+untested export_chronicle
+untested export_sector
+untested fix_names
+still flight_log
+untested fog_of_war
+untested galaxy_chart
+untested grant
+untested halo_cell
+untested hello
+untested history
+untested hold_dressing
+untested import_chronicle
+untested import_sector
+untested import_v3
+untested intent_decide
+untested intents
+untested jump_map
+untested known_in
+untested known_to
+untested life_view
+quiet log_flight # writes a flight-log entry to the record
+untested look_ahead
+untested manifest
+untested matter_budget
+untested mine
+untested name_sample
+untested orbits_at
+untested pack_reports
+untested phase_at
+untested plan_descent
+untested plan_route
+untested plan_voyage
+untested programs
+untested programs_step
+untested promote_star
+untested read_air_optics
+untested read_bows
+untested read_composition
+untested read_field
+untested read_inventory
+untested read_light
+untested read_limb
+untested read_matter
+untested read_names
+untested read_nebulae
+untested read_photometry
+untested read_reach
+untested read_spectrum
+untested read_world_stack
+untested record
+untested rename
+untested resolved_system
+untested restore
+untested retire
+untested roll_profile
+untested rules
+untested rules_decide
+untested rules_pending
+untested rules_policy
+untested rules_step
+untested run_formation
+untested scan_toggle
+untested scene
+untested sector_map
+untested send_intent
+untested set_authored
+untested set_campaign_now
+untested set_kept
+untested set_known
+untested set_naming
+untested set_seats
+untested set_system_age
+untested ship_at_world
+untested ship_power
+untested sift
+untested sky_from_here
+untested sky_glow
+untested star_cell
+untested state_hash
+untested surface_frames
+untested survey_caves
+untested survey_planets
+untested survey_surface
+untested systems
+untested tech_reading
+untested templates
+untested transfer
+untested undo_known
+untested web_slice
+untested window_view

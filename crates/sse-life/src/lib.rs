@@ -23,10 +23,12 @@ pub mod feedback;
 pub mod gradients;
 pub mod habitat;
 pub mod history;
+pub mod ledger;
 pub mod scenario;
 pub mod sift;
 pub mod signatures;
 pub mod soil;
+pub mod speed;
 mod suite;
 pub mod traits;
 pub mod world_life;
@@ -250,12 +252,20 @@ mod feedback_tests;
 #[cfg(test)]
 mod gradients_tests;
 #[cfg(test)]
+mod history_air_tests;
+#[cfg(test)]
 mod history_e2_tests;
 #[cfg(test)]
+mod history_heat_tests;
+#[cfg(test)]
 mod history_tests;
+#[cfg(test)]
+mod ledger_tests;
 #[cfg(test)]
 mod signatures_tests;
 #[cfg(test)]
 mod soil_tests;
+#[cfg(test)]
+mod speed_tests;
 #[cfg(test)]
 mod traits_tests;

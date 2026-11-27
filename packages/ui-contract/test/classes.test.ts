@@ -12,15 +12,20 @@ const physics: PackDoc = json("packs/base-physics/pack.json");
 const atlasPack: PackDoc = json("packs/base-atlas/pack.json");
 const classic: PackDoc = json("packs/sse3-classic/pack.json");
 
-test("a stack with no atlas has no classes; the SSE4 atlas has its four schemes", () => {
+test("a stack with no atlas has no classes; the SSE4 atlas has its five schemes", () => {
   assert.deepEqual(classesOnStack([physics]).schemes, []);
   const a = classesOnStack([physics, atlasPack]);
   assert.deepEqual(
     a.schemes.map((s) => s.id),
-    ["physical", "surface", "air", "habitability"],
+    ["physical", "surface", "air", "habitability", "star"],
   );
   assert.equal(a.schemes[0]!.question, "What kind of object is this?");
-  assert.equal(a.schemes.reduce((n, s) => n + s.classes.length, 0), 69);
+  // 69 world classes and 61 star classes (ten families and their kinds).
+  assert.equal(a.schemes.reduce((n, s) => n + s.classes.length, 0), 130);
+  const sun = findClass(a, "star/main-sequence/G")!;
+  assert.equal(sun.parent, "star/main-sequence");
+  const sample = sun.examples.find((e) => e.in)!.values!;
+  assert.ok(typeof sample["star.sample_mass_msun"] === "number" && typeof sample["star.sample_age_yr"] === "number", "a life-line star to draw");
   assert.equal(a.axes.get("teq")?.unit, "K");
 });
 
@@ -82,5 +87,5 @@ test("SSE 3's classic list reads as one scheme; find looks in names, summaries a
   const both = classesOnStack([atlasPack, later]);
   assert.equal(findClass(both, "rocky")!.names.plain, "stony world");
   assert.equal(findClass(both, "rocky")!.pack, "later");
-  assert.equal(both.schemes.reduce((n, s) => n + s.classes.length, 0), 69);
+  assert.equal(both.schemes.reduce((n, s) => n + s.classes.length, 0), 130);
 });

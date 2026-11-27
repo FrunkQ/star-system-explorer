@@ -226,7 +226,8 @@ pub(crate) fn read_world_stack(
 
 /// Light from bodies (O2): the Solar System fixture or given conditions.
 pub(crate) fn read_light(fixture: Option<&str>, bodies: Option<Vec<serde_json::Value>>) -> Out {
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let (source, conds) = match (fixture, bodies) {
         (_, Some(list)) => {
             let mut out = vec![];
@@ -284,7 +285,7 @@ pub(crate) fn read_light_paths(
         }
         (Some("black-holes"), None) => (
             "fixture:black-holes".to_string(),
-            sse_light::paths::fixtures(),
+            sse_light::scenario::fixtures(),
         ),
         (f, None) => {
             return Err(bad(format!(
@@ -381,7 +382,8 @@ pub(crate) fn detect(
         #[serde(default)]
         radar_cross_section_m2: Option<f64>,
     }
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let light_of = |l: Lit, what: &str| -> Result<sse_light::LightDescription, Response> {
         match (l.conditions, l.light) {
             (Some(c), _) => Ok(sse_light::emit::describe(&c, model)
@@ -465,7 +467,8 @@ pub(crate) fn read_air_optics(
     airs: Vec<serde_json::Value>,
     wavelengths_m: Option<Vec<f64>>,
 ) -> Out {
-    let table = &sse_light::emit::Model::base().table;
+    let light_model = sse_light::emit::Model::base();
+    let table = &light_model.table;
     let wl = wavelengths_m.unwrap_or_else(|| vec![680e-9, 550e-9, 440e-9]);
     if wl.iter().any(|&l| !(1e-8..=1e-3).contains(&l)) {
         return Err(err(
@@ -577,7 +580,8 @@ pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {
         #[serde(default)]
         contacts: Vec<sse_sense::fog::Contact>,
     }
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let fits = sse_sense::fog::base_fits().map_err(|e| err("bad_light", e))?;
     let mut out = vec![];
     for (n, v) in seats.into_iter().enumerate() {
@@ -627,7 +631,8 @@ pub(crate) fn read_limb(discs: Vec<serde_json::Value>) -> Out {
         #[serde(default)]
         wavelengths_m: Option<Vec<f64>>,
     }
-    let table = &sse_light::emit::Model::base().table;
+    let light_model = sse_light::emit::Model::base();
+    let table = &light_model.table;
     let eye = table
         .eye
         .as_ref()
@@ -762,7 +767,8 @@ pub(crate) fn light_through_gas(
         #[serde(default)]
         floor: f64,
     }
-    let table = &sse_light::emit::Model::base().table;
+    let light_model = sse_light::emit::Model::base();
+    let table = &light_model.table;
     let eye = table
         .eye
         .as_ref()
@@ -855,7 +861,8 @@ pub(crate) fn read_spectrum(
         distance_m: f64,
         components: Vec<In>,
     }
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let o: Observer = match observer {
         Some(v) => {
             serde_json::from_value(v).map_err(|e| err("bad_spectrum", format!("observer: {e}")))?
@@ -1011,10 +1018,12 @@ pub(crate) fn read_photometry(stars: Vec<serde_json::Value>, bands: Vec<String>)
 pub(crate) fn read_activity(
     stars: Vec<serde_json::Value>,
     seed: Option<&str>,
-    at_s: Option<f64>,
+    at_s: Option<sse_core::time::Seconds>,
     window: Option<serde_json::Value>,
+    prominences: Option<serde_json::Value>,
 ) -> Out {
     use sse_activity::*;
+    use sse_core::time::Instant;
     #[derive(serde::Deserialize)]
     struct Item {
         #[serde(flatten)]
@@ -1024,8 +1033,10 @@ pub(crate) fn read_activity(
     }
     #[derive(serde::Deserialize)]
     struct Window {
-        from_s: f64,
-        to_s: f64,
+        #[serde(deserialize_with = "sse_core::time::seconds")]
+        from_s: Instant,
+        #[serde(deserialize_with = "sse_core::time::seconds")]
+        to_s: Instant,
         #[serde(default = "min_e")]
         min_energy_j: f64,
     }
@@ -1037,12 +1048,27 @@ pub(crate) fn read_activity(
     let window: Option<Window> = window
         .map(|w| serde_json::from_value(w).map_err(|e| err("bad_activity", format!("window: {e}"))))
         .transpose()?;
+    #[derive(serde::Deserialize)]
+    struct Span {
+        from_s: f64,
+        to_s: f64,
+    }
+    let span: Option<Span> = prominences
+        .map(|w| {
+            serde_json::from_value(w).map_err(|e| err("bad_activity", format!("prominences: {e}")))
+        })
+        .transpose()?;
     let mut out = vec![];
     for (n, v) in stars.into_iter().enumerate() {
         let it: Item =
             serde_json::from_value(v).map_err(|e| err("bad_activity", format!("star {n}: {e}")))?;
         let a = activity(&seed, &it.star, &set).map_err(|e| err("bad_activity", e))?;
-        let mo = moment(&a, at_s.unwrap_or(it.star.age_s), &set);
+        let age = match at_s {
+            Some(t) => t.0,
+            None => Instant::from_seconds_f64(it.star.age_s)
+                .map_err(|e| err("bad_activity", format!("star {n}: age: {e}")))?,
+        };
+        let mo = moment(&a, age, &set);
         let fl = match &window {
             Some(w) => Some(
                 flares(
@@ -1058,7 +1084,25 @@ pub(crate) fn read_activity(
             ),
             None => None,
         };
-        out.push(serde_json::json!({ "activity": a, "moment": mo, "flares": fl }));
+        let mut one = serde_json::json!({ "activity": a, "moment": mo, "flares": fl });
+        if let Some(w) = &span {
+            let p = prominence::prominences(
+                &seed,
+                &it.star,
+                &a,
+                w.from_s,
+                w.to_s,
+                &prominence::ProminenceSettings::default(),
+                &set,
+            )
+            .map_err(|e| err("bad_activity", e))?;
+            one["prominences"] = serde_json::to_value(p).expect("plain data");
+            // SG7: the active regions over the same span (the spots, and where flares and prominences sit).
+            let g = regions::regions(&seed, &a, w.from_s, w.to_s, &set)
+                .map_err(|e| err("bad_activity", e))?;
+            one["regions"] = serde_json::to_value(g).expect("plain data");
+        }
+        out.push(one);
     }
     Ok(Response::ActivityRead { stars: out })
 }
@@ -1133,5 +1177,45 @@ pub(crate) fn read_nebulae(
         at_s,
         nebulae,
         absent,
+    })
+}
+
+/// BX1: a pair of stars aged together.
+pub(crate) fn age_pair(
+    node: serde_json::Value,
+    to_myr: f64,
+    z: Option<f64>,
+    planets: Option<Vec<serde_json::Value>>,
+    time: Option<&sse_time::epoch::TimeSettings>,
+) -> Out {
+    use sse_time::pair::*;
+    let node: Node =
+        serde_json::from_value(node).map_err(|e| err("bad_pair", format!("node: {e}")))?;
+    let planets: Vec<PlanetIn> = planets
+        .unwrap_or_default()
+        .into_iter()
+        .map(|p| serde_json::from_value(p).map_err(|e| err("bad_pair", format!("planet: {e}"))))
+        .collect::<Result<_, _>>()?;
+    // The stack's time settings (its ageing star); the rule table and the
+    // pair settings are their defaults until they join the stack.
+    let time = time.ok_or_else(|| {
+        err(
+            "no_time_settings",
+            "no pack in the stack provides time settings",
+        )
+    })?;
+    let star = time.star.clone();
+    let line = age_node(
+        &node,
+        z.unwrap_or(0.02),
+        to_myr,
+        &planets,
+        &star,
+        &sse_time::binary::BinaryRules::default(),
+        &PairSettings::default(),
+    )
+    .map_err(|e| err("bad_pair", e))?;
+    Ok(Response::PairAged {
+        line: serde_json::to_value(line).expect("plain data"),
     })
 }

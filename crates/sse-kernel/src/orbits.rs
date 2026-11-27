@@ -56,6 +56,10 @@ pub struct At {
     /// The centre its orbit goes round (the barycentre of its host and
     /// everything further in), from the host's centre, metres.
     pub centre_m: [f64; 3],
+    /// For a body with a motion model (RW17): `measured` inside the model's
+    /// span, `plausible` outside it (a plain orbit fitted at the span's edge).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub motion: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -71,8 +75,26 @@ pub struct Placed {
     pub phase_source: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub missing: Vec<String>,
+    /// The motion model it follows (RW17), with its span, or why the one it
+    /// names cannot be used (it then follows its plain orbit).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub motion: Option<MotionNote>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub at: Vec<At>,
+}
+
+/// What `Placed` says about a body's motion model.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct MotionNote {
+    pub model: String,
+    /// The span it holds over, universe seconds (absent when unusable).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub from_s: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to_s: Option<i64>,
+    /// Why the model is not used, when it is not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unused: Option<String>,
 }
 
 /// Solve E - e sin E = M for E (radians), 16 fixed Newton steps from a safe start.
@@ -91,26 +113,123 @@ struct Orbit {
     a_m: f64,
     e: f64,
     m0: f64,
-    epoch: f64,
+    /// The date of `m0`, on the whole-second axis (TP1: never a double).
+    epoch: UniverseTime,
     /// R3(-node) R1(-inc) R3(-peri), rows x, y, z by perifocal (x, y).
     rot: [[f64; 2]; 3],
     mass: f64,
     source: &'static str,
+    measured: Option<Measured>,
+}
+
+/// A plain orbit: elements and its own mean motion (the hand-over outside a
+/// motion model's span).
+struct Plain {
+    a_m: f64,
+    e: f64,
+    m0: f64,
+    epoch: i64,
+    n: f64,
+    rot: [[f64; 2]; 3],
+}
+
+impl Plain {
+    fn from_elements(el: [f64; 6], epoch: i64, mu: f64) -> Plain {
+        let [a_m, e, inc, node, peri, m0] = el;
+        Plain {
+            a_m,
+            e,
+            m0,
+            epoch,
+            n: m::sqrt(mu / (a_m * a_m * a_m)),
+            rot: rotation(inc, node, peri),
+        }
+    }
+    fn rel(&self, t: i64) -> [f64; 3] {
+        let mean = self.m0 + self.n * (t - self.epoch) as f64;
+        perifocal(self.a_m, self.e, mean, &self.rot)
+    }
+}
+
+/// A body that follows a motion model (RW17).
+struct Measured {
+    series: &'static sse_time::series::Series,
+    /// Universe second of J2000.0 in this system.
+    anchor: i64,
+    /// mu for the hand-over orbit.
+    mu: f64,
+    /// Hand-overs fitted at the span's start and end, worked out only when a
+    /// time outside the span is asked for.
+    before: std::cell::OnceCell<Option<Plain>>,
+    after: std::cell::OnceCell<Option<Plain>>,
+}
+
+impl Measured {
+    fn new(series: &'static sse_time::series::Series, anchor: i64, mu: f64) -> Measured {
+        Measured {
+            series,
+            anchor,
+            mu,
+            before: std::cell::OnceCell::new(),
+            after: std::cell::OnceCell::new(),
+        }
+    }
+    fn fit(&self, jd: f64) -> Option<Plain> {
+        let (r, v) = self.series.state_m(jd, 0.5);
+        elements_from_state(r, v, self.mu)
+            .map(|el| Plain::from_elements(el, crate::motion::at_s(jd, self.anchor), self.mu))
+    }
+    /// `measured` inside the span, `plausible` outside it.
+    fn label(&self, t: i64) -> &'static str {
+        if self.series.covers(crate::motion::jd(t, self.anchor)) {
+            "measured"
+        } else {
+            "plausible"
+        }
+    }
+    /// Where it is from its host's centre at `t`, and whether that is measured.
+    fn at(&self, t: i64) -> Option<([f64; 3], &'static str)> {
+        let jd = crate::motion::jd(t, self.anchor);
+        if self.series.covers(jd) {
+            return Some((self.series.position_m(jd), "measured"));
+        }
+        let p = if jd < self.series.from_jd {
+            self.before.get_or_init(|| self.fit(self.series.from_jd))
+        } else {
+            self.after.get_or_init(|| self.fit(self.series.to_jd))
+        };
+        p.as_ref().map(|p| (p.rel(t), "plausible"))
+    }
+}
+
+/// R3(-node) R1(-inc) R3(-peri), rows x, y, z by perifocal (x, y).
+fn rotation(inc: f64, node: f64, peri: f64) -> [[f64; 2]; 3] {
+    let (co, so) = (m::cos(node), m::sin(node));
+    let (cw, sw) = (m::cos(peri), m::sin(peri));
+    let (ci, si) = (m::cos(inc), m::sin(inc));
+    [
+        [co * cw - so * sw * ci, -co * sw - so * cw * ci],
+        [so * cw + co * sw * ci, -so * sw + co * cw * ci],
+        [sw * si, cw * si],
+    ]
+}
+
+fn perifocal(a_m: f64, e: f64, mean: f64, r: &[[f64; 2]; 3]) -> [f64; 3] {
+    let ea = eccentric_anomaly(mean, e);
+    let b = a_m * m::sqrt(1.0 - e * e);
+    let (xp, yp) = (a_m * (m::cos(ea) - e), b * m::sin(ea));
+    [
+        r[0][0] * xp + r[0][1] * yp,
+        r[1][0] * xp + r[1][1] * yp,
+        r[2][0] * xp + r[2][1] * yp,
+    ]
 }
 
 impl Orbit {
     /// The relative vector at `t` for mean motion `n`.
     fn rel(&self, n: f64, t: i64) -> [f64; 3] {
-        let mean = self.m0 + n * (t as f64 - self.epoch);
-        let ea = eccentric_anomaly(mean, self.e);
-        let b = self.a_m * m::sqrt(1.0 - self.e * self.e);
-        let (xp, yp) = (self.a_m * (m::cos(ea) - self.e), b * m::sin(ea));
-        let r = &self.rot;
-        [
-            r[0][0] * xp + r[0][1] * yp,
-            r[1][0] * xp + r[1][1] * yp,
-            r[2][0] * xp + r[2][1] * yp,
-        ]
+        let mean = self.m0 + UniverseTime::seconds(t).angle_since(self.epoch, n);
+        perifocal(self.a_m, self.e, mean, &self.rot)
     }
 }
 
@@ -240,7 +359,13 @@ impl<'a> Tree<'a> {
                 let (Some(n), Some(g)) = (self.n.get(&c), self.group.get(&c)) else {
                     continue;
                 };
-                let x = add(b, self.orbits[&c].rel(*n, t));
+                // A measured body is placed from its host's centre directly
+                // (its model already holds the inner bodies' pull); a plain
+                // orbit goes round the barycentre of what lies inside it.
+                let x = match self.orbits[&c].measured.as_ref().and_then(|ms| ms.at(t)) {
+                    Some((v, _)) => v,
+                    None => add(b, self.orbits[&c].rel(*n, t)),
+                };
                 cen.insert(c.clone(), b);
                 let mut sp = BTreeMap::new();
                 let mut sc = BTreeMap::new();
@@ -281,7 +406,7 @@ pub fn orbits_at(
     times: &[i64],
     seed: Option<&Seed>,
 ) -> Vec<Placed> {
-    let (mut out, orbits, host_mass) = read_orbits(facts, system, seed);
+    let (mut out, orbits, host_mass, notes) = read_orbits(facts, system, seed);
     let tree = Tree::new(&orbits, &host_mass);
     let frames = tree.frames(times);
     for (a, o) in &orbits {
@@ -294,6 +419,7 @@ pub fn orbits_at(
                 period_s: None,
                 phase_source: None,
                 missing: vec!["orbit.host chain that ends at a body orbiting nothing".into()],
+                motion: None,
                 at: vec![],
             });
             continue;
@@ -318,6 +444,7 @@ pub fn orbits_at(
                     phase_deg: ph,
                     sys_m: me,
                     centre_m: sub(cen[a], hp),
+                    motion: o.measured.as_ref().map(|ms| ms.label(t).to_string()),
                 }
             })
             .collect();
@@ -326,8 +453,16 @@ pub fn orbits_at(
             placed: true,
             parent: Some(o.host.to_string()),
             period_s: Some(m::TAU / n),
-            phase_source: Some(o.source.into()),
+            phase_source: Some(
+                if o.measured.is_some() {
+                    "measured"
+                } else {
+                    o.source
+                }
+                .into(),
+            ),
             missing: vec![],
+            motion: notes.get(a).cloned(),
             at,
         });
     }
@@ -339,7 +474,112 @@ type Read = (
     Vec<Placed>,
     BTreeMap<Address, Orbit>,
     BTreeMap<Address, f64>,
+    BTreeMap<Address, MotionNote>,
 );
+
+/// The universe second of J2000.0 for `a`'s system: `time.j2000_s` on the
+/// top of its host chain (the root star).
+fn anchor_of(facts: &Facts, a: &Address) -> Option<i64> {
+    let mut at = a.clone();
+    for _ in 0..64 {
+        if let Some(v) = facts
+            .get(&at)
+            .and_then(|r| r.get(crate::motion::ANCHOR_FIELD))
+        {
+            return match v {
+                Value::Int(i) => i64::try_from(*i).ok(),
+                v => num(v).map(|x| m::round(x) as i64),
+            };
+        }
+        let row = facts.get(&at);
+        let up = row
+            .and_then(|r| r.get("orbit.host").or_else(|| r.get("parent")))
+            .and_then(|v| match v {
+                Value::Text(t) => t.parse().ok(),
+                _ => None,
+            })
+            .or_else(|| at.parent())?;
+        if up == at {
+            return None;
+        }
+        at = up;
+    }
+    None
+}
+
+/// The motion model a body names, ready to place it, or why not.
+fn motion_of(
+    facts: &Facts,
+    a: &Address,
+    row: &BTreeMap<String, Value>,
+    mu: f64,
+) -> Option<(Option<Measured>, MotionNote)> {
+    let id = match row.get(crate::motion::MOTION_FIELD)? {
+        Value::Text(t) => t.clone(),
+        _ => {
+            return Some((
+                None,
+                MotionNote {
+                    model: String::new(),
+                    from_s: None,
+                    to_s: None,
+                    unused: Some("orbit.motion is not a model id".into()),
+                },
+            ))
+        }
+    };
+    let unused = |why: String| {
+        Some((
+            None,
+            MotionNote {
+                model: id.clone(),
+                from_s: None,
+                to_s: None,
+                unused: Some(why),
+            },
+        ))
+    };
+    let Some(series) = crate::motion::model(&id) else {
+        return unused(format!("no motion model {id} in the kernel"));
+    };
+    let Some(anchor) = anchor_of(facts, a) else {
+        return unused(format!(
+            "no {} on its system's star to read the model's dates by",
+            crate::motion::ANCHOR_FIELD
+        ));
+    };
+    let note = MotionNote {
+        model: id,
+        from_s: Some(crate::motion::at_s(series.from_jd, anchor)),
+        to_s: Some(crate::motion::at_s(series.to_jd, anchor)),
+        unused: None,
+    };
+    Some((Some(Measured::new(series, anchor, mu)), note))
+}
+
+/// The date of a body's dated phase: `orbit.epoch_s` (universe seconds,
+/// whole when it is an integer), else an SSE 3 `orbit.epoch_v3_ms`
+/// (milliseconds), else the universe's origin. Kept as a date, never a double.
+fn epoch_of(row: &BTreeMap<String, Value>) -> Result<UniverseTime, sse_core::time::OutOfRange> {
+    match (row.get("orbit.epoch_s"), row.get("orbit.epoch_v3_ms")) {
+        (Some(Value::Int(s)), _) => i64::try_from(*s).map(UniverseTime::seconds).map_err(|_| {
+            sse_core::time::OutOfRange(format!("{s} seconds is beyond what dates can hold"))
+        }),
+        (Some(Value::Float(x)), _) => UniverseTime::from_seconds_f64(*x),
+        (_, Some(Value::Int(ms))) => {
+            let ms = *ms;
+            let s = i64::try_from(ms.div_euclid(1000)).map_err(|_| {
+                sse_core::time::OutOfRange(format!("{ms} ms is beyond what dates can hold"))
+            })?;
+            Ok(UniverseTime {
+                s,
+                ns: (ms.rem_euclid(1000) * 1_000_000) as u32,
+            })
+        }
+        (_, Some(Value::Float(x))) => UniverseTime::from_seconds_f64(x / 1000.0),
+        _ => Ok(UniverseTime::ORIGIN),
+    }
+}
 
 /// Pass 1: every orbit under `system` read from its facts; the unplaced
 /// come back with what they miss.
@@ -347,6 +587,7 @@ fn read_orbits(facts: &Facts, system: &Address, seed: Option<&Seed>) -> Read {
     let mut out: Vec<Placed> = vec![];
     let mut orbits: BTreeMap<Address, Orbit> = BTreeMap::new();
     let mut host_mass: BTreeMap<Address, f64> = BTreeMap::new();
+    let mut notes: BTreeMap<Address, MotionNote> = BTreeMap::new();
     for (a, row) in facts.iter().filter(|(a, _)| system.contains(a)) {
         let Some(sma) = row.get("orbit.semi_major_axis") else {
             continue;
@@ -409,28 +650,41 @@ fn read_orbits(facts: &Facts, system: &Address, seed: Option<&Seed>) -> Read {
                 period_s: None,
                 phase_source: None,
                 missing,
+                motion: None,
                 at: vec![],
             });
             continue;
         };
-        let epoch = row
-            .get("orbit.epoch_s")
-            .and_then(num)
-            .or_else(|| {
-                row.get("orbit.epoch_v3_ms")
-                    .and_then(num)
-                    .map(|x| x / 1000.0)
-            })
-            .unwrap_or(0.0);
+        let mass = row.get("body.mass").and_then(num).unwrap_or(0.0);
+        let measured = match motion_of(facts, a, row, G * (mh + mass)) {
+            Some((ms, note)) => {
+                notes.insert(a.clone(), note);
+                ms
+            }
+            None => None,
+        };
+        let epoch = match epoch_of(row) {
+            Ok(t) => t,
+            Err(e) => {
+                out.push(Placed {
+                    address: a.to_string(),
+                    placed: false,
+                    parent: Some(h.to_string()),
+                    period_s: None,
+                    phase_source: None,
+                    missing: vec![format!("orbit.epoch_s within range: {e}")],
+                    motion: None,
+                    at: vec![],
+                });
+                continue;
+            }
+        };
         let inc = row.get("orbit.inclination").and_then(num).unwrap_or(0.0);
         let node = row.get("orbit.ascending_node").and_then(num).unwrap_or(0.0);
         let peri = row
             .get("orbit.argument_of_periapsis")
             .and_then(num)
             .unwrap_or(0.0);
-        let (co, so) = (m::cos(node), m::sin(node));
-        let (cw, sw) = (m::cos(peri), m::sin(peri));
-        let (ci, si) = (m::cos(inc), m::sin(inc));
         host_mass.insert(h.clone(), mh);
         orbits.insert(
             a.clone(),
@@ -440,17 +694,14 @@ fn read_orbits(facts: &Facts, system: &Address, seed: Option<&Seed>) -> Read {
                 e,
                 m0,
                 epoch,
-                rot: [
-                    [co * cw - so * sw * ci, -co * sw - so * cw * ci],
-                    [so * cw + co * sw * ci, -so * sw + co * cw * ci],
-                    [sw * si, cw * si],
-                ],
-                mass: row.get("body.mass").and_then(num).unwrap_or(0.0),
+                rot: rotation(inc, node, peri),
+                mass,
                 source,
+                measured,
             },
         );
     }
-    (out, orbits, host_mass)
+    (out, orbits, host_mass, notes)
 }
 
 /// What a re-parent keeps (editing design 10A, R4).
@@ -551,7 +802,7 @@ pub fn rehost(
     if body == to {
         return Err(format!("{body} cannot orbit itself"));
     }
-    let (_, orbits, host_mass) = read_orbits(facts, system, seed);
+    let (_, orbits, host_mass, _) = read_orbits(facts, system, seed);
     if !orbits.contains_key(body) {
         return Err(format!(
             "{body} has no orbit to move (it needs one placed first)"
@@ -729,6 +980,10 @@ pub struct Calendar {
     /// The month (0-based) that gains the leap day; needed when months and leap are both set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub leap_month: Option<usize>,
+    /// A line for people on how the calendar reads (e.g. Sol today's note
+    /// on UTC days counted on TT); carried, never read by the kernel.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -954,6 +1209,64 @@ mod tests {
                 v2 > lo * 0.97 && v2 < hi * 1.03,
                 "vis-viva between the ends of each chord"
             );
+        }
+    }
+
+    /// TP1: a date at a star's age, or at 13.8 Gyr, still moves a body every
+    /// second. Before TP1 the date became a double first, and a low station
+    /// took 3 distinct places in 64 one-second steps, jumping 424 km.
+    #[test]
+    fn one_second_moves_a_station_at_any_age() {
+        let mut f = earth_sun();
+        let sys: Address = "u:o/sys:0".parse().unwrap();
+        let earth: Address = "u:o/sys:0/body:3".parse().unwrap();
+        let station: Address = "u:o/sys:0/body:3/body:1".parse().unwrap();
+        f.insert(
+            station.clone(),
+            [
+                ("orbit.host".to_string(), Value::Text(earth.to_string())),
+                ("orbit.semi_major_axis".to_string(), Value::Float(6.778e6)),
+                ("orbit.mean_anomaly_at_epoch".to_string(), Value::Float(0.3)),
+                ("body.mass".to_string(), Value::Float(4.2e5)),
+            ]
+            .into(),
+        );
+        let yr = sse_core::time::YEAR_S;
+        let star_age = 4_610_000_000 * yr;
+        let cosmic = 13_800_000_000 * yr;
+        // (date, the epoch of the dated phase): the epoch far back, and the epoch near.
+        for (base, epoch) in [
+            (star_age, None),
+            (cosmic, None),
+            (cosmic, Some(cosmic - 86_400)),
+        ] {
+            let mut g = f.clone();
+            if let Some(ep) = epoch {
+                for a in [&earth, &station] {
+                    g.get_mut(a)
+                        .unwrap()
+                        .insert("orbit.epoch_s".into(), Value::Int(ep.into()));
+                }
+            }
+            let times: Vec<i64> = (0..64).map(|k| base + k).collect();
+            let got = orbits_at(&g, &sys, &times, None);
+            for (who, speed) in [(&station, 7.67e3), (&earth, 2.98e4)] {
+                let p = got.iter().find(|p| p.address == who.to_string()).unwrap();
+                assert!(p.placed, "{p:?}");
+                let mut distinct = 1;
+                for w in p.at.windows(2) {
+                    let d = sub(w[1].r_m, w[0].r_m);
+                    let jump = m::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+                    if jump > 0.0 {
+                        distinct += 1;
+                    }
+                    assert!(
+                        (jump - speed).abs() < 0.02 * speed,
+                        "{who} at {base} s, epoch {epoch:?}: moved {jump:.1} m in one second"
+                    );
+                }
+                assert_eq!(distinct, 64, "{who} at {base} s, epoch {epoch:?}");
+            }
         }
     }
 

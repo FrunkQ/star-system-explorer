@@ -505,6 +505,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-catalogue"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "sse-chronicle"
 version = "0.1.0"
 dependencies = [
@@ -519,6 +528,7 @@ name = "sse-cli"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "sse-catalogue",
  "sse-core",
  "sse-import-v3",
 ]
@@ -545,6 +555,7 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+ "sse-physics",
  "sse-sector-io",
  "sse-sift",
 ]
@@ -583,6 +594,7 @@ dependencies = [
  "sse-flow",
  "sse-nebula",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-resolve",
 ]
@@ -597,6 +609,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-light",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -623,6 +636,7 @@ dependencies = [
  "sse-cosmos",
  "sse-flow",
  "sse-pack",
+ "sse-physics",
  "sse-resolve",
 ]
 
@@ -657,6 +671,7 @@ dependencies = [
  "sse-core",
  "sse-field",
  "sse-flow",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -671,6 +686,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-formation",
+ "sse-physics",
 ]
 
 [[package]]
@@ -681,6 +697,7 @@ dependencies = [
  "serde_json",
  "sse-activity",
  "sse-atoms",
+ "sse-catalogue",
  "sse-chronicle",
  "sse-climate",
  "sse-codes",
@@ -700,6 +717,7 @@ dependencies = [
  "sse-nebula",
  "sse-observe",
  "sse-pack",
+ "sse-physics",
  "sse-record",
  "sse-reference",
  "sse-sector-io",
@@ -728,6 +746,7 @@ dependencies = [
  "sse-core",
  "sse-observe",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-suite",
  "sse-world",
@@ -744,6 +763,7 @@ dependencies = [
  "sse-flow",
  "sse-gravity",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -791,6 +811,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-light",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -818,6 +839,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-physics"
+version = "0.1.0"
+dependencies = [
+ "semver",
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-formula",
+ "sse-pack",
+ "sse-reference",
+]
+
+[[package]]
 name = "sse-place"
 version = "0.1.0"
 dependencies = [
@@ -829,6 +865,7 @@ dependencies = [
  "sse-flow",
  "sse-life",
  "sse-pack",
+ "sse-physics",
  "sse-sift",
  "sse-world",
 ]
@@ -886,6 +923,7 @@ dependencies = [
  "sse-flow",
  "sse-light",
  "sse-nav",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -967,8 +1005,10 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-atoms",
  "sse-chronicle",
  "sse-core",
+ "sse-flow",
  "sse-formation",
  "sse-pack",
 ]
@@ -1030,6 +1070,7 @@ dependencies = [
  "sse-atoms",
  "sse-core",
  "sse-flow",
+ "sse-physics",
 ]
 
 [[package]]

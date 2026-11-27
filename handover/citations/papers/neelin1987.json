@@ -1,0 +1,1 @@
+{"key": "neelin1987", "citation": "Neelin and Held 1987", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-climate/src/ebm.rs"], "claims": ["// h_T a fixed ratio above the equator's h (Neelin and Held 1987)."], "tier": 3}

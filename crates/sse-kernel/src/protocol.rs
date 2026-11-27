@@ -544,7 +544,7 @@ pub enum Request {
     },
     /// Weather from the rule-based weather block (weather track): `want` is
     /// `climate`, `systems`, `field` (a cube-sphere `tile` [face, level, x,
-    /// y], `n` × `n` cells), `report`, `column` (descent hazards) or `sound`,
+    /// y], `n` × `n` cells), `report`, `glint` (the sun's glint off the seas: slope variance and reflectance, EC2), `column` (descent hazards) or `sound`,
     /// at `day` (days since the campaign epoch) and `lat`/`lon` where a place
     /// is needed. The world is a weather fixture by `world` label, given
     /// `conditions`, or a `body` of an adopted `system` (read at `at_s`, like
@@ -583,6 +583,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         lon: Option<f64>,
+        /// `want: "patch"`: half the patch's width, km, round `lat`, `lon`.
+        #[serde(default)]
+        #[ts(optional)]
+        half_km: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
@@ -681,6 +685,23 @@ pub enum Request {
     ReadBows {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
+    },
+    /// A pair of stars aged together (BX1): `node` is a star `{node: "star",
+    /// address, mass_msun}` or a pair `{node: "pair", a, b, separation_au,
+    /// eccentricity}` of nodes; the answer is its dated line from birth to
+    /// `to_myr` (each star's phase, mass, radius and lobe fill; the orbit; the
+    /// transfer; common envelopes, mergers, strippings; what each planet in
+    /// `planets` `{address, host, semi_major_axis_au}` ends up doing).
+    AgePair {
+        #[ts(type = "unknown")]
+        node: serde_json::Value,
+        to_myr: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planets: Option<Vec<serde_json::Value>>,
     },
     /// Phase tables per kind of particle (K-e): each of `items` is
     /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
@@ -796,19 +817,25 @@ pub enum Request {
     /// activity level, cycle, spots and coronal X-rays, the state at `at_s`
     /// (default: the star's age), and, with `window`, its flares and mass
     /// ejections as keyed events, each ejection hitting or missing the
-    /// star's `targets` by geometry.
+    /// star's `targets` by geometry. With `prominences` ({from_s, to_s}),
+    /// each star's field and corona and the prominences alive in that window
+    /// (SG6): cool gas held in its loops, or slung round a fast spinner.
     ReadActivity {
         #[ts(type = "unknown[]")]
         stars: Vec<serde_json::Value>,
         #[serde(default)]
         #[ts(optional)]
         seed: Option<String>,
+        /// A date in seconds: a whole number is read exactly (TP1).
         #[serde(default)]
-        #[ts(optional)]
-        at_s: Option<f64>,
+        #[ts(optional, type = "number")]
+        at_s: Option<sse_core::time::Seconds>,
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         window: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        prominences: Option<serde_json::Value>,
     },
     /// What stops the wind at each body (MF6 part 1): for each of `bodies`
     /// (radius, dipole moment, air, the star's wind there, the host for a
@@ -881,6 +908,38 @@ pub enum Request {
         #[ts(optional)]
         r_au: Option<f64>,
     },
+    /// VP-R3: one ring, whole (sse-small ring.rs): its zones, the marks its
+    /// moons leave (edges, gaps, density-wave trains), optical depth across
+    /// it and its grains' colour from what they are made of. Give `ask`
+    /// (sse-small `RingAsk` {key, variant, host {mass_kg, radius_m, j2?,
+    /// flattening?, rotation_period_s?}, sculptors [{id, name, a_m,
+    /// mass_kg}], ring {inner_m, outer_m, mass_kg?, makeup?, grain_radius_m?,
+    /// contaminant?, zones [{name?, inner_m, outer_m, tau?, tau_range?,
+    /// albedo?, share?, makeup?, contaminant?, contaminant_grain_m?,
+    /// source?}]}, samples?, window?}); or `system` and `cloud` for a ring
+    /// formation made (the kernel builds the ask from the run). `variant` 0
+    /// is the generator's pick; others are other plausible rings from the
+    /// same inputs. Nothing is stored.
+    RingStructure {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        cloud: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        ask: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        variant: Option<u64>,
+        #[serde(default)]
+        #[ts(optional)]
+        samples: Option<u32>,
+        #[serde(default)]
+        #[ts(optional)]
+        window: Option<[f64; 2]>,
+    },
     /// SB2: a small body a GM adds by hand (the Add list), made of the
     /// system's own nearest cloud: `kind` asteroid, comet-nucleus,
     /// contact-binary or binary-pair, a `diameter_km` or `mass_kg`, at
@@ -899,6 +958,58 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         e: Option<f64>,
+        /// RW16a, the small-body designer's pins (each optional; left out,
+        /// the field decides): `pair` single, contact or separated; `makeup`
+        /// mass shares of metal, rock, carbon and ice; `structure`
+        /// rubble-pile, monolith or relaxed; one turn in `spin_hours`;
+        /// `battered` 0 to 1 within its structure's relief range; a pair's
+        /// `size_ratio`. A pin is never refused: the answer's `takes` says
+        /// what an implausible one would need. In a system with no
+        /// formation record the body is made of a designed field.
+        #[serde(default)]
+        #[ts(optional)]
+        pair: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        makeup: Option<Vec<f64>>,
+        #[serde(default)]
+        #[ts(optional)]
+        structure: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        battered: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        size_ratio: Option<f64>,
+    },
+    /// RW16a: the shape of any body below the size at which it pulls itself
+    /// round (a small moon, an imported or catalogued asteroid), from its
+    /// address, so it is the same lump on every device and in every view.
+    /// Give what is known: `diameter_km`, `mass_kg` (with both, the makeup
+    /// follows the bulk density), an `ice` share, `spin_hours`, `a_au`. The
+    /// answer is the body as `make_small_body` makes it (single, never a
+    /// pair) with `round` and `round_km`. Needs no formation record.
+    SmallShape {
+        system: String,
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        diameter_km: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ice: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        a_au: Option<f64>,
     },
     /// Natural resource inventory (TG11, MP8b): for each world of `system`
     /// (or `body`), the kilograms of each resource kind in `kinds` (pack
@@ -2030,6 +2141,89 @@ pub enum Request {
         how: Option<sse_trigger::split::How>,
         at_s: i64,
     },
+    /// CM1: capture. `address` is mounted on `on` at `at_s`, at one of the
+    /// five places (`front`, `behind`, `inside`, `hull`, `outside`), at the
+    /// carrier's `port` and its own `own_port` if named, in `bay` for
+    /// inside, at `along_m` and `clock_deg` on the hull or outside (and
+    /// `stand_off_m` for outside), held by `bond` (default: fixed on the
+    /// axis, rest in a bay, latch on the hull or outside), passing `lines`
+    /// (propellant, power, air, people). Nothing moves between the two.
+    MountConstruct {
+        address: String,
+        on: String,
+        #[ts(type = "\"front\" | \"behind\" | \"inside\" | \"hull\" | \"outside\"")]
+        place: sse_trigger::mount::Place,
+        #[serde(default)]
+        #[ts(optional)]
+        port: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        own_port: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bay: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        along_m: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        clock_deg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        stand_off_m: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "\"fixed\" | \"latch\" | \"rest\"")]
+        bond: Option<sse_trigger::mount::Bond>,
+        #[serde(default)]
+        #[ts(optional)]
+        lines: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        push_m_s: Option<f64>,
+        /// CM2: write it `authored` when the flight logs have the two craft
+        /// further apart than a capture allows (it is then made, with a note).
+        #[serde(default)]
+        #[ts(optional)]
+        authored: Option<bool>,
+        /// CM2: the system the flight logs are read in (a NAV `fixture`, an
+        /// inline `nav` system or an adopted universe `system`), to check
+        /// the capture's reach; without one it is not checked.
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        at_s: i64,
+    },
+    /// CM1: release. `address` leaves what carries it at `at_s` (`from`,
+    /// when named, must be its carrier); `push_m_s` overrides the mount's
+    /// separation push. Nothing moves; a dock (`docked.to`) is released the same way.
+    ReleaseConstruct {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        from: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        push_m_s: Option<f64>,
+        /// CM2: the system the released construct's first flight-log piece
+        /// is worked out in (as for `mount_construct`); without one the
+        /// carrier's orbit is copied and the push only noted.
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        at_s: i64,
+    },
     /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
     IntentDecide {
         proposal: String,
@@ -2155,6 +2349,20 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// GZ12: the universe's home galaxy, one of the web's own catalogued
+    /// haloes: the GM's choice (`set_home`) if made, else the halo that best
+    /// fits the cosmology pack's home wish, searched cell by cell outward
+    /// from the origin cell. Worked out once per universe; read only.
+    HomeGalaxy,
+    /// GZ12 "Make this home": choose another catalogued halo
+    /// (`…/cell:x.y.z/halo:n`) as the universe's home, written as one record
+    /// event; `halo` absent or null returns to the web's own choice. Every
+    /// op that reads the campaign's galaxy follows it. GM machine only.
+    SetHome {
+        #[serde(default)]
+        #[ts(optional)]
+        halo: Option<String>,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -2238,7 +2446,8 @@ pub enum Request {
         #[ts(optional)]
         stars: Option<bool>,
         /// GZ6: with the galaxies, every one of home's satellites' paths
-        /// since infall, in `galaxy_walk.satellites.paths` (default false).
+        /// since infall, in `galaxy_walk.satellites.paths`, and the group's
+        /// edge in `galaxy_walk.group_edge` (default false).
         #[serde(default)]
         #[ts(optional)]
         satellite_paths: Option<bool>,
@@ -2532,6 +2741,35 @@ pub enum Request {
         #[ts(optional, type = "Record<string, unknown>")]
         facts: Option<serde_json::Value>,
     },
+    /// RW3: read a catalogue (`sse.catalogue/1`, format spec
+    /// `handover/design/SSE4-catalogue-format.md`) and preview it, before
+    /// anything is applied: what it is, every source's credit in full, the
+    /// price rule, the rows at each step, what the cut read, the first
+    /// `limit` rows (default 20, at most 200) with each value's grade and
+    /// source, and the rows it cannot place. Give `text` (the text form) or
+    /// `packed_b64` (the packed form, base64). The cut is `min_size` (the
+    /// catalogue's size unit: rows at or above it), or `rank` (the first
+    /// `rank` rows), or neither (all). A packed file is read only to the
+    /// cut. A catalogue with no credit, out of size order or with a value
+    /// whose source is unknown is refused (code `catalogue_<reason>`).
+    /// Read-only; needs no universe.
+    ReadCatalogue {
+        #[serde(default)]
+        #[ts(optional)]
+        text: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        packed_b64: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        min_size: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        rank: Option<u64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit: Option<u32>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -2654,6 +2892,8 @@ impl Request {
             Request::ReadInventory { .. } => "read_inventory",
             Request::SmallBody { .. } => "small_body",
             Request::MakeSmallBody { .. } => "make_small_body",
+            Request::SmallShape { .. } => "small_shape",
+            Request::RingStructure { .. } => "ring_structure",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
@@ -2662,6 +2902,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::AgePair { .. } => "age_pair",
             Request::HazardMap { .. } => "hazard_map",
             Request::ReadScattering { .. } => "read_scattering",
             Request::ReadShadowLight { .. } => "read_shadow_light",
@@ -2729,6 +2970,8 @@ impl Request {
             Request::PreviewTree { .. } => "preview_tree",
             Request::SplitConstruct { .. } => "split_construct",
             Request::JoinConstructs { .. } => "join_constructs",
+            Request::MountConstruct { .. } => "mount_construct",
+            Request::ReleaseConstruct { .. } => "release_construct",
             Request::Programs { .. } => "programs",
             Request::AttachProgram { .. } => "attach_program",
             Request::DetachProgram { .. } => "detach_program",
@@ -2738,6 +2981,8 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::RollProfile { .. } => "roll_profile",
             Request::SectorMap { .. } => "sector_map",
+            Request::HomeGalaxy => "home_galaxy",
+            Request::SetHome { .. } => "set_home",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
             Request::StarCell { .. } => "star_cell",
@@ -2759,6 +3004,7 @@ impl Request {
             Request::FixNames { .. } => "fix_names",
             Request::PackReports { .. } => "pack_reports",
             Request::AtmosphereAdvice { .. } => "atmosphere_advice",
+            Request::ReadCatalogue { .. } => "read_catalogue",
         }
     }
 }
@@ -2901,6 +3147,11 @@ pub fn ops() -> Vec<OpInfo> {
             "per item: one or two formula blocks",
         ),
         o(
+            "age_pair",
+            Cost::Light,
+            "per pair: up to a few thousand steps of both life lines, a few formula blocks each",
+        ),
+        o(
             "read_scattering",
             Cost::Light,
             "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
@@ -2969,6 +3220,16 @@ pub fn ops() -> Vec<OpInfo> {
             "make_small_body",
             Cost::Trivial,
             "one body: the same as small_body on a one-member field",
+        ),
+        o(
+            "small_shape",
+            Cost::Trivial,
+            "one body: the same as make_small_body, no formation run needed",
+        ),
+        o(
+            "ring_structure",
+            Cost::Trivial,
+            "one ring: a few hundred resonance solves and four samples per profile pixel (4,096 by default)",
         ),
         o(
             "read_photometry",
@@ -3140,6 +3401,8 @@ pub fn ops() -> Vec<OpInfo> {
         o("rehost", Cost::Light, "GM machine only; the system's orbits at one time, one universe event"),
         o("split_construct", Cost::Trivial, "GM machine only; one universe event"),
         o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
+        o("mount_construct", Cost::Trivial, "GM machine only; one universe event"),
+        o("release_construct", Cost::Trivial, "GM machine only; one universe event"),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
         o("attach_program", Cost::Trivial, "GM machine only; one record event"),
         o("hold", Cost::Trivial, "GM machine only; one record event"),
@@ -3194,6 +3457,16 @@ pub fn ops() -> Vec<OpInfo> {
             "sector_map",
             Cost::Light,
             "GM machine only; one code reading per mapped system",
+        ),
+        o(
+            "home_galaxy",
+            Cost::Medium,
+            "the first time per universe, searches the halo cells round the origin for the best fit to the home wish (1 to 125 cells of big haloes, about 0.005 to 0.4 s native), then kept; read only",
+        ),
+        o(
+            "set_home",
+            Cost::Medium,
+            "GM machine only; reads the chosen halo's cell to check it, then one record event",
         ),
         o(
             "halo_cell",
@@ -3291,6 +3564,11 @@ pub fn ops() -> Vec<OpInfo> {
             "atmosphere_advice",
             Cost::Light,
             "two formula blocks and one equilibrium search (about 60 sweeps of 5 reactions); read only",
+        ),
+        o(
+            "read_catalogue",
+            Cost::Light,
+            "linear in the rows above the cut (a packed file is decoded only to the cut); one SHA-256 per block read; read only",
         ),
     ]
 }
@@ -3641,6 +3919,11 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// `age_pair`: `line` is `sse_time::pair::PairLine`.
+    PairAged {
+        #[ts(type = "unknown")]
+        line: serde_json::Value,
+    },
     /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
     BowsRead {
         #[ts(type = "unknown[]")]
@@ -3723,6 +4006,16 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown[]")]
         notables: Option<Vec<serde_json::Value>>,
+    },
+    /// `ring_structure`: `ring` (sse-small `RingSystem`: inner_m, outer_m,
+    /// mass_kg, j2, variant, zones [{name?, inner_m, outer_m, mass_kg, tau,
+    /// tau_range?, sigma_kg_m2, albedo, rgb, dark_share, contaminant, cause
+    /// {kind, sculptor?, m?}, assumed}], marks [{kind, sculptor, m, r_m,
+    /// half_width_m, ratio, depth, wave_lambda_m?, damping_m?, edge_wave_m?,
+    /// edge_amplitude_m?}], profile {lo_m, hi_m, tau [], zone []}, why []).
+    RingStructureIs {
+        #[ts(type = "unknown")]
+        ring: serde_json::Value,
     },
     /// `read_inventory`: each of `bodies` is a world's address, mass and
     /// kinds (id, matter, reach, kg, per_kg, by_reservoir, note), with
@@ -4108,6 +4401,37 @@ pub enum Response {
         event_id: String,
         state_hash: String,
     },
+    /// `mount_construct` and `release_construct`: the mount made or ended
+    /// (`{on, place, bond, lines, port?, own_port?, bay?, along_m?,
+    /// clock_deg?, stand_off_m?, push_m_s?, docked?}`), the compound the
+    /// carrier is in after the event (`{root, members: [{address, depth,
+    /// mount?, mass_kg?}], mass_kg, mass_unknown}`), and notes on what could
+    /// not be checked. When either construct has a flight log, the release
+    /// or capture is written there too (CM2): `logged` lists the entries.
+    ConstructMounted {
+        address: String,
+        #[ts(type = "unknown")]
+        mount: serde_json::Value,
+        #[ts(type = "unknown")]
+        compound: serde_json::Value,
+        notes: Vec<String>,
+        /// CM2: the flight-log entries written (the carrier's split or join event, the carried construct's piece).
+        logged: Vec<String>,
+        event_id: String,
+        state_hash: String,
+    },
+    ConstructReleased {
+        address: String,
+        #[ts(type = "unknown")]
+        mount: serde_json::Value,
+        #[ts(type = "unknown")]
+        compound: serde_json::Value,
+        notes: Vec<String>,
+        /// CM2: the flight-log entries written (the carrier's split or join event, the carried construct's piece).
+        logged: Vec<String>,
+        event_id: String,
+        state_hash: String,
+    },
     /// `join_constructs`.
     ConstructsJoined {
         how: String,
@@ -4395,6 +4719,20 @@ pub enum Response {
         code: String,
         message: String,
     },
+    /// `home_galaxy`: `{halo, key, cell, mass_msun, position_mpc, neighbour,
+    /// by ("web" or "gm"), fits_wish, why, cells_read, wish, model}`.
+    HomeGalaxy {
+        #[ts(type = "unknown")]
+        home: serde_json::Value,
+    },
+    /// `set_home`: the home now (as `home_galaxy`), the event that chose it
+    /// and the state hash.
+    HomeSet {
+        #[ts(type = "unknown")]
+        home: serde_json::Value,
+        event_id: String,
+        state_hash: String,
+    },
     /// `halo_cell`: `{address, index, side_mpc, origin_mpc, delta_l, mass_msun,
     /// halo_mass_msun, total, above_min, haloes: [{address, key, mass_msun,
     /// position_mpc, half_mass_gyr, spin, mergers, major_mergers, last_major_gyr,
@@ -4530,6 +4868,17 @@ pub enum Response {
     AtmosphereAdvised {
         #[ts(type = "unknown")]
         advice: serde_json::Value,
+    },
+    /// `read_catalogue`: `{id, title, version, level, frame, anchor, epoch,
+    /// size, columns, credits ([{id, name, version, kind, licence, credit,
+    /// link, retrieved}]), price ({may_sell, why}), completeness, steps
+    /// ([{size, label, rows}]), motions, notes, total_rows, total_bytes,
+    /// header_sha256, read ({rows, bytes, largest, smallest}), rows (each
+    /// present value, with `_from` {column: {grade, source}}),
+    /// warnings_total, warnings ([{id, column, what}])}`.
+    CatalogueRead {
+        #[ts(type = "unknown")]
+        preview: serde_json::Value,
     },
 }
 

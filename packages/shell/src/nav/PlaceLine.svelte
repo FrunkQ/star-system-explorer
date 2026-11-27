@@ -5,7 +5,7 @@
 <script lang="ts">
   import { Picker } from "../../../chart-grammar/src/index.ts";
   import PlaceNotes from "./PlaceNotes.svelte";
-  import { isPlaceScale, PLACE_WORDS, SUBJECT_KIND_ORDER, subjectItems, type ElsewhereItem, type PickItem, type Place, type PlaceNote, type PlaceScale, type PlaceStep, type RailScale, type SceneSubject, type ViewSession, campaignAddress } from "../../../ui-contract/src/index.ts";
+  import { stepperLine, stepIn, stepOut, isPlaceScale, PLACE_WORDS, SUBJECT_KIND_ORDER, subjectItems, type ElsewhereItem, type PickItem, type Place, type PlaceNote, type PlaceScale, type PlaceStep, type RailScale, type SceneSubject, type ViewSession, campaignAddress } from "../../../ui-contract/src/index.ts";
 
   let {
     railScale,
@@ -26,6 +26,7 @@
     switchSystem,
     session = null,
     systemAddress = "",
+    stepper = false,
   }: {
     railScale: RailScale;
     place: Place | null;
@@ -52,7 +53,23 @@
     session?: Pick<ViewSession, "record" | "addNote"> | null;
     /** The system in view's address ("u:kestrel/sys:1"); the campaign's notes live at its root. */
     systemAddress?: string;
+    /** The Run desk's form (three desks design 3.2): every level drawn, Out and In at the end, Page Up and Page Down. */
+    stepper?: boolean;
   } = $props();
+
+  // The stepper (TM7): every level, the trail's below it pencilled, the rest as the level's word; Out and In.
+  const line = $derived(stepper ? stepperLine(steps) : steps.map((x) => ({ ...x, unvisited: false })));
+  const outTo = $derived(stepper ? stepOut(steps) : null);
+  const inTo = $derived(stepper && place ? stepIn(steps, place, selection) : null);
+  const goIn = () => inTo && goPlace(inTo);
+  const goOut = () => outTo && goPlace(outTo);
+  function stepKeys(e: KeyboardEvent) {
+    if (!stepper || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    const t = e.target as HTMLElement | null;
+    if (t?.closest?.("input, textarea, select, [contenteditable=true], [role=slider], dialog")) return;
+    if (e.key === "PageUp" && outTo) (e.preventDefault(), goOut());
+    else if (e.key === "PageDown" && inTo) (e.preventDefault(), goIn());
+  }
 
   let narrow = $state(typeof matchMedia === "function" && matchMedia("(max-width: 600px)").matches);
   $effect(() => {
@@ -171,9 +188,11 @@
 
 <svelte:head>{#if litCss}{@html `<style data-lit-tag>${litCss}</style>`}{/if}</svelte:head>
 
-<nav class="place" aria-label="Place" data-scale={railScale}>
-  {#each place ? steps : [] as s, i (s.scale)}
-    {@const parent = steps[i + 1]?.current ?? false}
+<svelte:window onkeydown={stepKeys} />
+
+<nav class="place" class:stepper aria-label="Place" data-scale={railScale} data-stepper={stepper ? "" : undefined}>
+  {#each place ? line : [] as s, i (s.scale)}
+    {@const parent = line[i + 1]?.current ?? false}
     {#if s.current && s.scale === "system" && adoptedSystems.length}
       <!-- The system's name is its own switcher when the campaign holds more than one: press the name, pick another. -->
       <label class="title-switch" title="Switch to another system in this campaign">
@@ -213,13 +232,22 @@
         <button type="button" class="notes-btn" bind:this={notesBtn} aria-expanded={notesOpen} onclick={() => (notesOpen = !notesOpen)} title="Description and notes for {notesFor.label === 'This campaign' ? 'this campaign' : notesFor.label}" data-place-notes-open aria-label="Notes">Notes</button>
         {#if notesOpen}<PlaceNotes session={session!} address={notesFor.address} label={notesFor.label} kicker={notesFor.kicker} from={notesBtn} onclose={() => (notesOpen = false)} />{/if}
       {/if}
+    {:else if s.unvisited || !s.place}
+      <button type="button" class="step below unvisited" data-place-step={s.scale} data-unvisited="" disabled={!inTo} onclick={goIn} title={inTo ? `In towards ${s.label}` : `Select something to go into`}>{s.label}</button>
     {:else}
-      <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name"><span class="long">{s.label}</span>{#if SHORT_WORDS[s.scale] && s.label === PLACE_WORDS[s.scale]}<span class="short" aria-hidden="true">{SHORT_WORDS[s.scale]}</span>{/if}</span></button>
+      {@const to = s.place}
+      <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(to)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name"><span class="long">{s.label}</span>{#if SHORT_WORDS[s.scale] && s.label === PLACE_WORDS[s.scale]}<span class="short" aria-hidden="true">{SHORT_WORDS[s.scale]}</span>{/if}</span></button>
     {/if}
-    {#if i < steps.length - 1}<span class="sep" class:up-sep={parent} class:far={!s.below && !parent && !s.current} class:below={s.below} aria-hidden="true">›</span>{/if}
+    {#if i < line.length - 1}<span class="sep" class:up-sep={parent} class:far={!s.below && !parent && !s.current} class:below={s.below} aria-hidden="true">›</span>{/if}
   {:else}
     <h1 class="title" data-place="system">{title}</h1>
   {/each}
+  {#if stepper && place}
+    <span class="outin" role="group" aria-label="Out and In">
+      <button type="button" class="oi" data-step-out disabled={!outTo} onclick={goOut} title="Out one level (Page Up)">Out</button>
+      <button type="button" class="oi" data-step-in disabled={!inTo} onclick={goIn} title={inTo ? "In one level (Page Down)" : "Select something to go into"}>In</button>
+    </span>
+  {/if}
 </nav>
 
 <style>
@@ -296,6 +324,34 @@
   }
   .place .title {
     flex: 0 0.1 auto;
+  }
+  .place .unvisited {
+    color: var(--sse-ink-muted);
+    font-style: italic;
+  }
+  .place .unvisited:disabled {
+    cursor: default;
+  }
+  .outin {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: 6px;
+    align-self: center;
+  }
+  .oi {
+    height: 26px;
+    padding: 0 10px;
+    font: inherit;
+    font-size: 12px;
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    background: transparent;
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .oi:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
   .place .step {
     flex: 0 8 auto;
@@ -424,6 +480,71 @@
     }
     .place {
       min-width: 64px;
+    }
+    /* On Run the place line is its own row, the stepper (design section 8): every step drawn, scrolling sideways, Out
+       and In thumb-sized and held at the row's two ends. */
+    .place.stepper {
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      padding: 0 0 2px;
+    }
+    .place.stepper .step,
+    .place.stepper .step.below,
+    .place.stepper .step.far,
+    .place.stepper .sep,
+    .place.stepper .sep.below,
+    .place.stepper .sep.far {
+      display: inline-flex;
+      align-items: center;
+      flex: none;
+      min-height: 44px;
+      font-size: 14px;
+    }
+    .place.stepper .up {
+      font-size: 14px;
+    }
+    .place.stepper .up-name {
+      display: inline;
+    }
+    .place.stepper .up-sep {
+      display: inline-flex;
+    }
+    .place.stepper .up-arrow {
+      display: none;
+    }
+    .place.stepper .title {
+      flex: none;
+      overflow: visible;
+      font-size: 20px;
+    }
+    .place.stepper .outin {
+      display: contents;
+    }
+    .place.stepper .oi {
+      position: sticky;
+      z-index: 1;
+      flex: none;
+      min-width: 56px;
+      height: 44px;
+      font-size: 14px;
+      background: var(--sse-ground);
+    }
+    /* Held over the steps, so a disabled button is drawn muted rather than see-through. */
+    .place.stepper .oi:disabled {
+      opacity: 1;
+      color: var(--sse-ink-muted);
+      border-color: var(--sse-rule);
+    }
+    .place.stepper [data-step-out] {
+      order: -1;
+      left: 0;
+    }
+    .place.stepper [data-step-in] {
+      order: 1;
+      right: 0;
     }
   }
 </style>

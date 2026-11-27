@@ -63,8 +63,8 @@ try {
   await until(gm, "galaxy");
   await gm.locator(".gal").waitFor({ timeout: 30000 });
   // The galaxy chart says which galaxy is in view: its name is the place, and its key is in the link.
-  await gm.waitForFunction(() => location.hash === "#chart/galaxy//milky-way-like", null, { timeout: 20000 });
-  assert.equal((await line.locator("h1").innerText()).trim(), "A Milky-Way-like galaxy");
+  await gm.waitForFunction(() => location.hash === "#chart/galaxy//home", null, { timeout: 20000 });
+  assert.equal((await line.locator("h1").innerText()).trim(), "Our galaxy");
   assert.deepEqual((await line.locator("[data-place-step].below").allInnerTexts()).map((s) => s.trim()), ["Kestrel", tarnName]);
   assert.match(await gm.locator('.rail [data-go="back"]').innerText(), new RegExp(`Back to ${tarnName}`));
   // The galaxy's picker holds the campaign's systems, the levels above, and recent places.
@@ -104,7 +104,7 @@ try {
   const cell = await pop(gm);
   const kids = cell.locator('[data-pick^="child:"]');
   await kids.first().waitFor({ timeout: 30000 });
-  assert.match(await cell.locator("[data-picker-head]").textContent(), /^In Cell /);
+  assert.match(await cell.locator("[data-picker-head]").textContent(), /^In Milky Way neighbourhood/);
   const kid = (await kids.first().innerText()).trim();
   assert.match(kid, /^Halo /);
   await shot(gm, "picker-cluster");
@@ -112,7 +112,7 @@ try {
   await until(gm, "galaxy");
   await gm.waitForFunction(() => /^#chart\/galaxy\/\/.*cell%3A.*halo%3A/.test(location.hash), null, { timeout: 30000 });
   await gm.waitForFunction(() => /^Halo /.test(document.querySelector(".place h1.title")?.textContent?.trim() ?? ""), null, { timeout: 30000 });
-  assert.match(await line.locator('[data-place-step="cluster"]').innerText(), /Cell /, "the step above is the cell by name");
+  assert.match(await line.locator('[data-place-step="cluster"]').innerText(), /Milky Way neighbourhood/, "the step above is the cell by name");
   await shot(gm, "u24-galaxy-named");
   await line.locator('[data-place-step="cluster"]').click();
   await until(gm, "cluster");

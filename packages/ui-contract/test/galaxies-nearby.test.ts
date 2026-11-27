@@ -151,27 +151,31 @@ test("a stream is drawn along its own path behind its stars, only once torn apar
   assert.equal(satelliteStateWords(readNearby(withPaths)!.paths[1]!, 5), "merged into our galaxy");
 });
 
-test("the group's edge: Sandage's zero-velocity radius of the mass inside it", async () => {
-  const { zeroVelocityRadius, groupEdge } = await import("../src/galaxies-nearby.ts");
-  // An absolute check, by hand: 8 G M t^2 / pi^2 with G = 4.4985e-15 Mpc^3 / (Msun Gyr^2), M = 3e12, t = 13.8 Gyr
-  // gives 2.0835 Mpc^3, so R0 = 1.277 Mpc (about the measured Local Group's 1 Mpc for its mass of 2 to 3e12).
-  assert.ok(Math.abs(zeroVelocityRadius(3e12, 13.8) - 1.277) < 0.002, String(zeroVelocityRadius(3e12, 13.8)));
-  assert.equal(zeroVelocityRadius(0, 13.8), 0);
-  // Grows as the cube root of mass and as t^(2/3).
-  assert.ok(Math.abs(zeroVelocityRadius(8e12, 13.8) / zeroVelocityRadius(1e12, 13.8) - 2) < 1e-9);
-  const home = 1e12;
-  const r0 = zeroVelocityRadius(home, 13.8);
-  // A big neighbour just inside home's own sphere is taken in, which widens it to take in the next; one far
-  // outside is not; a satellite is not counted twice.
-  const gs = [
-    { halo_mass_msun: 1.5e12, distance_mpc: r0 * 0.9, satellite: false },
-    { halo_mass_msun: 1e11, distance_mpc: r0 * 1.15, satellite: false },
-    { halo_mass_msun: 5e12, distance_mpc: 5, satellite: false },
-    { halo_mass_msun: 1e11, distance_mpc: 0.1, satellite: true },
-  ];
-  const e = groupEdge(home, gs, 13.8);
-  assert.equal(e.members, 2);
-  assert.equal(e.mass_msun, 2.6e12);
-  assert.ok(Math.abs(e.radius_mpc - zeroVelocityRadius(2.6e12, 13.8)) < 1e-12);
-  assert.equal(groupEdge(home, [], 13.8).radius_mpc, r0);
+test("the group's edge is read from the kernel's block, and absent when not asked", () => {
+  const e = readNearby({ ...(withPaths as object), galaxy_walk: { ...(withPaths as { galaxy_walk: object }).galaxy_walk, group_edge: { radius_mpc: 1.277, mass_msun: 3e12, members: 2, t_gyr: 13.8, block: "sse.gravity.zero_velocity_radius" } } } as unknown as Json)!.group_edge;
+  assert.deepEqual(e, { radius_mpc: 1.277, mass_msun: 3e12, members: 2, block: "sse.gravity.zero_velocity_radius" });
+  assert.equal(readNearby(withPaths)!.group_edge, null);
+});
+
+test("Free turning: starts as Tilted, a quarter turn of yaw swings x into y, a full tip is Edge-on", async () => {
+  const { turnOf, FREE_START } = await import("../src/galaxies-nearby.ts");
+  const p: [number, number, number] = [1, 0.5, 0.3];
+  assert.deepEqual(projectNearby(p, "free", 500, 2), projectNearby(p, "tilted", 500, 2));
+  assert.deepEqual(projectNearby(p, "free", 500, 2, 24, { yaw_deg: 0, tilt_deg: 90 }), projectNearby(p, "edge", 500, 2));
+  assert.deepEqual(projectNearby(p, "free", 500, 2, 24, { yaw_deg: 0, tilt_deg: 0 }), projectNearby(p, "above", 500, 2));
+  const q = projectNearby([1, 0, 0], "free", 500, 2, 24, { yaw_deg: 90, tilt_deg: 0 });
+  assert.ok(Math.abs(q.x - 250) < 1e-9 && q.y < 250, "a galaxy on +x is up the page after a quarter turn");
+  assert.deepEqual(turnOf("free", { yaw_deg: 10, tilt_deg: 140 }), { yaw_deg: 10, tilt_deg: 90 }, "never tipped past edge-on");
+  assert.deepEqual(turnOf("above"), { yaw_deg: 0, tilt_deg: 0 });
+  assert.equal(FREE_START.tilt_deg, 60);
+});
+
+test("the biggest neighbours whose real charts are read: biggest in stars within the reach, never our satellites", async () => {
+  const { biggestNeighbours, REAL_FACES } = await import("../src/galaxies-nearby.ts");
+  const r = readNearby(withPaths)!;
+  assert.deepEqual(r.home_mpc, null, "no home place given in this fixture");
+  assert.deepEqual(readNearby({ ...(sky as object), galaxy_walk: { home_mpc: [4, 4, 4], satellites: {} } } as unknown as Json)!.home_mpc, [4, 4, 4]);
+  assert.deepEqual(biggestNeighbours(r.galaxies, 12).map((g) => g.address), ["u:k/cell:0.0.-1/halo:1"]);
+  assert.deepEqual(biggestNeighbours(r.galaxies, 1.5), [], "the only galaxy in the group is our satellite");
+  assert.equal(REAL_FACES, 3);
 });

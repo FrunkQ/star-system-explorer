@@ -1,0 +1,1 @@
+{"key": "sayanagi2019", "citation": "Sayanagi and Dowling 2019", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-weather/src/giants.rs"], "claims": ["//!   Sayanagi and Dowling 2019). Weak internal heat also gives the broad"], "tier": 3}

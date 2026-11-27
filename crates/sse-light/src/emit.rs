@@ -15,7 +15,6 @@ use serde::{Deserialize, Serialize};
 use sse_core::{Quantity, Units};
 use sse_flow::{AtomRegistry, Context, Flow, InputValue, SourceLabel};
 use std::collections::BTreeMap;
-use std::sync::OnceLock;
 
 pub const EMISSION_FLOW: &str = "sse.base-light.body-emission";
 pub const BASE_PHYSICS: &str = include_str!("../../../packs/base-physics/pack.json");
@@ -131,7 +130,9 @@ impl Model {
     /// table and an emission flow (base-light, or a pack replacing it).
     pub fn from_packs(packs: &[sse_pack::PackManifest]) -> Result<Self, String> {
         let stack = sse_pack::resolve(packs, "0.1.0").map_err(|e| format!("{e:?}"))?;
-        let atoms = sse_atoms::registry();
+        // ER2: compiled against the blocks in force, so it follows an edit
+        // to a block's settings.
+        let atoms = sse_physics::registry();
         let doc = stack
             .flows
             .values()
@@ -157,10 +158,10 @@ impl Model {
         })
     }
 
-    /// The base packs.
-    pub fn base() -> &'static Model {
-        static CELL: OnceLock<Model> = OnceLock::new();
-        CELL.get_or_init(|| {
+    /// The base packs, with the blocks in force; kept with the physics in
+    /// force (ER2), so an edit to a block's settings reaches it.
+    pub fn base() -> std::sync::Arc<Model> {
+        sse_physics::memo("sse-light.emit.base", || {
             let packs = [
                 sse_pack::PackManifest::from_json(BASE_PHYSICS).expect("base-physics parses"),
                 sse_pack::PackManifest::from_json(table::BASE_PACK).expect("base-light parses"),
@@ -179,9 +180,9 @@ impl Model {
 
     fn atom(&self, id: &str, inputs: &[f64]) -> Result<Vec<f64>, String> {
         let a = self.atoms.get(id).ok_or(format!("atom {id} missing"))?;
-        let params: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-        a.eval(inputs, &params)
-            .map_err(|e| format!("{id}: {}", e.0))
+        // The registry holds the blocks in force: no settings passed runs
+        // each with those in force (ER2).
+        a.eval(inputs, &[]).map_err(|e| format!("{id}: {}", e.0))
     }
 }
 

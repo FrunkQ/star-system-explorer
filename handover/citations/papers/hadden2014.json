@@ -1,0 +1,1 @@
+{"key": "hadden2014", "citation": "Hadden and Lithwick 2014", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/violent_tests.rs"], "claims": ["// Kepler multis are nearly circular: TTV rms about 0.02 (Hadden and Lithwick 2014,"], "tier": 3}

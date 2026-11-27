@@ -1,0 +1,1 @@
+G estimated {"block":"sse.cosmos.major_mergers","law":"merger rate fitted in our universe, used unchanged on the changed halo counts (Fakhouri, Ma and Boylan-Kolchin 2010, MNRAS 406, 2267, arXiv:1001.2304)","reads":["Omega_m","sigma8"]}

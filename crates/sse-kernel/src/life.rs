@@ -130,6 +130,7 @@ impl crate::Kernel {
             || b.water_fraction > 0.0
             || ice.as_ref().is_some_and(|i| i.ice_share > 0.0)
             || conditions.gases.get("h2o").is_some_and(|x| *x > 0.0);
+        let heat_history = heat_lost_by_age(&env, conditions.radius_m);
         let reading = sse_life::world_life::WorldReading {
             body: body.to_string(),
             name: b.label.clone(),
@@ -144,8 +145,33 @@ impl crate::Kernel {
             ice_water_m: ice.filter(|i| i.ice).map(|i| i.shell_km * 1000.0),
             has_water,
             birth_year,
+            heat_history,
         };
         let seed = format!("{}/life/{body}", u.seed.0.hex());
         Ok((reading, seed))
+    }
+}
+
+/// A world's heat out of the top at each age, for life's deep-time history
+/// (L3-heat): the interior's own thermal history (`core_history`), heat out
+/// of the top over the surface. The one read of it, so the heat-flow
+/// thread's coming `heat_lost` field (W/m² by age) and the time-scales
+/// design's step times swap in here. Empty for a world without one.
+fn heat_lost_by_age(
+    env: &sse_surface::SurfaceEnvelope,
+    radius_m: f64,
+) -> Vec<sse_life::world_life::HeatSample> {
+    let area = 4.0 * sse_core::math::PI * radius_m * radius_m;
+    match (&env.core, area > 0.0) {
+        (Some(h), true) => h
+            .steps
+            .iter()
+            .filter(|x| x.q_surface_tw.is_finite())
+            .map(|x| sse_life::world_life::HeatSample {
+                at_myr: x.t_gyr * 1000.0,
+                heat_flow_w_m2: x.q_surface_tw * 1.0e12 / area,
+            })
+            .collect(),
+        _ => vec![],
     }
 }

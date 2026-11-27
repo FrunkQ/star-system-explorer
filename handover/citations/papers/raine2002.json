@@ -1,0 +1,1 @@
+{"key": "raine2002", "citation": "Raine 2002 eq. 1.2", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-light/src/disc_tests.rs"], "claims": ["/// and Raine 2002 eq. 1.2: 1.3e31 W for M in Suns), efficiency 5.7% at"], "tier": 3}

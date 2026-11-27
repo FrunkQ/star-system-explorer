@@ -1,0 +1,1 @@
+{"key": "montgomery2007", "citation": "Montgomery 2007", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/soil.rs"], "claims": ["/// Geological erosion of the land surface, m/Myr (Montgomery 2007)."], "tier": 3}

@@ -33,6 +33,24 @@ Owner: "Build galaxy charts and histories" (this package built by the thread "Bu
   with an absolute hand-worked value: 3e12 suns at 13.8 Gyr is 1.277 Mpc). E2e in `tests/ui/cluster.e2e.mjs`: the
   edge about a megaparsec out, streams under HUD, Play, pause in the past, scrub to halfway, back to the date.
 
+## Part 3 (26 Nov 2026): the biggest neighbours' real faces, the web's threads
+- The three biggest neighbours in stars within the reach (`biggestNeighbours`, never home's satellites, which have
+  no chart of their own) have their real charts read from the kernel (`galaxy_chart` with their cell and halo), one
+  at a time in the background, and kept. In True each swaps its type picture for its real face (`galaxyFace`, the
+  same picture Galaxy 3D's True draws, with its bulge glow) as the read finishes, laid at the sky's tilt and turn. A
+  chip says "Histories read: 2 of 3", and the card says whether that galaxy's history is read.
+- Under HUD, **the web's threads** lie on our disc's plane, from a web slice through home (`web_slice` centred on
+  `galaxy_walk.home_mpc`, the reach's width, 64 cells): only what is over the mean density, inside the reach's circle,
+  turned and tipped with the view. The web's axes are the galactic frame's (F37), so the slice is our disc's plane.
+- E2e: the web's threads appear in the neighbourhood under HUD; in True the neighbourhood reads 3 of 3 histories and
+  draws their real faces. Screens: project files `sse4/handover-screens/GZ6-screens/` (`gz6-nearby-real-faces`).
+
+## Follow-up (26 Nov): physics out of the interface
+After an audit against "physics lives in the kernel's editable blocks":
+- The group's edge is now the formula block `sse.gravity.zero_velocity_radius` (Sandage 1986, `packs/base-physics/formulas/gravity.json`), which reads G through Look up; its reach is declared as following G. The kernel runs it in `galaxies.rs` `group_edge` when `sky_from_here` is asked with `satellite_paths`, and returns `galaxy_walk.group_edge`. It reads the block and the Sun's mass through the physics in force (ER1: `sse_physics::now().blocks()`, `sse_physics::constant("M_sun")`), so it adds no side door; with no stack loaded there is no sheet and the edge is left out. The interface's own copy (`zeroVelocityRadius`, `groupEdge`, G typed in) is gone; Nearby only reads it. In the browser the kernel gives the same 0.885 Mpc as the old sum.
+- Golden: `tests/golden/contract-reach.txt` gains one line on purpose (the new block follows G). Atom count 176 to 177 (P1 log).
+- Colour from B-V stays a display rule (fudge GZ-F14), now in one copy: `ui-contract/src/compare.ts` `tempFromBV`, read by the sky's stars, the chart's galaxy dots and True's type pictures.
+
 ## Honest limits
 - Play is this view's own playback of the stored orbits, not the universe clock: the rest of the screen stays at the
   campaign's date. The Run desk has no clock above the system (design 5.9); Play shows on every desk until the
@@ -41,7 +59,9 @@ Owner: "Build galaxy charts and histories" (this package built by the thread "Bu
   time (those are the sky's, read only at the date).
 - The group's mass is the haloes' r200 masses and the sphere has no dark energy (GZ-F13).
 - Big neighbours' own satellites are not walked yet (design 7.4).
+- The web's threads are one slice, in our disc's plane only, and the galaxies are not yet moved by the web's
+  displacement (grand zoom gap 4, GZ15), so a galaxy can sit beside its thread rather than on it.
+- A neighbour's real face is laid at the sky's tilt and turn, not the axis its chart would give (GZ14).
 
 ## Next
-Part 2 (GZ5 part 2): True with type pictures from a new `renderer/src/galaxy-types.ts`, Free turning. Then part 3:
-the biggest neighbours' real charts read in the background ("Histories read: 2 of 3"), the web's threads behind.
+GZ6 is done but for the big neighbours' own satellites (design 7.4), which wait on a satellite walk per neighbour in the kernel. GZ7 (the Local stars rung) is the next package of Stage B.

@@ -1,0 +1,1 @@
+{"key": "cox2000", "citation": "Cox 2000, table", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/spectral.rs"], "claims": ["/// the giant column of Allen's Astrophysical Quantities (Cox 2000, table"], "tier": 3}

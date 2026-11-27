@@ -610,6 +610,947 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.activity.surface_field",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "ro",
+     "letter": "Ro"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "field",
+     "letter": "B"
+    }
+   ],
+   "models": {
+    "gauss": {
+     "value": 0.0001,
+     "grade": "derived",
+     "source": "one gauss is 10⁻⁴ tesla"
+    }
+   },
+   "params": [
+    {
+     "param": "b_fast_g",
+     "letter": "Bf",
+     "default": 2050.0,
+     "range": [
+      500.0,
+      8000.0
+     ],
+     "description": "field of a saturated star at Ro = 1 on its fast branch, gauss (Reiners 2022: 2050)"
+    },
+    {
+     "param": "slope_fast",
+     "letter": "sf",
+     "default": -0.11,
+     "range": [
+      -1.0,
+      0.0
+     ],
+     "description": "slope of the fast branch (−0.11 ± 0.03)"
+    },
+    {
+     "param": "b_slow_g",
+     "letter": "Bs",
+     "default": 199.0,
+     "range": [
+      20.0,
+      1000.0
+     ],
+     "description": "field at Ro = 1 on the slow branch, gauss (199)"
+    },
+    {
+     "param": "slope_slow",
+     "letter": "ss",
+     "default": -1.26,
+     "range": [
+      -3.0,
+      0.0
+     ],
+     "description": "slope of the slow branch (−1.26 ± 0.10)"
+    },
+    {
+     "param": "ro_sat",
+     "letter": "Ro_sat",
+     "default": 0.13,
+     "range": [
+      0.01,
+      1.0
+     ],
+     "description": "Rossby number where the branches meet (the X-ray saturation point)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "ro",
+     "says": "Rossby number"
+    }
+   ],
+   "references": [
+    "Reiners, A., Shulyak, D., Käpylä, P. J. et al. 2022, Magnetism, rotation, and nonthermal emission in cool stars: average magnetic field measurements in 292 M dwarfs, A&A 662, A41: mean surface field ⟨B⟩ = 199 G Ro^(−1.26 ± 0.10) for slow rotators and 2050 G Ro^(−0.11 ± 0.03) for fast (saturated) rotators. https://arxiv.org/abs/2204.00342"
+   ],
+   "shown": "⟨B⟩ = 2050 G Ro^−0.11 (Ro ≤ 0.13); 199 G Ro^−1.26 above",
+   "equation": {
+    "name": "How strong a star's surface magnetism is for its spin",
+    "formula": "B = (if Ro <= Ro_sat then Bf * Ro ^ sf else Bs * Ro ^ ss) * gauss",
+    "inputs": {
+     "Ro": {
+      "kind": "star.rossby_number",
+      "unit": "1",
+      "name": "spin over churning (Rossby number)"
+     },
+     "gauss": {
+      "kind": "model.gauss",
+      "unit": "T",
+      "name": "one gauss"
+     },
+     "Bf": {
+      "kind": "model.field_fast_branch",
+      "unit": "1",
+      "name": "fast branch field at Ro = 1, gauss"
+     },
+     "sf": {
+      "kind": "model.field_fast_slope",
+      "unit": "1",
+      "name": "fast branch slope"
+     },
+     "Bs": {
+      "kind": "model.field_slow_branch",
+      "unit": "1",
+      "name": "slow branch field at Ro = 1, gauss"
+     },
+     "ss": {
+      "kind": "model.field_slow_slope",
+      "unit": "1",
+      "name": "slow branch slope"
+     },
+     "Ro_sat": {
+      "kind": "model.ro_sat",
+      "unit": "1",
+      "name": "Rossby number where activity saturates"
+     }
+    },
+    "outputs": {
+     "B": {
+      "kind": "star.surface_field",
+      "unit": "T",
+      "name": "mean field over the star's surface"
+     }
+    },
+    "source": {
+     "text": "Reiners, A. et al. 2022, A&A 662, A41",
+     "url": "https://arxiv.org/abs/2204.00342",
+     "where": "the two branches of mean field against Rossby number"
+    },
+    "explain": {
+     "curious": "A star's magnetism is stirred by its spin. The Sun's field averages about a hundred gauss over its surface; a young red dwarf spinning in a day carries thousands, enough to hold up huge clouds of gas.",
+     "science": "Zeeman-broadening measurements of the mean surface field against Rossby number: a steep power law for slow rotators and a nearly flat one once activity saturates. Fitted on M dwarfs; used for every cool star with a churning outer layer (unverified until the paper search returns)."
+    },
+    "examples": [
+     {
+      "Ro": 1.8,
+      "B": 0.009488765633724213
+     },
+     {
+      "Ro": 0.05,
+      "B": 0.28501463482953704
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.corona_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "lx",
+     "letter": "Lx"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "t_corona",
+     "letter": "Tc"
+    }
+   ],
+   "models": {
+    "cgs_flux": {
+     "value": 1000.0,
+     "grade": "derived",
+     "source": "1 W m⁻² is 1000 erg s⁻¹ cm⁻²"
+    },
+    "MK": {
+     "value": 1000000.0,
+     "grade": "derived",
+     "source": "a million kelvin"
+    }
+   },
+   "params": [
+    {
+     "param": "k",
+     "letter": "k",
+     "default": 0.11,
+     "range": [
+      0.01,
+      1.0
+     ],
+     "description": "coronal temperature in MK at unit X-ray surface flux (cgs) (Johnstone and Güdel 2015: 0.11)"
+    },
+    {
+     "param": "n",
+     "letter": "n",
+     "default": 0.26,
+     "range": [
+      0.1,
+      0.5
+     ],
+     "description": "index on the X-ray surface flux (0.26)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Johnstone, C. P. and Güdel, M. 2015, The coronal temperatures of low-mass main-sequence stars, A&A 578, A129: mean coronal temperature T̄_cor ≈ 0.11 F_X^0.26 MK, F_X the X-ray surface flux in erg s⁻¹ cm⁻². https://arxiv.org/abs/1505.00643"
+   ],
+   "shown": "T̄_cor = 0.11 F_X^0.26 MK,  F_X = L_X / 4πR²",
+   "equation": {
+    "name": "How hot a star's corona is",
+    "formula": "Fx = max(Lx, 0) / (4 * pi * R * R) * cgs_flux\nTc = k * Fx ^ n * MK",
+    "inputs": {
+     "Lx": {
+      "kind": "star.xray_luminosity",
+      "unit": "W",
+      "name": "X-ray light of the star"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "cgs_flux": {
+      "kind": "model.cgs_flux",
+      "unit": "s3 kg-1",
+      "name": "one W m⁻² counted in erg s⁻¹ cm⁻²"
+     },
+     "MK": {
+      "kind": "model.megakelvin",
+      "unit": "K",
+      "name": "a million kelvin"
+     },
+     "k": {
+      "kind": "model.corona_t_scale",
+      "unit": "1",
+      "name": "temperature scale, MK"
+     },
+     "n": {
+      "kind": "model.corona_t_index",
+      "unit": "1",
+      "name": "index on the X-ray flux"
+     }
+    },
+    "outputs": {
+     "Tc": {
+      "kind": "star.corona_temperature",
+      "unit": "K",
+      "name": "mean temperature of the corona"
+     }
+    },
+    "source": {
+     "text": "Johnstone, C. P. and Güdel, M. 2015, A&A 578, A129",
+     "url": "https://arxiv.org/abs/1505.00643",
+     "where": "mean coronal temperature against X-ray surface flux"
+    },
+    "explain": {
+     "curious": "Above a star's surface the thin gas is far hotter than the surface itself: about two million degrees over the Sun, ten million or more over an active young star.",
+     "science": "An empirical fit of emission-measure-weighted coronal temperature to X-ray surface flux across low-mass main-sequence stars (unverified until the paper search returns)."
+    },
+    "examples": [
+     {
+      "Lx": 2.2e+20,
+      "R": 700000000.0,
+      "Tc": 1679488.508838445
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.corona_base_density",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "lx",
+     "letter": "Lx"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "t_corona",
+     "letter": "Tc"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "density",
+     "letter": "n"
+    }
+   ],
+   "constants": {
+    "k_B": "sheet/k_B",
+    "m_u": "sheet/m_u"
+   },
+   "params": [
+    {
+     "param": "loss",
+     "letter": "Lam",
+     "default": 1.2e-35,
+     "range": [
+      1e-36,
+      1e-34
+     ],
+     "description": "radiative loss of coronal gas per electron and ion pair, W m³ (Rosner, Tucker and Vaiana 1978 near 1 to 2 MK: about 10⁻²² erg cm³ s⁻¹)"
+    },
+    {
+     "param": "mu",
+     "letter": "mu",
+     "default": 0.6,
+     "range": [
+      0.5,
+      1.3
+     ],
+     "description": "mean mass per particle of fully ionised coronal gas, in atomic mass units"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "t_corona",
+     "says": "corona temperature"
+    },
+    {
+     "port": "gravity",
+     "says": "gravity"
+    }
+   ],
+   "references": [
+    "Rosner, R., Tucker, W. H. and Vaiana, G. S. 1978, Dynamics of the quiescent solar corona, ApJ 220, 643: optically thin radiative loss function of coronal gas, about 10⁻²² erg cm³ s⁻¹ near 1 to 2 million kelvin. doi:10.1086/155949"
+   ],
+   "shown": "n = √(L_X / (Λ 4πR² H)),  H = k T / (μ m_u g)",
+   "equation": {
+    "name": "How dense the gas at the foot of a star's corona is",
+    "formula": "H = k_B * Tc / (mu * m_u * g)\nn = sqrt(max(Lx, 0) / (Lam * 4 * pi * R * R * H))",
+    "inputs": {
+     "Lx": {
+      "kind": "star.xray_luminosity",
+      "unit": "W",
+      "name": "X-ray light of the star"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "Tc": {
+      "kind": "star.corona_temperature",
+      "unit": "K",
+      "name": "temperature of the corona"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the surface"
+     },
+     "k_B": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann's constant"
+     },
+     "m_u": {
+      "kind": "constant.m_u",
+      "unit": "kg",
+      "name": "atomic mass unit"
+     },
+     "Lam": {
+      "kind": "model.radiative_loss",
+      "unit": "W m3",
+      "name": "radiative loss of hot gas"
+     },
+     "mu": {
+      "kind": "model.corona_mean_mass",
+      "unit": "1",
+      "name": "mean mass per particle"
+     }
+    },
+    "outputs": {
+     "n": {
+      "kind": "star.corona_base_density",
+      "unit": "m-3",
+      "name": "particles per cubic metre at the corona's foot"
+     }
+    },
+    "source": {
+     "text": "Rosner, R., Tucker, W. H. and Vaiana, G. S. 1978, ApJ 220, 643",
+     "doi": "10.1086/155949",
+     "where": "the radiative loss function of coronal gas"
+    },
+    "explain": {
+     "curious": "A star's X-rays are the glow of its corona, so how brightly it shines says how much hot gas it holds. Cool gas caught in the field, the prominences, sits in this gas a hundred times denser and colder.",
+     "science": "The corona taken as one hydrostatic layer of one scale height over the whole star, glowing optically thin: L_X = n² Λ(T) 4πR² H. The loss function is held at one value for 1 to 2 MK, a stand-in for its full temperature dependence."
+    },
+    "examples": [
+     {
+      "Lx": 2.2e+20,
+      "R": 700000000.0,
+      "Tc": 1679488.508838445,
+      "g": 274.0,
+      "n": 187224655868947.16
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.closed_corona_radius",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "field",
+     "letter": "B"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "extent",
+     "letter": "rc"
+    }
+   ],
+   "models": {
+    "gauss": {
+     "value": 0.0001,
+     "grade": "derived",
+     "source": "one gauss is 10⁻⁴ tesla"
+    }
+   },
+   "params": [
+    {
+     "param": "r_ref",
+     "letter": "r0",
+     "default": 2.5,
+     "range": [
+      1.5,
+      10.0
+     ],
+     "description": "closed field's reach for a star with the reference field, stellar radii (the Sun's source surface, 2.5)"
+    },
+    {
+     "param": "b_ref_g",
+     "letter": "B0",
+     "default": 95.0,
+     "range": [
+      1.0,
+      1000.0
+     ],
+     "description": "reference field, gauss (the Sun's from the surface field block at Ro 1.8)"
+    },
+    {
+     "param": "index",
+     "letter": "x",
+     "default": 0.3333333333333333,
+     "range": [
+      0.1,
+      1.0
+     ],
+     "description": "growth with field: 1/3 for a dipole held off by an even pressure"
+    }
+   ],
+   "positive": [
+    {
+     "port": "field",
+     "says": "field"
+    }
+   ],
+   "references": [
+    "Schatten, K. H., Wilcox, J. M. and Ness, N. F. 1969, A model of interplanetary and coronal magnetic fields, Solar Physics 6, 442: the Sun's field is closed out to a source surface near 2.5 solar radii (later potential-field models keep 2.5). doi:10.1007/BF00146478",
+    "Jardine, M. and Collier Cameron, A. 2019, Slingshot prominences: nature's wind gauges, MNRAS 482, 2853: prominences form at and beyond the co-rotation radius when it lies inside the closed corona. https://arxiv.org/abs/1810.09319"
+   ],
+   "shown": "r_c = 2.5 (B / B☉)^(1/3) stellar radii, at least 1",
+   "equation": {
+    "name": "How far out a star's field stays closed",
+    "formula": "rc = max(r0 * (B / (B0 * gauss)) ^ x, 1)",
+    "inputs": {
+     "B": {
+      "kind": "star.surface_field",
+      "unit": "T",
+      "name": "mean field over the star's surface"
+     },
+     "gauss": {
+      "kind": "model.gauss",
+      "unit": "T",
+      "name": "one gauss"
+     },
+     "r0": {
+      "kind": "model.source_surface_ref",
+      "unit": "1",
+      "name": "reach for the reference field, stellar radii"
+     },
+     "B0": {
+      "kind": "model.source_surface_field",
+      "unit": "1",
+      "name": "reference field, gauss"
+     },
+     "x": {
+      "kind": "model.source_surface_index",
+      "unit": "1",
+      "name": "growth with field"
+     }
+    },
+    "outputs": {
+     "rc": {
+      "kind": "star.closed_corona_extent",
+      "unit": "1",
+      "name": "reach of the closed field, stellar radii"
+     }
+    },
+    "source": {
+     "text": "Schatten, K. H., Wilcox, J. M. and Ness, N. F. 1969, Solar Physics 6, 442",
+     "doi": "10.1007/BF00146478",
+     "where": "the source surface at 2.5 solar radii"
+    },
+    "explain": {
+     "curious": "Near the star its field lines loop back to the surface and can hold gas up; further out the wind drags them open. A stronger field keeps its loops closed further out.",
+     "science": "The Sun's source surface at 2.5 radii, scaled to other stars as a dipole (falling as r⁻³) balanced against an even outside pressure, which grows as the cube root of the field. A stand-in for a real wind and field model (fudge register)."
+    },
+    "examples": [
+     {
+      "B": 0.009488765633724213,
+      "rc": 2.4990141405576205
+     },
+     {
+      "B": 0.28501463482953704,
+      "rc": 7.768214226989075
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.differential_rotation",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "latitude",
+     "letter": "phi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "share",
+     "letter": "w"
+    }
+   ],
+   "params": [
+    {
+     "param": "a",
+     "letter": "A",
+     "default": 14.713,
+     "range": [
+      5.0,
+      30.0
+     ],
+     "description": "equator's rate, degrees a day (Snodgrass and Ulrich 1990: 14.713); only the ratios matter"
+    },
+    {
+     "param": "b",
+     "letter": "B",
+     "default": -2.396,
+     "range": [
+      -10.0,
+      0.0
+     ],
+     "description": "sin² term, degrees a day (−2.396)"
+    },
+    {
+     "param": "c",
+     "letter": "C",
+     "default": -1.787,
+     "range": [
+      -10.0,
+      0.0
+     ],
+     "description": "sin⁴ term, degrees a day (−1.787)"
+    }
+   ],
+   "references": [
+    "Snodgrass, H. B. and Ulrich, R. K. 1990, Rotation of Doppler features in the solar photosphere, ApJ 351, 309: ω = A + B sin²φ + C sin⁴φ with A = 14.713, B = −2.396, C = −1.787 degrees a day. doi:10.1086/168467"
+   ],
+   "shown": "ω(φ)/ω_eq = (A + B sin²φ + C sin⁴φ) / A",
+   "equation": {
+    "name": "How fast a star's surface turns at a latitude, as a share of its equator's rate",
+    "formula": "s2 = sin(phi) * sin(phi)\nw = (A + B * s2 + C * s2 * s2) / A",
+    "inputs": {
+     "phi": {
+      "kind": "star.active_latitude",
+      "unit": "1",
+      "name": "latitude on the star"
+     },
+     "A": {
+      "kind": "model.rotation_equator",
+      "unit": "1",
+      "name": "equator's rate, degrees a day"
+     },
+     "B": {
+      "kind": "model.rotation_sin2",
+      "unit": "1",
+      "name": "sin² term"
+     },
+     "C": {
+      "kind": "model.rotation_sin4",
+      "unit": "1",
+      "name": "sin⁴ term"
+     }
+    },
+    "outputs": {
+     "w": {
+      "kind": "star.rotation_rate_share",
+      "unit": "1",
+      "name": "surface rate over the equator's"
+     }
+    },
+    "source": {
+     "text": "Snodgrass, H. B. and Ulrich, R. K. 1990, ApJ 351, 309",
+     "doi": "10.1086/168467",
+     "where": "the Doppler-feature fit"
+    },
+    "explain": {
+     "curious": "A star is not solid: its equator goes round faster than its poles. On the Sun the equator laps the poles about every three months, which drags spots and filaments into slanting streaks.",
+     "science": "The Sun's surface rate from Doppler features, used for every cool star scaled to its own equator's spin (a stand-in: Barnes et al. 2005 find the shear depends weakly on temperature). Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "phi": 0.0,
+      "w": 1.0
+     },
+     {
+      "phi": 0.5,
+      "w": 0.95615265903194
+     },
+     {
+      "phi": 1.2,
+      "w": 0.7668776563936451
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.butterfly_latitude",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "progress",
+     "letter": "psi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "latitude",
+     "letter": "phi"
+    }
+   ],
+   "models": {
+    "deg": {
+     "value": 0.017453292519943295,
+     "grade": "derived",
+     "source": "one degree is π/180 radians"
+    }
+   },
+   "params": [
+    {
+     "param": "start_deg",
+     "letter": "L0",
+     "default": 28.0,
+     "range": [
+      5.0,
+      80.0
+     ],
+     "description": "mean latitude of new spot groups as a cycle begins, degrees (Hathaway 2015: about 25 to 30)"
+    },
+    {
+     "param": "end_deg",
+     "letter": "L1",
+     "default": 8.0,
+     "range": [
+      0.0,
+      60.0
+     ],
+     "description": "mean latitude at the cycle's end, degrees (about 8)"
+    }
+   ],
+   "references": [
+    "Hathaway, D. H. 2015, The solar cycle, Living Reviews in Solar Physics 12, 4: spot groups appear near 25 to 30 degrees latitude early in a cycle and drift toward about 8 degrees by its end (Spörer's law, the butterfly diagram); groups follow Joy's law and Hale's polarity law. https://arxiv.org/abs/1502.07020"
+   ],
+   "shown": "φ = L0 − (L0 − L1) ψ, ψ the share of the cycle gone since its minimum",
+   "equation": {
+    "name": "Where on a star new spot groups appear as its cycle goes on",
+    "formula": "phi = (L0 - (L0 - L1) * clamp(psi, 0, 1)) * deg",
+    "inputs": {
+     "psi": {
+      "kind": "star.cycle_progress",
+      "unit": "1",
+      "name": "share of the cycle gone since its minimum"
+     },
+     "deg": {
+      "kind": "model.degree",
+      "unit": "1",
+      "name": "one degree"
+     },
+     "L0": {
+      "kind": "model.butterfly_start",
+      "unit": "1",
+      "name": "latitude as a cycle begins, degrees"
+     },
+     "L1": {
+      "kind": "model.butterfly_end",
+      "unit": "1",
+      "name": "latitude at its end, degrees"
+     }
+    },
+    "outputs": {
+     "phi": {
+      "kind": "star.active_latitude",
+      "unit": "1",
+      "name": "mean latitude of new spot groups"
+     }
+    },
+    "source": {
+     "text": "Hathaway, D. H. 2015, Living Reviews in Solar Physics 12, 4",
+     "url": "https://arxiv.org/abs/1502.07020",
+     "where": "the butterfly diagram (Spörer's law)"
+    },
+    "explain": {
+     "curious": "Early in each cycle the Sun's spots break out at mid latitudes; as the cycle goes on they appear nearer and nearer the equator. Plotted against time they make the famous butterfly wings.",
+     "science": "A straight line through the cycle as a stand-in for the measured curve (fudge register), with a spread drawn about it. Used for every star with a cycle; stars without one place their spots by a separate stand-in. Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "psi": 0.0,
+      "phi": 0.4886921905584123
+     },
+     {
+      "psi": 0.5,
+      "phi": 0.3141592653589793
+     },
+     {
+      "psi": 1.0,
+      "phi": 0.13962634015954636
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.joy_tilt",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "latitude",
+     "letter": "phi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "tilt",
+     "letter": "gamma"
+    }
+   ],
+   "models": {
+    "deg": {
+     "value": 0.017453292519943295,
+     "grade": "derived",
+     "source": "one degree is π/180 radians"
+    }
+   },
+   "params": [
+    {
+     "param": "scale_deg",
+     "letter": "k",
+     "default": 32.1,
+     "range": [
+      0.0,
+      90.0
+     ],
+     "description": "tilt at the pole, degrees (Stenflo and Kosovichev 2012: 32.1)"
+    }
+   ],
+   "references": [
+    "Stenflo, J. O. and Kosovichev, A. G. 2012, Bipolar magnetic regions on the Sun: global analysis of the SOHO/MDI data set, ApJ 745, 129: tilt angle γ ≈ 32.1° sin φ (Joy's law). https://arxiv.org/abs/1112.5226",
+    "Hathaway, D. H. 2015, The solar cycle, Living Reviews in Solar Physics 12, 4: spot groups appear near 25 to 30 degrees latitude early in a cycle and drift toward about 8 degrees by its end (Spörer's law, the butterfly diagram); groups follow Joy's law and Hale's polarity law. https://arxiv.org/abs/1502.07020"
+   ],
+   "shown": "γ = 32.1° sin|φ|, the leading spot nearer the equator",
+   "equation": {
+    "name": "How far a spot group's pair is tilted from east to west",
+    "formula": "gamma = k * deg * sin(abs(phi))",
+    "inputs": {
+     "phi": {
+      "kind": "star.active_latitude",
+      "unit": "1",
+      "name": "latitude on the star"
+     },
+     "deg": {
+      "kind": "model.degree",
+      "unit": "1",
+      "name": "one degree"
+     },
+     "k": {
+      "kind": "model.joy_scale",
+      "unit": "1",
+      "name": "tilt at the pole, degrees"
+     }
+    },
+    "outputs": {
+     "gamma": {
+      "kind": "star.active_region_tilt",
+      "unit": "1",
+      "name": "tilt of the pair, leading spot toward the equator"
+     }
+    },
+    "source": {
+     "text": "Stenflo, J. O. and Kosovichev, A. G. 2012, ApJ 745, 129",
+     "url": "https://arxiv.org/abs/1112.5226",
+     "where": "Joy's law fit"
+    },
+    "explain": {
+     "curious": "Spots come in pairs of opposite magnetic sign. The leading one sits a little nearer the equator, and more so the further from the equator the pair is: the twist the star's spin gives the rising field.",
+     "science": "Joy's law from magnetograms of the Sun, used for every star with spots (a stand-in for other stars). Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "phi": 0.0,
+      "gamma": 0.0
+     },
+     {
+      "phi": 0.3,
+      "gamma": 0.16556539965850398
+     },
+     {
+      "phi": -0.3,
+      "gamma": 0.16556539965850398
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.spot_group_life",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "area",
+     "letter": "A"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "life",
+     "letter": "T"
+    }
+   ],
+   "constants": {
+    "day": "sheet/day"
+   },
+   "params": [
+    {
+     "param": "decay_msh_day",
+     "letter": "W",
+     "default": 10.0,
+     "range": [
+      1.0,
+      100.0
+     ],
+     "description": "decay rate, millionths of a hemisphere a day (Petrovay and van Driel-Gesztelyi 1997: about 10)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "area",
+     "says": "area"
+    }
+   ],
+   "references": [
+    "Petrovay, K. and van Driel-Gesztelyi, L. 1997, Making sense of sunspot decay. I. Parabolic decay law and Gnevyshev-Waldmeier relation, Solar Physics 176, 249: a group's lifetime is about its peak area over W ≈ 10 millionths of a hemisphere a day. doi:10.1023/A:1004988123265"
+   ],
+   "shown": "T = A / W, W ≈ 10 millionths of a hemisphere a day",
+   "equation": {
+    "name": "How long a spot group lives for its size",
+    "formula": "T = A / W * day",
+    "inputs": {
+     "A": {
+      "kind": "star.spot_group_area",
+      "unit": "1",
+      "name": "a spot group's peak area, millionths of a hemisphere"
+     },
+     "day": {
+      "kind": "constant.day",
+      "unit": "s",
+      "name": "one day"
+     },
+     "W": {
+      "kind": "model.spot_decay_rate",
+      "unit": "1",
+      "name": "decay rate, millionths of a hemisphere a day"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "star.spot_group_life",
+      "unit": "s",
+      "name": "how long the group lives"
+     }
+    },
+    "source": {
+     "text": "Petrovay, K. and van Driel-Gesztelyi, L. 1997, Solar Physics 176, 249",
+     "doi": "10.1023/A:1004988123265",
+     "where": "the Gnevyshev-Waldmeier relation"
+    },
+    "explain": {
+     "curious": "Big spots last longer: a small spot is gone in a few days, a huge group can last for months.",
+     "science": "The Gnevyshev-Waldmeier rule: spots shrink at a steady rate in area, so life is peak area over that rate. Used for every star's spot groups (a stand-in for other stars). Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "A": 100.0,
+      "T": 864000.0
+     },
+     {
+      "A": 1000.0,
+      "T": 8640000.0
+     }
+    ]
+   }
   }
  ]
 }

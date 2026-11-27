@@ -192,6 +192,10 @@ pub struct Atlas {
     weathering: Option<crate::weathering::Weathering>,
     /// IG1: the bare ground is ice (the world keeps open ice).
     ice_ground: bool,
+    /// Mean age of the ground the regimes' renewal has left (S4's rule), Myr:
+    /// on a renewed surface (Europa's cracking shell, Io's eruptions) ground
+    /// is younger than the regime. None without a crater field.
+    renewal_age_myr: Option<f64>,
     /// IG1: no air to speak of, so worn-down debris is regolith, not sediment.
     airless: bool,
 }
@@ -400,6 +404,7 @@ impl Atlas {
             weathering: None,
             ice_ground: false,
             airless: false,
+            renewal_age_myr: None,
         }
     }
 
@@ -522,6 +527,7 @@ impl Atlas {
         features: crate::impacts::Features,
         field: crate::impacts::CraterField,
     ) -> Self {
+        self.renewal_age_myr = renewal_mean_age_myr(&field);
         self.impacts = Some(Box::new(ImpactLayer { features, field }));
         self
     }
@@ -535,13 +541,23 @@ impl Atlas {
     ) -> Self {
         self.ice_ground = ice.is_some_and(|x| x.ice);
         self.airless = airless;
-        if self.ice_ground {
-            self.material_land = 3;
-        }
-        if let Some(ps) = self.plates.as_mut() {
-            if self.ice_ground && ps.land_material.is_some() {
-                ps.land_material = Some(3);
+        // Ice ground is the crust: a regime's own deposits laid over it (a
+        // hydrocarbon world's organic dunes and plains) stay as they are.
+        // An ice regime whose open ice did not last (it sublimed away) is
+        // left with rock.
+        let ice = self.ice_ground;
+        fn land(ice: bool, airless: bool, x: u8) -> u8 {
+            let crust = matches!(MATERIALS[x as usize], "basalt" | "granite" | "regolith");
+            match (ice, MATERIALS[x as usize]) {
+                (true, _) if crust => 3,
+                (false, "ice") if airless => 2,
+                (false, "ice") => 0,
+                _ => x,
             }
+        }
+        self.material_land = land(ice, airless, self.material_land);
+        if let Some(ps) = self.plates.as_mut() {
+            ps.land_material = ps.land_material.map(|x| land(ice, airless, x));
         }
         self
     }
@@ -1247,6 +1263,7 @@ impl Atlas {
                 } else {
                     self.regime_age_myr
                 };
+                let a = self.renewal_age_myr.map_or(a, |x| a.min(x));
                 let a = match feats.plains_at(dirs[c], self.radius_m / 1000.0) {
                     Some(t) if !liquid => {
                         // Lava plains; an ice world's floods are refrozen ice.
@@ -1289,13 +1306,13 @@ impl Atlas {
                     }
                 }
                 let mut al = p.albedo;
-                // IG1: bare airless ground and ice ground reflect as their
-                // material does (the data sheet's optics), not the regime's
-                // one number.
+                // IG1: bare airless ground reflects as its material does (the
+                // data sheet's optics), not the regime's one number. Under air
+                // the regime's number stands, ice included: what settles out
+                // of the air onto the ground (Titan's organic haze) is not
+                // modelled yet, and bare ice there is not bare (fudge register).
                 let mat_now = MATERIALS[*material.last().expect("pushed") as usize];
-                if COVERS[*cover.last().expect("pushed") as usize] == "none"
-                    && (self.airless || mat_now == "ice")
-                {
+                if COVERS[*cover.last().expect("pushed") as usize] == "none" && self.airless {
                     let go = crate::ice_ground::ground_optics();
                     match mat_now {
                         "basalt" => al = go.basalt,
@@ -1468,6 +1485,33 @@ impl TileFeatures {
             .map(|p| p.2)
             .fold(None, |a: Option<f64>, t| Some(a.map_or(t, |x| x.max(t))))
     }
+}
+
+/// Steps of the mean-age sum over a world's life.
+const RENEWAL_AGE_STEPS: u32 = 400;
+
+/// Mean age of the ground at the field's epoch, Myr, under the regimes'
+/// global renewal: a point's ground made `a` Myr ago survives with the share
+/// S(epoch − a) the crater field already uses (`renewal_kept`), so the share
+/// of the surface older than `a` is S, and the mean age is ∫ S da over the
+/// world's life (a steady renewal at rate 1/τ gives τ). None when no regime
+/// renews it (the mean is then the whole life, and the regime's age stands).
+fn renewal_mean_age_myr(field: &crate::impacts::CraterField) -> Option<f64> {
+    let epoch = field.epoch_myr();
+    if epoch <= 0.0 || field.renewal_kept(0.0) >= 1.0 {
+        return None;
+    }
+    // Midpoint sum in u = sqrt(a / epoch) so short renewal times (Io's
+    // million years) are resolved as well as Europa's tens of millions.
+    let n = RENEWAL_AGE_STEPS;
+    let mut sum = 0.0;
+    for k in 0..n {
+        let u = (k as f64 + 0.5) / n as f64;
+        let a = epoch * u * u;
+        // da = 2 epoch u du
+        sum += field.renewal_kept(epoch - a) * 2.0 * epoch * u / n as f64;
+    }
+    Some(sum)
 }
 
 /// Average a child tile 2 × 2 onto its quarter of the parent: returns the

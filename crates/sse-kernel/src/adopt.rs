@@ -895,12 +895,7 @@ pub(crate) fn radius_from_makeup(mass: f64, r: &BTreeMap<String, Value>) -> Opti
         return None;
     }
     let (cmf, wf) = makeup_shares(r).unwrap_or((0.32, 0.0));
-    let atoms = sse_atoms::atoms();
-    let a = atoms
-        .iter()
-        .find(|a| a.decl().id == "sse.interior.rocky_radius")?;
-    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-    let out = a.eval(&[mass, cmf.min(1.0)], &p).ok()?;
+    let out = sse_physics::run("sse.interior.rocky_radius", &[mass, cmf.min(1.0)]).ok()?;
     Some(out[0] * (1.0 + 0.5 * wf)).filter(|x| x.is_finite() && *x > 0.0)
 }
 
@@ -1047,6 +1042,9 @@ fn bodies_from_facts(
                 .filter(|x| (0.0..=1.0).contains(x))
                 .unwrap_or_else(|| makeup_shares(r).map_or(0.32, |m| m.0)),
             water_fraction: makeup_shares(r).map_or(0.0, |m| m.1),
+            water_from_density: makeup_shares(r).is_none(),
+            // A moon's sunlight is its planet's distance from the star (HV2c).
+            star_au: (host != star).then_some(a_star / AU),
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,
@@ -1198,7 +1196,7 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
                 sse_formation::leftovers::Tilt::Isotropic => ("shell", None),
                 sse_formation::leftovers::Tilt::Rayleigh { sigma_deg } => ("disc", Some(sigma_deg)),
             };
-            serde_json::json!({
+            let mut j = serde_json::json!({
                 "shape": shape,
                 "i_sigma_deg": i_sigma_deg,
                 "address": c.address.to_string(),
@@ -1209,7 +1207,22 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
                 "a_max_au": c.a_max_au,
                 "largest_km": c.largest_km,
                 "over_1km": c.over_1km,
-            })
+            });
+            // A ring's world by its address (VP-R3: the scene hangs the ring on it; `ring_structure` reads it).
+            if c.kind == "ring" {
+                if let Some(i) = l
+                    .worlds
+                    .iter()
+                    .position(|w| Some(&w.id) == c.around.as_ref())
+                {
+                    if let Some(sys) = c.address.parent() {
+                        if let Ok(w) = sys.child("body", i as u64) {
+                            j["around_address"] = w.to_string().into();
+                        }
+                    }
+                }
+            }
+            j
         })
         .collect()
 }
@@ -1428,6 +1441,40 @@ fn orbit_atlas<'c>(
 }
 
 #[allow(clippy::too_many_arguments)]
+/// A star's class from its row, when the row is a star: a phase, or a
+/// surface temperature with mass and radius.
+pub(crate) fn star_class(
+    row: &BTreeMap<String, Value>,
+) -> Option<sse_formation::spectral::StarClass> {
+    let num = |k: &str| row.get(k).and_then(as_f64);
+    let phase = match row.get("star.phase") {
+        Some(Value::Text(p)) => sse_formation::spectral::phase_of(p),
+        _ => None,
+    };
+    let is_star = phase.is_some()
+        || matches!(row.get("body.kind"), Some(Value::Text(k)) if k == "star")
+        || num("star.effective_temperature").is_some();
+    if !is_star {
+        return None;
+    }
+    let mass_kg = num("body.mass")?;
+    let mass = mass_kg / M_SUN_KG;
+    let phase = phase.unwrap_or(sse_formation::Phase::MainSequence);
+    if matches!(
+        phase,
+        sse_formation::Phase::BlackHole | sse_formation::Phase::NeutronStar
+    ) {
+        return Some(sse_formation::spectral::classify(
+            0.0, mass, mass_kg, 0.0, phase,
+        ));
+    }
+    let teff = num("star.effective_temperature").filter(|x| *x > 0.0)?;
+    let radius_m = num("body.radius").filter(|x| *x > 0.0)?;
+    Some(sse_formation::spectral::classify(
+        teff, mass, mass_kg, radius_m, phase,
+    ))
+}
+
 pub(crate) fn resolved_system(
     ch: &Chronicle,
     seed: &Seed,
@@ -1492,6 +1539,23 @@ pub(crate) fn resolved_system(
                 .or_default()
                 .entry("body.moment_of_inertia_factor".to_string())
                 .or_insert(f(c));
+        }
+    }
+    // Every star's formal class at the date read (sse_formation::spectral):
+    // a label read off its temperature, mass, radius and phase, never read
+    // back by physics. Kept facts of the same name (an authored class) win.
+    for row in facts.values_mut() {
+        if let Some(c) = star_class(row) {
+            for (k, v) in [
+                ("star.spectral_class", c.code.as_str()),
+                ("star.spectral_letter", c.letter.as_str()),
+                ("star.luminosity_class", c.luminosity.as_str()),
+                ("star.class_family", c.family),
+                ("star.class_kind", c.kind.as_str()),
+                ("star.class_why", c.why.as_str()),
+            ] {
+                row.entry(k.to_string()).or_insert(t(v));
+            }
         }
     }
     let mut out_tiles = vec![];

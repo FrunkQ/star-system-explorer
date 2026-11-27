@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| sse-time pair.rs stars rebuilt (BX1) | A main-sequence star given or robbed of gas is rebuilt at its new mass with its share of the main sequence kept (an accretor's share falls as the mass ratio: fresh fuel mixed in), past 1 % change; a donor stripped to its core becomes a white dwarf of that core at once (the helium-star stage is left out); a remnant keeps none of the gas it is given | the HPT00 life lines reused, no second star model | BSE's rejuvenation and helium-star tracks; nova and X-ray-binary accretion (BX4) | stand-in |

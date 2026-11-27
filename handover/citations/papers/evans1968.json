@@ -1,0 +1,1 @@
+{"key": "evans1968", "citation": "Evans 1968", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/hierarchy.rs"], "claims": ["//! which is how real stable multiples are arranged (Evans 1968; Tokovinin"], "tier": 3}

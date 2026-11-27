@@ -29,6 +29,7 @@
     cutBody,
     openKeys,
     extraTools,
+    viewLead,
   }: {
     ws: Workspace;
     desk: Desk;
@@ -56,6 +57,8 @@
     openKeys: () => void;
     /** Tools another section adds after Redo (the Run desk's Bookmarks, PB2b), so the stage imports nothing of theirs. */
     extraTools?: Snippet;
+    /** At the head of the view controls: the Run desk's folded rail (three desks design 3.1). */
+    viewLead?: Snippet;
   } = $props();
 
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
@@ -70,7 +73,7 @@
 
 <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={cardMount ? undefined : ""} data-lens={lensId} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
   {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-  {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH} data-chart-overlay><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
+  {#if (viewSpec && ws.view) || viewLead}<div class="viewbar" bind:clientHeight={viewbarH} data-chart-overlay><div class="viewrow">{@render viewLead?.()}{#if viewSpec && ws.view}<ViewControls spec={viewSpec} choice={ws.view} onchange={setView} />{/if}</div></div>{/if}
   <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
   <nav class="tools" aria-label="Tools" data-chart-overlay>
     {#if partShows("tools", desk, "select")}<ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />{/if}
@@ -86,7 +89,7 @@
   {#if ws.adding && ws.adding.a_au === null}
     <p class="undo-note clip-note" role="status" data-add-note>Press on the chart where it should go round {ws.adding.label}; the ghost says how far out. Esc puts it away.{#if typeAdd} <button type="button" class="type-add" data-add-type onclick={typeAdd}>Type a distance</button>{/if}</p>
   {:else if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
-  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
+  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"} data-picked={ws.selection ? "" : undefined} data-sheet={partShows("card-sheet", desk) ? "" : undefined}>{#if partShows("card-sheet", desk) && ws.selection}<button type="button" class="sheet-close" data-sheet-close onclick={() => ws.select(null)}>Close</button>{/if}{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
 </main>
 
 <style>
@@ -149,6 +152,15 @@
     right: 440px;
     z-index: 2;
     pointer-events: none;
+  }
+  .viewrow {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    pointer-events: none;
+  }
+  .viewrow > :global(*) {
+    pointer-events: auto;
   }
   .viewbar > :global(*) {
     pointer-events: auto;
@@ -216,6 +228,12 @@
       padding: 8px 12px 6px;
       pointer-events: auto;
     }
+    /* The folded rail's button (Run) heads the view controls on its own line, where the chips row was. */
+    .viewrow {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
     .area-chart {
       position: relative;
       height: 44vh;
@@ -261,6 +279,44 @@
       overflow-x: clip;
       margin: 16px 16px 24px;
       padding: 0 6px 6px 0;
+    }
+  }
+  .sheet-close {
+    display: none;
+  }
+  /* The phone's Run frame (three desks design section 8): the card is a sheet that comes up only on a press, over the
+     foot of the picture, and goes with Close or Esc. */
+  @media (max-width: 760px) {
+    .area-card[data-sheet]:not([data-picked]) {
+      display: none;
+    }
+    .area-card[data-sheet][data-picked] {
+      position: fixed;
+      top: auto;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: auto;
+      box-sizing: border-box;
+      z-index: 30;
+      max-height: 60dvh;
+      margin: 0;
+      padding: 8px 12px 12px;
+      overflow: auto;
+      background: var(--sse-ground);
+      border-top: var(--sse-line) solid var(--sse-ink);
+      box-shadow: 0 -6px 18px rgb(0 0 0 / 0.14);
+    }
+    .area-card[data-sheet] .sheet-close {
+      display: block;
+      margin: 0 0 8px auto;
+      min-height: 44px;
+      padding: 0 16px;
+      font: inherit;
+      border: var(--sse-line) solid var(--sse-ink);
+      border-radius: var(--sse-radius);
+      background: transparent;
+      color: var(--sse-ink);
     }
   }
   @media (max-width: 760px) {

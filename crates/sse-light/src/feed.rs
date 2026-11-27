@@ -21,7 +21,6 @@
 
 use crate::*;
 use serde::{Deserialize, Serialize};
-use sse_flow::Atom;
 
 /// The formula blocks the feed runs, in order.
 pub const BLOCKS: &[&str] = &[
@@ -45,15 +44,10 @@ pub const HOT_STAND_IN: &str = "the hot thin flow is drawn as a glow of stated s
 pub const THICK_STAND_IN: &str = "the thick flow's light is drawn as the thin disc's until a slim-disc block lands (fudge register: exotic objects, thick flow)";
 pub const NEWTONIAN_DISC: &str = "the thin disc's brightness follows the Newtonian law of Shakura and Sunyaev, not the relativistic one of Novikov and Thorne (fudge register: exotic objects)";
 
-/// A block from the base registry, run with its default parameters.
+/// A block from the physics in force, run on numbers (its settings in
+/// force; outside a call the shipped ones).
 pub(crate) fn run_block(id: &str, inputs: &[f64]) -> Result<Vec<f64>, String> {
-    let a = sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .ok_or_else(|| format!("base formula block {id} is missing"))?;
-    let params: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-    a.eval(inputs, &params)
-        .map_err(|e| format!("{id}: {}", e.0))
+    sse_physics::run(id, inputs)
 }
 
 /// Where the matter comes from.

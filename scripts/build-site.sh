@@ -25,4 +25,6 @@ mkdir -p dist/harness
 cp -r packages/shell/dist/. dist/
 cp -r tests/harness/. dist/harness/
 rm -f dist/harness/run-node.mjs dist/harness/run-browsers.mjs dist/harness/bench.mjs
+# The fudge register and the build rulings as one readable page each, from main's row files (scripts/registers.py).
+node scripts/build-registers.mjs dist
 echo "site ready in dist/"

@@ -17,19 +17,20 @@
 </script>
 
 <script lang="ts">
-  import { addBookmark, fixDate, globeOfPose, keepStamp, poseOfGlobe, R_EARTH_M, R_SUN_M, STAMP_SIDE, stampOf } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, fixDate, globeOfPose, keepStamp, poseOfGlobe, readShape, R_EARTH_M, R_SUN_M, STAMP_SIDE, stampOf } from "../../../ui-contract/src/index.ts";
   import { globeStats, regimeWords, tableLandmarks, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { PEN_WORDS, penOf, type Pen } from "../../../chart-grammar/src/pencil.ts";
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
-  import { loadAurora, type AuroraPlan, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { loadAurora, type AuroraPlan, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, smallBodyShape, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
   import BodyMag from "./BodyMag.svelte";
+  import BodyHeat from "./BodyHeat.svelte";
   import { decksKept, isDecks, loadDecks, loadSurface, surfaceKept, type Decks, type Surface } from "./surface.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -239,6 +240,21 @@
     if (ovRecipe === id) ovRecipe = null;
   }
 
+  // RW16a: a body below the round size is drawn as its own lump on the globe, the same lump system True draws
+  // (kernel `small_shape` from its address); a round body stays a sphere. The canvas tier still draws a disc.
+  let lumpOf = $state<{ address: string; shape: ReturnType<typeof smallBodyShape> | null } | null>(null);
+  $effect(() => {
+    const sub = subject;
+    const sys = scene.system;
+    if (!sub || lumpOf?.address === sub.address) return;
+    untrack(() =>
+      void readShape(ctx.session, sys, sub).then((f) => {
+        if (subject?.address !== sub.address) return;
+        lumpOf = { address: sub.address, shape: f ? smallBodyShape(f, sub.address) : null };
+      }),
+    );
+  });
+  const lump = $derived(lumpOf && lumpOf.address === subject?.address ? lumpOf.shape : null);
   const runOpts = $derived({
     registry: draft?.ok ? [...registry.filter((r) => r.id !== draft.doc.id), draft.doc] : registry,
     library: LIBRARY,
@@ -252,6 +268,7 @@
     label: subject?.label ?? "",
     air: got?.air ?? null,
     aurora,
+    shape: lump,
   });
   // Time lapse (R6): the kernel's surface_frames for this world, played on the same globe. `lapse` is the API the
   // chart room's timeline (BodyTimeline) drives; it is reactive, so a scrubber follows changes made anywhere.
@@ -420,8 +437,10 @@
       // Only a turn the runtime made itself (its spin) comes back: a late echo of any turn this view sent must not undo
       // a newer one (two quick key presses lost the second). The runtime can repeat its last status after a newer turn
       // is sent but before it is drawn, so every sent turn not yet seen back is remembered, not only the last.
+      // The newest echo seen is kept too: the runtime can repeat it while a newer turn is still on its way, and that
+      // repeat must not undo the newer turn either (seen on CI: two Shift+ArrowRight presses read 45, not 90).
       const echo = sentLons.indexOf(st.lon);
-      if (echo >= 0) sentLons = sentLons.slice(echo + 1);
+      if (echo >= 0) sentLons = sentLons.slice(echo);
       else if (st.lon !== lon) lon = st.lon;
     });
     run = r;
@@ -741,6 +760,10 @@
     <div class="cut">
       <Cutaway {ctx} {scene} {params} />
     </div>
+  {/if}
+  {#if params.heat !== false && subject && subject.kind !== "star"}
+    <!-- Energy flow (track HF's screen): the world's heat books over its life, from its core history, in the Power card's grammar. -->
+    <BodyHeat session={ctx.session} system={scene.system} address={subject.address} label={subject.label} depth={ws.depth ?? "science"} />
   {/if}
 </div>
 

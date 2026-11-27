@@ -13,4 +13,5 @@ path = "src/main.rs"
 [dependencies]
 serde_json.workspace = true
 sse-core.workspace = true
+sse-catalogue = { path = "../sse-catalogue" }
 sse-import-v3 = { workspace = true, features = ["reconstruct"] }

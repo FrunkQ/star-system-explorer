@@ -332,6 +332,8 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
                 "liquid": l.climate.liquid,
                 "water": l.climate.water,
                 "pressure_bar": l.climate.pressure_bar,
+                // HV2: what arrives, is reflected and absorbed, and leaves as infrared, W/m².
+                "sunlight": k.sunlight(),
                 "assumed": l.climate.world.assumed,
                 "why": l.climate.why,
                 "places": places,

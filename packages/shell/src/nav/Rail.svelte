@@ -17,6 +17,8 @@
     toGalaxy,
     toWorkshop,
     workshopDoor = true,
+    folded = false,
+    inMenu = false,
   }: {
     railScale: RailScale;
     rail: ReturnType<typeof railOf>;
@@ -36,10 +38,15 @@
     toWorkshop: () => void;
     /** The Workshop door at the foot of the rail; off on Run, where it is in More (three desks design section 5). */
     workshopDoor?: boolean;
+    /** On Run the rail is folded into one button at the head of the view controls (RailMenu): hidden beside the picture
+     *  on a wide screen; a phone keeps its row of chips. */
+    folded?: boolean;
+    /** Drawn inside the folded rail's list. */
+    inMenu?: boolean;
   } = $props();
 </script>
 
-<nav class="rail" aria-label="Instruments" data-scale={railScale}>
+<nav class="rail" class:folded class:in-menu={inMenu} aria-label={inMenu ? "Instruments for the table" : "Instruments"} data-scale={railScale}>
   {#if railScale === "workshop"}
     <button type="button" class="door back" data-go="back" onclick={toSystem}>‹ Back to {title}</button>
   {:else if railScale !== "system" && railScale !== "world"}
@@ -177,6 +184,33 @@
     .rail .door[data-go="workshop"] {
       margin-top: 0;
     }
+  }
+  /* Folded on the Run desk: the list lives in the view controls' button (RailMenu), on a phone too (design section 8). */
+  .rail.folded {
+    display: none;
+  }
+  /* In the folded list a phone keeps the words in a column, not the row of chips. */
+  @media (max-width: 760px) {
+    .rail.in-menu {
+      flex-direction: column;
+      align-items: stretch;
+      overflow: visible;
+      white-space: normal;
+      border-bottom: 0;
+    }
+    .rail.in-menu .group {
+      flex-direction: column;
+    }
+    .rail.in-menu h2 {
+      display: block;
+    }
+  }
+  .rail.in-menu {
+    padding: 12px 14px;
+    overflow: visible;
+  }
+  .rail.in-menu .door[data-go="workshop"] {
+    margin-top: 0;
   }
   @keyframes rail-in {
     from {

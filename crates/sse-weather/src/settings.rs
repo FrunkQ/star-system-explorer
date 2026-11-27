@@ -45,12 +45,38 @@ pub struct Circulation {
     pub source: String,
 }
 
+/// The zonal weather's cloud drawing (pack `weather.clouds`; fudge
+/// W-clouds). Pairs are [sinking air, rising air], blended by how deep the
+/// towers grow.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Clouds {
+    /// Optical depth: `tau_floor + tau_rise` x the rain over the wettest band's.
+    pub tau_floor: f64,
+    pub tau_rise: f64,
+    /// Deep towers grow in from this share of the peak rain, over this span.
+    pub towers_from: f64,
+    pub towers_span: f64,
+    /// Winds strengthen by this share per layer up toward the jets.
+    pub wind_rise_per_layer: f64,
+    pub low_tau_share: [f64; 2],
+    pub low_cover_share: [f64; 2],
+    pub towers_cover_share: f64,
+    pub high_cover_share: [f64; 2],
+    pub high_tau: [f64; 2],
+    /// Thin air: the frost haze's optical depth.
+    pub thin_air_tau: f64,
+    #[serde(default)]
+    pub source: String,
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct WeatherSettings {
     pub season_samples: u32,
     pub circulation: Circulation,
     /// Thin air: cover from frost and ice haze only (drawing).
     pub thin_cover: f64,
+    /// How the zonal weather draws its cloud layers (pack `clouds`).
+    pub clouds: Clouds,
     pub photochemical: Vec<Photochemical>,
     pub references: Vec<Reference>,
     /// The one climate this weather is drawn on (W7a): the climate pack in

@@ -43,6 +43,9 @@ import conductivity_rows  # noqa: E402
 import liquid_rows  # noqa: E402
 import optical_rows  # noqa: E402
 import band_rows  # noqa: E402
+import photo_rows  # noqa: E402
+import emission_rows  # noqa: E402
+import melt_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -756,7 +759,8 @@ MIXTURES = [
      "yield_strength": val(5.6e6, "Pa", "lineweaver2010", "unverified", note="calibrated so ice rounds at about 200 km"),
      "melting_point": val(273.15, "K", NIST, note="at low pressure")},
     {"id": "crust-rock", "names": {"physics": "continental crust rock", "plain": "crust rock", "story": "rock"},
-     "recipe": {}, "by": "mass", "density": val(2700.0, "kg m-3", "turcotte2014", "unverified")},
+     "recipe": {}, "by": "mass", "density": val(2700.0, "kg m-3", "turcotte2014", "unverified"),
+     "thermal_conductivity": val(2.5, "W m-1 K-1", "turcotte2014", "unverified", note="typical of the continental crust's granites and gneisses near the surface (about 2 to 3); read by the life suite's deep-crust warming")},
     {"id": "mantle-rock", "names": {"physics": "upper mantle rock", "plain": "mantle rock", "story": "deep rock"},
      "recipe": {}, "by": "mass", "density": val(3300.0, "kg m-3", "turcotte2014", "unverified")},
     {"id": "sediment", "names": {"physics": "compacted sediment", "plain": "sediment", "story": "sediment"},
@@ -806,6 +810,21 @@ for gid, name, t_k, t_src, rho, share in [
         },
         "density": val(rho, "kg m-3", "fudge-register", "authored"),
     })
+# RW16a: what the formation rock and ice hold, for the small-body designer's "what it would take" (sse-small takes.rs).
+# Recalled, not read: fudge SB-strength-sheet in docs/fudges.md.
+_STRENGTH = {
+    "formation-rock": {
+        "tensile_strength": val(1.0e6, "Pa", "fudge-register", "unverified", note="rock at the scale of a small asteroid, about 1 MPa (Holsapple 2007, Icarus 187, 500); laboratory samples are ten times stronger, large bodies weaker; recalled, not read"),
+        "compressive_strength": val(1.0e8, "Pa", "fudge-register", "unverified", note="chondritic and basaltic rock about 100 MPa; recalled, not read"),
+        "rubble_cohesion": val(25.0, "Pa", "fudge-register", "unverified", note="van der Waals cohesion among the fine grains of a rubble pile, tens of pascals (Sanchez and Scheeres 2014, Meteorit. Planet. Sci. 49, 788); recalled, not read"),
+    },
+    "formation-water": {
+        "tensile_strength": val(1.0e5, "Pa", "fudge-register", "unverified", note="water ice at the scale of a small body, about a tenth of rock's (Holsapple 2007); recalled, not read"),
+        "compressive_strength": val(1.0e7, "Pa", "fudge-register", "unverified", note="cold water ice about 10 MPa; recalled, not read"),
+    },
+}
+for _id, _kv in _STRENGTH.items():
+    next(x for x in MIXTURES if x["id"] == _id).update(_kv)
 
 
 # ---------------------------------------------------------------- elements
@@ -900,6 +919,24 @@ for _m in optical_rows.apply(MIXTURES):
 for _m in optical_rows.sulphur_rows(MIXTURES):
     MIXTURES.append(_m)
 optical_rows.apply_ices(SUBSTANCES, val)
+# HF4b.0: the rock rows the melt and lid blocks read (scripts/melt_rows.py).
+for _k, _v in melt_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+melt_rows.apply(MIXTURES, val)
+# Lifetimes of gases in sunlight, for the ice ground and the comets (scripts/photo_rows.py).
+for _k, _v in photo_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+photo_rows.apply(SUBSTANCES, val)
+# Lines ions give off: nebular forbidden lines and comet ion tails (scripts/emission_rows.py).
+for _k, _v in emission_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+emission_rows.apply(SUBSTANCES)
+# MP37: water ice ground, fine and coarse grains (scripts/optical_rows.py, ice_rows).
+for _m in optical_rows.ice_rows(MIXTURES):
+    MIXTURES.append(_m)
 
 
 def elements():

@@ -124,6 +124,20 @@ MOONS = [
     ("Titania", "titania", "uranus", 34.2e20, 788.9, 436.30e3, 0.0011, 0.08, 0.27, None, "nssdca-uranian-sats"),
     ("Oberon", "oberon", "uranus", 28.8e20, 761.4, 583.50e3, 0.0014, 0.07, 0.23, None, "nssdca-uranian-sats"),
     ("Titan", "titan", "saturn", 1345.5e20, 2575, 1221.87e3, 0.0292, 0.33, 0.22, None, "nssdca-saturnian-sats"),
+    # Saturn's small inner moons (read 26 Nov 2026, sheet last updated 22 Jul
+    # 2025; asked for by the ring structure work so Pan and Daphnis open the
+    # Encke and Keeler gaps and the shepherds and co-orbitals sculpt the
+    # rings). Radii are the mean of the three printed axis radii. Daphnis
+    # prints no albedo. Epimetheus and Janus are the co-orbital pair.
+    # Listed after Titan so the moon slots already in use (Titan is Saturn's
+    # slot 6) keep their addresses.
+    ("Pan", "pan", "saturn", 0.00005e20, (17 + 16 + 10) / 3, 133.583e3, 0.000, 0.0, 0.5, None, "nssdca-saturnian-sats"),
+    ("Daphnis", "daphnis", "saturn", 0.000001e20, (4.3 + 4.1 + 3.2) / 3, 136.500e3, 0.000, 0.0, None, None, "nssdca-saturnian-sats"),
+    ("Atlas", "atlas", "saturn", 0.00007e20, (20 + 18 + 9) / 3, 137.670e3, 0.000, 0.3, 0.8, None, "nssdca-saturnian-sats"),
+    ("Prometheus", "prometheus", "saturn", 0.0016e20, (68 + 40 + 30) / 3, 139.353e3, 0.00204, 0.0, 0.5, None, "nssdca-saturnian-sats"),
+    ("Pandora", "pandora", "saturn", 0.0014e20, (52 + 41 + 32) / 3, 141.700e3, 0.0042, 0.0, 0.7, None, "nssdca-saturnian-sats"),
+    ("Epimetheus", "epimetheus", "saturn", 0.0053e20, (65 + 57 + 53) / 3, 151.422e3, 0.009, 0.34, 0.8, None, "nssdca-saturnian-sats"),
+    ("Janus", "janus", "saturn", 0.0190e20, (102 + 93 + 76) / 3, 151.472e3, 0.007, 0.14, 0.9, None, "nssdca-saturnian-sats"),
     ("Triton", "triton", "neptune", 214e20, 1353.4, 354.76e3, 0.000016, 157.345, 0.72, None, "nssdca-neptunian-sats"),
     ("Charon", "charon", "pluto", 1.586e21, 606, 19596, 0.0, 0.00005, 0.42, 0.25, "nssdca-pluto"),
     # Round Pluto and Charon (the sheet's distances are barycentric, which
@@ -138,6 +152,13 @@ MOONS = [
 MOON_NOTES = {
     "phobos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
     "deimos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
+    "pan": "radius: the mean of the three axis radii printed; orbits in the Encke gap",
+    "daphnis": "radius: the mean of the three axis radii printed; orbits in the Keeler gap; no albedo printed",
+    "atlas": "radius: the mean of the three axis radii printed",
+    "prometheus": "radius: the mean of the three axis radii printed; inner shepherd of the F ring",
+    "pandora": "radius: the mean of the three axis radii printed; outer shepherd of the F ring",
+    "epimetheus": "radius: the mean of the three axis radii printed; co-orbital with Janus, the two swap orbits every four years",
+    "janus": "radius: the mean of the three axis radii printed; co-orbital with Epimetheus, the two swap orbits every four years",
     "triton": "retrograde orbit (inclination over 90 degrees)",
     "charon": "a is the mean distance from Pluto; radius is equatorial; the pair goes round a point outside Pluto",
     "styx": "a is barycentric (round Pluto and Charon); no mass printed",
@@ -159,6 +180,7 @@ def moon_row(name, pid, host, mass, r_km, a_km, e, inc, geo, bond, src):
     values = {k: v for k, v in values.items() if v["v"] is not None}
     if bond is not None:
         values["body.albedo"] = val(bond, "1", src, note="Bond albedo")
+    values.update(MOON_SURFACE.get(pid, {}))
     row = {"id": pid, "name": name, "kind": "moon", "host": host, "values": values}
     if pid in MOON_NOTES:
         row["note"] = MOON_NOTES[pid]
@@ -180,6 +202,40 @@ def val(v, unit, src, **kw):
     return out
 
 
+# Moons' measured surfaces, where a probe has stood on one. Titan: Huygens
+# landed on 14 Jan 2005 and its HASI read 93.65 +/- 0.25 K and 1467 +/- 1 hPa
+# at the surface (Fulchignoni et al. 2005, abstract read 26 Nov 2026). Its
+# air is nitrogen with methane (Niemann et al. 2005, abstract read 26 Nov
+# 2026); the 5.65% methane near the surface is the data sheet's figure from
+# the same paper, not yet re-read against it, so the shares are unverified.
+TITAN_CH4 = 0.0565
+MOON_SURFACE = {
+    "titan": {
+        "planet.surface_temperature": val(93.65, "K", "fulchignoni2005", note="at the Huygens landing site"),
+        "atmosphere.surface_pressure": val(146700.0, "Pa", "fulchignoni2005", note="at the Huygens landing site"),
+        "atmosphere.main": val("n2", "substance", "niemann2005", note="nitrogen with methane, by volume"),
+        "atmosphere.composition.n2": val(round(1.0 - TITAN_CH4, 6), "1", "niemann2005", check="unverified",
+                                         note="by volume near the surface; argon and trace organics left out"),
+        "atmosphere.composition.ch4": val(TITAN_CH4, "1", "niemann2005", check="unverified",
+                                          note="by volume near the surface (GCMS)"),
+    },
+}
+MOON_SURFACE_SOURCES = [
+    {"id": "fulchignoni2005", "text": "Fulchignoni, M. et al. 2005, Nature 438, 785: in situ measurements of the physical characteristics of Titan's environment (surface 93.65 +/- 0.25 K, 1467 +/- 1 hPa)",
+     "status": "verified", "doi": "10.1038/nature04314"},
+    {"id": "niemann2005", "text": "Niemann, H. B. et al. 2005, Nature 438, 779: the abundances of constituents of Titan's atmosphere from the GCMS instrument on the Huygens probe (nitrogen and methane; methane share unverified)",
+     "status": "unverified", "doi": "10.1038/nature04122"},
+]
+
+
+# The second zonal gravity harmonic J2, as printed (x 10^-6; read 26 Nov 2026,
+# Saturn sheet last updated 18 Mar 2025). The sheet names no reference radius
+# for it. Only Saturn's is kept so far
+# (asked for by the ring structure work, to place its resonances).
+J2 = {"saturn": 16298.0}
+J2_NOTE = "second zonal gravity harmonic; the sheet states no reference radius"
+
+
 def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
     src = "nssdca-" + pid
     values = {
@@ -192,10 +248,13 @@ def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
         "body.albedo": val(bond, "1", src, note="Bond albedo"),
         "body.albedo_geometric": val(geo, "1", src),
     }
+    if pid in J2:
+        values["body.j2"] = val(J2[pid] * 1e-6, "1", src, note=J2_NOTE)
     row = {"id": pid, "name": name, "kind": kind, "host": host, "values": values}
     values.update(surface_facts(pid, src))
     values.update(composition_facts(pid, src))
     values.update(interior_facts(pid))
+    values.update(motion_facts(pid))
     if pid in NOTES:
         row["note"] = NOTES[pid]
     return row
@@ -302,6 +361,34 @@ INTERIOR_SOURCES = [
 ]
 
 
+# Measured motion (RW17, real-catalogues design 6A.2): the published series each body follows inside its span, as
+# tables in packs/base-sol/motion (scripts/build-sol-motion.py). Earth's table gives the Earth-Moon barycentre, which
+# is how the kernel places Earth's group. The Sun carries the anchor the tables read universe time by.
+MOTION = {"mercury": "vsop87a.mer", "venus": "vsop87a.ven", "earth": "vsop87a.emb", "mars": "vsop87a.mar",
+          "jupiter": "vsop87a.jup", "saturn": "vsop87a.sat", "uranus": "vsop87a.ura", "neptune": "vsop87a.nep",
+          "moon": "elpmpp02.moon"}
+MOTION_SRC = {"vsop87a": "bretagnon-francou1988", "elpmpp02": "chapront-francou2003"}
+# Universe seconds count TT; J2000.0 (2000 January 1, 12:00 TT) is at this second, the anchor the Sol today pack's
+# calendar uses (its 1 January 2000 00:00 is 43,200 s earlier).
+J2000_S = 63115200000
+MOTION_SOURCES = [
+    {"id": "bretagnon-francou1988", "text": "Bretagnon, P. and Francou, G. 1988, A&A 202, 309: Planetary theories in rectangular and spherical variables. VSOP 87 solutions (VizieR VI/81)",
+     "status": "verified", "url": "https://ui.adsabs.harvard.edu/abs/1988A&A...202..309B"},
+    {"id": "chapront-francou2003", "text": "Chapront, J. and Francou, G. 2003, A&A 404, 735: The lunar theory ELP revisited. Introduction of new planetary perturbations (ELP/MPP02)",
+     "status": "verified", "doi": "10.1051/0004-6361:20030529"},
+    {"id": "sse-sol-clock", "text": "SSE4's Sol clock: universe seconds on TT, J2000.0 at 63,115,200,000 s, as the Sol today pack's calendar counts them (store-packs/sol-today)",
+     "status": "verified", "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/store-packs/sol-today/pack.json"},
+]
+
+
+def motion_facts(pid):
+    if pid not in MOTION:
+        return {}
+    m = MOTION[pid]
+    return {"orbit.motion": val(m, "model", MOTION_SRC[m.split(".")[0]],
+                                note="where it is comes from this published series inside its span (packs/base-sol/motion/%s.json)" % m)}
+
+
 def interior_facts(pid):
     if pid not in INTERIOR:
         return {}
@@ -332,8 +419,9 @@ def build():
     }}
     sun["values"].update(sol_extra.SUN_AGE)
     sun["values"].update(sun_frame())
+    sun["values"]["time.j2000_s"] = val(J2000_S, "s", "sse-sol-clock", note="the universe second of J2000.0 (2000 January 1, 12:00 TT): the date the motion tables count from")
     bodies = [sun] + [planet_row(*p) for p in PLANETS] + [moon_row(*x) for x in MOONS] + sol_extra.BODIES
-    sources = sorted(SOURCES + INTERIOR_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
+    sources = sorted(SOURCES + INTERIOR_SOURCES + MOON_SURFACE_SOURCES + MOTION_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
     regions = sol_extra.regions({b["id"]: b for b in bodies})
     return {
         "format": "sse.pack/1", "id": "sse.base-sol", "version": "0.1.0", "kind": ["base-physics"],
@@ -361,6 +449,9 @@ def validate(pack):
             if k.startswith("atmosphere.composition."):
                 assert k.rsplit(".", 1)[1] in subs, "%s %s: not a substance on the sheet" % (b["id"], k)
                 assert 0.0 < v["v"] <= 1.0, (b["id"], k)
+            if v["unit"] == "model":
+                assert os.path.exists(os.path.join(ROOT, "packs", "base-sol", "motion", v["v"] + ".json")), "%s: no motion table %s" % (b["id"], v["v"])
+                continue
             if v["unit"] == "substance":
                 assert v["v"] in subs, "%s %s: %s is not a substance on the sheet" % (b["id"], k, v["v"])
                 continue

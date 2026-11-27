@@ -70,6 +70,12 @@
         "unit": "deg",
         "src": "hipparcos1997",
         "note": "J2000 ecliptic equinox (longitude zero) in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "time.j2000_s": {
+        "v": 63115200000,
+        "unit": "s",
+        "src": "sse-sol-clock",
+        "note": "the universe second of J2000.0 (2000 January 1, 12:00 TT): the date the motion tables count from"
        }
       }
      },
@@ -142,6 +148,12 @@
         "src": "margot2012",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.mer",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.mer.json)"
        }
       }
      },
@@ -266,6 +278,12 @@
         "src": "margot2021",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.ven",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.ven.json)"
        }
       }
      },
@@ -409,6 +427,12 @@
         "src": "yoder1995",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.emb",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.emb.json)"
        }
       }
      },
@@ -475,6 +499,12 @@
         "src": "konopliv1998",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "elpmpp02.moon",
+        "unit": "model",
+        "src": "chapront-francou2003",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/elpmpp02.moon.json)"
        }
       },
       "note": "semi-major axis about Earth"
@@ -614,6 +644,12 @@
         "src": "konopliv2011",
         "note": "C = I/(M R^2)",
         "check": "unverified"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.mar",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.mar.json)"
        }
       }
      },
@@ -702,6 +738,12 @@
         "unit": "1",
         "src": "nssdca-jupiter",
         "note": "by volume, at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.jup",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.jup.json)"
        }
       },
       "note": "rotation in System III (1965.0)"
@@ -756,6 +798,12 @@
         "unit": "1",
         "src": "nssdca-saturn"
        },
+       "body.j2": {
+        "v": 0.016298,
+        "unit": "1",
+        "src": "nssdca-saturn",
+        "note": "second zonal gravity harmonic; the sheet states no reference radius"
+       },
        "planet.surface_temperature": {
         "v": 134.0,
         "unit": "K",
@@ -785,6 +833,12 @@
         "unit": "1",
         "src": "nssdca-saturn",
         "note": "by volume, at the 1 bar level; HD (110 ppm) and ethane (7 ppm) left out"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.sat",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.sat.json)"
        }
       },
       "note": "rotation in Saturnian System III"
@@ -862,6 +916,12 @@
         "unit": "1",
         "src": "nssdca-uranus",
         "note": "by volume, at the 1 bar level; HD (148 ppm) left out"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.ura",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.ura.json)"
        }
       },
       "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
@@ -939,6 +999,12 @@
         "unit": "1",
         "src": "nssdca-neptune",
         "note": "by volume, at the 1 bar level; HD (192 ppm) and ethane (1.5 ppm) left out"
+       },
+       "orbit.motion": {
+        "v": "vsop87a.nep",
+        "unit": "model",
+        "src": "bretagnon-francou1988",
+        "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.nep.json)"
        }
       },
       "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
@@ -1703,8 +1769,308 @@
         "v": 0.22,
         "unit": "1",
         "src": "nssdca-saturnian-sats"
+       },
+       "planet.surface_temperature": {
+        "v": 93.65,
+        "unit": "K",
+        "src": "fulchignoni2005",
+        "note": "at the Huygens landing site"
+       },
+       "atmosphere.surface_pressure": {
+        "v": 146700.0,
+        "unit": "Pa",
+        "src": "fulchignoni2005",
+        "note": "at the Huygens landing site"
+       },
+       "atmosphere.main": {
+        "v": "n2",
+        "unit": "substance",
+        "src": "niemann2005",
+        "note": "nitrogen with methane, by volume"
+       },
+       "atmosphere.composition.n2": {
+        "v": 0.9435,
+        "unit": "1",
+        "src": "niemann2005",
+        "check": "unverified",
+        "note": "by volume near the surface; argon and trace organics left out"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 0.0565,
+        "unit": "1",
+        "src": "niemann2005",
+        "check": "unverified",
+        "note": "by volume near the surface (GCMS)"
        }
       }
+     },
+     {
+      "id": "pan",
+      "name": "Pan",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 5000000000000000.0,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 14333.3,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 133583000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.0,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.5,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      },
+      "note": "radius: the mean of the three axis radii printed; orbits in the Encke gap"
+     },
+     {
+      "id": "daphnis",
+      "name": "Daphnis",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 100000000000000.0,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 3866.7,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 136500000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.0,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       }
+      },
+      "note": "radius: the mean of the three axis radii printed; orbits in the Keeler gap; no albedo printed"
+     },
+     {
+      "id": "atlas",
+      "name": "Atlas",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 7000000000000000.0,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 15666.7,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 137670000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.3,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.8,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      },
+      "note": "radius: the mean of the three axis radii printed"
+     },
+     {
+      "id": "prometheus",
+      "name": "Prometheus",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 1.6e+17,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 46000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 139353000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.00204,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.0,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.5,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      },
+      "note": "radius: the mean of the three axis radii printed; inner shepherd of the F ring"
+     },
+     {
+      "id": "pandora",
+      "name": "Pandora",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 1.4e+17,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 41666.7,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 141700000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0042,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.0,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.7,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      },
+      "note": "radius: the mean of the three axis radii printed; outer shepherd of the F ring"
+     },
+     {
+      "id": "epimetheus",
+      "name": "Epimetheus",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 5.3e+17,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 58333.3,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 151422000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.009,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.34,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.8,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      },
+      "note": "radius: the mean of the three axis radii printed; co-orbital with Janus, the two swap orbits every four years"
+     },
+     {
+      "id": "janus",
+      "name": "Janus",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 1.9e+18,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 90333.29999999999,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 151472000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.007,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.14,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.9,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      },
+      "note": "radius: the mean of the three axis radii printed; co-orbital with Epimetheus, the two swap orbits every four years"
      },
      {
       "id": "triton",
@@ -2132,6 +2498,18 @@
     ],
     "sources": [
      {
+      "id": "bretagnon-francou1988",
+      "text": "Bretagnon, P. and Francou, G. 1988, A&A 202, 309: Planetary theories in rectangular and spherical variables. VSOP 87 solutions (VizieR VI/81)",
+      "status": "verified",
+      "url": "https://ui.adsabs.harvard.edu/abs/1988A&A...202..309B"
+     },
+     {
+      "id": "chapront-francou2003",
+      "text": "Chapront, J. and Francou, G. 2003, A&A 404, 735: The lunar theory ELP revisited. Introduction of new planetary perturbations (ELP/MPP02)",
+      "status": "verified",
+      "doi": "10.1051/0004-6361:20030529"
+     },
+     {
       "id": "charette-smith2010",
       "text": "Charette, M. A. and Smith, W. H. F. 2010, Oceanography 23(2), 112: The volume of Earth's ocean (1.335e9 km3, the size of one Earth ocean as the kernel counts it; Earth holds 1 by definition)",
       "status": "unverified",
@@ -2148,6 +2526,12 @@
       "text": "Connelly, J. N. et al. 2012, Science 338, 651: the absolute chronology and thermal processing of solids in the solar protoplanetary disk (CAIs at 4567.30 ± 0.16 Myr)",
       "status": "verified",
       "doi": "10.1126/science.1226919"
+     },
+     {
+      "id": "fulchignoni2005",
+      "text": "Fulchignoni, M. et al. 2005, Nature 438, 785: in situ measurements of the physical characteristics of Titan's environment (surface 93.65 +/- 0.25 K, 1467 +/- 1 hPa)",
+      "status": "verified",
+      "doi": "10.1038/nature04314"
      },
      {
       "id": "hauck2013",
@@ -2214,6 +2598,12 @@
       "text": "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547: compositional model for the Earth's core (the core is 32.5% of Earth's mass)",
       "status": "unverified",
       "doi": "10.1016/B0-08-043751-6/02015-6"
+     },
+     {
+      "id": "niemann2005",
+      "text": "Niemann, H. B. et al. 2005, Nature 438, 779: the abundances of constituents of Titan's atmosphere from the GCMS instrument on the Huygens probe (nitrogen and methane; methane share unverified)",
+      "status": "unverified",
+      "doi": "10.1038/nature04122"
      },
      {
       "id": "nssdca-asteroid",
@@ -2346,6 +2736,12 @@
       "text": "Russell, C. T. et al. 2016, Science 353, 1008: Dawn arrives at Ceres, exploration of a small, volatile-rich world (mean radius 469.7 km, mass 9.384e20 kg, obliquity 4°)",
       "status": "verified",
       "doi": "10.1126/science.aaf4219"
+     },
+     {
+      "id": "sse-sol-clock",
+      "text": "SSE4's Sol clock: universe seconds on TT, J2000.0 at 63,115,200,000 s, as the Sol today pack's calendar counts them (store-packs/sol-today)",
+      "status": "verified",
+      "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/store-packs/sol-today/pack.json"
      },
      {
       "id": "staehler2021",

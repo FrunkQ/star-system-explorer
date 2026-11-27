@@ -88,6 +88,18 @@ pub struct FigureSettings {
     pub relief_rubble: [f64; 2],
 }
 
+/// What real material holds, for the designer's "what it would take"
+/// (takes.rs), filled at load from the data sheet's mixtures
+/// `formation-rock` and `formation-water` (fudge SB-strength-sheet).
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct StrengthSettings {
+    pub regolith_cohesion_pa: f64,
+    pub rock_tensile_pa: f64,
+    pub ice_tensile_pa: f64,
+    pub rock_compressive_pa: f64,
+    pub ice_compressive_pa: f64,
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct WeatheringSettings {
     pub t_myr_at_1au: f64,
@@ -100,7 +112,9 @@ pub struct VolatileSettings {
     pub id: String,
     /// Which of formation's solid groups it is (3 water, 4 CO2, 5 CO).
     pub group: usize,
-    /// Photodissociation lifetime at 1 AU, s (scales as r^2).
+    /// Lifetime in sunlight at 1 AU, s (scales as r^2): the sheet's
+    /// `photochemistry.lifetime_1au`, filled at load.
+    #[serde(skip)]
     pub lifetime_s_at_1au: f64,
     #[serde(skip)]
     pub molar_kg_mol: f64,
@@ -166,6 +180,75 @@ pub struct Recipe {
     pub citation: String,
 }
 
+/// Ring structure (`rings`): one ring per world, its zones, marks and profile (ring.rs).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingStructureSettings {
+    pub scale_m: f64,
+    pub octaves: u32,
+    pub hurst: f64,
+    pub ln_amplitude: f64,
+    pub tau_half: f64,
+    pub range_sigmas: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingGeneratedSettings {
+    pub zones_min: u64,
+    pub zones_max: u64,
+    pub ln_sigma: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingWaveSettings {
+    pub max_amplitude: f64,
+    pub edge_wave_coefficient: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingPhaseSettings {
+    pub back_g: f64,
+    pub forward_g: f64,
+    pub surge_b0: f64,
+    pub surge_width_deg: f64,
+    pub dusty_below_tau: f64,
+    pub clean_above_tau: f64,
+    pub dust_share_clean: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingSettings {
+    /// The ring's collective kinematic viscosity from grain collisions (a ring dynamics number, not a substance
+    /// property, so not a sheet row).
+    pub collisional_nu_m2_s: f64,
+    pub resonance_f: f64,
+    pub gap_per_root_mu: f64,
+    pub gap_min_hill_radii: f64,
+    pub edge_slack: f64,
+    pub m_max: u32,
+    pub min_ratio: f64,
+    pub grain_radius_m: f64,
+    pub grain_porosity: f64,
+    /// The data sheet's id for the dark matter that dirties ring ice (a mixture with a reflectance table, or a substance with a condensed colour).
+    pub contaminant: String,
+    /// Size of the contaminant's grains, m (Hapke's equivalent slab: light crosses about this much of it).
+    pub contaminant_grain_m: f64,
+    /// Red, green and blue, nm.
+    pub bands_nm: [f64; 3],
+    /// The sheet's id for the ice.
+    pub ice: String,
+    pub fallback_tau: f64,
+    pub fallback_albedo: f64,
+    pub structure: RingStructureSettings,
+    pub generated: RingGeneratedSettings,
+    pub waves: RingWaveSettings,
+    pub phase: RingPhaseSettings,
+    pub samples_default: usize,
+    pub samples_max: usize,
+    /// Newton's G, read from the sheet.
+    #[serde(skip)]
+    pub g: f64,
+}
+
 /// Everything the resolve reads. Unknown keys such as `about` are ignored.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Settings {
@@ -177,8 +260,11 @@ pub struct Settings {
     pub spin: SpinSettings,
     pub pairs: PairSettings,
     pub figure: FigureSettings,
+    #[serde(skip)]
+    pub strength: StrengthSettings,
     pub weathering: WeatheringSettings,
     pub comet: CometSettings,
+    pub rings: RingSettings,
     pub recipes: Vec<Recipe>,
 }
 
@@ -196,6 +282,14 @@ impl Settings {
         let s = v
             .pointer("/provides/other/small_bodies")
             .ok_or("no provides.other.small_bodies")?;
+        Self::from_block_with(s, sheet)
+    }
+    /// From a `small_bodies` settings block itself (the stack's, as the
+    /// physics in force holds it), reading the sheet's values from `sheet`.
+    pub fn from_block_with(
+        s: &serde_json::Value,
+        sheet: &sse_reference::Reference,
+    ) -> Result<Self, String> {
         let mut out: Settings = serde_json::from_value(s.clone()).map_err(|e| e.to_string())?;
         for (g, id) in [
             "formation-metal",
@@ -213,6 +307,21 @@ impl Settings {
                 .and_then(|v| v.as_f64())
                 .ok_or_else(|| format!("the sheet has no density for {id}"))?;
         }
+        let held = |id: &str, key: &str| {
+            sheet
+                .row("mixtures", id)
+                .and_then(|r| r.get(key))
+                .and_then(|d| d.get("v"))
+                .and_then(|v| v.as_f64())
+                .ok_or_else(|| format!("the sheet has no {key} for {id}"))
+        };
+        out.strength = StrengthSettings {
+            regolith_cohesion_pa: held("formation-rock", "rubble_cohesion")?,
+            rock_tensile_pa: held("formation-rock", "tensile_strength")?,
+            ice_tensile_pa: held("formation-water", "tensile_strength")?,
+            rock_compressive_pa: held("formation-rock", "compressive_strength")?,
+            ice_compressive_pa: held("formation-water", "compressive_strength")?,
+        };
         let c = &mut out.comet;
         let k = |id: &str| {
             sheet
@@ -226,10 +335,18 @@ impl Settings {
         c.gm_sun = k("GM_sun")?;
         c.au_m = k("au")?;
         c.day_s = k("day")?;
+        out.rings.g = k("G")?;
         for v in &mut c.volatiles {
             v.molar_kg_mol = sheet
                 .molar_mass_kg_mol(&v.id)
                 .ok_or_else(|| format!("the sheet has no molar mass for {}", v.id))?;
+            v.lifetime_s_at_1au = sheet
+                .row("substances", &v.id)
+                .and_then(|r| r.get("photochemistry"))
+                .and_then(|p| p.get("lifetime_1au"))
+                .and_then(|l| l.get("v"))
+                .and_then(|x| x.as_f64())
+                .ok_or_else(|| format!("the sheet has no lifetime in sunlight for {}", v.id))?;
             v.phases = sheet
                 .row("substances", &v.id)
                 .and_then(|r| r.get("phases"))

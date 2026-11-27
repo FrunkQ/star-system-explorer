@@ -12,12 +12,12 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { sayNumber, checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, DEFAULT_VIEW, SEEN_ELEVATION, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SolDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { sayNumber, checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, pictureSpan, rateWords, tooFast, DEFAULT_VIEW, SEEN_ELEVATION, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SolDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, markPattern } from "../../../chart-grammar/src/index.ts";
   import { lineups } from "./lineup.svelte.ts";
   import { COMPARE_CONTROLS } from "./controls.ts";
   import Lineup3D from "./Lineup3D.svelte";
-  import { hoursPerSecond, SECONDS_PER_TURN } from "../../../renderer/src/index.ts";
+  import { SECONDS_PER_TURN } from "../../../renderer/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -51,7 +51,7 @@
   let noGpu = $state(false);
   const globes = $derived(shownView.style === "3d" || shownView.style === "true" || shownView.style === "wireframe");
   const look = $derived(globes && !noGpu ? (shownView.style as "3d" | "true" | "wireframe") : null);
-  let pace = $state<"same" | "true">("same");
+  let pace = $state<"same" | "clock">("same");
   // Seen from tips every globe together over their orbits' plane, the row staying put; Free is turned by hand.
   let freeElev = $state(SEEN_ELEVATION.tilted);
   let yaw = $state(0);
@@ -202,9 +202,14 @@
     return `${sayNumber(k, 0, { decimals: k >= 10 ? 0 : k >= 1 ? 1 : 2 })} × ${sel.label}`;
   };
   const tidy = (km: number) => `${sayNumber(km, 0, { upTo: km < 100 ? 1 : 0 })} km`;
-  const quickest = $derived(order.reduce<CompareItem | null>((q, i) => (i.day_h && (!q || Math.abs(i.day_h) < Math.abs(q.day_h!)) ? i : q), null));
+  // On the clock (CLK1): the globes that turn faster than the screen's pictures can follow at the clock's rate.
+  const fastSpins = $derived.by(() => {
+    const c = ws.clock;
+    if (!c || !(c.rate > 0)) return "";
+    const names = order.filter((i) => i.day_h && tooFast(Math.abs(i.day_h) * 3600, pictureSpan(c, 60))).map((i) => i.label);
+    return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]} turn` : names.length ? `${names[0]} turns` : "";
+  });
   const stillOnes = $derived(order.filter((i) => !i.day_h).length);
-  const hours = (h: number) => (h >= 48 ? `${sayNumber(h / 24, 0, { upTo: 1 })} days` : `${sayNumber(h, 0, { upTo: h < 10 ? 1 : 0 })} hours`);
   const summary = $derived(order.map((i) => `${i.label} ${tidy(i.radius_km)}`).join(", "));
 </script>
 
@@ -317,8 +322,8 @@
   </div>
   {#if look}
     <p class="note turning" data-pace={pace}>
-      <button type="button" aria-pressed={pace === "true"} onclick={() => (pace = pace === "same" ? "true" : "same")}>True pace</button>
-      {#if pace === "same"}Each body turns once every {SECONDS_PER_TURN} seconds, its own way round and leaning by its own tilt.{:else if quickest}True pace: one second is {hours(hoursPerSecond(Math.abs(quickest.day_h!)))} of turning; {quickest.label}, the quickest, turns once every {SECONDS_PER_TURN} seconds and the rest in proportion.{/if}
+      <button type="button" aria-pressed={pace === "clock"} onclick={() => (pace = pace === "same" ? "clock" : "same")}>On the clock</button>
+      {#if pace === "same"}Each body turns once every {SECONDS_PER_TURN} seconds, its own way round and leaning by its own tilt: an aid for comparing, not their real speeds.{:else}On the campaign's clock, {rateWords(ws.clock?.rate ?? 0)}: each body turns at its own real speed{(ws.clock?.rate ?? 0) > 0 ? "" : ", so with the clock stopped they stand still (press play on the ruler to set them turning)"}{fastSpins ? `; ${fastSpins} faster than the screen can show, drawn where ${fastSpins.includes(" and ") ? "they are" : "it is"} at each picture` : ""}.{/if}
       {#if stillOnes}{stillOnes === 1 ? "One body's day is" : `${stillOnes} bodies' days are`} not known, so {stillOnes === 1 ? "it stands" : "they stand"} still.{/if}
     </p>
   {/if}

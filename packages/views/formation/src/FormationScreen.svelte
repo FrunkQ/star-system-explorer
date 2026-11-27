@@ -7,7 +7,9 @@
   recomputes nothing.
 -->
 <script lang="ts">
-  import { chartTime, formationChart, formationOf, howWorkedOut, noWorldsWhy, stageAt, storyFor, worldStory, type FormationSource, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
+  import { chartFate, chartTime, fatePlan, formationChart, formationOf, howWorkedOut, noWorldsWhy, stageAt, storyFor, withFate, worldStory, type ChartFate, type FormationSource, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import FateStrip from "./FateStrip.svelte";
   import FormationReplay from "../../system-chart/src/FormationReplay.svelte";
   import FormationChart from "./FormationChart.svelte";
   import StoryCard from "./StoryCard.svelte";
@@ -29,15 +31,44 @@
 
   const noWorlds = $derived(source?.kind === "run" ? noWorldsWhy(source.run) : null);
   const names = $derived(Object.fromEntries(scene.subjects.map((x) => [x.address, x.label])));
-  const chart = $derived(source?.kind === "run" ? formationChart(source.run, { names, seed: source.seed }) : null);
+  const base = $derived(source?.kind === "run" ? formationChart(source.run, { names, seed: source.seed }) : null);
+
+  // The star's end (F10c): the surviving worlds aged by the time model on a branch that is dropped at once, so the
+  // campaign never moves. Worked out once per system, after the chart is up; a red dwarf outlives the chart and says so.
+  let fate = $state<{ f: ChartFate | null; note: string | null; working: boolean } | null>(null);
+  $effect(() => {
+    const src = source;
+    if (!src || src.kind !== "run") return void (fate = null);
+    const b = untrack(() => base);
+    if (!b) return;
+    const plan = fatePlan(src.run, b);
+    if (plan.kind !== "ahead") return void (fate = { f: null, note: plan.words, working: false });
+    fate = { f: null, note: null, working: true };
+    const g = gen;
+    void ctx.session.lookAhead(plan.spec, plan.target_myr).then((r) => {
+      if (r.ok) void ctx.session.discardBranch(r.result.branch);
+      if (g !== gen) return;
+      fate = r.ok ? { f: chartFate(b, plan, r.result), note: null, working: false } : { f: null, note: `The star's end could not be worked out here (${r.message}).`, working: false };
+    });
+  });
+  const chart = $derived(base && fate?.f ? withFate(base, fate.f) : base);
 
   // The slice follows the ruler; while it is being dragged it is the screen's own until let go.
   let held = $state<number | null>(null);
   const fromRuler = $derived(chart ? Math.max(chart.t_top, Math.min(chart.t_bottom, ctx.workspace.now_yr / 1e6)) : 1);
-  const slice = $derived(held ?? fromRuler);
+  // Past now the slice is the screen's own: the future is only looked at, so the campaign's date stays.
+  let ahead = $state<number | null>(null);
+  $effect(() => {
+    void fromRuler;
+    ahead = null;
+  });
+  const slice = $derived(held ?? ahead ?? fromRuler);
+  const future = $derived(!!chart?.fate && slice > chart.now * 1.001);
   const stage = $derived(chart ? stageAt(chart, slice) : null);
   function commit(t: number) {
     held = null;
+    if (chart?.fate && t > chart.now * 1.001) return void (ahead = t);
+    ahead = null;
     ctx.workspace.setTime(t * 1e6);
   }
   const worldsAt = $derived(chart ? chart.tracks.filter((k) => k.born.t <= slice && (k.end.how === "lasts" || k.end.t > slice)).length : 0);
@@ -85,10 +116,14 @@
       <button type="button" class="play" onclick={() => (watching = true)} data-watch-form>▶ Watch it form</button>
       <span class="k">Stage</span>
       {#each chart.stages as st (st.n)}
-        <button type="button" aria-current={stage.n === st.n ? "step" : undefined} onclick={() => commit(st.from)} title={st.text} data-stage={st.n}>{st.n} {st.name}</button>
+        <button type="button" aria-current={stage.n === st.n && !(future && chart.fate && slice >= chart.fate.ms_end) ? "step" : undefined} onclick={() => commit(st.from)} title={st.text} data-stage={st.n}>{st.n} {st.name}</button>
       {/each}
+      {#if chart.fate}
+        {@const f = chart.fate}
+        <button type="button" class="end" aria-current={future && slice >= f.ms_end ? "step" : undefined} onclick={() => commit(f.giant ?? f.ms_end)} title={f.text} data-stage="end">☉ The star's end</button>
+      {/if}
     </nav>
-    <p class="stage-text" data-stage-text>{stage.text}</p>
+    <p class="stage-text" data-stage-text>{future && chart.fate && slice >= chart.fate.ms_end ? chart.fate.text : stage.text}</p>
     {#if noWorlds}<p class="drift" data-formation-empty>{noWorlds}</p>{/if}
     {#if source.drift}
       <p class="drift" data-formation-drift>Grown again with today's formation rules, which have changed since this system was added. The history may differ in detail from the facts on the chart.</p>
@@ -113,7 +148,14 @@
 
       <section class="chart" aria-label="Formation chart">
         <FormationChart {chart} {slice} selected={storyId} onslice={(t) => (held = t)} onslicedone={commit} onpick={pick} />
-        <p class="at" data-slice-words>At {chartTime(slice)}: stage {stage.n}, {stage.name.toLowerCase()} · {worldsAt} {worldsAt === 1 ? "body" : "bodies"}{chart.gas_until > slice ? " · gas still in the disc" : ""}</p>
+        <p class="at" data-slice-words>At {chartTime(slice)}: stage {stage.n}, {stage.name.toLowerCase()} · {worldsAt} {worldsAt === 1 ? "body" : "bodies"}{chart.gas_until > slice ? " · gas still in the disc" : ""}{future ? " · looking ahead: the campaign's date stays at now" : ""}</p>
+        {#if chart.fate}
+          <!-- The close-up of the star's end sits under the chart, below the panels. -->
+        {:else if fate?.working}
+          <p class="quiet fate-note" data-fate-working>Working out how the star ends…</p>
+        {:else if fate?.note}
+          <p class="quiet fate-note" data-fate-note>{fate.note}</p>
+        {/if}
         <details class="how" data-how-panel>
           <summary>How this was worked out <span class="k">one seed</span></summary>
           <dl>
@@ -127,6 +169,11 @@
 
       {#if story}<StoryCard {story} {chosen} />{/if}
     </div>
+    {#if chart.fate}
+      <div class="body after">
+        <div class="fate-cell"><FateStrip {chart} fate={chart.fate} selected={storyId} onpick={pick} /></div>
+      </div>
+    {/if}
     <dialog class="replay-dlg" bind:this={dlg} aria-label="How {scene.title} formed" onclose={() => (watching = false)}>
       {#if watching}<FormationReplay run={source.run} title={scene.title} onclose={() => (watching = false)} view={ctx.workspace.view} onview={(c) => ctx.workspace.pickView?.(c)} />{/if}
     </dialog>
@@ -210,12 +257,22 @@
     grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(250px, 300px);
     grid-template-areas: "inh chart story";
     gap: 16px;
-    flex: 1 1 0;
+    /* Fills the screen, and grows (the page scrolls) when "How this was worked out" is open. */
+    flex: 1 0 auto;
     min-height: 420px;
     min-width: 0;
   }
   .inherited {
     grid-area: inh;
+  }
+  .body.after {
+    flex: none;
+    min-height: 0;
+    grid-template-areas: "inh fate story";
+  }
+  .fate-cell {
+    grid-area: fate;
+    min-width: 0;
   }
   .how {
     font-size: 13px;
@@ -242,6 +299,14 @@
     margin: 8px 0 0;
     font-size: 12px;
     color: var(--sse-ink-muted);
+  }
+  .fate-note {
+    margin: 4px 0 0;
+    font-size: 13px;
+    max-width: 60em;
+  }
+  .stages .end {
+    border-color: var(--sse-accent);
   }
   .play {
     font: inherit;
@@ -339,11 +404,17 @@
       grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
       grid-template-areas: "inh chart" "story story";
     }
+    .body.after {
+      grid-template-areas: "inh fate";
+    }
   }
   @media (max-width: 800px) {
     .body {
       grid-template-columns: 1fr;
       grid-template-areas: "chart" "story" "inh";
+    }
+    .body.after {
+      grid-template-areas: "fate";
     }
     .chart {
       min-height: 480px;

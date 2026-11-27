@@ -1,0 +1,1 @@
+{"key": "steffen2015", "citation": "Steffen and Hwang 2015, MNRAS 448, 1956", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/violent_tests.rs"], "claims": ["// ApJ 790, 146; Steffen and Hwang 2015, MNRAS 448, 1956)."], "tier": 3}

@@ -1,0 +1,90 @@
+# TP1 ledger: dates still held as doubles. It only shrinks.
+#
+# Each line is `count path`: casts of an absolute date to a double in Rust
+# (`at_s as f64` and its kin, and `<instant>.s as f64`), and clock fields kept
+# in years in the screens (`now_yr`, `campaign_now_yr`, `campaign_epoch_yr`,
+# `clock_yr`). Checked by crates/sse-core/tests/float_dates.rs. Never raise a
+# count or add a line: keep the date as `sse_core::time::Instant` and subtract
+# with `since` (or `angle_since` for a phase). When a change removes a use,
+# lower its line in the same change, and delete a line that reaches 0.
+# TP2 and TP3 (the anchors and the clock) are expected to empty most of it.
+#
+# 26 Nov: App.svelte 62 -> 67 once, by hand: the Run desk clock work
+# (TM3a) added five uses while TP1 was in review, before the ledger existed
+# on main. This is the ledger catching up, not a licence to raise a line.
+# 26 Nov: App.svelte 67 -> 57: App reads the campaign's now in one place
+# (three desks thread, with TM3b).
+1 crates/sse-cosmos/src/patch.rs
+1 crates/sse-formation/src/leftovers.rs
+2 crates/sse-kernel/src/lib.rs
+1 crates/sse-kernel/src/nav.rs
+1 crates/sse-logic/src/blocks.rs
+2 crates/sse-sense/src/fog.rs
+1 crates/sse-sift/src/sifter.rs
+1 crates/sse-suite/src/scenario.rs
+1 packages/agents/src/orac-atlas.ts
+2 packages/agents/src/orac-known.ts
+1 packages/agents/test/orac-atlas.test.ts
+3 packages/agents/test/orac-blocks.test.ts
+3 packages/agents/test/orac-known.test.ts
+3 packages/agents/test/orac-rules.test.ts
+3 packages/agents/test/orac-sheet.test.ts
+3 packages/agents/test/orac-triggers.test.ts
+2 packages/agents/test/orac.test.ts
+57 packages/shell/src/App.svelte
+3 packages/shell/src/LookAhead.svelte
+2 packages/shell/src/MakeSystem.svelte
+1 packages/shell/src/Players.svelte
+3 packages/shell/src/postcards/Card.svelte
+2 packages/shell/src/rollcall/RollCall.svelte
+1 packages/shell/src/rollcall/feed.ts
+4 packages/shell/src/run/ArrivalSlip.svelte
+4 packages/shell/src/run/Switchboard.svelte
+3 packages/shell/src/run/TableStatus.svelte
+7 packages/shell/src/share.svelte.ts
+8 packages/shell/src/workspace.svelte.ts
+2 packages/ui-contract/src/bookmark.ts
+4 packages/ui-contract/src/campaign.ts
+3 packages/ui-contract/src/derivation.ts
+10 packages/ui-contract/src/edit.ts
+2 packages/ui-contract/src/fate.ts
+7 packages/ui-contract/src/make.ts
+23 packages/ui-contract/src/p2p.ts
+4 packages/ui-contract/src/postcard.ts
+1 packages/ui-contract/src/route.ts
+1 packages/ui-contract/src/scene.ts
+3 packages/ui-contract/src/view.ts
+3 packages/ui-contract/test/adopt.test.ts
+2 packages/ui-contract/test/bookmark.test.ts
+3 packages/ui-contract/test/campaign.test.ts
+1 packages/ui-contract/test/derivation.test.ts
+1 packages/ui-contract/test/grounds.test.ts
+1 packages/ui-contract/test/make.test.ts
+7 packages/ui-contract/test/p2p.test.ts
+1 packages/ui-contract/test/packs.test.ts
+2 packages/ui-contract/test/physics.test.ts
+1 packages/ui-contract/test/playbook.test.ts
+1 packages/ui-contract/test/postcard.test.ts
+4 packages/ui-contract/test/seats.test.ts
+2 packages/ui-contract/test/sol.test.ts
+2 packages/ui-contract/test/workspace.ts
+8 packages/views/atlas/src/Atlas.svelte
+3 packages/views/body-card/src/BodyCard.svelte
+2 packages/views/body-card/src/NameCard.svelte
+1 packages/views/body/src/Body.svelte
+9 packages/views/constructs/src/Constructs.svelte
+2 packages/views/editing/src/Box.svelte
+1 packages/views/editing/src/CouldBe.svelte
+5 packages/views/editing/src/Handles.svelte
+2 packages/views/editing/src/Reach.svelte
+3 packages/views/editing/src/StarChooser.svelte
+1 packages/views/formation/src/FormationScreen.svelte
+2 packages/views/manifest/src/Picture.svelte
+2 packages/views/pictures/src/Pictures.svelte
+1 packages/views/reference/src/NamesHere.svelte
+4 packages/views/route/src/Route.svelte
+5 packages/views/surface/src/Surface.svelte
+6 packages/views/time-ruler/src/RulerView.svelte
+4 packages/views/voyage/src/InSystem.svelte
+4 packages/views/voyage/src/Stars.svelte
+2 packages/views/window/src/Window.svelte

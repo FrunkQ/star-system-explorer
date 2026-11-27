@@ -2,7 +2,7 @@
 // as the sky sees them (`sky_from_here` with galaxies and no stars: `galaxies_seen` and `satellites_seen`), and lays
 // them out in space around our galaxy. Each galaxy's place is its direction from home times its distance, so this
 // view and the night sky agree. Nothing is invented: a galaxy has the type, size, tilt and colour the kernel gave it.
-import { starColour } from "./compare.ts";
+import { starColour, tempFromBV } from "./compare.ts";
 import type { Json } from "./json.ts";
 
 /** One galaxy as the kernel's sky gives it, cut to what this view draws and says. */
@@ -47,6 +47,22 @@ export interface NearbyRead {
   centre_mpc: [number, number, number];
   /** The time the sky was read at, Gyr after the Big Bang (the campaign's date). */
   t_gyr: number;
+  /** Home's place in the web, Mpc (the web's frame shares the galactic frame's axes; F37). */
+  home_mpc: [number, number, number] | null;
+  /** GZ6: the edge of our group, worked out by the kernel's block (asked with `satellite_paths`); null if not asked. */
+  group_edge: GroupEdge | null;
+}
+
+/**
+ * The edge of our group (design 7.2), from the kernel: the zero-velocity sphere round home of the mass inside it, by
+ * the block `sse.gravity.zero_velocity_radius` (Sandage 1986), which reads G through Look up. `members` counts the
+ * galaxies inside besides ours and its satellites.
+ */
+export interface GroupEdge {
+  radius_mpc: number;
+  mass_msun: number;
+  members: number;
+  block: string;
 }
 
 /** GZ6: one of home's satellites from infall to now, as the kernel followed it in our galaxy's growing pull. */
@@ -144,6 +160,8 @@ export function readNearby(sky: Json): NearbyRead | null {
     paths,
     centre_mpc: c ? [c[0] / 1000, c[1] / 1000, c[2] / 1000] : [0, 0, 0],
     t_gyr: (num(s!.t_myr) ?? 13800) / 1000,
+    home_mpc: vec(walk.home_mpc),
+    group_edge: readEdge(walk.group_edge),
   };
 }
 
@@ -195,34 +213,11 @@ export function satelliteStateWords(p: Pick<SatellitePath, "fate" | "infall_gyr"
 /** The first infall among the paths: where Play starts. */
 export const firstInfall = (ps: readonly Pick<SatellitePath, "infall_gyr">[]): number | null => (ps.length ? Math.min(...ps.map((p) => p.infall_gyr)) : null);
 
-/** G in Mpc^3 per solar mass per Gyr^2 (4.30091e-9 Mpc (km/s)^2 per solar mass; 1 km/s = 1.022712e-3 Mpc/Gyr). */
-const G_MPC_GYR = 4.30091e-9 * 1.022712e-3 * 1.022712e-3;
-
-/**
- * The zero-velocity radius of a mass at a time: the sphere inside which matter has stopped moving apart with the
- * expansion and fallen back. Sandage 1986 (ApJ 307, 1, doi:10.1086/164387), the timing argument for a pressureless sphere with no
- * dark energy: R0^3 = 8 G M t^2 / pi^2. Dark energy would widen it by some per cent (fudge GZ-F13).
- */
-export function zeroVelocityRadius(mass_msun: number, t_gyr: number): number {
-  return Math.cbrt((8 * G_MPC_GYR * Math.max(0, mass_msun) * t_gyr * t_gyr) / (Math.PI * Math.PI));
-}
-
-/**
- * The edge of our group (design 7.2): the zero-velocity sphere around home of the mass inside it, found by
- * widening it until it holds what it needs (home's halo, then every catalogued halo inside, which widens it again;
- * the radius only grows, so it settles in a few steps). Satellites are already inside home's halo, so not counted twice.
- */
-export function groupEdge(home_halo_msun: number, gs: readonly Pick<NearGalaxy, "halo_mass_msun" | "distance_mpc" | "satellite">[], t_gyr: number): { radius_mpc: number; mass_msun: number; members: number } {
-  const others = gs.filter((g) => !g.satellite).sort((a, b) => a.distance_mpc - b.distance_mpc);
-  let mass = home_halo_msun;
-  let r = zeroVelocityRadius(mass, t_gyr);
-  let n = 0;
-  while (n < others.length && others[n]!.distance_mpc <= r) {
-    mass += others[n]!.halo_mass_msun;
-    n++;
-    r = zeroVelocityRadius(mass, t_gyr);
-  }
-  return { radius_mpc: r, mass_msun: mass, members: n };
+function readEdge(v: unknown): GroupEdge | null {
+  const e = v as Record<string, unknown> | null | undefined;
+  const r = typeof e?.radius_mpc === "number" && Number.isFinite(e.radius_mpc) ? e.radius_mpc : null;
+  if (r === null || r <= 0) return null;
+  return { radius_mpc: r, mass_msun: typeof e!.mass_msun === "number" ? e!.mass_msun : 0, members: typeof e!.members === "number" ? e!.members : 0, block: typeof e!.block === "string" ? e!.block : "" };
 }
 
 /** A galaxy's place relative to home, Mpc, in the galactic frame (x to our centre, z out of our disc). */
@@ -233,27 +228,47 @@ export function withinReach(gs: readonly NearGalaxy[], reach_mpc: number): NearG
   return gs.filter((g) => g.distance_mpc <= reach_mpc).sort((a, b) => b.stellar_mass_msun - a.stellar_mass_msun || (a.address < b.address ? -1 : 1));
 }
 
-/** How the sphere is seen: from above our disc, tilted 60 degrees down, or edge-on along our disc. */
-export type NearbySeen = "above" | "tilted" | "edge";
+/** How the sphere is seen: from above our disc, tilted 60 degrees down, edge-on along our disc, or turned freely. */
+export type NearbySeen = "above" | "tilted" | "edge" | "free";
 const TILT_DEG = 60;
+
+/** A free turn (GZ5 part 2): yaw about our disc's axis and how far the view is tipped from straight above, degrees. */
+export interface NearbyTurn {
+  yaw_deg: number;
+  tilt_deg: number;
+}
+/** Where Free starts: the Tilted view, so pressing Free changes nothing until it is dragged. */
+export const FREE_START: NearbyTurn = { yaw_deg: 0, tilt_deg: TILT_DEG };
+
+/** The turn each fixed view is: Above is no tilt, Tilted 60 degrees, Edge-on 90 (along our disc). */
+export function turnOf(seen: NearbySeen, free: NearbyTurn = FREE_START): NearbyTurn {
+  if (seen === "free") return { yaw_deg: free.yaw_deg, tilt_deg: Math.max(0, Math.min(90, free.tilt_deg)) };
+  return { yaw_deg: 0, tilt_deg: seen === "above" ? 0 : seen === "edge" ? 90 : TILT_DEG };
+}
 
 /**
  * Project a place (Mpc, galactic frame) onto the drawing: `size` across, `reach` Mpc from the middle to the edge.
  * Returns the page point, the foot of its stalk on our disc's plane (the same plane Your systems stands its stalks
- * on) and a depth for drawing order (larger is nearer the viewer).
+ * on) and a depth for drawing order (larger is nearer the viewer). The view is turned by `yaw` about our disc's
+ * axis, then tipped by `tilt` about the page's across line: 0 is straight above, 90 edge-on.
  */
-export function projectNearby(p: readonly [number, number, number], seen: NearbySeen, size: number, reach_mpc: number, pad = 24): { x: number; y: number; fx: number; fy: number; depth: number } {
+export function projectNearby(p: readonly [number, number, number], seen: NearbySeen, size: number, reach_mpc: number, pad = 24, free: NearbyTurn = FREE_START): { x: number; y: number; fx: number; fy: number; depth: number } {
   const k = (size / 2 - pad) / reach_mpc;
   const c = size / 2;
-  const [x, y, z] = p;
-  if (seen === "above") return { x: c + x * k, y: c - y * k, fx: c + x * k, fy: c - y * k, depth: z };
-  if (seen === "edge") return { x: c + x * k, y: c - z * k, fx: c + x * k, fy: c, depth: -y };
-  const t = (TILT_DEG * Math.PI) / 180;
-  const ct = Math.cos(t);
-  const st = Math.sin(t);
-  // Turned about x: the plane's y goes up the page shortened by cos(t); height rises by sin(t).
-  const sy = (v: number, h: number) => v * ct + h * st;
-  return { x: c + x * k, y: c - sy(y, z) * k, fx: c + x * k, fy: c - sy(y, 0) * k, depth: z * ct - y * st };
+  const turn = turnOf(seen, free);
+  const yw = (turn.yaw_deg * Math.PI) / 180;
+  const t = (turn.tilt_deg * Math.PI) / 180;
+  const cy = Math.cos(yw);
+  const sy0 = Math.sin(yw);
+  const x = p[0] * cy - p[1] * sy0;
+  const y = p[0] * sy0 + p[1] * cy;
+  const z = p[2];
+  // Clean values at the fixed views, so Above and Edge-on keep the exact plane they always had.
+  const ct = turn.tilt_deg === 90 ? 0 : Math.cos(t);
+  const st = turn.tilt_deg === 0 ? 0 : Math.sin(t);
+  // Tipped about x: the plane's y goes up the page shortened by cos(t); height rises by sin(t).
+  const up = (v: number, h: number) => v * ct + h * st;
+  return { x: c + x * k, y: c - up(y, z) * k, fx: c + x * k, fy: c - up(y, 0) * k, depth: z * ct - y * st };
 }
 
 /**
@@ -285,7 +300,7 @@ export function haloR200(mass_msun: number, home: { r200_mpc: number; mass_msun:
 export function galaxyColour(b_v: number | null): string {
   if (b_v === null) return starColour(undefined);
   const bv = Math.min(2, Math.max(-0.4, b_v));
-  return starColour(4600 * (1 / (0.92 * bv + 1.7) + 1 / (0.92 * bv + 0.62)));
+  return starColour(tempFromBV(bv));
 }
 
 const TYPE_WORDS: Record<string, string> = {
@@ -346,6 +361,19 @@ export function boundPairs(cells: readonly { haloes: readonly { address: string;
       if (!out.has(`${a}|${b}`)) out.set(`${a}|${b}`, { a, b, distance_mpc: n.distance_mpc, approach_gyr: n.approach_gyr });
     }
   return [...out.values()].sort((x, y) => x.distance_mpc - y.distance_mpc || (x.a < y.a ? -1 : 1));
+}
+
+/** How many of the biggest neighbours have their real history read in the background (design 7.3: "two or three"). */
+export const REAL_FACES = 3;
+
+/**
+ * The neighbours whose real charts are read (design 7.3): the biggest in stars within the reach, not home's own
+ * satellites (they are not catalogued haloes and have no chart of their own), biggest first.
+ */
+export function biggestNeighbours(gs: readonly NearGalaxy[], reach_mpc: number, n = REAL_FACES): NearGalaxy[] {
+  return withinReach(gs, reach_mpc)
+    .filter((g) => !g.satellite)
+    .slice(0, n);
 }
 
 /** "meet in about 4 Gyr", or "already meeting" when the kernel says now. */

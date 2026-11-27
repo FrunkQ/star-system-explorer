@@ -319,6 +319,17 @@ pub struct Body {
     /// placement writes them), when known (MP8b).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub makeup: Option<Makeup>,
+    /// Nothing typed says what the world is made of (a catalogued moon with
+    /// only its mass and radius), so its ice is read off its density
+    /// ([`ice_ground::water_share`]). False when formation or a typed makeup
+    /// set `water_fraction`, even to 0.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub water_from_density: bool,
+    /// Distance from its star, AU, for a world that goes round a planet (a
+    /// moon), whose own `orbit` is round the planet: the climate's sunlight
+    /// is read at this distance (HV2c). None when `orbit` is round the star.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub star_au: Option<f64>,
 }
 
 /// A body's makeup as mass shares of the whole (`makeup.metal`, `rock`,
@@ -540,7 +551,7 @@ impl Ctx<'_> {
             ("t_surface_k", self.t_surface(t_gyr)),
             ("radius_km", b.radius_earth * R_EARTH_M / 1000.0),
             ("pressure_bar", b.pressure_bar),
-            ("water_fraction", b.water_fraction),
+            ("water_fraction", crate::ice_ground::water_share(b)),
             ("oceans", b.oceans),
             ("heat_flow_w_m2", q),
             ("q_ratio", q / self.s.q_crit_w_m2),
@@ -597,7 +608,7 @@ pub fn round_ratio(b: &Body) -> f64 {
         return 0.0;
     }
     let rho = b.mass_earth * M_EARTH_KG / (4.0 / 3.0 * m::PI * r * r * r);
-    let w = b.water_fraction.clamp(0.0, 1.0);
+    let w = crate::ice_ground::water_share(b).clamp(0.0, 1.0);
     let vi = w / RHO_ICE;
     let vr = (1.0 - w) / RHO_ROCK;
     let f = if vi + vr > 0.0 { vi / (vi + vr) } else { 0.0 };
@@ -875,6 +886,8 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
                 spin_source: spin.map(|_| "formation".to_string()),
                 core_light_fraction: None,
                 makeup: None,
+                water_from_density: false,
+                star_au: None,
             }
         })
         .collect()

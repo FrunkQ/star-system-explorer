@@ -33,4 +33,4 @@ The 10 Sun hole in visible light is a blue-white disc dimmed 3.2 × 10⁴ times,
 - Deep star cones (`sky_from_here` with a cone) take minutes and a magnitude-11 cone ran out of memory in the browser's wasm, so only the whole-sky read to 6.5 is used: a kernel speed-up would fill the sky.
 - XO5 (phones' WebGL2 path) and XO6 (close-up, bent grid, time stretch chip) are next. Headless chromium already runs this pass on WebGL2 through three's fallback, so XO5 starts from a working pass and has the frame budget to measure.
 - The picture repeats the disc's physics (temperature, shift, landing) instead of reading it from the kernel's blocks, so editing `sse.light.disc_shift` would not change it. Ruling 26 Nov (coordinator, from Alex's rule that physics lives in the kernel's blocks): the kernel bakes a table of the disc's seen temperature and shift, and the GPU only reads it. That is the next PR.
-- Fudge rows: `docs/fudges.md`, exotic objects, the six XO4 rows.
+- Fudge rows: the six XO4 rows in `docs/fudges/0700-exotic-objects-track-xo-crates-sse-gravity-packs-b/`.

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { leadingArmWords, type GalaxyMark } from "../src/galaxy.ts";
+import { leadingArmWords, cellName, placeholderGalaxyName, type GalaxyMark } from "../src/galaxy.ts";
 
 test("GH8: the leading arm in words, the latest made by the chart's time", () => {
   const fade = (m: { strength: number; began_gyr: number; fades_gyr: number | null }, t: number) => (t < m.began_gyr ? 0 : m.fades_gyr ? m.strength * Math.exp(-(t - m.began_gyr) / m.fades_gyr) : m.strength);
@@ -17,4 +17,19 @@ test("GH8: the leading arm in words, the latest made by the chart's time", () =>
   assert.match(early.line, /^A leading arm, from a backwards merger 1\.2 Gyr ago: the rotation has wound it back/);
   assert.equal(leadingArmWords(marks, 10, fade), null, "long wound back: only the history list keeps it");
   assert.equal(leadingArmWords([{ ...marks[1]!, strength: 0.1 }], 13.8, fade), null, "too weak ever to be seen");
+});
+
+test("a cell is named after its most important galaxy: ours at home, a keyed stand-in elsewhere", () => {
+  assert.equal(cellName([0, 0, 0], "u/web/cell:0.0.0/halo:7"), "Milky Way neighbourhood");
+  const a = "u/web/cell:1.0.0/halo:3";
+  const n = cellName([1, 0, 0], a);
+  assert.match(n, /^[A-Z][a-z]+ neighbourhood$/);
+  assert.equal(n, cellName([1, 0, 0], a), "same galaxy, same name");
+  assert.equal(placeholderGalaxyName(a), n.replace(" neighbourhood", ""));
+  const names = new Set(Array.from({ length: 50 }, (_, i) => placeholderGalaxyName(`u/web/cell:${i}.0.0/halo:0`)));
+  assert.ok(names.size >= 45, `stand-in names rarely repeat (${names.size} of 50)`);
+  assert.equal(cellName([2, 0, 0], null), "Cell 2 · 0 · 0", "no halo drawn, keeps its number");
+  // GZ12: home is wherever the kernel's home galaxy is; the middle cell is then named after its own biggest.
+  assert.equal(cellName([0, 2, -2], "u/web/cell:0.2.-2/halo:4", [0, 2, -2]), "Milky Way neighbourhood");
+  assert.match(cellName([0, 0, 0], "u/web/cell:0.0.0/halo:7", [0, 2, -2]), /^[A-Z][a-z]+ neighbourhood$/);
 });

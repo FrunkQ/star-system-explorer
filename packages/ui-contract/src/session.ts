@@ -28,7 +28,7 @@ export interface SkyAsk {
 
 /** One ask of the kernel `weather` op (presentation reads; nothing is recorded). */
 export interface WeatherAsk {
-  want: "climate" | "systems" | "field" | "report" | "column" | "sound";
+  want: "climate" | "systems" | "field" | "report" | "glint" | "column" | "sound";
   world?: string;
   system?: string;
   body?: string;
@@ -136,6 +136,22 @@ export interface AtomInfo {
   explain: { curious?: string; science?: string; formula?: string };
 }
 
+/** RW16a: what the small-body designer pins (kernel `make_small_body`); everything left out the field decides. */
+export interface SmallDesign {
+  kind: "asteroid" | "comet-nucleus" | "contact-binary" | "binary-pair";
+  diameter_km?: number;
+  mass_kg?: number;
+  a_au: number;
+  e?: number;
+  pair?: "single" | "contact" | "separated";
+  /** Mass shares of metal, rock, carbon and ice. */
+  makeup?: [number, number, number, number];
+  structure?: "rubble-pile" | "monolith" | "relaxed";
+  spin_hours?: number;
+  battered?: number;
+  size_ratio?: number;
+}
+
 export interface ViewSession {
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
@@ -184,6 +200,8 @@ export interface ViewSession {
   surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
+  /** A world's heat books over its life (track HF's screen): the quick survey's envelope with its core history, the same numbers that drive the world, and the climate's sunlight books (HV2b); GM only. */
+  surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope; sunlight: import("./heat-flow.ts").Sunlight | null } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
@@ -251,6 +269,10 @@ export interface ViewSession {
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
   /** What a ship's sensor sees from beside a body (V8 Window, kernel `window_view`). Read only; any seat, on the system it knows. */
   windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }>;
+  /** The universe's home galaxy, one of the web's own (GZ12, kernel `home_galaxy`). Read only; GM only. */
+  homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
+  /** "Make this home" (GZ12, kernel `set_home`): a catalogued halo's address, or null for the web's own choice. GM only. */
+  setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
   /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
   haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
   /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
@@ -298,6 +320,8 @@ export interface ViewSession {
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
   /** Light through layers of gas and particles (kernel `light_through_gas`, light track ND2): colour in and out per passage. Read only; any seat. */
   lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }>;
+  /** The light inside a world's shadow (kernel `read_shadow_light`, VP-L3): starlight bent through its air, its colour and brightness. Read only; any seat. */
+  readShadowLight(items: Json[]): Promise<{ ok: true; items: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
@@ -307,13 +331,21 @@ export interface ViewSession {
   /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
-  readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
+  readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number }; prominences?: { from_s: number; to_s: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
   readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
   /** SB2: one member of a belt, ring or cloud resolved into a definite body (kernel `small_body`): by `member` address,
    * or `cloud` and `rank` (1 the largest); with neither, the notable bodies formation made. `r_au` sets where an icy
    * body's activity is worked out (perihelion when left out). Nothing is stored; the same body comes back every time. */
   smallBody(ask: { system: string; member?: string; cloud?: string; rank?: number; r_au?: number }): Promise<{ ok: true; body: Json | null; notables: Json[] } | { ok: false; code: string; message: string }>;
+  /** RW16a: a small body made by hand (kernel `make_small_body`), with the designer's pins; its answer's `takes` says
+   * what an implausible design would need. Works in a system with no formation record (a designed field). */
+  makeSmallBody(ask: SmallDesign & { system: string; address: string }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }>;
+  /** RW16a: the lump of any body below the round size, from its address (kernel `small_shape`), with `round`. */
+  smallShape(ask: { system: string; address: string; diameter_km?: number; mass_kg?: number; ice?: number; spin_hours?: number; a_au?: number }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }>;
+  /** VP-R3: one ring, whole (kernel `ring_structure`): its zones, the marks its moons leave, optical depth across it
+   * and its grains' colour. Give `ask` (sse-small RingAsk), or `system` and `cloud` for a ring formation made. Read only. */
+  ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }>;
   /** XO18: the Hazard map's reading (kernel `hazard_map`): a measured Solar System body by `fixture` and `body`, or
    * handed `asks`; along `line` ("equator" or "poles"); with `ship`, or the stated stock ship. Read only. */
   hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }>;
@@ -837,6 +869,17 @@ export class Session implements ViewSession {
     return c ? { ok: true, climate: c } : { ok: false, code: "no_climate", message: "this world has no climate in its survey" };
   }
 
+  async surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope; sunlight: import("./heat-flow.ts").Sunlight | null } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
+    // The same quick survey the climate reads (cached by the kernel): its envelope carries the core history.
+    const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit: 1 });
+    if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const sv = (r as unknown as { survey?: { envelope?: import("./heat-flow.ts").HeatEnvelope; climate?: { sunlight?: import("./heat-flow.ts").Sunlight } } }).survey;
+    const e = sv?.envelope;
+    // The climate's sunlight books (HV2a) are the outside half; a world with no climate has none.
+    return e ? { ok: true, envelope: e, sunlight: sv?.climate?.sunlight ?? null } : { ok: false, code: "no_envelope", message: "this world has no envelope in its survey" };
+  }
+
   /** The open universe as a document to keep (kernel `export_chronicle`, `sse.chronicle-export/1`); GM only. Open branches are not in it. */
   async exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master saves the campaign" };
@@ -915,6 +958,11 @@ export class Session implements ViewSession {
     return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async readShadowLight(items: Json[]): Promise<{ ok: true; items: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_shadow_light", items });
+    return r.type === "shadow_light_read" ? { ok: true, items: (r as unknown as { items: Json[] }).items } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "light_through_gas", passages });
     return r.type === "gas_passed" ? { ok: true, passages: (r as unknown as { passages: Json[] }).passages } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
@@ -944,7 +992,7 @@ export class Session implements ViewSession {
     return { ok: true, want: x.want, world: x.world, provenance: x.provenance, data: x.data };
   }
 
-  async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
+  async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number }; prominences?: { from_s: number; to_s: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_activity", ...ask } as Json);
     return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -953,6 +1001,23 @@ export class Session implements ViewSession {
     const r = await this.#call({ op: "small_body", ...ask } as Json);
     const o = r as unknown as { body?: Json; notables?: Json[] };
     return r.type === "small_body_is" ? { ok: true, body: o.body ?? null, notables: o.notables ?? [] } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async makeSmallBody(ask: SmallDesign & { system: string; address: string }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "make_small_body", ...ask } as Json);
+    const o = r as unknown as { body?: Json };
+    return r.type === "small_body_is" && o.body ? { ok: true, body: o.body } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async smallShape(ask: { system: string; address: string; diameter_km?: number; mass_kg?: number; ice?: number; spin_hours?: number; a_au?: number }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "small_shape", ...ask } as Json);
+    const o = r as unknown as { body?: Json };
+    return r.type === "small_body_is" && o.body ? { ok: true, body: o.body } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "ring_structure", ...ask } as Json);
+    return r.type === "ring_structure_is" ? { ok: true, ring: (r as unknown as { ring: Json }).ring } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
@@ -1003,6 +1068,18 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the galaxy's history is the game master's chart; players see it through data views" };
     const r = await this.#call({ op: "galaxy_chart", ...ask });
     return r.type === "galaxy_charted" ? { ok: true, chart: (r as unknown as { chart: import("./galaxy.ts").GalaxyChart }).chart } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the universe's galaxies are charted on the game master's machine" };
+    const r = await this.#call({ op: "home_galaxy" });
+    return r.type === "home_galaxy" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master chooses the universe's home" };
+    const r = await this.#call(halo ? { op: "set_home", halo } : { op: "set_home" });
+    return r.type === "home_set" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }> {

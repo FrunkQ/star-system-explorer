@@ -31,7 +31,7 @@ pub mod water;
 pub mod wind;
 
 pub use circulation::Circulation;
-pub use climate::{glance, orbit, Cache, Climate, Glance, Level};
+pub use climate::{glance, orbit, Cache, Climate, Glance, Level, Sunlight};
 pub use conditions::{Conditions, Extra};
 pub use settings::ClimateSettings;
 
@@ -58,6 +58,8 @@ mod land_sea_tests;
 mod species_tests;
 #[cfg(test)]
 mod strengths_tests;
+#[cfg(test)]
+mod sunlight_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

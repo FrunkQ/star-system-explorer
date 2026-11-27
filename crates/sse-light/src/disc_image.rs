@@ -72,10 +72,12 @@ pub struct Spot {
 pub struct Exposure {
     /// Visible-band brightness of the brightest point, W m⁻² sr⁻¹.
     pub brightest_visible_w_m2_sr: f64,
-    /// The same for the Sun's surface (the sheet's T_sun).
-    pub sun_surface_visible_w_m2_sr: f64,
-    /// Brightest point over the Sun's surface, in visible light.
-    pub times_sun_surface: f64,
+    /// The same for the Sun's surface (the sheet's T_sun); none when the
+    /// data sheet in force has no Sun to compare with.
+    pub sun_surface_visible_w_m2_sr: Option<f64>,
+    /// Brightest point over the Sun's surface, in visible light (none
+    /// without a Sun on the sheet).
+    pub times_sun_surface: Option<f64>,
     pub note: String,
 }
 
@@ -186,6 +188,9 @@ pub fn trace(
             *slot = Some(s.clone());
         }
     };
+    // The shift block in force, looked up once for the whole picture.
+    let shift = sse_physics::block("sse.light.disc_shift")
+        .ok_or("formula block sse.light.disc_shift is missing")?;
     for (b, db) in b_steps(r_out * 1.02) {
         let area = 4.0 * b * db * dalpha * rg * rg;
         for j in 0..ANGLES {
@@ -197,7 +202,9 @@ pub fn trace(
             if t <= 0.0 {
                 continue;
             }
-            let g = run_block("sse.light.disc_shift", &[1.0, r, b, tilt, alpha])?[0];
+            let g = shift
+                .eval(&[1.0, r, b, tilt, alpha], &[])
+                .map_err(|e| format!("sse.light.disc_shift: {e}"))?[0];
             if g <= 0.0 {
                 continue;
             }
@@ -281,7 +288,17 @@ fn visible_radiance(t_k: f64, light: &LightTable) -> Result<f64, String> {
 /// brightest point is in visible light.
 fn exposure(brightest: &Spot, light: &LightTable) -> Result<Exposure, String> {
     let lit = visible_radiance(brightest.t_seen_k, light)?;
-    let sun = visible_radiance(sse_core::sheet::T_SUN, light)?;
+    // The Sun's surface temperature from the sheet in force, so an edited
+    // Sun moves the comparison with it.
+    let Some(t_sun) = sse_physics::constant("T_sun") else {
+        return Ok(Exposure {
+            brightest_visible_w_m2_sr: lit,
+            sun_surface_visible_w_m2_sr: None,
+            times_sun_surface: None,
+            note: format!("In visible light its brightest point is {lit:.3e} W per square metre per steradian; the data sheet in force has no Sun to compare it with."),
+        });
+    };
+    let sun = visible_radiance(t_sun, light)?;
     let x = lit / sun;
     let note = if x >= 1.0 {
         format!("In visible light its brightest point is {x:.3e} times as bright as the Sun's surface: far too bright to look at, so a picture is dimmed about that much to show its detail.")
@@ -290,8 +307,8 @@ fn exposure(brightest: &Spot, light: &LightTable) -> Result<Exposure, String> {
     };
     Ok(Exposure {
         brightest_visible_w_m2_sr: lit,
-        sun_surface_visible_w_m2_sr: sun,
-        times_sun_surface: x,
+        sun_surface_visible_w_m2_sr: Some(sun),
+        times_sun_surface: Some(x),
         note,
     })
 }

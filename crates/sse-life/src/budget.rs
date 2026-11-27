@@ -21,6 +21,15 @@
 //!   transfer efficiency), at most `low_power_levels` without a high-power
 //!   (oxygen-making) metabolism somewhere on the world.
 //!
+//! - **keep-alive** (LE1, life-from-energy design section 4): the power
+//!   captured must pay the maintenance of living matter at the habitat's
+//!   temperature (Arrhenius, one shared block for both life models). Below
+//!   the *starved* maintenance of the smallest population the habitat is
+//!   closed with its numbers; below the *laboratory* maintenance of the
+//!   thinnest population life is found at, spread through the habitat, it is
+//!   open and "alive, barely" (no feeding levels); standing biomass is the
+//!   smaller of production x residence and power / starved maintenance.
+//!
 //! A value nobody supplied stays `None` and is listed in `missing`: a gap is
 //! never a zero. Every closed habitat says why.
 
@@ -103,6 +112,114 @@ pub struct BudgetParams {
     /// fidelity contract (evolution design 3.5) is reviewed.
     #[serde(default = "listed_model", skip_serializing_if = "is_listed")]
     pub life_model: String,
+    /// The keep-alive block shared by both models (LE1). A stack without it
+    /// runs no keep-alive test, and says so in each habitat's `missing`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub maintenance: Option<Maintenance>,
+    /// Rough numbers by size class (LE3). Without it, guilds carry no counts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sizes: Option<SizeParams>,
+}
+
+/// One broad size class (`life_budget.sizes.classes`), up to `below_kg`.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SizeClass {
+    pub id: String,
+    #[serde(default)]
+    pub below_kg: Option<f64>,
+}
+
+/// Where the energy goes, in numbers (`life_budget.sizes`, LE3): a guild's
+/// spent power is spread evenly over log body mass from its smallest member
+/// to its largest (energy equivalence, Damuth 1981), and each class is
+/// counted at Kleiber's rate B = b0 M^(3/4) exp(-E/k (1/T - 1/T_ref)).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SizeParams {
+    pub classes: Vec<SizeClass>,
+    /// Smallest member by grade, kg.
+    pub smallest_kg: BTreeMap<String, f64>,
+    /// b0 by rate (`unicell`, `ectotherm`, `endotherm`), W per kg^(3/4) at
+    /// `ref_k` (endotherms at their own body temperature).
+    pub b0_w: BTreeMap<String, f64>,
+    pub ref_k: f64,
+    pub endotherm_body_k: f64,
+    /// Below this mass a member is counted as a cell (unicell rate).
+    pub cell_below_kg: f64,
+    /// At or above this mass, an animal on land is counted warm-blooded.
+    pub endotherm_from_kg: f64,
+}
+
+/// Maintenance power of living matter (`life_budget.maintenance`, LE1):
+/// two measured values an order of magnitude apart many times over, the
+/// laboratory one (cultures that grow) and the starved one (the basal power
+/// of deep-sediment cells), both moved with temperature by one activation
+/// energy (Arrhenius), and the two populations they are tested against.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Maintenance {
+    /// W per C-mol of biomass at `ref_k`.
+    pub laboratory_w_per_cmol: f64,
+    pub starved_w_per_cmol: f64,
+    pub ea_j_mol: f64,
+    pub ref_k: f64,
+    /// Smallest population worth calling life, C-mol (the closure floor).
+    pub min_population_cmol: f64,
+    /// Thinnest density of living carbon life is found at, g C per m^3:
+    /// the population that must be kept growing through the whole habitat.
+    pub thinnest_life_gc_m3: f64,
+    /// Depth of the living layer of a surface habitat (no volume), m.
+    pub surface_layer_m: f64,
+}
+
+const R_GAS: f64 = sse_atoms::chem::R_GAS;
+
+impl Maintenance {
+    fn arrhenius(&self, t_k: f64) -> f64 {
+        m::exp(self.ea_j_mol / R_GAS * (1.0 / self.ref_k - 1.0 / t_k))
+    }
+    /// Laboratory maintenance per gram of biomass carbon at `t_k`, W.
+    pub fn laboratory_w_per_gc(&self, t_k: f64) -> f64 {
+        self.laboratory_w_per_cmol * self.arrhenius(t_k) / 12.0
+    }
+    /// Starved (basal) maintenance per gram of biomass carbon at `t_k`, W.
+    pub fn starved_w_per_gc(&self, t_k: f64) -> f64 {
+        self.starved_w_per_cmol * self.arrhenius(t_k) / 12.0
+    }
+    /// The thinnest living population through the habitat, g C (`None`
+    /// when the habitat has neither a volume nor an area).
+    pub fn growing_population_gc(&self, p: &LifeRequirementProfile) -> Option<f64> {
+        p.volume_m3
+            .or_else(|| p.area_m2.map(|a| a * self.surface_layer_m))
+            .map(|v| v * self.thinnest_life_gc_m3)
+    }
+}
+
+/// The keep-alive numbers of one habitat (LE1), W.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct KeepAlive {
+    pub t_k: f64,
+    /// Starved maintenance of the smallest population: below it, closed.
+    pub floor_w: f64,
+    /// Laboratory maintenance of the thinnest population through the
+    /// habitat: below it, "alive, barely".
+    pub growing_w: Option<f64>,
+    /// Starved maintenance per gram, for the biomass ceiling.
+    pub starved_w_per_gc: f64,
+}
+
+/// The keep-alive numbers for a habitat, if its temperature is known and the
+/// stack has the maintenance block.
+pub fn keep_alive(p: &LifeRequirementProfile, bp: &BudgetParams) -> Option<KeepAlive> {
+    let mt = bp.maintenance.as_ref()?;
+    let t = p.temperature_k.map(|t| 0.5 * (t.lo + t.hi))?;
+    let starved = mt.starved_w_per_gc(t);
+    Some(KeepAlive {
+        t_k: t,
+        floor_w: starved * mt.min_population_cmol * 12.0,
+        growing_w: mt
+            .growing_population_gc(p)
+            .map(|g| g * mt.laboratory_w_per_gc(t)),
+        starved_w_per_gc: starved,
+    })
 }
 
 fn listed_model() -> String {
@@ -153,6 +270,17 @@ pub struct HabitatBudget {
     /// (`gradients/1` only; not new carbon, so not in `production_gc_yr`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub secondary_gc_yr: Option<f64>,
+    /// Power to keep the thinnest population growing through the habitat
+    /// (laboratory maintenance), W (LE1).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub keep_alive_w: Option<f64>,
+    /// Open, but the power keeps life only at starvation rates: "alive,
+    /// barely" (LE1). No feeding levels.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub barely: bool,
+    /// What set the standing biomass: `residence` or `maintenance` (LE1).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub biomass_limited_by: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -173,8 +301,8 @@ const H: f64 = sse_core::sheet::H;
 const C: f64 = sse_core::sheet::C;
 const K_B: f64 = sse_core::sheet::K_B;
 const SIGMA: f64 = sse_core::sheet::SIGMA_SB;
-const WIEN_NM_K: f64 = sse_core::sheet::B_WIEN * 1e9;
-const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
+pub(crate) const WIEN_NM_K: f64 = sse_core::sheet::B_WIEN * 1e9;
+pub(crate) const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 
 /// Share of a blackbody's energy between two wavelengths (nm), for the
 /// temperature whose Wien peak is `peak_nm`. Simpson's rule, 400 intervals.
@@ -236,6 +364,74 @@ pub(crate) fn closed_reason(p: &LifeRequirementProfile, bp: &BudgetParams) -> Op
     None
 }
 
+/// Carbon one metabolism could fix per year in a habitat, g (its energy
+/// cap), or `None` with what is missing pushed to `missing`.
+pub(crate) fn metabolism_cap(
+    p: &LifeRequirementProfile,
+    bp: &BudgetParams,
+    mb: &Metabolism,
+    missing: &mut Vec<String>,
+) -> Option<f64> {
+    if mb.channel == "light" {
+        match (p.energy.light_w_m2, p.area_m2) {
+            (Some(flux), Some(area)) => {
+                let peak = p.energy.light_peak_nm.unwrap_or_else(|| {
+                    missing.push("light_peak_nm".to_string());
+                    500.0
+                });
+                let (lo, hi) = mb.band_nm.unwrap_or((400.0, 700.0));
+                let w = flux * band_fraction(peak, lo, hi) * mb.light_efficiency * area;
+                let mut g = w * YEAR_S / bp.j_per_g_carbon;
+                if let Some(d) = &mb.light_donor {
+                    match p.materials.get(d) {
+                        Some(s) => g = g.min(s * mb.c_per_donor * 12.0),
+                        None => {
+                            missing.push(format!("material.{d}"));
+                            return None;
+                        }
+                    }
+                }
+                Some(g)
+            }
+            _ => {
+                if p.energy.light_w_m2.is_none() {
+                    missing.push("light_w_m2".into());
+                }
+                if p.area_m2.is_none() {
+                    missing.push("area_m2".into());
+                }
+                None
+            }
+        }
+    } else {
+        let donor = mb
+            .donor
+            .as_ref()
+            .and_then(|d| p.materials.get(d).map(|s| s * mb.c_per_donor));
+        let oxidant = mb
+            .oxidant
+            .as_ref()
+            .map(|o| p.materials.get(o).map(|s| s * mb.c_per_oxidant));
+        match (donor, oxidant) {
+            (Some(dc), None) => Some(dc * 12.0),
+            (Some(dc), Some(Some(oc))) => Some(dc.min(oc) * 12.0),
+            _ => {
+                if let Some(d) = &mb.donor {
+                    if !p.materials.contains_key(d) {
+                        missing.push(format!("material.{d}"));
+                    }
+                }
+                if let Some(o) = &mb.oxidant {
+                    if !p.materials.contains_key(o) {
+                        missing.push(format!("material.{o}"));
+                    }
+                }
+                None
+            }
+        }
+    }
+}
+
 /// The budget of one habitat for the given metabolisms.
 pub fn habitat_budget(
     p: &LifeRequirementProfile,
@@ -256,6 +452,9 @@ pub fn habitat_budget(
         feeding_levels: None,
         missing: vec![],
         secondary_gc_yr: None,
+        keep_alive_w: None,
+        barely: false,
+        biomass_limited_by: None,
     };
     if let Some(r) = closed_reason(p, bp) {
         out.closed = Some(r);
@@ -287,64 +486,7 @@ pub fn habitat_budget(
     let mut any_known = false;
     let mut missing = vec![];
     for mb in usable {
-        let g = if mb.channel == "light" {
-            match (p.energy.light_w_m2, p.area_m2) {
-                (Some(flux), Some(area)) => {
-                    let peak = p.energy.light_peak_nm.unwrap_or_else(|| {
-                        missing.push("light_peak_nm".to_string());
-                        500.0
-                    });
-                    let (lo, hi) = mb.band_nm.unwrap_or((400.0, 700.0));
-                    let w = flux * band_fraction(peak, lo, hi) * mb.light_efficiency * area;
-                    let mut g = w * YEAR_S / bp.j_per_g_carbon;
-                    if let Some(d) = &mb.light_donor {
-                        match p.materials.get(d) {
-                            Some(s) => g = g.min(s * mb.c_per_donor * 12.0),
-                            None => {
-                                missing.push(format!("material.{d}"));
-                                continue;
-                            }
-                        }
-                    }
-                    Some(g)
-                }
-                _ => {
-                    if p.energy.light_w_m2.is_none() {
-                        missing.push("light_w_m2".into());
-                    }
-                    if p.area_m2.is_none() {
-                        missing.push("area_m2".into());
-                    }
-                    None
-                }
-            }
-        } else {
-            let donor = mb
-                .donor
-                .as_ref()
-                .and_then(|d| p.materials.get(d).map(|s| s * mb.c_per_donor));
-            let oxidant = mb
-                .oxidant
-                .as_ref()
-                .map(|o| p.materials.get(o).map(|s| s * mb.c_per_oxidant));
-            match (donor, oxidant) {
-                (Some(dc), None) => Some(dc * 12.0),
-                (Some(dc), Some(Some(oc))) => Some(dc.min(oc) * 12.0),
-                _ => {
-                    if let Some(d) = &mb.donor {
-                        if !p.materials.contains_key(d) {
-                            missing.push(format!("material.{d}"));
-                        }
-                    }
-                    if let Some(o) = &mb.oxidant {
-                        if !p.materials.contains_key(o) {
-                            missing.push(format!("material.{o}"));
-                        }
-                    }
-                    None
-                }
-            }
-        };
+        let g = metabolism_cap(p, bp, mb, &mut missing);
         if let Some(g) = g {
             any_known = true;
             out.by_metabolism.insert(mb.id.clone(), g);
@@ -401,13 +543,55 @@ pub(crate) fn finish(
         .get(&p.kind)
         .copied()
         .unwrap_or(bp.default_residence_yr);
-    out.biomass_gc = Some(prod * res);
+    let mut biomass = prod * res;
+    let mut levels_allowed = true;
+    match keep_alive(p, bp) {
+        None => {
+            if bp.maintenance.is_none() {
+                missing.push("life_budget.maintenance".into());
+            } else {
+                missing.push("temperature_k".into());
+            }
+        }
+        Some(k) => {
+            let power = prod * bp.j_per_g_carbon / YEAR_S;
+            if power < k.floor_w {
+                out.closed = Some(format!(
+                    "too little energy to keep anything alive: {power:.1e} W is captured here; keeping even the smallest population alive at {:.0} K costs {:.1e} W",
+                    k.t_k, k.floor_w
+                ));
+                out.production_gc_yr = Some(0.0);
+                out.power_w = Some(0.0);
+                out.biomass_gc = Some(0.0);
+                out.feeding_levels = Some(0);
+                out.limited_by = "closed".into();
+                out.keep_alive_w = k.growing_w;
+                missing.sort();
+                missing.dedup();
+                out.missing = missing;
+                return out;
+            }
+            out.keep_alive_w = k.growing_w;
+            if k.growing_w.is_some_and(|g| power < g) {
+                out.barely = true;
+                levels_allowed = false;
+            }
+            let ceiling = power / k.starved_w_per_gc;
+            out.biomass_limited_by = Some(if ceiling < biomass {
+                biomass = ceiling;
+                "maintenance".into()
+            } else {
+                "residence".into()
+            });
+        }
+    }
+    out.biomass_gc = Some(biomass);
     let area = p
         .area_m2
         .or_else(|| p.volume_m3.map(|v| m::pow(v, 2.0 / 3.0)));
     out.feeding_levels = area.map(|a| {
         let dens = prod / a;
-        if dens <= bp.min_viable_g_m2_yr {
+        if !levels_allowed || dens <= bp.min_viable_g_m2_yr {
             0
         } else {
             m::floor(m::ln(dens / bp.min_viable_g_m2_yr) / m::ln(1.0 / bp.transfer_efficiency))

@@ -1,0 +1,1 @@
+{"key": "kopp2011", "citation": "Kopp and Lean 2011", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "textbook (docs/citations/climate-life.md)", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-atoms/src/tests.rs"], "claims": ["// Solar constant 1361 W/m² (Kopp and Lean 2011; IAU 2015 B3)."], "tier": 3}

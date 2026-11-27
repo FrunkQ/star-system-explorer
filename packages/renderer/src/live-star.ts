@@ -6,6 +6,8 @@
 // peak power, energy, drawn from the light track's flare-frequency law) all come from `read_activity` (O10). This
 // file only places them on the disc at a time and draws them with star.ts.
 import { constant, type Json } from "../../ui-contract/src/index.ts";
+import type { Prominence } from "./star-prominences.ts";
+import { spotsFromRegions, type Regions } from "./star-regions.ts";
 import { coronaScaleHeight, drawStar, granulesFor, granulesShow, spotsFor, type Convection, type Spot, type StarDraw } from "./star.ts";
 
 
@@ -19,6 +21,8 @@ export interface Flare {
   light?: { parts?: Json[] };
   /** A mass ejection with the flare: speed, mass, direction (unit vector, z the spin axis) and cone half-width. */
   ejection?: { speed_m_s: number; mass_kg: number; direction: [number, number, number]; half_width_rad: number };
+  /** Where it goes off (SG7): its active region, in the star's own frame at its peak. */
+  site?: { region: string; lat_deg: number; lon_deg: number };
 }
 
 export interface LiveStar {
@@ -33,12 +37,20 @@ export interface LiveStar {
   moment: Record<string, Json>;
   /** Flares above 10²⁴ J from two days before the present to a year after. */
   flares: Flare[];
+  /** Prominences standing from the present to PROMINENCE_WINDOW_S after (SG6), and the field and corona that hold them. */
+  prominences?: Prominence[];
+  corona?: Record<string, Json>;
+  /** The active regions alive over the same span (SG7): the spots, and where flares and prominences sit. */
+  regions?: Regions;
 }
+
+/** How much of the star's time the drawn star keeps prominences for: about six minutes on the True view's star clock. */
+export const PROMINENCE_WINDOW_S = 90 * constant("day");
 
 /** What a session needs to read a star (session.ts `resolvedSystem` and `readActivity`). */
 export interface StarReader {
   resolvedSystem(system: string): Promise<{ ok: true; result: { facts: Record<string, Record<string, Json>> } } | { ok: false; message: string }>;
-  readActivity(ask: { stars: Json[]; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; message: string }>;
+  readActivity(ask: { stars: Json[]; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number }; prominences?: { from_s: number; to_s: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; message: string }>;
 }
 
 /** A star's own numbers from its scene facts (teff_k, mass_sun, radius_sun), for a system the kernel did not resolve. */
@@ -99,10 +111,10 @@ export async function readLiveStar(session: StarReader, system: string, address:
   const age_s = age > 0 ? age : 4.6e9 * constant("yr_julian");
   const aim = targets === "system" ? targetsFromFacts(rs.result.facts as Record<string, Record<string, Json>>, address) : targets;
   const star = { address, mass_kg: mass, radius_m: radius, luminosity_w: lum, teff_k: teff, age_s, ...(aim?.length ? { targets: aim as unknown as Json[] } : {}) };
-  const r = await session.readActivity({ stars: [star], at_s: age_s, window: { from_s: age_s - 2 * constant("day"), to_s: age_s + constant("yr_julian"), min_energy_j: 1e24 } });
+  const r = await session.readActivity({ stars: [star], at_s: age_s, window: { from_s: age_s - 2 * constant("day"), to_s: age_s + constant("yr_julian"), min_energy_j: 1e24 }, prominences: { from_s: age_s, to_s: age_s + PROMINENCE_WINDOW_S } });
   if (!r.ok) return r.message;
-  const one = r.stars[0] as unknown as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: Flare[] } };
-  return { address, teff, mass, radius, lum, age_s, activity: one.activity, moment: one.moment, flares: one.flares?.flares ?? [] };
+  const one = r.stars[0] as unknown as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: Flare[] }; prominences?: { prominences?: Prominence[]; corona?: Record<string, Json> | null }; regions?: Regions };
+  return { address, teff, mass, radius, lum, age_s, activity: one.activity, moment: one.moment, flares: one.flares?.flares ?? [], prominences: one.prominences?.prominences ?? [], ...(one.prominences?.corona ? { corona: one.prominences.corona } : {}), ...(one.regions ? { regions: one.regions } : {}) };
 }
 
 /** Where the star is in its cycle: progress from minimum and the cycle's number, or null with no clean cycle. */
@@ -115,8 +127,11 @@ export function cycleOf(s: LiveStar): { phase: number; number: number } | null {
   return { phase: p, number: Math.floor(s.age_s / c.period_s + 0.25) };
 }
 
-/** The star's spots at its present (spot places from the star and the cycle; the kernel gives coverage). */
-export const spotsOf = (s: LiveStar): Spot[] => spotsFor(s.address, Number(s.moment.spot_coverage ?? 0), cycleOf(s));
+/**
+ * The star's spots at its present: its active regions' spots when the kernel gave them (SG7); without them (a star
+ * read without a span) a stand-in scatter at the kernel's coverage.
+ */
+export const spotsOf = (s: LiveStar): Spot[] => (s.regions ? spotsFromRegions(s.regions, s.age_s) : spotsFor(s.address, Number(s.moment.spot_coverage ?? 0), cycleOf(s)));
 
 /**
  * A flare's power at time t over its peak: a straight rise over `rise_s` then an exponential fall with e-folding
@@ -143,9 +158,9 @@ export function flaresAt(s: LiveStar, spots: Spot[], t: number, span = 0): { lat
     // The light curve has one peak, so its brightest within the span is the peak or one end.
     const k = span > 0 && f.at_s <= t && f.at_s >= t - span ? 1 : Math.max(flareProfile(f, t), span > 0 ? flareProfile(f, t - span) : 0);
     if (k <= 0) return;
-    // A flare with an ejection goes off under where the ejection leaves; any other in an active region, over a spot
-    // taken in turn (the kernel gives those times, not places).
-    const at = flarePlace(s, f);
+    // A flare goes off in its active region (the kernel's site, SG7); one without a site under where its ejection
+    // leaves, or over a spot taken in turn.
+    const at = f.site ?? flarePlace(s, f);
     const sp = spots[i % Math.max(1, spots.length)];
     out.push({ lat_deg: at?.lat_deg ?? sp?.lat_deg ?? 15, lon_deg: at?.lon_deg ?? sp?.lon_deg ?? 0, strength: (k * f.peak_w) / xr, flare: f });
   });
@@ -165,11 +180,14 @@ export function flarePlace(s: LiveStar, f: Flare): { lat_deg: number; lon_deg: n
   return { lat_deg: (Math.asin(Math.max(-1, Math.min(1, dz))) * 180) / Math.PI, lon_deg: ((lon % 360) + 360) % 360 };
 }
 
-/** The star's turn under a viewer at time t, degrees of central meridian (its own spin from the kernel). */
+/**
+ * The star's turn at time t, degrees (its own spin from the kernel): its frame turns once a spin from age zero, the
+ * frame the kernel places regions, flares and prominences in.
+ */
 export function turnAt(s: LiveStar, t: number): number {
   const p = Number(s.activity.rotation_period_s ?? 0);
   if (!(p > 0)) return 0;
-  const f = ((t - s.age_s) / p) % 1;
+  const f = (t / p) % 1;
   return (((f < 0 ? f + 1 : f) * 360) % 360 + 360) % 360;
 }
 
@@ -185,12 +203,6 @@ export function drawLiveStar(out: { width: number; data: Uint8ClampedArray }, s:
   drawStar(out, { teff_k: s.teff, spots, lon_deg: turnAt(s, t), lat_deg, light, corona_h: coronaScaleHeight(s.mass, s.radius), flares: flaresAt(s, spots, t, span).map(({ lat_deg, lon_deg, strength }) => ({ lat_deg, lon_deg, strength })), granules }, disc);
 }
 
-/**
- * How fast the True view's star runs: six hours of the star's time each second on the screen, stated beside the
- * view. At that rate a Sun-like star turns once in under two minutes, so its spots are seen going round, and a flare
- * shows for a moment; the universe clock is not moved.
- */
-export const STAR_SECONDS_PER_SECOND = constant("day") / 4;
 
 /**
  * Differential rotation (VP-S4): a star's surface turns faster at its equator than near its poles. The Sun's rate is
@@ -211,6 +223,7 @@ export function rateShare(lat_deg: number): number {
  * high-latitude spot falls behind over the days. Without a known spin they stay put.
  */
 export function spotsAt(s: LiveStar, t: number): Spot[] {
+  if (s.regions) return spotsFromRegions(s.regions, t);
   const p = Number(s.activity.rotation_period_s ?? 0);
   const spots = spotsOf(s);
   if (!(p > 0)) return spots;

@@ -370,6 +370,13 @@ pub struct LifeView {
     pub guilds: Vec<crate::biosphere::GuildDetail>,
     pub traits: Option<crate::biosphere::WorldTraits>,
     pub dials: BTreeMap<String, f64>,
+    /// The energy ledger (LE2): what arrives, what life could tap, what it
+    /// captures, what staying alive costs. Worlds of the chart only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub energy: Option<crate::ledger::EnergyLedger>,
+    /// The speed read-out (LE4): fill time per habitat and one pace line.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub speed: Option<crate::speed::Speed>,
 }
 
 pub fn view(
@@ -404,5 +411,7 @@ pub fn view(
         guilds: bio.map(|b| b.guilds.clone()).unwrap_or_default(),
         traits: bio.map(|b| b.traits.clone()),
         dials: h.map(|h| h.dials.clone()).unwrap_or_default(),
+        energy: None,
+        speed: None,
     }
 }

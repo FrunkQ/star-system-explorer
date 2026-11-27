@@ -27,6 +27,7 @@ sse-flow = { path = "crates/sse-flow" }
 sse-pack = { path = "crates/sse-pack" }
 sse-reference = { path = "crates/sse-reference" }
 sse-atoms = { path = "crates/sse-atoms" }
+sse-physics = { path = "crates/sse-physics" }
 sse-import-v3 = { path = "crates/sse-import-v3", default-features = false }
 sse-world = { path = "crates/sse-world" }
 sse-formation = { path = "crates/sse-formation" }
@@ -43,6 +44,13 @@ codegen-units = 1
 
 # The formation suite's population tests run 10,000 systems; optimise it in
 # test builds too (same IEEE arithmetic, no fast-math, so results are unchanged).
+# Measured motion (RW17) sums thousands of series terms for each placed date.
+[profile.dev.package.sse-time]
+opt-level = 2
+
+[profile.dev.package.libm]
+opt-level = 2
+
 [profile.dev.package.sse-formation]
 opt-level = 2
 
