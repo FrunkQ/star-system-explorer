@@ -285,7 +285,7 @@ pub(crate) fn read_light_paths(
         }
         (Some("black-holes"), None) => (
             "fixture:black-holes".to_string(),
-            sse_light::paths::fixtures(),
+            sse_light::scenario::fixtures(),
         ),
         (f, None) => {
             return Err(bad(format!(

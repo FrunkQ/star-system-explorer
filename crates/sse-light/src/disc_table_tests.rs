@@ -19,7 +19,7 @@ fn blocks() -> Vec<Arc<dyn Atom>> {
 }
 
 fn fixtures() -> Vec<LightPaths> {
-    paths::fixtures()
+    crate::scenario::fixtures()
         .iter()
         .map(|a| paths::read(a, &emit::Model::base().table).unwrap())
         .collect()

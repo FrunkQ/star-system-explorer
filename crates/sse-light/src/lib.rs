@@ -31,6 +31,7 @@ pub mod observe;
 pub mod paths;
 pub mod photometry;
 pub mod scatter;
+pub mod scenario;
 pub mod shadow;
 pub mod shift;
 pub mod table;
