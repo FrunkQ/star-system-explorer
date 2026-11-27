@@ -123,10 +123,8 @@ pub struct ImpactSettings {
     /// Smallest crater a thick atmosphere lets through: atm_cut_km × P^atm_cut_exp (bar).
     pub atm_cut_km: f64,
     pub atm_cut_exp: f64,
-    /// Degradation: relief left = exp(−K t / (degrade_coeff D²)), K in m²/Myr.
-    pub kappa_dry_m2_myr: f64,
-    pub kappa_wet_m2_myr: f64,
-    pub kappa_air_m2_myr_bar: f64,
+    /// Degradation: relief left = exp(−K t / (degrade_coeff D²)), K the creep
+    /// diffusivity (creep.rs, the surface settings' `creep`).
     pub degrade_coeff: f64,
     pub ghost_fraction: f64,
     /// Global renewal by regime (absent: none): mean renewal time at a
@@ -308,6 +306,7 @@ pub struct CraterField {
     spans: Vec<(f64, f64, String, f64, f64)>,
     wet: (f64, f64),
     pressure_bar: f64,
+    creep: crate::creep::CreepRates,
     /// Plate crust birth per cell, and the grid, on plate worlds.
     crust: Option<(crate::plates::Grid, Vec<f64>)>,
     pub plains: Vec<Plains>,
@@ -617,9 +616,12 @@ impl CraterField {
         let age = self.epoch - t;
         let (w0, w1) = (self.wet.0.max(t), self.wet.1.min(self.epoch));
         let wet = (w1 - w0).max(0.0);
-        let k = self.s.kappa_dry_m2_myr * age
-            + self.s.kappa_wet_m2_myr * wet
-            + self.s.kappa_air_m2_myr_bar * self.pressure_bar * age;
+        // K t over the crater's life, m²: the creep diffusivity with the
+        // share of that life the ground was wet.
+        let wet_share = if age > 0.0 { wet / age } else { 0.0 };
+        let k = crate::creep::diffusivity(&self.creep, wet_share, self.pressure_bar * 1.0e5)
+            * age
+            * crate::creep::MYR_S;
         let dm = d_km * 1000.0;
         let fresh = m::exp(-k / (self.s.degrade_coeff * dm * dm));
         let ghost = fresh < self.s.ghost_fraction;
@@ -958,6 +960,7 @@ pub fn impacts(
             inputs.water.wet_until_gyr * 1000.0,
         ),
         pressure_bar: pressure,
+        creep: s.creep.clone(),
         crust,
         plains: vec![],
     };

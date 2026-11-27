@@ -656,6 +656,126 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.surface.creep_diffusivity",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "wet_share",
+     "letter": "w"
+    },
+    {
+     "port": "surface_pressure",
+     "letter": "P"
+    },
+    {
+     "port": "dry_creep",
+     "letter": "kd"
+    },
+    {
+     "port": "wet_creep",
+     "letter": "kw"
+    },
+    {
+     "port": "air_creep",
+     "letter": "ka"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "creep_diffusivity",
+     "letter": "K"
+    }
+   ],
+   "params": [],
+   "references": [
+    "Fassett, C. I. and Thomson, B. J. 2014, JGR Planets 119, 2255: lunar crater degradation read as topographic diffusion, about 5.5 m² per Myr on airless ground (impact gardening). doi:10.1002/2014JE004698",
+    "Roering, J. J., Kirchner, J. W. and Dietrich, W. E. 1999, Water Resources Research 35, 853: hillslope soil creep under air and water as nonlinear diffusion, about 0.003 m² per year on its linear branch. doi:10.1029/1998WR900090"
+   ],
+   "shown": "K = K_dry + K_wet w + K_air P",
+   "equation": {
+    "name": "How fast loose ground creeps downslope",
+    "formula": "K = kd + kw * clamp(w, 0, 1) + ka * max(P, 0)",
+    "inputs": {
+     "w": {
+      "kind": "surface.wet_share",
+      "unit": "1",
+      "name": "share of the time the ground had liquid water on it"
+     },
+     "P": {
+      "kind": "atmosphere.surface_pressure",
+      "unit": "Pa",
+      "name": "air pressure at the ground"
+     },
+     "kd": {
+      "kind": "material.creep_diffusivity",
+      "unit": "m2 s-1",
+      "name": "creep of dry airless regolith (Look up)"
+     },
+     "kw": {
+      "kind": "material.creep_diffusivity",
+      "unit": "m2 s-1",
+      "name": "creep of soil under running water (Look up)"
+     },
+     "ka": {
+      "kind": "material.air_creep_diffusivity",
+      "unit": "m2 s-1 Pa-1",
+      "name": "creep driven by wind, per pascal of air (Look up)"
+     }
+    },
+    "outputs": {
+     "K": {
+      "kind": "surface.creep_diffusivity",
+      "unit": "m2 s-1",
+      "name": "downslope creep diffusivity"
+     }
+    },
+    "source": {
+     "text": "Fassett, C. I. and Thomson, B. J. 2014, JGR Planets 119, 2255",
+     "doi": "10.1002/2014JE004698",
+     "where": "the airless rate; the wet and air rates are the fudge register's"
+    },
+    "explain": {
+     "curious": "Loose ground slowly slides downhill. On an airless moon only the steady rain of tiny impacts stirs it, so a crater takes billions of years to soften. Wind helps, and running water and soil life help far more, so on a wet world hills round off thousands of times faster.",
+     "science": "Linear topographic diffusion, dz/dt = K ∇²z. K is the airless impact-gardening rate plus a wet term weighted by the share of time the ground was wet, plus a wind term proportional to surface pressure. The same K fades craters and relaxes slopes; nonlinear creep near the critical slope is left out."
+    },
+    "examples": [
+     {
+      "w": 0.0,
+      "P": 0.0,
+      "kd": 1.7428448297715923e-13,
+      "kw": 1.5844043907014474e-09,
+      "ka": 3.168808781402895e-17,
+      "K": 1.7428448297715923e-13
+     },
+     {
+      "w": 1.0,
+      "P": 100000.0,
+      "kd": 1.7428448297715923e-13,
+      "kw": 1.5844043907014474e-09,
+      "ka": 3.168808781402895e-17,
+      "K": 1.5877474839658275e-09
+     },
+     {
+      "w": 0.0,
+      "P": 600.0,
+      "kd": 1.7428448297715923e-13,
+      "kw": 1.5844043907014474e-09,
+      "ka": 3.168808781402895e-17,
+      "K": 1.9329733566557661e-13
+     },
+     {
+      "w": 0.25,
+      "P": 0.0,
+      "kd": 1.7428448297715923e-13,
+      "kw": 1.5844043907014474e-09,
+      "ka": 3.168808781402895e-17,
+      "K": 3.96275382158339e-10
+     }
+    ]
+   }
   }
  ]
 }

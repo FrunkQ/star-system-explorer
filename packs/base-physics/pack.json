@@ -5626,6 +5626,20 @@
         "range": null
       },
       {
+        "description": "downslope creep driven by wind, per pascal of surface air (m² s⁻¹ Pa⁻¹)",
+        "dim": [
+          3,
+          -1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.air_creep_diffusivity",
+        "range": null
+      },
+      {
         "description": "a formation material's summed CI weight over its riders, bound oxygen included",
         "dim": [
           0,
@@ -5637,6 +5651,20 @@
           0
         ],
         "id": "material.ci_weight",
+        "range": null
+      },
+      {
+        "description": "a ground's downslope creep under one process, as a topographic diffusivity (m² s⁻¹)",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.creep_diffusivity",
         "range": null
       },
       {
@@ -8993,6 +9021,20 @@
         "range": null
       },
       {
+        "description": "how fast loose ground creeps downslope, as a topographic diffusivity (m² s⁻¹)",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.creep_diffusivity",
+        "range": null
+      },
+      {
         "description": "time bare ground has lain open to space since it was last renewed, by lava, ice or a crater's ejecta",
         "dim": [
           0,
@@ -9102,6 +9144,20 @@
           0
         ],
         "id": "surface.weathering_factor_650",
+        "range": null
+      },
+      {
+        "description": "share of the time ground had liquid water on it, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wet_share",
         "range": null
       },
       {
