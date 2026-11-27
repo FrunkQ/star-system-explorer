@@ -1051,6 +1051,21 @@ fn adopt_age_and_read_back_a_system() {
         site["tides"]["spring_range_m"].as_f64().unwrap() > 0.0,
         "{site}"
     );
+    // EC2: the sun's glint off Earth's seas from the year's winds (Cox and
+    // Munk) at water's index from the data sheet: 1.33 reflects 2% back.
+    let g = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "glint", "system": sys, "body": earth["address"]}),
+    );
+    let gl = &g["data"];
+    let n = gl["refractive_index"].as_f64().unwrap_or(0.0);
+    assert!((n - 1.333).abs() < 0.01, "{gl}");
+    let r0 = gl["normal_reflectance"].as_f64().unwrap();
+    assert!((r0 - 0.0204).abs() < 0.001, "{gl}");
+    let s2 = gl["slope_variance"].as_f64().unwrap();
+    let wind = gl["wind_m_s"].as_f64().unwrap();
+    assert!((3.0..15.0).contains(&wind), "{gl}");
+    assert!((0.02..0.09).contains(&s2), "{gl}");
     // A formation world spins at its settled spin.
     let f = send(
         &mut k,
