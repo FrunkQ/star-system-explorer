@@ -17,3 +17,12 @@ A JSON number is first the nearest double, as in a browser; then, integral and b
 
 ## Goldens
 None moved, core included: no fixture pack holds such a number in a free-form field (TP4 had already written its two as a browser writes them).
+
+## What must stay exact, checked (27 Nov)
+The rule only touches free-form JSON numbers: `cbor::Value` read from JSON (authored values, program and sifter values) and the untyped parts of a pack. It rounds nothing that a browser had not already rounded, because a browser holds every JSON number as a double before the kernel sees it.
+- Typed fields are read by their type and untouched: every `at_s`, `occurred_at_s`, `now_s` is an `i64` field. `typed_seconds_past_2_53_stay_exact` sets the campaign's now to 435494880000000001 s natively and reads it back exact.
+- Seeds are 32-byte hashes, sent as seed text (`open_universe.seed`, postcards); hashes and ids are hex strings.
+- Saves (`export_chronicle`) carry every event as hex canonical CBOR, which is binary and keeps its integers as encoded; this rule never reads them.
+- Shipped packs and fixtures: 211 whole numbers above 2^53, every one a double exactly (the only exceptions were digits inside DOI strings, and a test golden the kernel never reads back). So no pack number changes value today.
+
+Not this package's fault, but found here, for TP2: a browser sends a time in seconds as a JavaScript number, so past 2^53 s (285 million years after the Big Bang) the web cannot name every second. At today's date a double is 64 s apart. Natively the kernel keeps every second; from the web, times "to the second" need to travel as text or as a BigInt-safe form. TP2 owns that choice.
