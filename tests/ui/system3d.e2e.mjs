@@ -78,8 +78,16 @@ try {
         await gm.waitForFunction(() => /^(gpu-high|gpu-basic|gpu-ultra)\|\d+\|/.test(document.querySelector("[aria-roledescription='3D chart'] canvas.gpu")?.getAttribute("data-quality") ?? ""), null, { timeout: 30000 });
         const live = view.locator("[data-star-live]");
         await live.waitFor({ timeout: 30000 });
+        // CLK1: everything moves on the campaign's clock. Stopped, the star stands still and the note says so; played
+        // (a day a second), it turns on its own spin, and stopped again it holds.
         const turn0 = await live.getAttribute("data-star-turn");
+        assert.match(await view.locator("[data-clock-rate]").innerText(), /clock is stopped, so the picture is still/);
+        await gm.waitForTimeout(600);
+        assert.equal(await live.getAttribute("data-star-turn"), turn0, "a stopped clock is a still picture");
+        await gm.getByRole("button", { name: "Play", exact: true }).click();
         await gm.waitForFunction((t) => document.querySelector("[data-star-live]")?.getAttribute("data-star-turn") !== t, turn0, { timeout: 10000 });
+        assert.match(await view.locator("[data-clock-rate]").innerText(), /on the campaign's clock, a day a second/);
+        await gm.getByRole("button", { name: "Pause", exact: true }).click();
         // SG1 to SG3: the star's glow is the eye's glare, said beside the view, and its flares and ejections are named.
         assert.match(await live.innerText(), /glare/, "the glow says what it is");
         assert.match(await live.innerText(), /flare/, "the flares are named");

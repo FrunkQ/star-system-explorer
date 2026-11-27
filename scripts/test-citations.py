@@ -2,8 +2,10 @@
 """Tests for scripts/citations.py: what counts as a citation, how it is keyed, and how a reply is scored."""
 
 import importlib.util
+import json
 import os
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("citations", os.path.join(HERE, "citations.py"))
@@ -35,8 +37,49 @@ CASES = [
 ]
 
 
-def main():
+def row(key, status="unchecked"):
+    return {"key": key, "citation": key, "doi": [], "status": status, "places": []}
+
+
+def split_list_tests():
+    """One file per paper: names, round trip, the two failures, and moving a pre-split master.jsonl in."""
     bad = 0
+    names = [c.paper_file(k) for k in ["shakura1973", "doi:10.1175/a_b", "doi:10.1175/a/b", "doi:10.1175/A-B"]]
+    if names[0] != "shakura1973.json" or len(set(names)) != len(names):
+        print(f"FAIL paper_file names: {names}")
+        bad += 1
+    with tempfile.TemporaryDirectory() as tmp:
+        c.PAPERS = os.path.join(tmp, "papers")
+        c.LEGACY = os.path.join(tmp, "master.jsonl")
+        rows = [row("aarseth2001"), row("doi:10.1175/a_b")]
+        c.write_master(rows)
+        if [r["key"] for r in c.load_master()] != ["aarseth2001", "doi:10.1175/a_b"]:
+            print("FAIL round trip")
+            bad += 1
+        # A key in a file of the wrong name (a hand-made copy) is refused, so a duplicate cannot hide.
+        with open(os.path.join(c.PAPERS, "copy.json"), "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(row("aarseth2001")) + "\n")
+        try:
+            c.read_papers()
+            print("FAIL a misnamed or duplicate paper file was accepted")
+            bad += 1
+        except c.ListError:
+            pass
+        os.remove(os.path.join(c.PAPERS, "copy.json"))
+        # A branch from before the split: its master.jsonl is moved in, scores kept, and deleted.
+        with open(c.LEGACY, "w", encoding="utf-8") as fh:
+            for r in [row("aarseth2001", "confirmed"), row("zahn1977")]:
+                fh.write(json.dumps(r) + "\n")
+        c.absorb_legacy()
+        got = {r["key"]: r["status"] for r in c.load_master()}
+        if got != {"aarseth2001": "confirmed", "doi:10.1175/a_b": "unchecked", "zahn1977": "unchecked"} or os.path.exists(c.LEGACY):
+            print(f"FAIL absorbing master.jsonl: {got}")
+            bad += 1
+    return bad
+
+
+def main():
+    bad = split_list_tests()
     for text, want in CASES:
         got = keys(text)
         if got != want:
@@ -59,7 +102,7 @@ def main():
         bad += 1
     if bad:
         sys.exit(1)
-    print(f"citations tests: {len(CASES) + 4} passed")
+    print(f"citations tests: {len(CASES) + 8} passed")
 
 
 if __name__ == "__main__":

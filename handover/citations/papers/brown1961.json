@@ -1,0 +1,1 @@
+{"key": "brown1961", "citation": "Brown 1961", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/ice_ground.rs"], "claims": ["//! Brown 1961), so the warm Moon keeps none while Jupiter's moons keep all of"], "tier": 3}

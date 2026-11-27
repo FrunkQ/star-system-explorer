@@ -1,0 +1,1 @@
+{"key": "ramirez2012", "citation": "Ramírez et al. 2012 for", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-light/src/tests.rs"], "claims": ["/// (Blanton and Roweis 2007 Table 1, Vega system; Ramírez et al. 2012 for"], "tier": 3}

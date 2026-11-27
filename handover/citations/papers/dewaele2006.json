@@ -1,0 +1,1 @@
+{"key": "dewaele2006", "citation": "Dewaele et al. 2006", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/core.rs"], "claims": ["/// Iron's equation of state (Vinet, hcp iron; Dewaele et al. 2006):"], "tier": 3}

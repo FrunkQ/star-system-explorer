@@ -3,6 +3,7 @@
 // scheme's question, its classes as a tree (base classes under their parents, modifiers apart), each class's
 // bands in words with their units, and the named worlds the atlas checks it against. A class is a label read off a
 // world's results; nothing here decides anything about a world, and nothing reaches the kernel.
+import type { Json } from "./json.ts";
 import type { PackDoc } from "./physics.ts";
 import { roundTo } from "./figures.ts";
 
@@ -39,7 +40,8 @@ export interface AtlasClass {
   /** "fictional" for a class only a story can make (terraformed). */
   evidence?: string;
   /** Named worlds the atlas is checked against: those that land in it, and near misses that do not. */
-  examples: { name: string; in: boolean }[];
+  /** Its examples; `values` are the example's facts (a star class's first carries star.sample_mass_msun, star.sample_age_yr and star.sample_feh: a life-line star that lands in it). */
+  examples: { name: string; in: boolean; values?: Record<string, Json> }[];
   pack: string;
 }
 
@@ -69,7 +71,7 @@ interface AtlasData {
     gate?: AtlasBand[];
     needs?: string[];
     evidence?: string;
-    examples?: { name: string; expect?: string }[];
+    examples?: { name: string; expect?: string; values?: Record<string, Json> }[];
   }[];
 }
 
@@ -102,7 +104,7 @@ export function classesOnStack(packs: readonly PackDoc[]): ClassAtlas {
         gate: c.gate ?? [],
         needs: c.needs ?? [],
         ...(c.evidence ? { evidence: c.evidence } : {}),
-        examples: (c.examples ?? []).map((e) => ({ name: e.name, in: e.expect !== "out" })),
+        examples: (c.examples ?? []).map((e) => ({ name: e.name, in: e.expect !== "out", ...(e.values ? { values: e.values } : {}) })),
         pack: p.id,
       });
     }

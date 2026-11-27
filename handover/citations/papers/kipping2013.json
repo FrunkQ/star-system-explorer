@@ -1,0 +1,1 @@
+{"key": "kipping2013", "citation": "Kipping 2013, MNRAS 434, L51", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/violent_tests.rs"], "claims": ["// RV giants: Beta(0.867, 3.03), mean 0.22 (Kipping 2013, MNRAS 434, L51)."], "tier": 3}

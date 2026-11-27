@@ -1,7 +1,9 @@
 // The workspace state shared by the views of one screen. Reactive, so a
 // selection made on the chart reaches the card and the ruler.
 import { withChoice, type AppliedEdit, type ChangeRequest, type DeriveRef, type Workspace } from "../../ui-contract/src/index.ts";
-import { emptyPlaybook } from "../../ui-contract/src/index.ts";
+import { emptyPlaybook, followTime, stoppedAt, withRate } from "../../ui-contract/src/index.ts";
+
+const wallNow = () => (typeof performance !== "undefined" ? performance.now() : 0);
 
 export function createWorkspace(now_yr: number): Workspace {
   const ws: Workspace = $state({
@@ -9,6 +11,7 @@ export function createWorkspace(now_yr: number): Workspace {
     now_yr,
     campaign_now_yr: now_yr,
     campaign_epoch_yr: now_yr,
+    clock: stoppedAt(now_yr, now_yr),
     mode: "edit",
     applied: {},
     revision: 0,
@@ -36,6 +39,11 @@ export function createWorkspace(now_yr: number): Workspace {
     },
     setTime(yr: number) {
       ws.now_yr = yr;
+      ws.clock = followTime(ws.clock ?? stoppedAt(yr, ws.campaign_epoch_yr ?? yr), yr, ws.campaign_epoch_yr ?? yr, wallNow());
+    },
+    setRate(rate: number) {
+      const c = followTime(ws.clock ?? stoppedAt(ws.now_yr, ws.campaign_epoch_yr ?? ws.now_yr), ws.now_yr, ws.campaign_epoch_yr ?? ws.now_yr, wallNow());
+      ws.clock = withRate(c, rate, wallNow());
     },
     setCampaignNow(yr: number) {
       ws.campaign_now_yr = yr;

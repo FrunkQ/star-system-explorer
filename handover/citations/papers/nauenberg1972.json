@@ -1,0 +1,1 @@
+{"key": "nauenberg1972", "citation": "Nauenberg 1972, zero-temperature", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-nebula/src/lib.rs"], "claims": ["/// White dwarf radius from its mass (Nauenberg 1972, zero-temperature"], "tier": 3}
