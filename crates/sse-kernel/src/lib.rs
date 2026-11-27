@@ -67,6 +67,7 @@ mod physics_tests;
 mod power_books_tests;
 pub mod protocol;
 mod reference;
+mod scenario;
 mod sea;
 mod sky;
 mod small;
