@@ -789,9 +789,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         seed: Option<String>,
+        /// A date in seconds: a whole number is read exactly (TP1).
         #[serde(default)]
-        #[ts(optional)]
-        at_s: Option<f64>,
+        #[ts(optional, type = "number")]
+        at_s: Option<sse_core::time::Seconds>,
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         window: Option<serde_json::Value>,
@@ -920,6 +921,58 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         e: Option<f64>,
+        /// RW16a, the small-body designer's pins (each optional; left out,
+        /// the field decides): `pair` single, contact or separated; `makeup`
+        /// mass shares of metal, rock, carbon and ice; `structure`
+        /// rubble-pile, monolith or relaxed; one turn in `spin_hours`;
+        /// `battered` 0 to 1 within its structure's relief range; a pair's
+        /// `size_ratio`. A pin is never refused: the answer's `takes` says
+        /// what an implausible one would need. In a system with no
+        /// formation record the body is made of a designed field.
+        #[serde(default)]
+        #[ts(optional)]
+        pair: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        makeup: Option<Vec<f64>>,
+        #[serde(default)]
+        #[ts(optional)]
+        structure: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        battered: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        size_ratio: Option<f64>,
+    },
+    /// RW16a: the shape of any body below the size at which it pulls itself
+    /// round (a small moon, an imported or catalogued asteroid), from its
+    /// address, so it is the same lump on every device and in every view.
+    /// Give what is known: `diameter_km`, `mass_kg` (with both, the makeup
+    /// follows the bulk density), an `ice` share, `spin_hours`, `a_au`. The
+    /// answer is the body as `make_small_body` makes it (single, never a
+    /// pair) with `round` and `round_km`. Needs no formation record.
+    SmallShape {
+        system: String,
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        diameter_km: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ice: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        a_au: Option<f64>,
     },
     /// Natural resource inventory (TG11, MP8b): for each world of `system`
     /// (or `body`), the kilograms of each resource kind in `kinds` (pack
@@ -2259,6 +2312,20 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// GZ12: the universe's home galaxy, one of the web's own catalogued
+    /// haloes: the GM's choice (`set_home`) if made, else the halo that best
+    /// fits the cosmology pack's home wish, searched cell by cell outward
+    /// from the origin cell. Worked out once per universe; read only.
+    HomeGalaxy,
+    /// GZ12 "Make this home": choose another catalogued halo
+    /// (`…/cell:x.y.z/halo:n`) as the universe's home, written as one record
+    /// event; `halo` absent or null returns to the web's own choice. Every
+    /// op that reads the campaign's galaxy follows it. GM machine only.
+    SetHome {
+        #[serde(default)]
+        #[ts(optional)]
+        halo: Option<String>,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -2787,6 +2854,7 @@ impl Request {
             Request::ReadInventory { .. } => "read_inventory",
             Request::SmallBody { .. } => "small_body",
             Request::MakeSmallBody { .. } => "make_small_body",
+            Request::SmallShape { .. } => "small_shape",
             Request::RingStructure { .. } => "ring_structure",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
@@ -2874,6 +2942,8 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::RollProfile { .. } => "roll_profile",
             Request::SectorMap { .. } => "sector_map",
+            Request::HomeGalaxy => "home_galaxy",
+            Request::SetHome { .. } => "set_home",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
             Request::StarCell { .. } => "star_cell",
@@ -3108,6 +3178,11 @@ pub fn ops() -> Vec<OpInfo> {
             "one body: the same as small_body on a one-member field",
         ),
         o(
+            "small_shape",
+            Cost::Trivial,
+            "one body: the same as make_small_body, no formation run needed",
+        ),
+        o(
             "ring_structure",
             Cost::Trivial,
             "one ring: a few hundred resonance solves and four samples per profile pixel (4,096 by default)",
@@ -3333,6 +3408,16 @@ pub fn ops() -> Vec<OpInfo> {
             "sector_map",
             Cost::Light,
             "GM machine only; one code reading per mapped system",
+        ),
+        o(
+            "home_galaxy",
+            Cost::Medium,
+            "the first time per universe, searches the halo cells round the origin for the best fit to the home wish (1 to 125 cells of big haloes, about 0.005 to 0.4 s native), then kept; read only",
+        ),
+        o(
+            "set_home",
+            Cost::Medium,
+            "GM machine only; reads the chosen halo's cell to check it, then one record event",
         ),
         o(
             "halo_cell",
@@ -4568,6 +4653,20 @@ pub enum Response {
     Error {
         code: String,
         message: String,
+    },
+    /// `home_galaxy`: `{halo, key, cell, mass_msun, position_mpc, neighbour,
+    /// by ("web" or "gm"), fits_wish, why, cells_read, wish, model}`.
+    HomeGalaxy {
+        #[ts(type = "unknown")]
+        home: serde_json::Value,
+    },
+    /// `set_home`: the home now (as `home_galaxy`), the event that chose it
+    /// and the state hash.
+    HomeSet {
+        #[ts(type = "unknown")]
+        home: serde_json::Value,
+        event_id: String,
+        state_hash: String,
     },
     /// `halo_cell`: `{address, index, side_mpc, origin_mpc, delta_l, mass_msun,
     /// halo_mass_msun, total, above_min, haloes: [{address, key, mass_msun,

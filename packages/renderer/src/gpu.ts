@@ -79,7 +79,7 @@ export interface GpuItem {
    * True look: the body's own shape instead of a sphere (small-body.ts `smallBodyMesh`: an asteroid's figure, two lobes
    * of a contact binary), in units of `radius`, its long axis on x and spin axis on z. Keyed: built once.
    */
-  mesh?: { key: string; positions: Float32Array; normals: Float32Array; index: Uint32Array };
+  mesh?: { key: string; positions: Float32Array; normals: Float32Array; index: Uint32Array; uvs?: Float32Array };
   /** True look: how much the world's spin flattens it (true-shape.ts, TA6), drawn along its pole, volume kept. */
   flatten?: number;
   /** The world's north pole in camera space, for `flatten` when no `frame` is given. */
@@ -263,6 +263,7 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
       g = new BufferGeometry();
       g.setAttribute("position", new Float32BufferAttribute(mesh.positions, 3));
       g.setAttribute("normal", new Float32BufferAttribute(mesh.normals, 3));
+      if (mesh.uvs) g.setAttribute("uv", new Float32BufferAttribute(mesh.uvs, 2));
       g.setIndex(Array.from(mesh.index));
       meshGeoms.set(mesh.key, g);
     }

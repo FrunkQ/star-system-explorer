@@ -1,0 +1,48 @@
+{
+ "format": "sse.earth-orientation/1",
+ "id": "earth-orientation",
+ "about": "Which way the Earth faces at a date: its spin angle from Universal Time, the slow turn of its pole (precession) and the gap between the even time the series run on (TT) and the Earth's own uneven clock (UT1, Delta T). Used to say where on the ground a shadow or a sight falls. Nutation (at most about 17 arcseconds) is left out: it moves a ground place by under half a kilometre.",
+ "body": "earth",
+ "sources": [
+  {"id": "capitaine2003", "text": "Capitaine, N., Wallace, P. T. and Chapront, J. 2003, A&A 412, 567: Expressions for IAU 2000 precession quantities (P03, adopted as IAU 2006 precession)", "status": "unverified", "doi": "10.1051/0004-6361:20031539"},
+  {"id": "iers2010", "text": "Petit, G. and Luzum, B. (eds.) 2010, IERS Conventions (2010), IERS Technical Note 36, chapter 5: the Earth rotation angle and Greenwich mean sidereal time", "status": "unverified", "url": "https://iers-conventions.obspm.fr/"},
+  {"id": "hilton2006", "text": "Hilton, J. L. et al. 2006, Celest. Mech. Dyn. Astron. 94, 351: Report of the IAU Division I Working Group on Precession and the Ecliptic (obliquity at J2000, 84381.406 arcsec)", "status": "verified", "doi": "10.1007/s10569-006-0001-2"},
+  {"id": "espenak-meeus2006", "text": "Espenak, F. and Meeus, J. 2006, Five Millennium Canon of Solar Eclipses: -1999 to +3000, NASA/TP-2006-214141, section 2.6: polynomial expressions for Delta T (after Morrison and Stephenson 2004)", "status": "unverified", "url": "https://eclipse.gsfc.nasa.gov/SEcat5/deltatpoly.html"},
+  {"id": "morrison-stephenson2004", "text": "Morrison, L. V. and Stephenson, F. R. 2004, J. Hist. Astron. 35, 327: Historical values of the Earth's clock error Delta T and the calculation of eclipses (the uncertainty of Delta T in the past)", "status": "unverified", "doi": "10.1177/002182860403500305"}
+ ],
+ "era": {"turns_at_j2000": 0.779057273264, "turns_per_ut1_day": 1.00273781191135448, "src": "iers2010", "note": "ERA = 2 pi (turns_at_j2000 + turns_per_ut1_day * (JD_UT1 - 2451545.0))"},
+ "gmst_minus_era_arcsec": {"poly": [0.014506, 4612.156534, 1.3915817, -0.00000044, -0.000029956, -0.0000000368], "t": "Julian centuries of TT from J2000", "src": "capitaine2003"},
+ "obliquity_j2000_arcsec": {"v": 84381.406, "src": "hilton2006"},
+ "precession_arcsec": {
+  "zeta_a": [2.650545, 2306.083227, 0.2988499, 0.01801828, -0.000005971, -0.0000003173],
+  "z_a": [-2.650545, 2306.077181, 1.0927348, 0.01826837, -0.000028596, -0.0000002904],
+  "theta_a": [0.0, 2004.191903, -0.4294934, -0.04182264, -0.000007089, -0.0000001274],
+  "t": "Julian centuries of TT from J2000",
+  "rotation": "mean equator of date = R3(-z_a) R2(theta_a) R3(-zeta_a) times the J2000 mean equator",
+  "src": "capitaine2003"
+ },
+ "delta_t": {
+  "about": "Delta T = TT - UT1 in seconds, by decimal year y. Each piece is a polynomial in u = (y - centre) / scale, used from `from` (inclusive) to `to`. Outside them all, the long-term parabola of the first piece.",
+  "src": "espenak-meeus2006",
+  "pieces": [
+   {"from": -1.0e9, "to": -500.0, "centre": 1820.0, "scale": 100.0, "poly": [-20.0, 0.0, 32.0]},
+   {"from": -500.0, "to": 500.0, "centre": 0.0, "scale": 100.0, "poly": [10583.6, -1014.41, 33.78311, -5.952053, -0.1798452, 0.022174192, 0.0090316521]},
+   {"from": 500.0, "to": 1600.0, "centre": 1000.0, "scale": 100.0, "poly": [1574.2, -556.01, 71.23472, 0.319781, -0.8503463, -0.005050998, 0.0083572073]},
+   {"from": 1600.0, "to": 1700.0, "centre": 1600.0, "scale": 1.0, "poly": [120.0, -0.9808, -0.01532, 0.000140271]},
+   {"from": 1700.0, "to": 1800.0, "centre": 1700.0, "scale": 1.0, "poly": [8.83, 0.1603, -0.0059285, 0.00013336, -8.51788756e-7]},
+   {"from": 1800.0, "to": 1860.0, "centre": 1800.0, "scale": 1.0, "poly": [13.72, -0.332447, 0.0068612, 0.0041116, -0.00037436, 0.0000121272, -0.0000001699, 0.000000000875]},
+   {"from": 1860.0, "to": 1900.0, "centre": 1860.0, "scale": 1.0, "poly": [7.62, 0.5737, -0.251754, 0.01680668, -0.0004473624, 0.00000428860]},
+   {"from": 1900.0, "to": 1920.0, "centre": 1900.0, "scale": 1.0, "poly": [-2.79, 1.494119, -0.0598939, 0.0061966, -0.000197]},
+   {"from": 1920.0, "to": 1941.0, "centre": 1920.0, "scale": 1.0, "poly": [21.2, 0.84493, -0.0761, 0.0020936]},
+   {"from": 1941.0, "to": 1961.0, "centre": 1950.0, "scale": 1.0, "poly": [29.07, 0.407, -0.00429185, 0.000392619]},
+   {"from": 1961.0, "to": 1986.0, "centre": 1975.0, "scale": 1.0, "poly": [45.45, 1.067, -0.00384615, -0.00139276]},
+   {"from": 1986.0, "to": 2005.0, "centre": 2000.0, "scale": 1.0, "poly": [63.86, 0.3345, -0.060374, 0.0017275, 0.000651814, 0.00002373599]},
+   {"from": 2005.0, "to": 2050.0, "centre": 2000.0, "scale": 1.0, "poly": [62.92, 0.32217, 0.005589]},
+   {"from": 2050.0, "to": 2150.0, "centre": 1820.0, "scale": 100.0, "poly": [-205.724, 56.28, 32.0]},
+   {"from": 2150.0, "to": 1.0e9, "centre": 1820.0, "scale": 100.0, "poly": [-20.0, 0.0, 32.0]}
+  ],
+  "note": "The divided coefficients are the published ones worked out: 1/7129, 1/1174000, 1/233174, 1/233, 1/2547, 1/260, 1/718; the 2050 to 2150 piece is -20 + 32 u^2 - 0.5628 (2150 - y) written in u.",
+  "measured_years": [1955.0, 2026.0],
+  "uncertainty": {"about": "How far Delta T may be off, seconds: within the measured years about a second; away from them it grows as the square of the distance in centuries from 1820 (Morrison and Stephenson 2004 give about 0.8 t^2 seconds in the long run), and in the future as the square of the centuries after the last measurement.", "measured_s": 1.0, "past_s_per_century2": 0.8, "past_centre": 1820.0, "future_s_per_century2": 32.0, "src": "morrison-stephenson2004", "check": "unverified"}
+ }
+}

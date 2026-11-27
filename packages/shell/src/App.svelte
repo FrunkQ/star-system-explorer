@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskFor, screenOnDesk, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { MOTION_STEP_S, YEAR_SECONDS, followTime, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, stoppedAt, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -100,6 +100,7 @@
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { EXOTIC_SCREENS } from "./screens.exotic.ts";
   import { FORMATION_SCREENS } from "./screens.formation.ts";
+  import { SMALL_SCREENS } from "./screens.small.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
   import { ATLAS_SCREENS } from "./atlas/screens.atlas.ts";
   import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
@@ -137,7 +138,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(FORMATION_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(FORMATION_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(SMALL_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -855,7 +856,7 @@
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
     if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null));
-    orbitsWant = { s, sc, at, at_s: (ws.now_yr - (ws.campaign_epoch_yr ?? base.now_yr)) * YEAR_SECONDS, epoch, key };
+    orbitsWant = { s, sc, at, at_s: Number(at - epoch), epoch, key };
     pumpOrbits();
   });
   // A pack's calendar (kernel calendar), read again whenever the pack stack changes.
@@ -925,11 +926,7 @@
   });
   // The picture's clock (CLK1) follows the time in view however it was moved (a step, a bookmark, a save opened, a
   // campaign shifted to another system's present); play and the Run desk's clock set its rate.
-  $effect(() => {
-    const yr = ws.now_yr;
-    const epoch = ws.campaign_epoch_yr ?? base.now_yr;
-    untrack(() => (ws.clock = followTime(ws.clock ?? stoppedAt(yr, epoch), yr, epoch, performance.now())));
-  });
+  $effect(() => ws.followClock?.());
   // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
   // so stepping and playing through days does not call the kernel's derivations at every frame.
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
@@ -1321,9 +1318,19 @@
     if (sel && sel.kind !== "star") return sel.address;
     return systemOrder(scene).find((x) => x.kind === "planet")?.address;
   }
+  /** What a start-sheet action opens must be on the desk it lands on (TM9c): a screen's rail entries, a control's part. */
+  function startShows(a: StartAction, d: Desk): boolean {
+    if ("screen" in a) return screenOnDesk(SCREENS[a.screen] ?? {}, d);
+    if ("world" in a) return screenOnDesk(SCREENS[a.world] ?? {}, d);
+    if ("control" in a) return partShows(a.control, d);
+    return true;
+  }
   function fromStart(a: StartAction) {
     startOpen = false;
-    queueMicrotask(() => {
+    // "Carry on" keeps the desk last used; a verb lands on a desk that has what it opens (Explore first).
+    chooseDesk(deskFor(desk, (d) => startShows(a, d)));
+    // After the desk's parts are drawn, so a control such as Light is there to press.
+    void tick().then(() => {
       if ("door" in a) {
         if (a.door === "sol") void openSol();
         else if (a.door === "grow") openMake("generate");
@@ -1813,7 +1820,7 @@
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-desk={desk} data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   {#if filled}
     <!-- The top edge: the pointer there brings the bar back over the picture. -->
     <div class="fill-edge" aria-hidden="true" onpointerenter={() => (peek = true)}></div>
@@ -2691,6 +2698,22 @@
       flex-wrap: wrap;
       gap: 4px 12px;
       padding: 6px 12px;
+    }
+    /* The phone's Run frame (three desks design section 8, TM9b): the place line is its own row under the bar, the
+       stepper. */
+    .app[data-desk="run"] {
+      grid-template-rows: auto auto auto auto auto;
+    }
+    .app[data-desk="run"] > .bar {
+      flex-wrap: wrap;
+      row-gap: 0;
+      padding-top: 6px;
+      min-height: 56px;
+    }
+    .app[data-desk="run"] > .bar :global(.place.stepper) {
+      order: 10;
+      flex: 1 0 100%;
+      border-top: 1px solid var(--sse-rule);
     }
   }
 </style>

@@ -158,7 +158,7 @@ fn cassini_rewinds_through_its_flybys_to_saturn() {
     for (t, body) in &flybys {
         let just = l.at(t - 1, &sys);
         assert_eq!(just.kind, "course", "{body}");
-        let b = Ephemeris::body(&sys, body, *t as f64).unwrap();
+        let b = Ephemeris::body(&sys, body, sse_core::time::Instant::seconds(*t)).unwrap();
         let miss = norm(sub(just.r_m.unwrap(), b.0));
         assert!(miss < 1.0e6, "missed {body} by {} km", miss / 1e3);
     }
@@ -172,7 +172,12 @@ fn cassini_rewinds_through_its_flybys_to_saturn() {
     let after = l.at(soi + 86_400, &sys);
     assert_eq!(after.kind, "orbit");
     assert_eq!(after.with.as_deref(), Some("u:sol/sys:sun/body:saturn"));
-    let saturn = Ephemeris::body(&sys, "u:sol/sys:sun/body:saturn", (soi + 86_400) as f64).unwrap();
+    let saturn = Ephemeris::body(
+        &sys,
+        "u:sol/sys:sun/body:saturn",
+        sse_core::time::Instant::seconds(soi + 86_400),
+    )
+    .unwrap();
     let d = norm(sub(after.r_m.unwrap(), saturn.0));
     assert!(d < 1.0e10, "{} km from Saturn", d / 1e3);
     // 2018: gone into Saturn.
@@ -230,7 +235,9 @@ fn every_solved_course_arrives() {
                 course: Course::Lambert { to, arrive_s },
             } = &p.state
             {
-                let Some(b) = Ephemeris::body(&sys, to, *arrive_s as f64) else {
+                let Some(b) =
+                    Ephemeris::body(&sys, to, sse_core::time::Instant::seconds(*arrive_s))
+                else {
                     continue;
                 };
                 let just = l.at(arrive_s - 1, &sys);
@@ -267,7 +274,12 @@ fn iss_phase_drift_against_horizons() {
             .map(|x| x.as_f64().unwrap() * 1e3)
             .collect();
         let at = l.at(t, &sys);
-        let earth = Ephemeris::body(&sys, "u:sol/sys:sun/body:earth", t as f64).unwrap();
+        let earth = Ephemeris::body(
+            &sys,
+            "u:sol/sys:sun/body:earth",
+            sse_core::time::Instant::seconds(t),
+        )
+        .unwrap();
         let geo = sub(at.r_m.unwrap(), earth.0);
         let err = norm(sub(geo, [r[0], r[1], r[2]]));
         println!("{date}: off by {:.0} km", err / 1e3);

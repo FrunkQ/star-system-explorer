@@ -564,6 +564,23 @@ impl NavSystem {
         };
         kepler::state(&el, self.mu() + b.mu(), t_s - self.t0_s)
     }
+    /// As `at`, at a whole-second date (TP1): the span from the elements'
+    /// date is taken in integers and the angle formed exactly, so the body
+    /// moves every second at any age. `t0_s` itself is read as the exact
+    /// value of its double.
+    pub fn at_date(&self, b: &NavBody, t: sse_core::time::Instant) -> (V3, V3) {
+        let el = Elements {
+            a_m: b.a_au * AU,
+            e: b.e,
+            i_deg: b.i_deg,
+            node_deg: b.node_deg,
+            varpi_deg: b.varpi_deg,
+            mean_longitude_deg: b.mean_longitude_deg,
+        };
+        let epoch = sse_core::time::Instant::from_seconds_f64(self.t0_s)
+            .unwrap_or(sse_core::time::Instant::ORIGIN);
+        kepler::state_at(&el, self.mu() + b.mu(), t, epoch)
+    }
 }
 
 impl NavBody {
