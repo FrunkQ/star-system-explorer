@@ -43,6 +43,7 @@ try {
     // Remnants with no picture yet say so, never a stand-in disc.
     for (const fam of ["neutron-star", "black-hole"]) {
       await g.locator(`[data-family="${fam}"]`).click();
+      await gm.waitForFunction(() => document.querySelectorAll('[data-star-state="reading"]').length === 0, null, { timeout: 60000 });
       const rem = await g.locator("[data-star-class]").evaluateAll((els) => els.map((e) => [e.dataset.starClass, e.dataset.starState]));
       assert.ok(rem.length > 0, `${fam} has tiles`);
       for (const s of rem) assert.equal(s[1], "none", `${s[0]} is not drawn yet`);
@@ -80,6 +81,9 @@ try {
     await card.locator("[data-star-follow]").click();
     const life = gm.locator("[data-star-life]");
     await life.waitFor();
+    await gm.waitForFunction(() => document.querySelector("[data-star-life]")?.getAttribute("data-read") === "done", null, { timeout: 60000 });
+    // The K giant's life-line sample is a 3.5 solar mass star; the Sun's own life is one solar mass.
+    await life.locator("[data-life-mass]").evaluate((el) => ((el.value = "0"), el.dispatchEvent(new Event("input", { bubbles: true })), el.dispatchEvent(new Event("change", { bubbles: true }))));
     await gm.waitForFunction(() => document.querySelector("[data-star-life]")?.getAttribute("data-read") === "done", null, { timeout: 60000 });
     const phases = await life.locator("[data-life-stage]").evaluateAll((els) => els.map((e) => e.dataset.lifeStage));
     console.log(vp, "life of 1 solar mass", JSON.stringify(phases));
