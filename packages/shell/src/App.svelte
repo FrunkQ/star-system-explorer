@@ -928,7 +928,7 @@
         // One epoch (RW17 part 2): the screen counts this system's time from its birth second, and a real-sky system's
         // days from its anchor. The Solar System's door, opened fresh on a clock nobody has set, opens on the device's
         // present, and the kernel's campaign now is set to the same second.
-        ws.birth_s = r.result.birth_s ?? null;
+        ws.birth_s = r.result.birth_s !== undefined ? BigInt(r.result.birth_s) : null;
         viewAnchor = anchorOf(r.result.facts);
         let present = read.now_yr;
         if (v.fresh && skyDateDue && viewAnchor !== null && ws.birth_s !== null) {

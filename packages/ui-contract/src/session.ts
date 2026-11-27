@@ -49,6 +49,9 @@ export interface PackCalendar {
   day_s: number;
   year_days: number;
   months?: { name: string; days: number }[];
+  /** Long years (a day added to `leap_month`, counted from 0), as the kernel's calendar gives them. */
+  leap?: { every: number; except_every?: number; but_every?: number };
+  leap_month?: number;
   format: string;
 }
 import type { KernelClient } from "../../kernel-client/src/index.ts";
@@ -1223,7 +1226,7 @@ export class Session implements ViewSession {
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     // A birth second is past 2^53: read from the reply's own digits, not through a double (it would be 32 s coarse).
     const birth = birthDigits(text);
-    return { ok: true, result: { ...(r as unknown as SystemResolved), ...(birth !== undefined ? { birth_s: birth } : {}) } };
+    return { ok: true, result: { ...(r as unknown as SystemResolved), ...(birth !== undefined ? { birth_s: String(birth) } : {}) } };
   }
 
   async kernelVersion(): Promise<string> {

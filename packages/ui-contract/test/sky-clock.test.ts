@@ -67,3 +67,20 @@ test("the chart says where the bodies came from only when one names a motion mod
   assert.equal(motionWord([b({ motion: model, at: at("plausible") })])?.word, "plausible");
   assert.equal(motionWord([b({ motion: model, at: at("measured") }), b({ motion: model, at: at("plausible") })])?.word, "mixed");
 });
+
+test("the ruler's dates count leap days: J2000's calendar reads 8 April 2024 at the 2024 eclipse, and far dates stay right", async () => {
+  const { dateParts, dateWords } = await import("../../chart-grammar/src/calendar.ts");
+  const yr = 31_557_600;
+  const birth = -144_131_731_200_000_000n;
+  const cal = fromPackCalendar(skyCalendar(J2000), birth);
+  const at = (s: bigint) => Number(s - birth) / yr;
+  // Greatest eclipse, 18:18:29 TT (dates count on TT). The screen's years carry about 30 s at the Sun's age (TP3 makes
+  // them whole seconds), so the minute is good to one.
+  const p = dateParts(at(J2000 + TT(2024, 4, 8, 18, 18, 29)), cal);
+  assert.equal(`${p.mday} ${p.month} ${p.year}`, "8 April 2024");
+  assert.ok(Math.abs(p.hh * 60 + p.mm - (18 * 60 + 18)) <= 1, `${p.hh}:${p.mm}`);
+  assert.equal(dateWords(at(J2000 + TT(2000, 1, 1, 12, 0, 0)), cal), "1 January 2000");
+  assert.equal(dateWords(at(J2000 + TT(2024, 2, 29, 6, 0, 0)), cal), "29 February 2024");
+  assert.equal(dateWords(at(J2000 + TT(2100, 3, 1, 0, 0, 30)), cal), "1 March 2100");
+  assert.equal(dateWords(at(J2000 + TT(1999, 12, 31, 12, 0, 0)), cal), "31 December 1999");
+});

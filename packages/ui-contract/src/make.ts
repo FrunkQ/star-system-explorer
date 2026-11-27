@@ -453,9 +453,10 @@ export interface SystemResolved {
   spec?: import("./fate.ts").SystemSpec;
   /**
    * The universe second the system was born (time design section 4, `system.birth_s`), exact: a screen that counts
-   * time from the star's birth draws universe second `birth_s + age`. Absent when the kernel has no spec for it.
+   * time from the star's birth draws universe second `birth_s + age`. Absent when the kernel has no spec for it. Kept as
+   * its exact digits (past 2^53 a JSON number would round it), so the reply stays plain JSON: read it with `BigInt`.
    */
-  birth_s?: bigint;
+  birth_s?: string;
   surfaces: { address: string; kind: string; t_surface_now_k: number; regime_label?: string; speculative: boolean }[];
   tiles: Json[];
   refused: Json[];

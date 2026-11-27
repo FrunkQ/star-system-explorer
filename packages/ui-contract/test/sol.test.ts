@@ -9,6 +9,8 @@ import { gmSeat } from "../src/seat.ts";
 import { readSol, solBatches, solSourceText } from "../src/sol.ts";
 import { sceneFromResolved } from "../src/make.ts";
 import { nodeKernel } from "./node-kernel.ts";
+import { anchorOf, drawnSecond } from "../src/sky-clock.ts";
+import { constant } from "../src/sheet.ts";
 
 const root = new URL("../../../", import.meta.url);
 const text = (p: string) => readFileSync(new URL(p, root), "utf8");
@@ -59,6 +61,14 @@ test("entered as catalogued facts, Sol reads back whole, with its spec", async (
     assert.equal(scene.subjects.find((x) => x.label === "Oort cloud")!.shape, "sphere");
     assert.ok(Math.abs(scene.now_yr - 4.5673e9) < 1e6, String(scene.now_yr));
     assert.ok(r.result.spec, "the kernel can age it: a spec from its facts");
+    // One epoch (RW17 part 2): Sol's age is its age at its anchor, J2000.0 (time.j2000_s), so its birth second is that
+    // date less its age, in whole Julian years, exactly; the screen draws birth second + age.
+    const spec = r.result.spec as { birth_year: number; age_myr: number };
+    const anchor = anchorOf(r.result.facts)!;
+    const yr = BigInt(constant("yr_julian"));
+    assert.equal(spec.birth_year, Number(anchor / yr) - Math.round(spec.age_myr * 1e6));
+    assert.equal(BigInt(r.result.birth_s!), BigInt(spec.birth_year) * yr);
+    assert.equal(drawnSecond(BigInt(r.result.birth_s!), scene.now_yr) - anchor, 0n, "at its own age, Sol is drawn at J2000.0");
     assert.equal(r.result.evidence?.[earth.address]?.["body.mass"]?.evidence, "catalogued");
   } finally {
     await k.close();

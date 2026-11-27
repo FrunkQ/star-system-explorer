@@ -24,6 +24,9 @@ export interface Calendar {
   year_days: number;
   /** Optional months, in order; their days should sum to year_days (the remainder runs into the last). */
   months?: { name: string; days: number }[];
+  /** Optional long years: a year whose number divides by `every` has a day more (added to month `leap_month`, from 0), except those dividing by `except_every` unless they divide by `but_every` (the Gregorian rule is 4, 100, 400). */
+  leap?: { every: number; except_every?: number; but_every?: number };
+  leap_month?: number;
   /**
    * Optional date format. Placeholders: {year}, {day} (day of the year, from
    * 1), {day:03} (zero-padded to 3), {month}, {mday} or {d} (day of the
@@ -41,9 +44,9 @@ export function defaultCalendar(epoch_yr: number): Calendar {
  * A pack's calendar as the kernel serves it (`provides.other.calendar`), for the ruler. Its epoch is a universe second;
  * the ruler's years count from the viewed system's birth second (`birth_s`), so the epoch is taken from there.
  */
-export function fromPackCalendar(pc: { name: string; epoch_s: number; epoch_year?: number; day_s: number; year_days: number; months?: { name: string; days: number }[]; format: string }, birth_s: bigint | null = null): Calendar {
+export function fromPackCalendar(pc: { name: string; epoch_s: number; epoch_year?: number; day_s: number; year_days: number; months?: { name: string; days: number }[]; leap?: Calendar["leap"]; leap_month?: number; format: string }, birth_s: bigint | null = null): Calendar {
   const epoch_s = birth_s === null ? pc.epoch_s : Number(BigInt(Math.round(pc.epoch_s)) - birth_s);
-  return { id: `pack.calendar.${pc.name}`, label: pc.name, epoch_yr: epoch_s / YEAR_S, ...(pc.epoch_year !== undefined ? { epoch_year: pc.epoch_year } : {}), day_s: pc.day_s, year_days: pc.year_days, ...(pc.months?.length ? { months: pc.months } : {}), format: pc.format };
+  return { id: `pack.calendar.${pc.name}`, label: pc.name, epoch_yr: epoch_s / YEAR_S, ...(pc.epoch_year !== undefined ? { epoch_year: pc.epoch_year } : {}), day_s: pc.day_s, year_days: pc.year_days, ...(pc.months?.length ? { months: pc.months } : {}), ...(pc.leap ? { leap: pc.leap, leap_month: pc.leap_month ?? 1 } : {}), format: pc.format };
 }
 
 /** Problems with a calendar document, as sentences; empty when usable. */
@@ -74,27 +77,67 @@ export interface DateParts {
   mm: number;
 }
 
+const mod = (a: number, n: number) => ((a % n) + n) % n;
+/** Whether calendar year `year` (its own number) is long under the calendar's leap rule. */
+function isLong(c: Calendar, year: number): boolean {
+  const l = c.leap;
+  if (!l || !(l.every > 0)) return false;
+  const div = (n: number | undefined) => n !== undefined && n > 0 && mod(year, n) === 0;
+  return div(l.every) && !(div(l.except_every) && !div(l.but_every));
+}
+
+/**
+ * Whole days since the epoch as a year offset and a day index within it, under the leap rule: whole cycles of the rule
+ * (400 years for the Gregorian) are taken off first, so a date far from the epoch costs no more than one near it.
+ */
+function yearAndDay(c: Calendar, days: number): { years: number; dayIndex: number } {
+  const base = c.epoch_year ?? 1;
+  const cycle = c.leap!.but_every ?? c.leap!.except_every ?? c.leap!.every;
+  let cycleDays = 0;
+  for (let k = 0; k < cycle; k++) cycleDays += c.year_days + (isLong(c, base + k) ? 1 : 0);
+  const cycles = Math.floor(days / cycleDays);
+  let left = days - cycles * cycleDays;
+  let years = cycles * cycle;
+  for (;;) {
+    const len = c.year_days + (isLong(c, base + years) ? 1 : 0);
+    if (left < len) break;
+    left -= len;
+    years++;
+  }
+  return { years, dayIndex: left };
+}
+
 /** A time as calendar parts. Exact enough for hours at any universe age (f64 years carry about 30 s at 14 Gyr). */
 export function dateParts(yr: number, c: Calendar): DateParts {
   // Whole minutes since the epoch first: f64 years carry about 30 s at 14 Gyr, so rounding to the minute is honest and stops 11:59 for noon.
   const totalMin = Math.round(((yr - c.epoch_yr) * YEAR_S) / 60);
   const perDay = c.day_s / 60;
   const dayPos = totalMin / perDay;
-  const years = Math.floor(dayPos / c.year_days + 1e-12);
-  const intoYear = dayPos - years * c.year_days;
-  const dayIndex = Math.min(Math.floor(intoYear + 1e-9), Math.ceil(c.year_days) - 1);
-  const minutes = Math.min(Math.max(0, Math.round((intoYear - dayIndex) * perDay)), Math.floor(perDay) - 1);
-  const p: DateParts = { year: years + (c.epoch_year ?? 1), day: dayIndex + 1, hh: Math.floor(minutes / 60), mm: minutes % 60 };
+  let years: number, dayIndex: number, minutes: number;
+  if (c.leap && Number.isInteger(c.year_days)) {
+    const whole = Math.floor(dayPos + 1e-9);
+    ({ years, dayIndex } = yearAndDay(c, whole));
+    minutes = Math.min(Math.max(0, Math.round((dayPos - whole) * perDay)), Math.floor(perDay) - 1);
+  } else {
+    years = Math.floor(dayPos / c.year_days + 1e-12);
+    const intoYear = dayPos - years * c.year_days;
+    dayIndex = Math.min(Math.floor(intoYear + 1e-9), Math.ceil(c.year_days) - 1);
+    minutes = Math.min(Math.max(0, Math.round((intoYear - dayIndex) * perDay)), Math.floor(perDay) - 1);
+  }
+  const year = years + (c.epoch_year ?? 1);
+  const p: DateParts = { year, day: dayIndex + 1, hh: Math.floor(minutes / 60), mm: minutes % 60 };
   if (c.months?.length) {
+    const long = isLong(c, year);
     let left = dayIndex;
     for (let i = 0; i < c.months.length; i++) {
       const m = c.months[i]!;
-      if (left < m.days || i === c.months.length - 1) {
+      const days = m.days + (long && i === (c.leap_month ?? 1) ? 1 : 0);
+      if (left < days || i === c.months.length - 1) {
         p.month = m.name;
         p.mday = left + 1;
         break;
       }
-      left -= m.days;
+      left -= days;
     }
   }
   return p;
