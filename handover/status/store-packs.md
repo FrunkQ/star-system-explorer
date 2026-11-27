@@ -24,3 +24,4 @@ Only the owner thread edits this file. Build threads update their rows in the sa
 | SP11 shared campaigns carry pins, not packs | accepted, not started | |
 | SP12 the V3 upgrade pass, on Alex's go, once V4 is settled | accepted, not started |
 | SP13 the sale scanner on Explorers (priced packs only) | accepted, not started |
+| SP14 badges on the store, from the shared table | accepted, not started |

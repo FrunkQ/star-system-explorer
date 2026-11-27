@@ -184,7 +184,7 @@ Three parts, no new tab:
 - **On this device**: the library, including "yours, not published".
 - **On Explorers**: the shelves, read from the public `/api/v4`, with the contains filter. Add is one press and goes through the "this needs" sheet. A priced pack shows "Buy on Explorers" (PK2).
 
-Marks on a card, each one word with a line behind it: V3, Fan-made, Fictional physics, Free only (downloaded data), Paid, Yours, Withdrawn, Update.
+Marks on a card are the badge set of section 9.5, the same in the app and on the store.
 
 ### 9.2 Make a pack
 
@@ -208,6 +208,20 @@ From anywhere a thing is selected (a ship in the builder, parts, a system, a nam
 ### 9.4 Our own packs
 
 `store-packs/<name>/` stays the source. One script replaces the bundle step: `scripts/pack.mjs check|bundle|listing <folder>` gives the file, both fingerprints and the listing preview, and CI runs `check` on every folder and confirms the starter set's pins match. Publishing stays Alex's own press on his account; nothing in CI or in an agent publishes.
+
+### 9.5 Badges: one set, in the app and on the store
+
+Alex, 27 Nov 12:34 UTC: "probably need a badge update on the store now we have more types of content." The store has a badge component and one fan-made badge today. This is the whole set. Every badge is one or two words with a line of plain words behind it, worked out from the item itself and never typed by its maker, in this order on a card:
+
+| Group | Badges | Shown when |
+|---|---|---|
+| Which app | **V3**, **V4** | always, one of the two; after the upgrade pass (SP12) an item with both files shows both |
+| What it is | **Campaign**, **System**, **Clip**, **Setting**, **Constructs**, **Parts**, **Game system**, **Physics**, **Looks** | one for each thing it carries, so a pack can show several. **Physics** shows on anything that carries physics or reference data, whatever else it is (the "also physics" of section 3), and is the one badge in a warning colour |
+| Where it stands | **Fan-made** (names the setting), **Fictional physics**, **Real data** | fan-setting field filled; `fictional` set; `downloaded_data` not empty |
+| Money | **Free**, a price, **Free only** | every item shows one. Free only is on anything that can never be sold (real data), and its line says why |
+| State | **Needs N packs**, **Update**, **Withdrawn**, **Yours**, **Draft** | Update and Yours in the app only; Draft only to its maker |
+
+Smaller contents (calendars, ship styles, overlays and the rest) stay on the contains line under the badges, not as badges. One shared table of badge names, lines and rules is used by the app and the store, so they cannot drift (with SP1's table).
 
 ## 10. V3
 
@@ -244,7 +258,7 @@ Small, in order. Owners are proposed. Explorers packages add only; any migration
 | **SP3** | The `about` block, `suggests`, `changes`; readers take old and new; store reads it (fixes F3) | SSE4, Explorers | none | Sol today shows its title on the store untyped |
 | **SP4** | Resolve route on Explorers and the "this needs" sheet in the app, with limits | Explorers, SSE4 UI | SP3 | a ship pack brings its parts pack; a wrong sha stops one file and says which |
 | **SP5** | Library and pins: the campaign holds pins, the library holds bytes; update offer, preview, swap, old version kept; removal lists dependants. Retires the Sol special case | SSE4 UI | SP4 | a kept campaign is offered the newer Sol and can undo it |
-| **SP6** | Packs screen in three parts, with marks; shelves read in the app (takes in PK2) | SSE4 UI | SP3 | press budgets unchanged |
+| **SP6** | Packs screen in three parts, with the badge set of 9.5; shelves read in the app (takes in PK2) | SSE4 UI | SP3 | press budgets unchanged |
 | **SP7** | Make a pack: add things to a pack, needs worked out, kind and shelf worked out, save to library and file. Includes "Add to my ship pack" from the builder | SSE4 UI | SP2, CM14 for the builder button | a ship saved, removed and re-added from its pack is the same ship by hash |
 | **SP8** | Connect and Publish from the app: pairing, shared check files, listing preview, upload, update. Draft state if Alex says yes | SSE4 UI, Explorers | SP7 | round trip on a test account; nothing reaches a public shelf in tests |
 | **SP9** | `scripts/pack.mjs` and the CI check for `store-packs/` and starter pins | SSE4 | SP3 | a folder with a missing file fails CI |
@@ -252,6 +266,7 @@ Small, in order. Owners are proposed. Explorers packages add only; any migration
 | **SP11** | Shared campaigns carry pins, not packs (F2) | SSE4, Explorers | SP5, PK1 | a published campaign holds no copy of a store pack |
 | **SP12** | The V3 upgrade pass (section 10): a V4 file kept beside each V3 original, the store serving each app its own; hand fixes; `legacy.starsystemx.com` for V3. Only when V4 is settled, and only on Alex's go | Explorers, converter | SP10, a settled V4 | every V3 original byte for byte unchanged; each upgrade compared with its original |
 | **SP13** | The sale scanner: a pack given a price is read for names of known settings, ships, brands and publishers, and for text and pictures matching known sources; findings are listed for the first-sale moderator. Free and fan packs are not scanned | Explorers | PP5, PP6 | a priced pack with a known screen-ship name reaches the moderator with the name shown; a free one is untouched |
+| **SP14** | Badges on the store (9.5): the full set on shelf cards, item pages and the V3 library, from the shared table; the public API returns them so the app shows the same | Explorers | SP1, SP3 | a ship pack carrying a flow shows Constructs, Parts and Physics on its card; every V3 map shows V3 |
 
 The "we suggest free" message (section 11) goes in with SP8 on the app side and is a one-line change on the store's upload page.
 
@@ -268,6 +283,7 @@ Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued value
 - 12:04 UTC, question 10 answered: "we will need to build a scanner on the store for copyright content IF the pack is being sold. Gonna turn a blind eye to fan content for now - we have the disclaimer for that in place." So free fan content is left to the existing disclaimer, with no name checking; a pack offered **for sale** is scanned by the store for other people's names, brands and content before its first sale, and what the scanner finds goes to the moderator who already looks at every first paid version (paid packs section 7.4). The scanner informs a person; the person decides (SP13).
 - 12:04 UTC, the same point said outright: "the store CAN list TV/film ones - fan content... we will deal with issues as they arrive. If they charge - different case." So users may publish film and TV ships and settings free, as fan content; the earlier "no named ships from film, TV or games" ruling is read as covering what we ourselves ship and feature (the thread's reading).
 - 12:05 UTC, question 1 answered, not as recommended: kind is a label, physics may travel with other things and the pack is also categorised as physics; the user only has to know what it will impact (section 3). No pack is refused for its kind and no golden moves.
+- 12:34 UTC: "probably need a badge update on the store now we have more types of content." The badge set is section 9.5; the store half is SP14.
 
 ## 13. Questions as put
 
