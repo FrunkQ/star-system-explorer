@@ -5,6 +5,7 @@
 // opens it on the wall. On air, a screen held with a card and the ground "A postcard" shows that postcard full screen
 // with the card's words over it, and nothing of the place it was showing; a quote stands alone (no waiting line);
 // ground None takes the picture away again.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

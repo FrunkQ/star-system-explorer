@@ -13,6 +13,7 @@
 //  6. Land: both fly; skip to the ground; the lander (Beowulf's own model, LR6b) stands in frame, its lamps lit at night at the GM's switch (LR6),
 //     the GM walks and the player follows; take off;
 //  7. a whole landing (site, hour, lander) comes back from its link, as a bookmark or a Playbook preset fires it (LR5).
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

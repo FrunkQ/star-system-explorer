@@ -5,6 +5,7 @@
 // the nine Strata lines as the kernel words them, served by read_world_stack,
 // with the kernel's physics notes under a picked line. A body with no stack says
 // so and offers the worlds that have one. Nothing here changes the state hash.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

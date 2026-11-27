@@ -1,6 +1,7 @@
 // The detail ladder's GPU node (VP6) and the texture ladder's bake (VP3) match their processor twins, on WebGL2 always and on WebGPU where the browser
 // has it. Builds tests/ui/ladder-gpu/ with Vite into a temporary folder, serves it, draws every noise kind into a
 // float target and compares each pixel with ladderAt. Usage: node tests/ui/ladder-gpu.e2e.mjs
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

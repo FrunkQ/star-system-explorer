@@ -5,6 +5,7 @@
 // after adding the sample Sol to the campaign its Earth can be pulled in
 // from the campaign. On the chart, Measure gives the distance between two
 // bodies. On a phone the screen menu reaches Sizes with no sideways scroll.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

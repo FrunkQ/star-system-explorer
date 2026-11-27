@@ -4,6 +4,7 @@
 // view on both. One screen is held with a card while the other carries on; released, it comes back. Live is sent to one
 // screen alone by pressing its dot and then the screen; "Back with Table" ends that. Hold all holds both; Undo takes it
 // back. A send to the table's role, then a Send to Everyone, is a layer: Lift gives the role its own send again.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -5,6 +5,7 @@
 // present, with a ledger. An early time has less contrast than today; Play runs to today;
 // the environment shading and another slice size redraw. Night chart changes
 // the canvas ground. Phone (no sideways scroll) too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

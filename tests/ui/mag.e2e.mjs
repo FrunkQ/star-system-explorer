@@ -4,6 +4,7 @@
 // closed and open lines in the two field inks, the bubble and both axes; the words name the field and its stand-off;
 // every legend entry opens its why; Science depth names the model and its stand-ins. Mars says it has no field facts
 // yet. The Night chart inks the lines too. On a phone nothing runs off the side. Nothing is written.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

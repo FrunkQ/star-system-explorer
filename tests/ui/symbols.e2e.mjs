@@ -6,6 +6,7 @@
 // mix, changes one class's colour, and shows the symbols under every
 // theme; the state hash never moves; the players' chart draws the same
 // symbols under their theme (no colour under the one-colour theme).
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
