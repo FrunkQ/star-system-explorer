@@ -4133,7 +4133,8 @@ impl Kernel {
                 to_myr,
                 z,
                 planets,
-            } => systems::age_pair(node, to_myr, z, planets, self.time.as_ref())?,
+                seed,
+            } => systems::age_pair(node, to_myr, z, planets, seed, self.time.as_ref())?,
             Request::ReadScattering { items } => systems::read_scattering(items)?,
             Request::ReadShadowLight { items } => {
                 systems::read_shadow_light(items, &self.observe.reference)?

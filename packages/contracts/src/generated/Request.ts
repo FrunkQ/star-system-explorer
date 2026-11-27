@@ -90,7 +90,11 @@ block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[],
  * The setting's range bands (a measure, RK11): each detection's
  * distance and range are labelled with them.
  */
-range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_bows", items: unknown[], } | { "op": "age_pair", node: unknown, to_myr: number, z?: number, planets?: unknown[], } | { "op": "read_scattering", items: unknown[], } | { "op": "read_shadow_light", items: unknown[], } | { "op": "formation_record", system: string, } | { "op": "describe_star", mass_msun: number, age_yr: number, feh?: number, } | { "op": "fog_of_war", seats: unknown[], } | { "op": "read_limb", discs: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "hazard_map", asks: unknown[], fixture?: string, body?: string, ship?: unknown, line?: string, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, 
+range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_bows", items: unknown[], } | { "op": "age_pair", node: unknown, to_myr: number, z?: number, planets?: unknown[], 
+/**
+ * BX2: keys where on the orbit a death falls and its kick ("sse4" if left out).
+ */
+seed?: string, } | { "op": "read_scattering", items: unknown[], } | { "op": "read_shadow_light", items: unknown[], } | { "op": "formation_record", system: string, } | { "op": "describe_star", mass_msun: number, age_yr: number, feh?: number, } | { "op": "fog_of_war", seats: unknown[], } | { "op": "read_limb", discs: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "hazard_map", asks: unknown[], fixture?: string, body?: string, ship?: unknown, line?: string, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, 
 /**
  * A date in seconds: a whole number is read exactly (TP1).
  */
