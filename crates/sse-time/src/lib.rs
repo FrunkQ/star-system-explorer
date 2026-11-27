@@ -9,6 +9,7 @@ pub mod epoch;
 pub mod generated;
 pub mod kepler;
 pub mod nbody;
+pub mod pair;
 pub mod scenario;
 pub mod secular;
 pub mod star;
@@ -17,5 +18,7 @@ pub mod star;
 mod binary_tests;
 #[cfg(test)]
 mod generated_tests;
+#[cfg(test)]
+mod pair_tests;
 #[cfg(test)]
 mod tests;

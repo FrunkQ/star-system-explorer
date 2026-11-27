@@ -662,6 +662,23 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
+    /// A pair of stars aged together (BX1): `node` is a star `{node: "star",
+    /// address, mass_msun}` or a pair `{node: "pair", a, b, separation_au,
+    /// eccentricity}` of nodes; the answer is its dated line from birth to
+    /// `to_myr` (each star's phase, mass, radius and lobe fill; the orbit; the
+    /// transfer; common envelopes, mergers, strippings; what each planet in
+    /// `planets` `{address, host, semi_major_axis_au}` ends up doing).
+    AgePair {
+        #[ts(type = "unknown")]
+        node: serde_json::Value,
+        to_myr: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planets: Option<Vec<serde_json::Value>>,
+    },
     /// Phase tables per kind of particle (K-e): each of `items` is
     /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
     /// | substance (+ phase), medium_n?, spread?, angles_deg?}`, worked by
@@ -2676,6 +2693,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::AgePair { .. } => "age_pair",
             Request::HazardMap { .. } => "hazard_map",
             Request::ReadScattering { .. } => "read_scattering",
             Request::ReadShadowLight { .. } => "read_shadow_light",
@@ -2914,6 +2932,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_bows",
             Cost::Trivial,
             "per item: one or two formula blocks",
+        ),
+        o(
+            "age_pair",
+            Cost::Light,
+            "per pair: up to a few thousand steps of both life lines, a few formula blocks each",
         ),
         o(
             "read_scattering",
@@ -3644,6 +3667,11 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `age_pair`: `line` is `sse_time::pair::PairLine`.
+    PairAged {
+        #[ts(type = "unknown")]
+        line: serde_json::Value,
     },
     /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
     BowsRead {

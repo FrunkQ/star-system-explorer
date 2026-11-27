@@ -204,6 +204,8 @@ G cannot_follow {"block":"sse.nebular.ion_balance","why":"computed or fitted wit
 G cannot_follow {"block":"sse.nebular.ion_zone_share","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.nebular.photoionisation_cross_section","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.ocean.brine_freezing_point","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.orbit.overflow_rate","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.orbit.roche_lobe","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.outflow.dust_shell","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.outflow.giant_mass_loss","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.outflow.young_jet","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
@@ -236,6 +238,7 @@ G cannot_follow {"block":"sse.stability.hill_spacing","why":"computed or fitted 
 G cannot_follow {"block":"sse.stability.kozai","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.stability.moon_limit","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.stability.resonance","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.star.thermal_timescale","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.surface.ice_dust_lag","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.surface.ice_share_from_density","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.surface.open_ice_loss","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

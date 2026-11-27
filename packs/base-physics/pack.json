@@ -1899,6 +1899,62 @@
         "range": null
       },
       {
+        "description": "a star's radius over its Roche lobe's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.lobe_fill",
+        "range": null
+      },
+      {
+        "description": "one star's mass over its partner's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.mass_ratio",
+        "range": null
+      },
+      {
+        "description": "radius of the sphere with the volume of a star's Roche lobe",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.roche_lobe_radius",
+        "range": null
+      },
+      {
+        "description": "mass a star gives its partner each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.transfer_rate",
+        "range": null
+      },
+      {
         "description": "time since the body formed",
         "dim": [
           0,
@@ -7327,6 +7383,20 @@
         "range": null
       },
       {
+        "description": "mass of a star's burnt-out core (helium or carbon and oxygen)",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.core_mass",
+        "range": null
+      },
+      {
         "description": "particles per cubic metre at the foot of a star's corona",
         "dim": [
           -3,
@@ -7492,6 +7562,20 @@
           0
         ],
         "id": "star.surface_field",
+        "range": null
+      },
+      {
+        "description": "time a star's light takes to carry off its envelope's binding energy",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.thermal_timescale",
         "range": null
       },
       {
