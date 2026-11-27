@@ -374,6 +374,9 @@ pub struct LifeView {
     /// captures, what staying alive costs. Worlds of the chart only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub energy: Option<crate::ledger::EnergyLedger>,
+    /// The speed read-out (LE4): fill time per habitat and one pace line.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub speed: Option<crate::speed::Speed>,
 }
 
 pub fn view(
@@ -409,5 +412,6 @@ pub fn view(
         traits: bio.map(|b| b.traits.clone()),
         dials: h.map(|h| h.dials.clone()).unwrap_or_default(),
         energy: None,
+        speed: None,
     }
 }
