@@ -1196,7 +1196,7 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
                 sse_formation::leftovers::Tilt::Isotropic => ("shell", None),
                 sse_formation::leftovers::Tilt::Rayleigh { sigma_deg } => ("disc", Some(sigma_deg)),
             };
-            serde_json::json!({
+            let mut j = serde_json::json!({
                 "shape": shape,
                 "i_sigma_deg": i_sigma_deg,
                 "address": c.address.to_string(),
@@ -1207,7 +1207,22 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
                 "a_max_au": c.a_max_au,
                 "largest_km": c.largest_km,
                 "over_1km": c.over_1km,
-            })
+            });
+            // A ring's world by its address (VP-R3: the scene hangs the ring on it; `ring_structure` reads it).
+            if c.kind == "ring" {
+                if let Some(i) = l
+                    .worlds
+                    .iter()
+                    .position(|w| Some(&w.id) == c.around.as_ref())
+                {
+                    if let Some(sys) = c.address.parent() {
+                        if let Ok(w) = sys.child("body", i as u64) {
+                            j["around_address"] = w.to_string().into();
+                        }
+                    }
+                }
+            }
+            j
         })
         .collect()
 }
