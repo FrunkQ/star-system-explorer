@@ -4,9 +4,9 @@
   // pack), or a station's design built from its description (the renderer's StationPicture). On the Build desk the design's style, remix and overrides are kept with the construct as a recipe; on
   // Explore and Run the look is fixed (Alex, 24 Nov: play changes what is aboard, never the ship). Sites with
   // neither take own pictures.
-  import { DESIGN_FIELD, designOf, factOf, shipRecordOf, type Json, type NavShip, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { readPropellants, type DesignRecipe, type DesignRules, type DesignShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
-  import { ShipPlans } from "../../ship/src/index.ts";
+  import { DESIGN_FIELD, buildOf, designOf, factOf, shipRecordOf, type Json, type NavShip, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { readPropellants, type BuildRecipe, type DesignRecipe, type DesignRules, type DesignShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { ShipBuilder, ShipPlans } from "../../ship/src/index.ts";
   import StationPicture from "../../ship/src/StationPicture.svelte";
   import { Pictures } from "../../pictures/src/index.ts";
 
@@ -29,6 +29,8 @@
   const session = $derived(ctx.session);
   const ws = $derived(ctx.workspace);
   const design = $derived(designOf(factOf(construct, DESIGN_FIELD)));
+  // A ship built from parts (CM14a) is drawn from its build; on the Build desk the pictures are the builder itself.
+  const build = $derived(buildOf(factOf(construct, DESIGN_FIELD)) as BuildRecipe | null);
   let note = $state<string | null>(null);
 
   // The base-ships pack's rules and styles, served beside the page (scripts/build-shell.sh).
@@ -74,12 +76,19 @@
     }, 500);
   }
   $effect(() => () => pending && clearTimeout(pending));
+  async function keepBuild(r: BuildRecipe) {
+    const s = await session.send({ kind: "set_value", address: construct.address, field: DESIGN_FIELD, value: { build: r } as unknown as Json, at_yr: ws.campaign_now_yr ?? ws.now_yr });
+    if (s.status === "applied") ((note = "Build kept with the ship."), ws.revision++);
+    else note = s.status === "refused" ? s.reason : "Sent to the game master.";
+  }
 </script>
 
-<Pictures {ctx} subject={construct} {name} {editing} {views} hint={station ? "The shape and remix are kept with it." : views.length ? "Style and remix are kept with the ship." : undefined}>
+<Pictures {ctx} subject={construct} {name} {editing} {views} hint={station ? "The shape and remix are kept with it." : views.length ? "Built from parts; the build is kept with the ship." : undefined}>
   {#snippet view(id, choose)}
     {#if id === "station" && station}
       <StationPicture {construct} {name} words={station.words} tags={station.tags} locked={!editing} onchange={(r) => editing && station.ondesign(r)} />
+    {:else if ship && pack && (editing || build)}
+      <ShipBuilder {ctx} {ship} saved={build} readonly={!editing} start={id === "model" ? "model" : "plans"} {...editing ? { onkeep: keepBuild } : {}} />
     {:else if ship && pack}
       <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={24} fit="hull" locked={!editing} start={id === "model" ? "model" : "plans"} onview={choose} {...design && pack.styles[design.style] ? { recipe: design as DesignRecipe } : {}} onchange={designChanged} />
     {/if}

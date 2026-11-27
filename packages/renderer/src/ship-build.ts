@@ -32,6 +32,9 @@ export interface BuiltPart {
   fuel?: string;
   /** A finish or a colour (#rrggbb). */
   paint?: string;
+  /** A drive whose figures its part does not give yet (a tech advance's): the push and exhaust speed stated by the
+   * record it came from, with that record named. */
+  drive?: { thrust_n: number; exhaust_km_s: number; src: string };
 }
 
 /** A build: everything needed to rebuild the same ship anywhere. Saved with the construct in place of the old style recipe. */
@@ -45,6 +48,9 @@ export interface BuildRecipe {
   cargo_t?: number;
   /** The catalogue ship it was opened from. */
   from?: string;
+  /** Structure no part counts yet (tank walls, frame, wiring): carried over from the catalogue record a build was
+   * opened from, until the parts' own masses are read, and said so. */
+  structure_t?: number;
   /** Build to a plan: the record whose needs set the budgets (Alex: "fix the basic capabilities of a ship"). */
   plan?: DesignShip;
 }
@@ -165,10 +171,9 @@ export function buildPieces(placed: readonly PlacedPart[]): Piece[] {
     if (s.hint === "panel") {
       // A panel's span across, from the surface outward (the palette gives it, or twice its radius as a stand-in).
       const span = s.span_m ?? Math.max(4 * s.radius_m, s.length_m);
-      // Turn the panel's plane so it reaches away from the carrier along its clock (Piece.roll_deg: span along (cos, -sin) in (y, z)).
-      const reach = q.roll_deg;
-      const side = Math.sin(rad(reach)) >= 0 ? 1 : -1;
-      out.push({ system, shape: "panel", x0: q.x0, x1: q.x0 + s.length_m, r0: s.radius_m, r1: s.radius_m, y: q.y, z: q.z, span: side * span, sweep: 0, roll_deg: side > 0 ? 90 - reach : -90 - reach, label, part: q.key, member: q.key });
+      // Its plane turned so it reaches straight out along its clock: Piece.roll_deg puts the span along
+      // (cos roll, -sin roll) in (y, z), and outward at clock c is (sin c, cos c), so roll = c - 90.
+      out.push({ system, shape: "panel", x0: q.x0, x1: q.x0 + s.length_m, r0: s.radius_m, r1: s.radius_m, y: q.y, z: q.z, span, sweep: 0, roll_deg: q.roll_deg - 90, label, part: q.key, member: q.key });
       continue;
     }
     const prof = s.hint === "lathe" && s.profile && s.profile.length > 1 ? s.profile : [[0, 1], [1, 1]] as [number, number][];
@@ -278,7 +283,11 @@ export function buildTotals(r: BuildRecipe, placed: readonly PlacedPart[], store
     if (p.kind === "solar") t.solar_m2 += f.area_m2?.v ?? 0;
     t.electric_w += f.electric_w?.v ?? f.electric_w_at_1_au?.v ?? 0;
     if (p.kind === "engine") {
-      if (p.advance) t.advances.push(p.advance);
+      if (q.built.drive) {
+        t.thrust_n += q.built.drive.thrust_n;
+        thrustV += q.built.drive.thrust_n * q.built.drive.exhaust_km_s;
+        t.missing.push(`${p.name}: its push and exhaust speed are the ${q.built.drive.src}'s, until the drive's own figures are read.`);
+      } else if (p.advance) t.advances.push(p.advance);
       else if (f.thrust_n && f.exhaust_km_s) {
         t.thrust_n += f.thrust_n.v;
         thrustV += f.thrust_n.v * f.exhaust_km_s.v;
@@ -286,7 +295,11 @@ export function buildTotals(r: BuildRecipe, placed: readonly PlacedPart[], store
     }
   }
   t.exhaust_km_s = t.thrust_n > 0 ? thrustV / t.thrust_n : 0;
-  if (noMass.length) t.missing.push(`No mass given for ${[...new Set(noMass)].join(", ")}: counted as nothing until their sizing blocks read them (tank walls: sse.ship.tank_wall_mass).`);
+  if (r.structure_t) {
+    t.dry_t += r.structure_t;
+    t.missing.push(`${r.structure_t >= 10 ? Math.round(r.structure_t) : Math.round(r.structure_t * 10) / 10} t of structure is carried over from the catalogue record it was opened from, until the parts' own masses are read.`);
+  }
+  if (noMass.length && !r.structure_t) t.missing.push(`No mass given for ${[...new Set(noMass)].join(", ")}: counted as nothing until their sizing blocks read them (tank walls: sse.ship.tank_wall_mass).`);
   if (t.advances.length) t.missing.push(`${[...new Set(t.advances)].join(", ")}: the drive's figures are the tech advance's at the setting's level, which this sum does not read yet.`);
   const bodies = buildPieces(placed);
   t.length_m = Math.max(0, ...bodies.map((b) => b.x1));
@@ -371,7 +384,10 @@ export function fromLayout(l: ShipLayout, ship: DesignShip, palette: PartsPalett
       continue;
     }
     const key = `p${++n}`;
-    parts.push({ key, part: part.id, length_m: Math.max(0.1, p.x1 - p.x0), radius_m: Math.max(0.05, Math.max(p.r0, p.r1)), ...(last ? { on: last, place: "front" as const } : {}) });
+    const drive = kind === "engine" && !part.figures.thrust_n ? { drive: { thrust_n: ship.accel_g * ship.wet_t * 1e3 * constant("g0"), exhaust_km_s: ship.exhaust_km_s, src: `catalogue ship ${ship.name}` } } : {};
+    // A part that comes in fixed sizes keeps its own; a shape takes the size the old layout gave it.
+    const size = part.scale.law === "fixed" ? {} : { length_m: Math.max(0.1, p.x1 - p.x0), radius_m: Math.max(0.05, Math.max(p.r0, p.r1)) };
+    parts.push({ key, part: part.id, ...size, ...(last ? { on: last, place: "front" as const } : {}), ...drive });
     keyOf.set(p, key);
     last = key;
   }
@@ -387,10 +403,11 @@ export function fromLayout(l: ShipLayout, ship: DesignShip, palette: PartsPalett
       continue;
     }
     const clock = p.shape === "panel" ? ((p.span ?? 1) >= 0 ? 90 : 270) : (Math.atan2(p.y, p.z) * 180) / Math.PI;
-    parts.push({ key: `p${++n}`, part: part.id, length_m: Math.max(0.1, p.x1 - p.x0), radius_m: Math.max(0.05, p.shape === "panel" ? part.shape.radius_m : Math.max(p.r0, p.r1)), on: keyOf.get(c)!, place: "hull", along: (mid - c.x0) / Math.max(c.x1 - c.x0, 1e-6), clock_deg: Math.round(((clock % 360) + 360) % 360) });
+    const size = part.scale.law === "fixed" ? {} : { length_m: Math.max(0.1, p.x1 - p.x0), radius_m: Math.max(0.05, p.shape === "panel" ? part.shape.radius_m : Math.max(p.r0, p.r1)) };
+    parts.push({ key: `p${++n}`, part: part.id, ...size, on: keyOf.get(c)!, place: "hull", along: (mid - c.x0) / Math.max(c.x1 - c.x0, 1e-6), clock_deg: Math.round(((clock % 360) + 360) % 360) });
   }
   if (skipped.size) notes.push(`No palette part yet for ${[...skipped].join(", ")}, so ${skipped.size > 1 ? "they are" : "it is"} left out of the build.`);
-  return { recipe: { format: "sse.build/1", name: ship.name, parts, ...(ship.fuels ? { fuels: [...ship.fuels] } : {}), ...(ship.crew !== undefined ? { crew: ship.crew } : {}), ...(ship.cargo_t !== undefined ? { cargo_t: ship.cargo_t } : {}), plan: ship }, notes };
+  return { recipe: { format: "sse.build/1", name: ship.name, parts, structure_t: Math.max(0, ship.dry_t - (ship.cargo_t ?? 0)), ...(ship.fuels ? { fuels: [...ship.fuels] } : {}), ...(ship.crew !== undefined ? { crew: ship.crew } : {}), ...(ship.cargo_t !== undefined ? { cargo_t: ship.cargo_t } : {}), plan: ship }, notes };
 }
 
 /** The tech advance whose drive burns a base-nav fuel, as the palette's tech parts are named. */

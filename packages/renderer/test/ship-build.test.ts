@@ -131,3 +131,15 @@ test("the palette groups by era (any length, future eras too) and offers by exac
   assert.ok(paletteByEra(PALETTE, 2100).some((g) => g.era?.id === "fusion" && g.parts.some((p) => p.id === "tech-fusion-torch")));
   assert.equal(paletteByEra(PALETTE, 1965)[0]!.label, "Shapes");
 });
+
+test("a catalogue ship opened as parts keeps its own drive and structure until the parts' figures are read, and says so", () => {
+  const ship: DesignShip = { ...SHIPS["nuclear-thermal"]!, crew: 4 };
+  const { recipe } = fromLayout(designShip(ship, STORE, RULES, "spine", STYLES.spine!, 1), ship, PALETTE);
+  const l = buildLayout(recipe, PALETTE, STORE, RULES);
+  assert.equal(l.record.exhaust_km_s, ship.exhaust_km_s);
+  assert.ok(Math.abs(l.totals.dry_t - ship.dry_t) < 1e-9, `${l.totals.dry_t} vs ${ship.dry_t}`);
+  assert.ok(l.notes.some((n) => n.includes("carried over from the catalogue record")));
+  assert.ok(l.notes.some((n) => n.includes("catalogue ship")));
+  // The push is the record's: the same thrust on the record's own full mass.
+  assert.ok(Math.abs(l.totals.thrust_n - ship.accel_g * ship.wet_t * 1e3 * 9.80665) / l.totals.thrust_n < 1e-9);
+});
