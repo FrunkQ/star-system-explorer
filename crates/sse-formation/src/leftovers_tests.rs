@@ -135,3 +135,66 @@ fn golden() {
         &crate::scenario::leftovers_golden(),
     );
 }
+
+/// CO1 diagnostics: who keeps Trojans across many Sun-like systems.
+#[test]
+#[ignore]
+fn coorbital_census() {
+    use crate::violent::UpheavalEvent;
+    let (mut giants_kept, mut giants_lost, mut rocky_kept, mut rocky_caught) = (0, 0, 0, 0);
+    let mut disturbed = 0;
+    let mut ratios = vec![];
+    for n in 0..300 {
+        let (disc, g) = one(n, 1.0, 0.0);
+        let u = upheave(&seed(), &system(n), &disc, &g);
+        let mut kept_by = vec![];
+        for e in &u.events {
+            if let UpheavalEvent::TrojansThinned {
+                world,
+                kept_earth,
+                lost_earth,
+                disturbed_by,
+                resonance,
+                ..
+            } = e
+            {
+                let w = u.worlds.iter().find(|w| &w.id == world);
+                let giant = w.is_some_and(|w| w.is_giant());
+                if disturbed_by.is_some() {
+                    disturbed += 1;
+                }
+                if giant {
+                    if *kept_earth > 0.0 {
+                        giants_kept += 1
+                    } else {
+                        giants_lost += 1
+                    }
+                } else {
+                    rocky_caught += 1;
+                    if *kept_earth > 0.0 {
+                        rocky_kept += 1
+                    }
+                }
+                if n < 12 {
+                    eprintln!("sys {n} {world} giant {giant} a {:.2} m {:.1} kept {kept_earth:.2e} lost {lost_earth:.2e} by {disturbed_by:?} {resonance:?}",
+                        w.map_or(0.0, |w| w.a_au), w.map_or(0.0, |w| w.mass_earth()));
+                }
+                if giant && *kept_earth > 0.0 {
+                    kept_by.push((w.unwrap().a_au, *kept_earth));
+                }
+            }
+        }
+        if kept_by.len() >= 2 {
+            let outer = kept_by
+                .iter()
+                .cloned()
+                .fold((0.0, 0.0), |a, b| if b.0 > a.0 { b } else { a });
+            let inner = kept_by
+                .iter()
+                .cloned()
+                .fold((1e9, 0.0), |a, b| if b.0 < a.0 { b } else { a });
+            ratios.push(outer.1 / inner.1);
+        }
+    }
+    eprintln!("giants kept {giants_kept} lost {giants_lost}; rocky caught {rocky_caught} kept {rocky_kept}; disturbed {disturbed}; outer/inner kept ratios {ratios:?}");
+}

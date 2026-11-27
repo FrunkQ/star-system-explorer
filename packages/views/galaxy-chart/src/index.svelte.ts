@@ -19,7 +19,7 @@ export const galaxyChart: ViewModule = {
   controls: GALAXY_CONTROLS,
   inputs: [{ event_kinds: [] }],
   params: [
-    { name: "halo", type: "enum", default: "milky-way-like", options: ["dwarf", "milky-way-like", "group"], meaning: "Which reference galaxy to chart first: the median halo of 1e11, 1e12 or 1e13 solar masses grown from the universe's seed.", promoted: true, group: "content" },
+    { name: "halo", type: "enum", default: "home", options: ["home", "dwarf", "milky-way-like", "group"], meaning: "Which galaxy to chart first: our own (the universe's home galaxy, one of the cosmic web's), or a reference galaxy, the median halo of 1e11, 1e12 or 1e13 solar masses grown from the universe's seed.", promoted: true, group: "content" },
     { name: "place", type: "string", default: "", meaning: "The galaxy to open on: a reference halo's key or a catalogued halo's address; from a link on the place line.", group: "content" },
     { name: "layer", type: "enum", default: "metals", options: ["metals", "heavy", "stars", "supernovae"], meaning: "What the rings are shaded by.", promoted: true, group: "look" },
   ],

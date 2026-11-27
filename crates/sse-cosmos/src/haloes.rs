@@ -292,6 +292,20 @@ impl Haloes<'_> {
         self.cell_from(idx, bins, floor, false).haloes
     }
 
+    /// As `cell_above`, with each halo's mergers and bigger neighbour too:
+    /// exactly the haloes `cell` gives above the floor, mergers and
+    /// neighbours included (a neighbour is always bigger, so it is above the
+    /// floor too). For searches that only want big haloes (GZ12's home).
+    pub fn cell_above_full(&self, idx: [i64; 3], bins: &[(f64, f64)], floor: f64) -> Vec<Halo> {
+        let mut haloes = self.cell_from(idx, bins, floor, false).haloes;
+        for h in haloes.iter_mut() {
+            let addr: Address = h.address.parse().expect("a halo address");
+            h.mergers = self.mergers(h, &addr);
+        }
+        self.link_neighbours(&mut haloes);
+        haloes
+    }
+
     fn cell_from(&self, idx: [i64; 3], table: &[(f64, f64)], floor: f64, full: bool) -> Cell {
         let p = &self.params;
         let c = self.cosmo;
