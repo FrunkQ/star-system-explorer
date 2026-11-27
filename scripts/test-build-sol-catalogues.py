@@ -55,7 +55,11 @@ def main(argv):
         laplace = json.load(open(os.path.join(out, "sol-moons-laplace.catalogue.json"), encoding="utf-8"))["rows"]
         assert laplace[0]["diameter_km"] == 22.16 and laplace[0]["density_g_cm3"] == 1.86, laplace
         report = open(os.path.join(out, "report.md"), encoding="utf-8").read()
-        assert "Fakemoon" in report, "a moon with no radius is reported, not filled in"
+        fake = [m for m in moons if m["name"] == "Fakemoon"]
+        assert fake and fake[0]["diameter_km"] == 24.0 and fake[0]["diameter_grade"] == "estimated" \
+            and fake[0]["diameter_source"] == "jpl-horizons", fake
+        assert "Nereid" in [m["name"] for m in moons]
+        assert laplace[0]["diameter_grade"] == "measured"
         # The reader accepts every file and every credit is carried.
         for f in sorted(os.listdir(out)):
             if f.endswith(".ssecat"):

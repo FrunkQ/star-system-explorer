@@ -24,6 +24,10 @@ done once and the build can be re-run from what was saved:
 
   python scripts/build-sol-catalogues.py all CACHE OUT   both halves
 
+  python scripts/build-sol-catalogues.py fetch-horizons CACHE
+      Only the Horizons object data for moons JPL's physical-parameters page
+      gives no radius for (fetch does this too); files already saved are kept.
+
 Rules this keeps (design SSE4-real-catalogues-design.md 6.1, catalogue format
 SSE4-catalogue-format.md, RW1 terms docs/citations/real-catalogues.md):
 - No value is typed in: every number comes from the saved JPL answers.
@@ -55,6 +59,7 @@ MEASURED = os.path.join(ROOT, "scripts", "sol-measured-sizes.json")
 SBDB = "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
 SATS_ELEM = "https://ssd.jpl.nasa.gov/sats/elem/"
 SATS_PHYS = "https://ssd.jpl.nasa.gov/sats/phys_par/"
+HORIZONS = "https://ssd.jpl.nasa.gov/api/horizons.api"
 PAGE = 50000
 AGENT = "sse4-catalogue-build/1"
 
@@ -130,6 +135,32 @@ def fetch_sbdb(cache, kind):
     return {"count_answer": count, "pages": pages}
 
 
+def fetch_horizons(cache):
+    """The object-data header JPL Horizons prints for every moon that JPL's
+    physical-parameters page gives no radius for (the irregular moons)."""
+    ph, prows = table_with(os.path.join(cache, "sats-phys.html"), "satellite", "radius")
+    i_code, i_r = find(ph, "code"), find(ph, "radius")
+    sized = {r[i_code].strip() for r in prows if len(r) > i_r and r[i_code].strip().isdigit() and num(r[i_r])}
+    eh, erows = table_with(os.path.join(cache, "sats-elem.html"), "satellite", "frame", "epoch")
+    ix = moon_columns(eh)
+    codes = sorted({r[ix["code"]].strip() for r in erows if len(r) >= len(eh)} - sized)
+    folder = os.path.join(cache, "horizons")
+    os.makedirs(folder, exist_ok=True)
+    for k, code in enumerate(codes):
+        path = os.path.join(folder, code + ".json")
+        if os.path.exists(path):
+            continue
+        q = {"format": "json", "COMMAND": "'%s'" % code, "OBJ_DATA": "YES", "MAKE_EPHEM": "NO"}
+        body = get(HORIZONS + "?" + urllib.parse.urlencode(q))
+        doc = json.loads(body)
+        if "result" not in doc:
+            raise SystemExit("Horizons answer for %s has no result: keys %s" % (code, sorted(doc)))
+        with open(path, "wb") as f:
+            f.write(body)
+        print("  horizons %s (%d of %d)" % (code, k + 1, len(codes)), flush=True)
+        time.sleep(1.0)
+
+
 def fetch(cache):
     os.makedirs(cache, exist_ok=True)
     got = {"retrieved_utc": time.strftime("%Y-%m-%d", time.gmtime()), "sbdb": {}}
@@ -140,7 +171,8 @@ def fetch(cache):
         print(url, flush=True)
         with open(os.path.join(cache, name), "wb") as f:
             f.write(get(url))
-    got["urls"] = {"sbdb": SBDB, "sats_elem": SATS_ELEM, "sats_phys": SATS_PHYS}
+    fetch_horizons(cache)
+    got["urls"] = {"sbdb": SBDB, "sats_elem": SATS_ELEM, "sats_phys": SATS_PHYS, "horizons": HORIZONS}
     with open(os.path.join(cache, "retrieved.json"), "w", encoding="utf-8") as f:
         json.dump(got, f, indent=1)
     print("saved in %s" % cache)
@@ -503,6 +535,7 @@ def build_moons(cache, got, out, min_size, au_km):
     eh, erows = table_with(os.path.join(cache, "sats-elem.html"), "satellite", "frame", "epoch")
     ix = moon_columns(eh)
     known = base_sol()
+    horizons = horizons_radii(cache)
     files, left_out, by_plane, seen = {}, {}, {}, set()
     for r in erows:
         if len(r) < len(eh):
@@ -512,10 +545,12 @@ def build_moons(cache, got, out, min_size, au_km):
             left_out.setdefault("a second row for the same NAIF code (the first is kept)", []).append(r[ix["sat"]])
             continue
         seen.add(code)
-        rad = phys.get(code, (None, None, None))[0]
+        rad, rgrade, rsrc = phys.get(code, (None, None, None))[0], "measured", "jpl-sats"
+        if rad is None and code in horizons:
+            rad, rgrade, rsrc = horizons[code], "estimated", "jpl-horizons"
         why = None
         if rad is None:
-            why = "no mean radius on JPL's physical parameters page"
+            why = "no radius on JPL's physical parameters page or in Horizons"
         plane = PLANES.get(r[ix["frame"]].strip().lower())
         if plane is None:
             why = why or "frame %r not known" % r[ix["frame"]]
@@ -527,11 +562,12 @@ def build_moons(cache, got, out, min_size, au_km):
         if why:
             left_out.setdefault(why, []).append(r[ix["sat"]])
             continue
-        _, gm, rho = phys[code]
+        _, gm, rho = phys.get(code, (None, None, None))
         name = r[ix["sat"]].strip()
         row = {
             "id": name.lower().replace(" ", "-").replace("/", "-"), "name": name, "primary": r[ix["planet"]].strip(),
-            "naif": code, "diameter_km": 2 * rad, "gm_km3_s2": gm, "density_g_cm3": rho,
+            "naif": code, "diameter_km": 2 * rad, "diameter_grade": rgrade, "diameter_source": rsrc,
+            "gm_km3_s2": gm, "density_g_cm3": rho,
             "epoch_jd": jd_of_calendar(r[ix["epoch"]].strip()), "a_au": a_km / au_km, "a_km": a_km,
             "e": num(r[ix["e"]]), "i_deg": num(r[ix["i"]]), "node_deg": num(r[ix["node"]]),
             "peri_deg": num(r[ix["w"]]), "mean_anomaly_deg": num(r[ix["m"]]),
@@ -560,7 +596,9 @@ def build_moons(cache, got, out, min_size, au_km):
                 col("id", "str", "id"), col("name", "str", grade="convention", source=jpl),
                 col("primary", "str", grade="convention", source=jpl, doc="the planet it goes round"),
                 col("naif", "str", grade="convention", source=jpl, doc="NAIF id"),
-                col("diameter_km", "f32", unit="km", doc="twice the mean radius", **m),
+                col("diameter_km", "f32", unit="km", doc="twice the mean radius", grade_column="diameter_grade",
+                    source_column="diameter_source"),
+                col("diameter_grade", "u8", "meta"), col("diameter_source", "u8", "meta"),
                 col("gm_km3_s2", "f64", unit="km3 s-2", **m), col("density_g_cm3", "f32", unit="g cm-3", **m),
                 col("epoch_jd", "f64", unit="d", **m), col("a_au", "f64", unit="au", **m),
                 col("a_km", "f64", unit="km", **m), col("e", "f64", unit="1", **m),
@@ -575,15 +613,39 @@ def build_moons(cache, got, out, min_size, au_km):
                          "version": got["retrieved_utc"], "kind": "downloaded",
                          "licence": "NASA/JPL data; only a citation is asked",
                          "credit": credit(got["retrieved_utc"], "Planetary Satellite Mean Elements; Planetary Satellite Physical Parameters"),
-                         "link": "https://ssd.jpl.nasa.gov/sats/", "retrieved": got["retrieved_utc"]}],
+                         "link": "https://ssd.jpl.nasa.gov/sats/", "retrieved": got["retrieved_utc"]},
+                        {"id": "jpl-horizons", "name": "JPL Horizons, object data", "version": got["retrieved_utc"],
+                         "kind": "downloaded", "licence": "NASA/JPL data; only a citation is asked",
+                         "credit": credit(got["retrieved_utc"], "Horizons System"),
+                         "link": "https://ssd.jpl.nasa.gov/horizons/", "retrieved": got["retrieved_utc"]}],
             "completeness": {"size_edges": [1000.0], "fraction": [[1.0]], "grade": "convention", "source": jpl,
                              "note": "a stated convention, not a measurement: moons over 1,000 km are taken as all known"},
             "notes": ["Mean elements, which JPL says are not for ephemeris work; the measured motion (RW17) is.",
-                      "Moons without a mean radius on JPL's page are left out of this file (report.md lists them)."],
+                      "Radii from JPL's physical parameters page are graded measured; radii only Horizons prints are graded estimated.",
+                      "Moons with no radius in either are left out of this file (report.md lists them)."],
         }
         files[plane] = write(out, header["id"], header, rows)
     return files, {"planes": {p: len(r) for p, r in by_plane.items()},
                    "left_out": {k: sorted(v) for k, v in left_out.items()}}
+
+
+RADIUS_RE = __import__("re").compile(r"(?:Mean\s+)?[Rr]adius\s*(?:\(km\))?\s*=\s*([0-9]+(?:\.[0-9]+)?)")
+
+
+def horizons_radii(cache):
+    """Radii printed in Horizons' object data, by NAIF code. Horizons does not
+    say how a small moon's radius was found (most come from its brightness and
+    an assumed albedo), so they are graded estimated."""
+    folder, out = os.path.join(cache, "horizons"), {}
+    if not os.path.isdir(folder):
+        return out
+    for f in sorted(os.listdir(folder)):
+        if f.endswith(".json"):
+            text = json.load(open(os.path.join(folder, f), encoding="utf-8"))["result"]
+            m = RADIUS_RE.search(text)
+            if m and float(m.group(1)) > 0:
+                out[f[:-5]] = float(m.group(1))
+    return out
 
 
 def moon_columns(h):
@@ -672,6 +734,8 @@ def main(argv):
         argv = argv[:i] + argv[i + 2:]
     if len(argv) >= 2 and argv[0] == "fetch":
         fetch(argv[1])
+    elif len(argv) >= 2 and argv[0] == "fetch-horizons":
+        fetch_horizons(argv[1])
     elif len(argv) >= 3 and argv[0] == "build":
         build(argv[1], argv[2], min_size)
     elif len(argv) >= 3 and argv[0] == "all":

@@ -35,5 +35,7 @@ The run found these, each fixed in the script and covered by the fixture test (s
 - **The real run on Alex's PC.** The output files and their sizes, and which of them ship in the app and which go to the store (RW8).
 - Base-sol's full orbits at a date for its moons, from JPL's mean elements (the planets and the Moon are RW17's series).
 - Belt masses by group, which need cited totals (the paper search is back on 1 Dec).
-- Sizes for the irregular moons.
 - J2 for the other planets.
+
+## RW7c (27 Nov): moon sizes from Horizons
+For each moon that JPL's physical-parameters page gives no radius for, `fetch` now also saves JPL Horizons' object data (`CACHE/horizons/<NAIF>.json`, one request a second, skipping files already saved). `build` takes the radius Horizons prints and grades it estimated, source `jpl-horizons`, because Horizons does not say how the radius was found. A moon with a radius in neither place is left out and listed in the report. The moon files' diameter column now carries a grade and a source per row. The fixture gate was seen red with the Horizons answers removed.
