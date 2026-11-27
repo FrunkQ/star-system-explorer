@@ -16,8 +16,9 @@ after the numbered rows and never collides with another pull request's row.
 
     python3 scripts/registers.py --print fudges        the whole register as one Markdown document
     python3 scripts/registers.py --check               every register is well formed (scripts/check.sh)
-    python3 scripts/registers.py --absorb fudges       a branch from before the split: move the rows its old
-                                                       one-file docs/fudges.md carries into the folder
+    python3 scripts/registers.py --absorb fudges       in a merge of main that conflicts on docs/fudges.md (a
+                                                       branch from before the split): move that branch's own
+                                                       row changes into the folder, from git's merge stages
 
 The pointer files (docs/fudges.md, handover/decisions.md) are written by this script; --check fails if one
 holds table rows again, which is what a branch from before the split looks like after merging main.
@@ -27,6 +28,7 @@ import argparse
 import hashlib
 import os
 import re
+import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -60,8 +62,9 @@ id or a short slug (for example `{example}`), and edit its last line. Keep the h
 are. Prose and headings are the plain `.md` files beside the table folders. `scripts/check.sh` runs
 `python3 scripts/registers.py --check`.
 
-A branch from before the split that added rows to this file: take main's version of this file, put your copy aside,
-and run `python3 scripts/registers.py --absorb {name} --from <your copy>`.
+A branch from before the split that changed this file: merge main, and while git reports the conflict on this file
+run `python3 scripts/registers.py --absorb {name}`. It moves your branch's own row changes (added, edited, removed)
+into the folder and writes this page back; then `git add` both and commit.
 
 This file is written by `scripts/registers.py`; do not add rows here.
 """
@@ -260,8 +263,9 @@ def check_one(name):
         hint = ""
         if any(is_row(line) for line in pointer.split("\n")):
             hint = (
-                f" It holds table rows: a branch from before the split. Take main's {reg['pointer']}, keep your copy"
-                f" elsewhere, and run python3 scripts/registers.py --absorb {name} --from <your copy>."
+                f" It holds table rows: a branch from before the split. In the merge of main, while git reports the"
+                f" conflict, run python3 scripts/registers.py --absorb {name} (or --absorb {name} --from <old file>"
+                f" --base <the old file both sides started from>)."
             )
         raise RegisterError(f"registers: {reg['pointer']} is not the pointer page this script writes.{hint}")
     n = 0
@@ -307,17 +311,58 @@ def new_row_name(reg, row, existing):
     return name
 
 
-def absorb(name, src):
+def table_rows(parts):
+    return {row for p in parts if p[0] == "table" for row in p[3]}
+
+
+def merge_stages(name):
+    """In a merge that conflicts on a pointer page: (base text, the old one-file side's text) from git's stages."""
+    rel = REGISTERS[name]["pointer"]
+
+    def stage(n):
+        r = subprocess.run(["git", "show", f":{n}:{rel}"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+        return r.stdout if r.returncode == 0 else None
+
+    base = stage(1)
+    sides = [t for t in (stage(2), stage(3)) if t is not None and table_rows(split_parts(t))]
+    if base is None or len(sides) != 1:
+        raise RegisterError(
+            f"registers: {rel} is not in a merge conflict with one old one-file side; give --from (and --base)"
+        )
+    return base, sides[0]
+
+
+def absorb(name, src, base=None, src_text=None):
     """Move the rows of an old one-file register (a branch from before the split) into the folder.
 
-    A row already in the folder, as written, is skipped. A row whose id is in the folder replaces that row (an
-    edit). Any other row is added to the table with the same headings and header, or to a new table at the end
-    when its table is new. Rows the old file lacks are left alone: main may have added them since."""
+    With a base (the old file both sides started from; in a merge, git's stage 1), only the old side's own
+    changes move: a base row it removed or edited is deleted from the folder, and a row it added or edited is
+    added. Without a base, every row of the old file not already in the folder is added.
+
+    A row whose id is in the folder replaces that row (an edit). Any other row is added to the table with the same
+    headings and header, or to a new table at the end when its table is new."""
     reg = REGISTERS[name]
-    with open(src, encoding="utf-8") as fh:
-        old = split_parts(fh.read())
-    tree = read_tree(name)
     top = path(reg["dir"])
+    if src_text is None:
+        with open(src, encoding="utf-8") as fh:
+            src_text = fh.read()
+    old = split_parts(src_text)
+    removed = 0
+    if base is not None:
+        base_rows = table_rows(split_parts(base))
+        mine = table_rows(old)
+        gone = base_rows - mine
+        for p in read_tree(name):
+            if p[0] != "table":
+                continue
+            for f, row in zip(p[5], p[3]):
+                if row in gone:
+                    os.remove(os.path.join(top, p[4], f))
+                    removed += 1
+            if not os.listdir(os.path.join(top, p[4])):
+                os.rmdir(os.path.join(top, p[4]))
+        old = [p if p[0] != "table" else (p[0], p[1], p[2], [r for r in p[3] if r not in base_rows]) for p in old]
+    tree = read_tree(name)
     have = {row for p in tree if p[0] == "table" for row in p[3]}
     by_id = {}
     tables = {}
@@ -368,7 +413,10 @@ def absorb(name, src):
             have.add(row)
             added += 1
     write_pointer(name)
-    print(f"registers: {name}: {added} rows added, {replaced} replaced by id; prose edits in the old file are not moved")
+    print(
+        f"registers: {name}: {added} rows added, {replaced} replaced by id, {removed} removed;"
+        " prose edits in the old file are not moved"
+    )
 
 
 def main():
@@ -377,10 +425,18 @@ def main():
     ap.add_argument("--print", metavar="NAME", choices=sorted(REGISTERS))
     ap.add_argument("--absorb", metavar="NAME", choices=sorted(REGISTERS))
     ap.add_argument("--from", dest="src", metavar="FILE", help="with --absorb: the old one-file register")
+    ap.add_argument("--base", metavar="FILE", help="with --from: the old file both sides started from")
     a = ap.parse_args()
     try:
-        if a.absorb:
-            absorb(a.absorb, a.src or path(REGISTERS[a.absorb]["pointer"]))
+        if a.absorb and a.src:
+            base = None
+            if a.base:
+                with open(a.base, encoding="utf-8") as fh:
+                    base = fh.read()
+            absorb(a.absorb, a.src, base)
+        elif a.absorb:
+            base, text = merge_stages(a.absorb)
+            absorb(a.absorb, None, base, text)
         if a.print:
             sys.stdout.write(render(a.print))
     except RegisterError as e:
