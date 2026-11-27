@@ -970,8 +970,10 @@ dependencies = [
  "sse-atoms",
  "sse-climate",
  "sse-core",
+ "sse-flow",
  "sse-formation",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
 ]
 

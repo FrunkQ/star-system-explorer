@@ -13,7 +13,6 @@ use sse_core::math as m;
 use std::collections::BTreeMap;
 
 const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
-const G: f64 = sse_core::sheet::G;
 const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 
 /// Climate conditions for a body: the facts it has, the inputs given (spin,
@@ -28,21 +27,30 @@ pub fn conditions(
     let d = &s.climate.defaults;
     let mut assumed = vec![];
     let r = b.radius_earth * R_EARTH_M;
-    let g = G * b.mass_earth * M_EARTH_KG / (r * r);
-    let (a_au, host) = b
-        .orbit
-        .as_ref()
-        .map(|o| (o.a_au, o.host_msun))
-        .unwrap_or((1.0, 1.0));
-    let year_days = x.year_days.unwrap_or_else(|| {
-        assumed.push("year from the orbit (Kepler)".into());
-        365.256_363 * m::sqrt(a_au * a_au * a_au / host.max(1e-12))
+    // G in force (ER).
+    let g = sse_core::constants::g() * b.mass_earth * M_EARTH_KG / (r * r);
+    // CS1: the year is once round the star; a moon's planet carries it.
+    let place = crate::starlight::star_place(b);
+    let year_days = x.year_days.unwrap_or_else(|| match place {
+        Some(p) => {
+            let (y, fell_back) = crate::starlight::year_days(b, &p);
+            if fell_back {
+                assumed
+                    .push("year by Kepler's law in AU and years (no data sheet in force)".into());
+            }
+            y
+        }
+        None => {
+            assumed.push("a year of 1 AU round a sun-like star (no orbit)".into());
+            365.256_363
+        }
     });
     let locked = env.locked;
     let src = b.spin_source.as_deref().unwrap_or("authored");
     let rotation_hours = x.rotation_hours.unwrap_or_else(|| {
         if locked {
-            year_days * 24.0
+            // Locked to what it orbits: a moon's day is its month.
+            crate::starlight::orbit_days(b).map_or(year_days, |d| d.0) * 24.0
         } else if let Some(h) = b.spin_hours {
             if src != "authored" {
                 assumed.push(format!("spin {h:.2} h ({src})"));
@@ -68,10 +76,23 @@ pub fn conditions(
             d.obliquity_deg
         }
     });
-    let flux = x.flux_w_m2.unwrap_or_else(|| {
-        assumed.push("sunlight from a sun-like star at the orbit".into());
-        sse_core::sheet::S_SUN / (a_au * a_au)
-    });
+    // CS1: the star's own light at the world's place round it, now.
+    let flux =
+        x.flux_w_m2
+            .unwrap_or_else(|| match crate::starlight::starlight_w_m2(b, b.age_gyr) {
+                Some(f) => f,
+                None => {
+                    assumed.push(
+                    "sunlight from a sun-like star at the orbit (the star's light is not known, or no data sheet is in force)"
+                        .into(),
+                );
+                    let d = place
+                        .map(|p| p.d_au)
+                        .or(b.orbit.as_ref().map(|o| o.a_au))
+                        .unwrap_or(1.0);
+                    sse_core::sheet::S_SUN / (d * d)
+                }
+            });
     let gases = x.gases.clone().unwrap_or_else(|| {
         if b.deep_envelope && !d.giant_gases.is_empty() {
             assumed.push(format!(
@@ -107,10 +128,21 @@ pub fn conditions(
         0.0
     });
     let air = Air::guess(&s.cover, env, b.pressure_bar, b.oceans > 0.0);
-    let albedo = x.albedo.unwrap_or(match &b.climate {
-        Source::Star { albedo, .. } => *albedo,
-        Source::Fixed { .. } => s.albedo_default,
-    });
+    // CS1: the world's own Bond albedo (measured or typed) before any
+    // estimate; formation's worlds carry one in their climate.
+    let albedo = x
+        .albedo
+        .or(b.bond_albedo)
+        .unwrap_or_else(|| match &b.climate {
+            Source::Star { albedo, .. } => *albedo,
+            Source::Fixed { .. } => {
+                assumed.push(format!(
+                    "Bond albedo {} (the surface pack's default; none measured)",
+                    s.albedo_default
+                ));
+                s.albedo_default
+            }
+        });
     let wet = liquid.is_some();
     let c = Conditions {
         address: b.address.clone(),
@@ -126,7 +158,7 @@ pub fn conditions(
                 .is_some_and(|s| s.kind() == "body"),
         obliquity_deg,
         year_days,
-        eccentricity: b.orbit.as_ref().map(|o| o.e).unwrap_or(0.0),
+        eccentricity: place.map(|p| p.e).unwrap_or(0.0),
         perihelion_lon_deg: x.perihelion_lon_deg.unwrap_or(0.0),
         flux_w_m2: flux,
         albedo,

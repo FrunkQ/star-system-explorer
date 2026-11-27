@@ -1329,3 +1329,39 @@ fn icy_moons_take_their_regime_from_their_ice() {
         "{t}"
     );
 }
+
+/// CS1: catalogued worlds take the Sun's measured light at their distance
+/// from it (a moon's is its planet's) and their own measured Bond albedo
+/// (NSSDCA: Earth 0.294, Moon 0.11), never a sun-like guess or the pack's
+/// default.
+#[test]
+fn catalogued_worlds_get_their_own_sunlight_and_albedo() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    for (name, albedo) in [("Earth", 0.294), ("Moon", 0.11)] {
+        let addr = r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap();
+        let s = send(
+            &mut k,
+            serde_json::json!({"op":"survey_surface","system":SOL,"body":addr,"limit":0}),
+        );
+        let c = &s["survey"]["climate"];
+        let assumed = c["assumed"].to_string();
+        assert!(!assumed.contains("sun-like"), "{name}: {assumed}");
+        assert!(!assumed.contains("Bond albedo"), "{name}: {assumed}");
+        // About 340 W/m² over the sphere at 1 AU (1361 / 4); the Moon's was
+        // its orbit round the Earth before HV2c, about 10^8 times too much.
+        let arriving = c["sunlight"]["arriving_w_m2"].as_f64().unwrap();
+        assert!((330.0..350.0).contains(&arriving), "{name}: {arriving}");
+        let bond = c["sunlight"]["bond_albedo"].as_f64().unwrap();
+        assert!((bond - albedo).abs() < 0.03, "{name}: albedo {bond}");
+    }
+}
