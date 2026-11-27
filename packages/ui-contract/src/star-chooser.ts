@@ -9,7 +9,7 @@ import { thermalColour } from "./light.ts";
 import { secondsToYears } from "./intent.ts";
 import type { Json } from "./json.ts";
 
-export type StarPhase = "pre-main-sequence" | "main-sequence" | "hertzsprung-gap" | "giant" | "brown-dwarf" | "white-dwarf" | "neutron-star" | "black-hole";
+export type StarPhase = "pre-main-sequence" | "main-sequence" | "hertzsprung-gap" | "giant" | "wolf-rayet" | "brown-dwarf" | "white-dwarf" | "neutron-star" | "black-hole";
 
 /**
  * A star's formal class as the kernel reads it (sse_formation::spectral): "G2 V", "K1 III", "T5", "DX 4.5", "NS", "BH".
@@ -106,7 +106,7 @@ export async function readMassStrip(describe: Describe, age_yr: number, feh: num
 
 // The order the phases come in along the mass line at one age: heavier stars are further on. A star still forming is
 // left out of the search (the lightest stars form slowest, so it is not in order).
-const ORDER: StarPhase[] = ["brown-dwarf", "main-sequence", "hertzsprung-gap", "giant", "white-dwarf", "neutron-star", "black-hole"];
+const ORDER: StarPhase[] = ["brown-dwarf", "main-sequence", "hertzsprung-gap", "giant", "wolf-rayet", "white-dwarf", "neutron-star", "black-hole"];
 const rank = (p: StarPhase) => ORDER.indexOf(p);
 
 const fits = (k: StarKind, s: StarSample) => s.phase === k.phase && (!k.letters || (s.letter !== null && k.letters.includes(s.letter)));

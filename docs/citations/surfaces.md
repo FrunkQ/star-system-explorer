@@ -117,5 +117,6 @@ Abbreviations: P = `packs/base-surface/pack.json`; I = `crates/sse-surface/src/i
 | stains.rs sulphur | Carlson et al. 2007, in Io After Galileo, ch. 9 (Springer) | Io's colours from sulphur allotropes and SO2 frost | unverified | not read in this pass |
 | sheet-optics.ts | Hapke 2012, Theory of Reflectance and Emittance Spectroscopy, 2nd ed., Cambridge, doi:10.1017/CBO9781139025683 | equivalent-slab grain albedo, intimate mixing by cross-section, diffusive reflectance r0 | textbook | the equations as printed in Hapke 1993 and 2012 |
 | stain-look.ts STAIN_GRAIN_UM | Wolff et al. 2006, JGR 111, E12S17, doi:10.1029/2006JE002786 | Mars dust effective radius near 1.5 µm | unverified | not read in this pass |
+| renderer cloud-rows.json, sulphuric acid | Hansen, J. E. and Hovenier, J. W. 1974, J. Atmos. Sci. 31, 1137, doi:10.1175/1520-0469(1974)031<1137:IOTPOV>2.0.CO;2 | Venus's main cloud droplets: effective radius 1.05 µm, real index 1.44 at 550 nm, about 75% H2SO4 | unverified | from memory; Consensus out of allowance until 1 Dec 2026 |
 
 - Trainer, M. G., Pavlov, A. A., DeWitt, H. L., Jimenez, J. L., McKay, C. P., Toon, O. B. and Tolbert, M. A. 2006, PNAS 103, 18035: organic haze on Titan and the early Earth. Haze forms from CH4/CO2 of about 0.1 upward; used for `THOLIN_MIN_CH4_PER_OX`. doi:10.1073/pnas.0608561103 (unverified).

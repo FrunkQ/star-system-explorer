@@ -10858,13 +10858,13 @@
      "source": "sse.base-atlas",
      "examples": [
       {
-       "name": "a 39.4 solar-mass star at 1.29 million years (O6 V)",
+       "name": "a 39.4 solar-mass star at 1.49 million years (O6 V)",
        "values": {
         "star.class_family": "main-sequence",
         "star.class_kind": "O",
         "star.spectral_class": "O6 V",
         "star.sample_mass_msun": 39.37335590403715,
-        "star.sample_age_yr": 1289981.3632181545,
+        "star.sample_age_yr": 1494653.452932364,
         "star.sample_feh": 0.0
        },
        "expect": "in"
@@ -10895,13 +10895,13 @@
      "source": "sse.base-atlas",
      "examples": [
       {
-       "name": "a 39.4 solar-mass star at 1.29 million years (O6 V)",
+       "name": "a 39.4 solar-mass star at 1.49 million years (O6 V)",
        "values": {
         "star.class_family": "main-sequence",
         "star.class_kind": "O",
         "star.spectral_class": "O6 V",
         "star.sample_mass_msun": 39.37335590403715,
-        "star.sample_age_yr": 1289981.3632181545,
+        "star.sample_age_yr": 1494653.452932364,
         "star.sample_feh": 0.0
        },
        "expect": "in"
@@ -11688,11 +11688,11 @@
      "source": "sse.base-atlas",
      "examples": [
       {
-       "name": "a 3.49 solar-mass star at 259 million years (K1 III)",
+       "name": "a 3.49 solar-mass star at 259 million years (K2 III)",
        "values": {
         "star.class_family": "giant",
         "star.class_kind": "K",
-        "star.spectral_class": "K1 III",
+        "star.spectral_class": "K2 III",
         "star.sample_mass_msun": 3.4892232454607206,
         "star.sample_age_yr": 258843994.54999423,
         "star.sample_feh": 0.0
@@ -12309,13 +12309,13 @@
      "source": "sse.base-atlas",
      "examples": [
       {
-       "name": "a 39.4 solar-mass star at 4.86 million years (M6 Ia)",
+       "name": "a 27.1 solar-mass star at 6.52 million years (M5 Ia)",
        "values": {
         "star.class_family": "supergiant",
         "star.class_kind": "M",
-        "star.spectral_class": "M6 Ia",
-        "star.sample_mass_msun": 39.37335590403715,
-        "star.sample_age_yr": 4855087.935840393,
+        "star.spectral_class": "M5 Ia",
+        "star.sample_mass_msun": 27.119607863117274,
+        "star.sample_age_yr": 6517953.351597069,
         "star.sample_feh": 0.0
        },
        "expect": "in"
