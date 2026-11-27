@@ -14,15 +14,18 @@
 -->
 <script module lang="ts">
   import type { Landmark, SurfaceTile } from "../../../ui-contract/src/index.ts";
+  import type { StainHue } from "../../../renderer/src/index.ts";
   // The world's map tiles (a second or so) and its landmarks, kept per world for the page's life.
   const globes = new Map<string, SurfaceTile[]>();
+  /** What stains each world's ground (TRUE4), coloured from the sheet, kept with its globe for the finer patches. */
+  const stainsOf = new Map<string, StainHue[]>();
   const marks = new Map<string, Landmark[]>();
 </script>
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { clockAt, constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, readGroundOptics, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, readGroundOptics, readStains, stainTiles, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
@@ -75,9 +78,12 @@
       if (g !== gen) return;
       if (!t.ok) return void (failed = t.message);
       if (!t.tiles.length) return void (failed = `${sub.label} has no surface the kernel has built`);
-      // Bare ground in its measured colour from the data sheet, softened (natural outlines), as True and the Body globe draw it.
+      // Bare ground in its measured colour from the data sheet, softened (natural outlines), then stained by what the
+      // kernel says coats it (TRUE4: Io's sulphur from its measured reflectance), as True and the Body globe draw it.
       const r = reads as Partial<MatterReader>;
-      const laid = r.readMatter ? withGround(t.tiles, await readGroundOptics(r as MatterReader)) : t.tiles.map((x) => softenGround(x));
+      const record = (t as { record?: unknown }).record;
+      if (r.readMatter && record !== undefined) stainsOf.set(key, await readStains(r as MatterReader, record));
+      const laid = r.readMatter ? stainTiles(withGround(t.tiles, await readGroundOptics(r as MatterReader)), stainsOf.get(key) ?? []) : t.tiles.map((x) => softenGround(x));
       if (g !== gen) return;
       globes.set(key, laid);
       tiles = laid;
@@ -303,7 +309,9 @@
         continue;
       }
       if (!r.tiles.length) return r.refused[0]?.why ?? "no tiles";
-      return readPatch(r.tiles, site!.lat, site!.lon, w.radius_m, half, nFor(r.tiles[0]!.spacing_m));
+      // The finer ground stained as the globe it sits in (TRUE4).
+      const laid = stainTiles(r.tiles, stainsOf.get(`${system}|${sub.address}`) ?? []);
+      return readPatch(laid, site!.lat, site!.lon, w.radius_m, half, nFor(laid[0]!.spacing_m));
     }
     return "the kernel would not give tiles at any level asked";
   }

@@ -379,7 +379,7 @@
       // U10: the campaign kept in this browser reopens first; players then join from it.
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
-      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: campaignYr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
       // Grounds on held screens (PC5): the campaign's postcards, and the postcard sets (PC6: the base set, then the stack's).
       void loadSets(s.stack().base);
       share.setGrounds({ bookmarks: () => ws.bookmarks ?? [], sets: () => postcardSets.list });
@@ -873,10 +873,12 @@
   });
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
+  // The campaign's now, read in one place: the clock, the share and the players' screens all take it from here, so the
+  // move to whole seconds (time scales design, TP3) is one edit in this file.
+  const campaignYr = $derived(ws.campaign_now_yr ?? ws.now_yr);
   // The campaign's clock travels to players (U11): its now, not whatever time the GM is viewing.
   $effect(() => {
-    const yr = ws.campaign_now_yr ?? ws.now_yr;
-    if (share?.state.link) share.setClock(yr);
+    if (share?.state.link) share.setClock(campaignYr);
   });
   // The picture's clock (CLK1) follows the time in view however it was moved (a step, a bookmark, a save opened, a
   // campaign shifted to another system's present); play and the Run desk's clock set its rate.
@@ -890,14 +892,14 @@
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
   // The Run desk's clock (TM3a): the pack's calendar, as the ruler reads it; a step moves the campaign's now and the time
   // in view together, as stepping on the ruler does while it sits at now.
-  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? campaignYr));
   function stepCampaign(yr: number) {
     ws.setTime(yr);
     ws.setCampaignNow?.(yr);
   }
   /** Move the campaign's clock to another system's present, keeping the time elapsed in the campaign. */
   function shiftCampaign(present: number) {
-    const elapsed = (ws.campaign_now_yr ?? ws.now_yr) - (ws.campaign_epoch_yr ?? ws.now_yr);
+    const elapsed = campaignYr - (ws.campaign_epoch_yr ?? ws.now_yr);
     ws.campaign_epoch_yr = present;
     ws.campaign_now_yr = present + elapsed;
     ws.now_yr = ws.campaign_now_yr;
@@ -1879,7 +1881,7 @@
         {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
       {:else}
         <!-- The Run desk's clock in the ruler's place (three desks design 7.3): the campaign's now in human time. Above the system nothing moves in human time, so it shows the date only. -->
-        <div class="ruler-view"><CampaignClock campaignNow={ws.campaign_now_yr ?? ws.now_yr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} onrate={(r) => ws.setRate?.(r)} /></div>
+        <div class="ruler-view"><CampaignClock campaignNow={campaignYr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} onrate={(r) => ws.setRate?.(r)} /></div>
       {/if}
       <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. On Run only Sound stays, beside the clock; a what-if left open elsewhere still shows, so it can be kept or thrown away. -->
       <div class="ruler-side" aria-label="Time tools" role="group">
@@ -1893,7 +1895,7 @@
             <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
           {:else}
             {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
-            <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
+            <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} canKeep={deskDoc(desk).writes !== "try"} onbuild={() => chooseDesk("build")} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
           {/if}
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
         </span>{/if}
@@ -1924,7 +1926,7 @@
           onswitchboard={() => go("switchboard")}
           chip={desk !== "run"}
           party={ws.party ?? null}
-          now_yr={ws.campaign_now_yr ?? ws.now_yr}
+          now_yr={campaignYr}
           onchange={() => (ws.revision++, ws.notePhysics())}
         />
       {/if}

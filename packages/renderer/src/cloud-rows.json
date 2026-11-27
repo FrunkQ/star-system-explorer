@@ -1,0 +1,10 @@
+{
+  "note": "Which data sheet row (packs/base-reference) each weather condensate's droplets read in True, and their size, where the condensate has no `condensed_colour_rgb` of its own: the kernel's light_through_gas (sse-light haze.rs, anomalous diffraction and the adding method) turns the row's measured n + ik into the colour of a thick deck of those droplets. A drawing choice, not physics: the row and the size belong on the weather block's photochemical rule (packs/base-weather, which already has a particle_radius_um field) and move there in the golden lane; fudge register 'True cloud rows named in the renderer'.",
+  "rows": {
+    "sulphuric acid": {
+      "row": "sulfuric-acid-75",
+      "radius_um": 1.05,
+      "src": "Venus's main cloud droplets: effective radius 1.05 um and real index 1.44 at 550 nm, about 75% H2SO4 by weight, from the polarisation of Venus (Hansen and Hovenier 1974, J. Atmos. Sci. 31, 1137) [from memory, check]"
+    }
+  }
+}

@@ -15,6 +15,7 @@ G follows {"block":"sse.atmosphere.surface_pressure","reads":[],"uses_it":false}
 G follows {"block":"sse.climate.equilibrium_temperature","reads":["sigma_SB"],"uses_it":false}
 G follows {"block":"sse.climate.grey_surface_temperature","reads":[],"uses_it":false}
 G follows {"block":"sse.climate.insolation","reads":[],"uses_it":false}
+G follows {"block":"sse.gravity.zero_velocity_radius","reads":["G"],"uses_it":true}
 G follows {"block":"sse.math.equation","reads":[],"uses_it":false}
 G follows {"block":"sse.ocean.wind_waves","reads":[],"uses_it":false}
 G follows {"block":"sse.orbit.apsides","reads":[],"uses_it":false}

@@ -12,7 +12,7 @@
 // share of the light is the True galaxy's own (`GALAXY_LIGHT`), so a type picture and a charted galaxy agree on how
 // blue a galaxy of a given star formation looks.
 import { cloudNoise, GALAXY_LIGHT } from "./galaxy-true.ts";
-import { starRgb } from "./sky.ts";
+import { starRgb, tempFromBV } from "./sky.ts";
 
 /** What a type picture is drawn from: the kernel's `galaxies_seen` facts, cut to what is needed. */
 export interface GalaxyTypeFacts {
@@ -60,10 +60,9 @@ const seedOf = (key: string) => {
   return v >>> 0;
 };
 
-/** A colour temperature from B-V (Ballesteros 2012, EPL 97, 34008), as Galaxies nearby's chart colour does. */
+/** A colour temperature from the kernel's B-V (Ballesteros 2012, by the sky's one copy, `tempFromBV`); unknown reads as the Sun's 0.65. */
 export function bvTemperature(b_v: number | null): number {
-  const bv = Math.min(2, Math.max(-0.4, b_v ?? 0.65));
-  return 4600 * (1 / (0.92 * bv + 1.7) + 1 / (0.92 * bv + 0.62));
+  return tempFromBV(Math.min(2, b_v ?? 0.65));
 }
 
 /** The young stars' share of a galaxy's visible light, by the True galaxy's own light laws. */
