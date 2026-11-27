@@ -1,0 +1,1 @@
+{"key": "tadaki2019", "citation": "Tadaki and Fukumoto (2019, arXiv:1910.10926) trail", "doi": [], "arxiv": ["1910.10926"], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/g4_tests.rs"], "claims": ["/// Tadaki and Fukumoto (2019, arXiv:1910.10926) trail."], "tier": 3}

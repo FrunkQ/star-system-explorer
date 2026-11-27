@@ -1,0 +1,1 @@
+{"key": "doi:10.1126/science.1165280", "citation": "10.1126/science.1165280", "doi": ["10.1126/science.1165280"], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-field/src/tests.rs"], "claims": ["/// doi:10.1126/science.1165280)."], "tier": 3}
