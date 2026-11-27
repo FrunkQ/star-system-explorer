@@ -15,7 +15,18 @@ use sse_small::{Host, Makeup, Member, Pins, Settings};
 
 /// The base pack's numbers, read once (parsing the sheet for grain
 /// densities is the slow part).
+/// The small-body settings in force: the stack's `small_bodies` block and
+/// its sheet (ER1), or the base pack's outside a call or on a stack without
+/// one.
 fn settings() -> Settings {
+    if let Some(p) = sse_physics::now() {
+        if let Some(v) = p.settings("small_bodies") {
+            let json = serde_json::to_value(v).ok();
+            if let Some(Ok(s)) = json.map(|j| Settings::from_block_with(&j, p.sheet())) {
+                return s;
+            }
+        }
+    }
     static S: std::sync::OnceLock<Settings> = std::sync::OnceLock::new();
     S.get_or_init(Settings::default).clone()
 }

@@ -13,14 +13,12 @@ still formation_record
 quiet hold # records who holds a thing
 quiet holdings_in # lists what a holder holds
 still light_through_gas
-still make_small_body
 still preview_tree
 quiet read_catalogue # reads a catalogue file as published
 still read_scattering
 still rehost
 quiet set_authored_batch # writes authored facts to the record
 quiet set_tech # records a tech level
-still small_body
 still start_job
 still step_job
 quiet tech_of # reads the tech level recorded

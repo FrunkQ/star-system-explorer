@@ -212,6 +212,14 @@ impl Settings {
         let s = v
             .pointer("/provides/other/small_bodies")
             .ok_or("no provides.other.small_bodies")?;
+        Self::from_block_with(s, sheet)
+    }
+    /// From a `small_bodies` settings block itself (the stack's, as the
+    /// physics in force holds it), reading the sheet's values from `sheet`.
+    pub fn from_block_with(
+        s: &serde_json::Value,
+        sheet: &sse_reference::Reference,
+    ) -> Result<Self, String> {
         let mut out: Settings = serde_json::from_value(s.clone()).map_err(|e| e.to_string())?;
         for (g, id) in [
             "formation-metal",
