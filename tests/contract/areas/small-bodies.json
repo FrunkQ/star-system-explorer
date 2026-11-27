@@ -6,5 +6,8 @@
  {"op": "small_body", "system": "u:small/sys:1", "cloud": "u:small/sys:1/cloud:0", "rank": 40},
  {"op": "small_body", "system": "u:small/sys:1", "member": "u:small/sys:1/cloud:0/obj:0"},
  {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-1", "kind": "contact-binary", "diameter_km": 1.0, "a_au": 1.5},
- {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-2", "kind": "dragon", "diameter_km": 1.0, "a_au": 1.5}
+ {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-2", "kind": "dragon", "diameter_km": 1.0, "a_au": 1.5},
+ {"op": "ring_structure", "ask": {"key": "saturn", "host": {"mass_kg": 5.683e26, "radius_m": 6.0268e7, "j2": 0.01629}, "sculptors": [{"name": "Pan", "a_m": 1.33584e8, "mass_kg": 4.95e15}, {"name": "Janus", "a_m": 1.5146e8, "mass_kg": 1.898e18}, {"name": "Mimas", "a_m": 1.8552e8, "mass_kg": 3.79e19}], "ring": {"inner_m": 9.1975e7, "outer_m": 1.3678e8, "zones": [{"name": "B", "inner_m": 9.1975e7, "outer_m": 1.17507e8, "tau": 1.45, "tau_range": [0.4, 2.5], "albedo": 0.5}, {"name": "A", "inner_m": 1.2234e8, "outer_m": 1.3678e8, "tau": 0.7, "tau_range": [0.4, 1.0], "albedo": 0.5}]}}, "samples": 32},
+ {"op": "adopt", "formation": {"seed": "kernel-form-21", "system": "u:small/sys:2", "star_pins": {"primary_mass": 1.0}}},
+ {"op": "ring_structure", "system": "u:small/sys:2", "cloud": "u:small/sys:2/cloud:4", "samples": 32}
 ]
