@@ -4,7 +4,8 @@
 // storms and the polar cyclones are all the weather block's, cell by cell; each layer's colour is its condensate's on
 // the master data sheet, read by the caller; a haze's colour is the one the weather op sends. This file only stacks
 // the layers by the adding method (Bohren 1987), as weather.ts does on the Body globe.
-import { stainFacts, stainHue, type StainHue } from "./stain-look.ts";
+import { readStains } from "./stain-look.ts";
+import CLOUD_ROWS from "./cloud-rows.json" with { type: "json" };
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
 import type { Json, SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
@@ -514,16 +515,63 @@ export const nameKey = (s: string) =>
 
 /**
  * Match the weather op's condensate names to the sheet's substances by their names (any of physics, plain, story),
- * so a new substance on the sheet is coloured without a list here. Its `condensed_colour_rgb` is linear RGB.
+ * so a new substance on the sheet is coloured without a list here. Its `condensed_colour_rgb` is linear RGB. `droplets`
+ * (from `readCloudRows`) colours condensates the sheet measures as droplets instead, by the weather op's own name.
  */
-export function sheetColours(rows: readonly SheetSubstance[]): ColourOf {
+export function sheetColours(rows: readonly SheetSubstance[], droplets: Readonly<Record<string, Rgb>> = {}): ColourOf {
   const byName = new Map<string, Rgb>();
   for (const r of rows) {
     const v = r.optical?.condensed_colour_rgb?.v;
     if (!v || v.length < 3) continue;
     for (const n of [r.id, r.names?.physics, r.names?.plain, r.names?.story]) if (n) byName.set(nameKey(n), [v[0]!, v[1]!, v[2]!]);
   }
+  for (const [n, c] of Object.entries(droplets)) byName.set(nameKey(n), c);
   return (condensate) => byName.get(nameKey(condensate)) ?? null;
+}
+
+/** A condensate whose droplets the sheet measures (cloud-rows.json): its row and droplet size. */
+export interface CloudRow {
+  row: string;
+  radius_um: number;
+  src?: string;
+}
+
+/** The condensate-to-row naming (cloud-rows.json). */
+export const CLOUD_ROW_NAMES: Record<string, CloudRow> = CLOUD_ROWS.rows;
+
+/**
+ * A deck thick enough to stand for a semi-infinite cloud of it (a condensed colour is a thick layer's reflectance, as
+ * the sheet's `condensed_colour_rgb` are; the deck's own optical depth is applied separately by `slabReflectance`).
+ */
+const THICK_DECK_TAU = 1e4;
+
+let cloudRows: Promise<Record<string, Rgb>> | null = null;
+
+/**
+ * The colour of a thick deck of each cloud-rows.json condensate's droplets, linear RGB 0..1, from the row's measured
+ * n + ik through the kernel (`light_through_gas` particles: anomalous diffraction per droplet and the adding method,
+ * sse-light haze.rs) in sunlight, the eye adapted to it. Read once for the page; a reader without the op, or a row the
+ * kernel refuses, leaves that condensate to the sheet's substances (or white, and the note says so).
+ */
+export function readCloudRows(k: Pick<FaceReader, "lightThroughGas">): Promise<Record<string, Rgb>> {
+  cloudRows ??= (async () => {
+    const out: Record<string, Rgb> = {};
+    if (!k.lightThroughGas) return out;
+    for (const [name, c] of Object.entries(CLOUD_ROW_NAMES)) {
+      const r = await k.lightThroughGas([
+        { address: `cloud:${name}`, t_k: constant("T_sun"), layers: [], particles: [{ material: c.row, radius_m: c.radius_um * 1e-6, optical_depth: THICK_DECK_TAU, at_nm: 550, asymmetry: CLOUD_G }], floor: 0 },
+      ]);
+      const v = r.ok ? (r.passages[0] as { reflected?: { reflectance_rgb?: number[] } } | undefined)?.reflected?.reflectance_rgb : undefined;
+      if (v && v.length >= 3 && v.every((x) => Number.isFinite(x))) out[name] = [v[0]!, v[1]!, v[2]!];
+    }
+    return out;
+  })();
+  return cloudRows;
+}
+
+/** For tests: forget the page's copy. */
+export function forgetCloudRows(): void {
+  cloudRows = null;
 }
 
 /** The kernel door this needs (a ViewSession has both). */
@@ -647,12 +695,7 @@ export async function readTrueFace(k: FaceReader, system: string, body: string, 
   // A giant's tiles are its cloud deck's relief, not a ground: its face is its decks alone (trueGiant).
   const giantDeck = s.ok && s.kind === "cloud-deck";
   // What stains its ground (TRUE4): the kernel's stains, each hued by its sheet row's optics.
-  const stains: StainHue[] = [];
-  for (const f of s.ok && !giantDeck ? stainFacts(s.record) : []) {
-    const r = await k.readMatter({ id: f.material_id });
-    const h = r.ok ? stainHue(f, (r.value as { row?: unknown }).row) : null;
-    if (h) stains.push(h);
-  }
+  const stains = s.ok && !giantDeck ? await readStains(k, s.record) : [];
   // Bare ground in its measured colour from the data sheet (ground-optics.ts, VP3 part 5), then stained.
   const ground =
     s.ok && !giantDeck ? trueSurface(withGround(s.tiles, await readGroundOptics(k)), 128, 64, stains) : null;
@@ -663,7 +706,7 @@ export async function readTrueFace(k: FaceReader, system: string, body: string, 
   const gas = ground ? await readTrueAir(k, system, body) : null;
   const withGas = <T extends AirLook>(l: T): T => (gas && typeof gas !== "string" ? { ...l, air: gas } : l);
   if (!air.ok) return ground ? withGas({ tex: ground, ground, said: [`Its clouds are not shown: ${air.message}`] }) : groundWhy;
-  const colours = sheetColours(await readSheetSubstances(k));
+  const colours = sheetColours(await readSheetSubstances(k), await readCloudRows(k));
   if (ground) return withGas(withAir(ground, air.tiles, colours));
   const gg = await readGiantGas(k, system, body);
   const giant = trueGiant(air.tiles, colours, 128, 64, gg?.tint ?? null, gg?.deep ?? null);
