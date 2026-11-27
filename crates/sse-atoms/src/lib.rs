@@ -480,6 +480,11 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
     ("flare.energy", "total energy released by a flare, all wavelengths"),
     ("flare.rate_above", "flares per unit time with at least the given energy"),
+    // prominences (SG6)
+    ("star.surface_field", "mean magnetic field strength over a star's surface"),
+    ("star.corona_temperature", "mean temperature of a star's corona"),
+    ("star.corona_base_density", "particles per cubic metre at the foot of a star's corona"),
+    ("star.closed_corona_extent", "reach of a star's closed magnetic field, in stellar radii"),
     // what stops a wind (MF6)
     ("body.ionopause_altitude", "height above the ground at which a body's air holds off the stellar wind"),
     ("magnetosphere.flaring", "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)"),
