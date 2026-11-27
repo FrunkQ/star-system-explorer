@@ -79,8 +79,10 @@ try {
     await page.mouse.move(700, 400);
     await page.waitForFunction(() => (document.querySelector("header.bar")?.getBoundingClientRect().bottom ?? 1) <= 1);
     // The picture takes the whole window (the stage must not slide into the bar's empty grid row).
+    // Firefox honours the full-screen request and the window becomes the screen, so compare with the window as it is.
     const pic = await page.locator(".area-chart").boundingBox();
-    assert.ok(pic && pic.y <= 1 && pic.height >= 890, `the picture fills the window: ${JSON.stringify(pic)}`);
+    const winH = await page.evaluate(() => window.innerHeight);
+    assert.ok(pic && pic.y <= 1 && pic.height >= winH - 10, `the picture fills the window (${winH} px): ${JSON.stringify(pic)}`);
     await shot("4-filled");
     await page.mouse.move(700, 2);
     await page.waitForSelector(".app[data-peek]");
