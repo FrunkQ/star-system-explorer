@@ -546,8 +546,9 @@ def build_moons(cache, got, out, min_size, au_km):
             continue
         seen.add(code)
         rad, rgrade, rsrc = phys.get(code, (None, None, None))[0], "measured", "jpl-sats"
+        rsig, rough = None, False
         if rad is None and code in horizons:
-            rad, rgrade, rsrc = horizons[code], "estimated", "jpl-horizons"
+            (rad, rsig, rough), rgrade, rsrc = horizons[code], "estimated", "jpl-horizons"
         why = None
         if rad is None:
             why = "no radius on JPL's physical parameters page or in Horizons"
@@ -567,6 +568,7 @@ def build_moons(cache, got, out, min_size, au_km):
         row = {
             "id": name.lower().replace(" ", "-").replace("/", "-"), "name": name, "primary": r[ix["planet"]].strip(),
             "naif": code, "diameter_km": 2 * rad, "diameter_grade": rgrade, "diameter_source": rsrc,
+            "diameter_sigma_km": 2 * rsig if rsig else None, "rough": 1 if rough else None,
             "gm_km3_s2": gm, "density_g_cm3": rho,
             "epoch_jd": jd_of_calendar(r[ix["epoch"]].strip()), "a_au": a_km / au_km, "a_km": a_km,
             "e": num(r[ix["e"]]), "i_deg": num(r[ix["i"]]), "node_deg": num(r[ix["node"]]),
@@ -599,6 +601,9 @@ def build_moons(cache, got, out, min_size, au_km):
                 col("diameter_km", "f32", unit="km", doc="twice the mean radius", grade_column="diameter_grade",
                     source_column="diameter_source"),
                 col("diameter_grade", "u8", "meta"), col("diameter_source", "u8", "meta"),
+                col("diameter_sigma_km", "f32", unit="km", grade="estimated", source="jpl-horizons",
+                    doc="twice the radius uncertainty Horizons prints"),
+                col("rough", "u8", "meta", doc="1 where Horizons prints the radius as ~ (approximate)"),
                 col("gm_km3_s2", "f64", unit="km3 s-2", **m), col("density_g_cm3", "f32", unit="g cm-3", **m),
                 col("epoch_jd", "f64", unit="d", **m), col("a_au", "f64", unit="au", **m),
                 col("a_km", "f64", unit="km", **m), col("e", "f64", unit="1", **m),
@@ -629,7 +634,9 @@ def build_moons(cache, got, out, min_size, au_km):
                    "left_out": {k: sorted(v) for k, v in left_out.items()}}
 
 
-RADIUS_RE = __import__("re").compile(r"(?:Mean\s+)?[Rr]adius\s*(?:\(km\))?\s*=\s*([0-9]+(?:\.[0-9]+)?)")
+# Horizons prints "Radius (km) = 85 +- 10" and, for rough values, "= ~30".
+RADIUS_RE = __import__("re").compile(
+    r"(?:Mean\s+)?[Rr]adius\s*(?:\(km\))?\s*=\s*(~)?\s*([0-9]+(?:\.[0-9]+)?)(?:\s*\+-\s*([0-9]+(?:\.[0-9]+)?))?")
 
 
 def horizons_radii(cache):
@@ -643,8 +650,8 @@ def horizons_radii(cache):
         if f.endswith(".json"):
             text = json.load(open(os.path.join(folder, f), encoding="utf-8"))["result"]
             m = RADIUS_RE.search(text)
-            if m and float(m.group(1)) > 0:
-                out[f[:-5]] = float(m.group(1))
+            if m and float(m.group(2)) > 0:
+                out[f[:-5]] = (float(m.group(2)), float(m.group(3)) if m.group(3) else None, bool(m.group(1)))
     return out
 
 

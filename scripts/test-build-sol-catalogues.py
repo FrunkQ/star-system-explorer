@@ -58,6 +58,9 @@ def main(argv):
         fake = [m for m in moons if m["name"] == "Fakemoon"]
         assert fake and fake[0]["diameter_km"] == 24.0 and fake[0]["diameter_grade"] == "estimated" \
             and fake[0]["diameter_source"] == "jpl-horizons", fake
+        assert fake[0]["rough"] == 1, "a radius printed as ~12 is kept and marked rough"
+        # JPL's page wins over Horizons where both have a radius (Nereid 178 km in the fixture).
+        assert nereid[0]["diameter_km"] == 356.0 and nereid[0]["diameter_grade"] == "measured"
         assert "Nereid" in [m["name"] for m in moons]
         assert laplace[0]["diameter_grade"] == "measured"
         # The reader accepts every file and every credit is carried.
@@ -68,6 +71,13 @@ def main(argv):
                                    cwd=ROOT, capture_output=True, text=True)
                 assert r.returncode == 0, r.stderr
                 assert "NASA/JPL Solar System Dynamics. Data retrieved on 2026, November, 26." in r.stdout, f
+    # The two ways Horizons prints a radius (lines as it printed them for Himalia and Sycorax, 27 Nov 2026).
+    import runpy
+    rx = runpy.run_path(os.path.join(ROOT, "scripts", "build-sol-catalogues.py"))["RADIUS_RE"]
+    m = rx.search("  Radius (km)             = 85 +- 10         Density (g cm^-3)   =              ")
+    assert m and m.group(2) == "85" and m.group(3) == "10" and not m.group(1), m
+    m = rx.search("  Radius (km)           = ~30")
+    assert m and m.group(1) == "~" and m.group(2) == "30", m
     print("build-sol-catalogues: ok")
     return 0
 
