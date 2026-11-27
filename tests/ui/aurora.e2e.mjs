@@ -5,6 +5,7 @@
 // and the HUD line says the long exposure lifts faint light (Alex, 24 Nov: Long exposure is the default). Seen from
 // above and edge-on, both drawn. Mars (no field facts in the fixture, thin CO2 air) draws none and says why. From the ground on Earth near the oval at night (desk), the Land screen names the same oval and
 // lines and the long exposure. Nothing is written.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -5,6 +5,7 @@
 // finishes it; going back the previous page comes down over this one. By hand: a drag carries the fold, past a third it
 // turns, short it settles back and the page is put back; a press on a button inside is the button's. Reduced motion:
 // a plain change.
+import "./chart-first.mjs";
 import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire, stripTypeScriptTypes } from "node:module";

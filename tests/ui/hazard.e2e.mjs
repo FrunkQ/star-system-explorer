@@ -5,6 +5,7 @@
 // out, the moons' lanes are marked, Park and Dive are drawn and said, Io reads deadly and Callisto clear. Over the poles
 // the belts' row folds into the quiet line. The Sun at system scale: heat and the climb set the marks. Reading writes
 // nothing; a phone gets the same strip.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

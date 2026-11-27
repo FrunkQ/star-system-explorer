@@ -3,6 +3,7 @@
 // The GM shares Kestrel from the Run desk and a player joins. On Tarn's card the eye shows; one press reveals Tarn to
 // the table (held two seconds while players are connected), the player's screen fills in, and Undo takes it back.
 // The popup opens from the caret and Escape closes it; the eye is reachable and pressable by keyboard alone.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -468,7 +468,10 @@
     const sys = scene.system;
     const sel = ctx.workspace.selection;
     const g = ++trueGen;
-    if (!looksTrue || ctx.session.seat.authority !== "gm") return void (reading = null);
+    // Held (the start sheet covers the stage, or a door is entering a system): no faces read for a system nobody can
+    // see yet, so the door's own kernel calls are not queued behind them (AF3: the Solar System took 13.6 s to open in
+    // True on a Radeon 890M, 0.27 s on Chart, while the hidden base system's faces were read).
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || ctx.workspace.held) return void (reading = null);
     const worlds = scene.subjects.filter((s) => s.orbit && s.kind !== "star" && s.kind !== "belt");
     const order = [...worlds.filter((s) => s.address === sel), ...worlds.filter((s) => s.address !== sel)];
     // The reader runs untracked: worlds already kept are put in `surfaces` without waiting, so a tracked read of
@@ -479,6 +482,8 @@
       let noneWhy = "";
       let done = 0;
       for (const s of order) {
+        // Stop between worlds as soon as the system, the choice or True has changed (or the stage is held).
+        if (g !== trueGen) return;
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };

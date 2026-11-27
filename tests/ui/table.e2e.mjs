@@ -3,6 +3,7 @@
 // The GM shares from Kestrel: the players' screen shows Kestrel. The GM opens the Solar System privately: the players
 // still see Kestrel, and the GM's bar says so and offers "Send this view". Sent, the players' screen follows to the
 // Solar System, as far as the table knows it. Hold all on the Switchboard puts a holding card up until a view is sent again.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

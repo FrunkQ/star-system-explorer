@@ -4,6 +4,7 @@
 // naming features not built are held back). Escape and "Go to the chart" leave it; More › Start sheet brings it
 // back with another line. "Grow a new system" opens Make on its grow tab; a verb opens the real screen; "Open
 // straight to the chart next time" is remembered; "#chart" skips it. On a phone nothing runs off the side.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

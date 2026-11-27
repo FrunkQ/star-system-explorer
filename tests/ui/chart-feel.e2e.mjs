@@ -3,6 +3,7 @@
 // The Solar System opens framed on its worlds and belts (the Oort cloud is a haze beyond, not the frame); no two names
 // overlap; no name, world or scale figure sits under the view controls, tools, card, key or zoom; resting on a world
 // lifts its orbit and its mark. The same on a phone, where the system is drawn above the key and the zoom.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { pinClock } from "./nav.mjs";

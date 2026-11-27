@@ -3,6 +3,7 @@
 // The GM selects Tarn, bookmarks it beside Undo and names it, goes elsewhere, and the bookmark takes them back exactly
 // (the world selected, the instrument in front). The bookmark is kept with the campaign: it is still there after a
 // reload. Reordered by dragging; removed. On the Run desk the on-air chip sits in the top bar.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

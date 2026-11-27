@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskFor, screenOnDesk, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, firstView, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskFor, screenOnDesk, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -125,7 +125,8 @@
   const ws = createWorkspace(base.now_yr);
   // The standard view controls (rule 12): the viewer's view style and "seen from", kept on this device for every
   // diagram; a view turned by hand becomes Free.
-  ws.view = readViewChoice(loadPref("view"));
+  // Nothing chosen yet: the first view (True during the alpha, firstView in view-controls.ts).
+  ws.view = readViewChoice(loadPref("view"), firstView());
   function setView(c: ViewChoice) {
     ws.view = c;
     // Kept for this desk at this level (TM6), and as the latest choice anywhere, which a desk's first visit starts from.
@@ -764,7 +765,7 @@
     untrack(() => {
       if (at === viewAt) return;
       viewAt = at;
-      const v = readViewChoice(recallForDesk(loadPref, desk, "view", level).value);
+      const v = readViewChoice(recallForDesk(loadPref, desk, "view", level).value, firstView());
       // A view that opens on its own scale keeps it; the recalled scale is what comes back when it is left.
       const opens = viewSpec?.opens?.scale;
       if (opens && keptScale !== null) {
@@ -1376,6 +1377,8 @@
   $effect(() => {
     if (solNow === null && adoptedSystems.some((x) => x.system === SOL)) solSheet().catch(() => {});
   });
+  // A door entering a system holds the stage's heavy reads until it is in (ws.held).
+  let entering = $state(false);
   async function openSol() {
     const s = session;
     if (!s) return;
@@ -1385,6 +1388,7 @@
       const set = await s.campaignNow();
       const clockFree = set.ok && set.at_s === undefined && ws.campaign_now_yr === ws.campaign_epoch_yr;
       whatNote = "Entering the Solar System from its catalogue…";
+      entering = true;
       try {
         const sheet = await solSheet();
         for (const b of solBatches(sheet, SOL).batches) {
@@ -1402,6 +1406,8 @@
         }
       } catch (e) {
         return void (whatNote = `Could not open the Solar System: ${e instanceof Error ? e.message : String(e)}`);
+      } finally {
+        entering = false;
       }
       solEntered = solNow;
       adoptedSystems = [...adoptedSystems, { system: SOL, title: SOL_TITLE }];
@@ -1416,6 +1422,9 @@
   // "Sol today" folder> opens the Solar System and lands in Roll call, with no start sheet. A linked place (#...) wins.
   const spaceflightDoor = packFolder() !== null && typeof location !== "undefined" && !parsePlaceHash(location.hash);
   let startOpen = $state(!spaceflightDoor && typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
+  $effect(() => {
+    ws.held = startOpen || entering;
+  });
   let spaceflightOpened = false;
   $effect(() => {
     if (!spaceflightDoor || spaceflightOpened || !session) return;

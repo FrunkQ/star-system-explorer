@@ -6,6 +6,7 @@
 // come straight back down, and look up an element. Each step counts the presses it took (clicks, taps and choices
 // from a list; typing a value is not counted) against the most it may take, so a later change that buries a common
 // step fails here. A step that needs more than one press is listed in handover/test-drive.md as a rough edge.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { view, pinClock } from "./nav.mjs";
