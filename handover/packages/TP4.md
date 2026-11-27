@@ -49,7 +49,7 @@ Today: 97 dated ops; 67 declared, 30 on the ledger (weather, formation, surface,
 - `a_rung_without_its_sheet_row_says_why`; `packs_add_replace_and_are_refused_by_form` (a fourth shape, a march with no grid, an anchor not named, a missing driver, an op that does not exist, a typed number as tau: six refusals; a replaced declaration comes from the top pack).
 
 ## Goldens
-New area `time` (`tests/contract/areas/time.json`, `tests/golden/areas/time.jsonl`): the ladder with the sheet, and without it. Its packs are frozen fixtures: `tests/fixtures/packs/base-time.json` (a copy of the live pack today) and `tests/fixtures/packs/time-sheet.json` (the eleven sheet rows the subjects read, copied unchanged from base-reference, group notes left out). The core golden (`tests/golden/contract.jsonl`) did not move.
+New area `time` (`tests/contract/areas/time.json`, `tests/golden/areas/time.jsonl`): the ladder with the sheet, and without it. Its packs are frozen fixtures: `tests/fixtures/packs/base-time-processes.json` (a copy of the live pack today; BX1's `base-time.json` is the older pack, before the declarations, and its `pairs` area keeps it) and `tests/fixtures/packs/time-sheet.json` (the eleven sheet rows the subjects read, copied unchanged from base-reference, group notes left out). The core golden (`tests/golden/contract.jsonl`) did not move.
 
 `sse-time`'s own golden (`tests/golden/time.json`) moved by one line, on purpose: its `manifest` hash is the hash of the base-time pack, which now carries the declarations. The chronicle head, the run digest and every event and window are unchanged.
 

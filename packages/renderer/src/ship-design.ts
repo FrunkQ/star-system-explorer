@@ -332,6 +332,8 @@ export function remixes(s: DesignShip, store: Propellants, rules: DesignRules, s
 export interface ViewPath {
   system: SystemKind;
   d: string;
+  /** The piece's part or construct (the builder picks a part by it). */
+  member?: string;
 }
 
 export interface Callout {
@@ -399,7 +401,7 @@ export function shipViews(l: ShipLayout & { ports?: readonly PortMark[] }, size:
         d = `M${f(X(p.x0))} ${f(Y(p.z + t))} L${f(X(p.x1))} ${f(Y(p.z + t))} L${f(X(p.x1))} ${f(Y(p.z - t))} L${f(X(p.x0))} ${f(Y(p.z - t))} Z`;
         at = [X((p.x0 + p.x1) / 2), Y(p.z)];
       }
-      paths.push({ system: p.system, d });
+      paths.push({ system: p.system, d, ...(p.member !== undefined ? { member: p.member } : {}) });
       // An anchor off the frame (radiators running off a "hull" picture) is pulled to the frame's edge.
       at = [Math.min(W - 4, Math.max(4, at[0])), Math.min(cy + (H * band) / 2, Math.max(cy - (H * band) / 2, at[1]))];
       if (p.label && !anchors.has(p.system)) anchors.set(p.system, { at, text: p.label });

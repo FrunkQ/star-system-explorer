@@ -22,7 +22,7 @@
       "name": "Making and ageing a system",
       "meaning": "Importing a V3 save, the formation run and the look-ahead through deep time. Long, so it shows progress; the budget is for the whole run.",
       "budget_ms": 5000,
-      "sources": ["import_v3", "run_formation", "formation_record", "look_ahead", "commit_look_ahead", "set_system_age"],
+      "sources": ["import_v3", "run_formation", "formation_record", "look_ahead", "commit_look_ahead", "set_system_age", "age_pair"],
       "bench": ["formation", "formation-early", "formation-accrete", "formation-accrete-dole", "formation-growth", "formation-upheaval", "formation-leftovers", "formation-pipeline"]
     },
     {

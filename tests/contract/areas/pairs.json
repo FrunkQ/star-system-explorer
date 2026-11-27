@@ -1,0 +1,7 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics", "$pack:base-time"]},
+ {"op": "age_pair", "to_myr": 450, "node": {"node": "pair", "a": {"node": "star", "address": "u:pairs/sys:0/star:0", "mass_msun": 3.0}, "b": {"node": "star", "address": "u:pairs/sys:0/star:1", "mass_msun": 1.5}, "separation_au": 0.08}},
+ {"op": "age_pair", "to_myr": 13000, "node": {"node": "pair", "a": {"node": "star", "address": "u:pairs/sys:1/star:0", "mass_msun": 1.0}, "b": {"node": "star", "address": "u:pairs/sys:1/star:1", "mass_msun": 0.3}, "separation_au": 1.0}, "planets": [{"address": "u:pairs/sys:1/body:0", "host": "u:pairs/sys:1/star:0", "semi_major_axis_au": 0.4}]},
+ {"op": "age_pair", "to_myr": 3000, "node": {"node": "pair", "a": {"node": "pair", "a": {"node": "star", "address": "u:pairs/sys:2/star:0", "mass_msun": 1.2}, "b": {"node": "star", "address": "u:pairs/sys:2/star:1", "mass_msun": 1.0}, "separation_au": 0.5}, "b": {"node": "star", "address": "u:pairs/sys:2/star:2", "mass_msun": 0.7}, "separation_au": 100, "eccentricity": 0.3}},
+ {"op": "age_pair", "to_myr": -1, "node": {"node": "star", "address": "u:pairs/sys:3/star:0", "mass_msun": 1.0}}
+]

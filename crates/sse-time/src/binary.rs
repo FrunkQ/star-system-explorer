@@ -76,6 +76,21 @@ pub fn q_crit(r: &BinaryRules, phase: Phase, mass: f64, core: f64) -> f64 {
     }
 }
 
+/// Webbink 1984 (alpha-lambda form): the separation after a common envelope
+/// of a donor of mass `md` with core `mc` and radius `r_d` round an accretor
+/// `ma` at separation `a_i` (lengths in one unit, masses in another).
+pub fn common_envelope_separation(
+    md: f64,
+    mc: f64,
+    ma: f64,
+    a_i: f64,
+    r_d: f64,
+    rules: &BinaryRules,
+) -> f64 {
+    let menv = md - mc;
+    mc * ma / (2.0 * (md * ma / (2.0 * a_i) + md * menv / (rules.alpha_ce * rules.lambda_ce * r_d)))
+}
+
 /// A contact found for one pair.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Interaction {
@@ -255,9 +270,7 @@ fn contact(a: &Side, b: &Side, sep: f64, e: f64, rules: &BinaryRules) -> Option<
     } else {
         let menv = md - mc;
         let r_d = sd.star.radius * RSUN_AU;
-        let a_f = mc * ma
-            / (2.0
-                * (md * ma / (2.0 * a_i) + md * menv / (rules.alpha_ce * rules.lambda_ce * r_d)));
+        let a_f = common_envelope_separation(md, mc, ma, a_i, r_d, rules);
         // After the envelope: does the companion fit inside its lobe?
         let r_acc = acc.star.state_at(t).star.radius * RSUN_AU;
         let acc_fits = r_acc < roche_fraction(ma / mc) * a_f;
