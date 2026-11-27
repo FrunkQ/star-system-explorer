@@ -1899,6 +1899,62 @@
         "range": null
       },
       {
+        "description": "a star's radius over its Roche lobe's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.lobe_fill",
+        "range": null
+      },
+      {
+        "description": "one star's mass over its partner's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.mass_ratio",
+        "range": null
+      },
+      {
+        "description": "radius of the sphere with the volume of a star's Roche lobe",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.roche_lobe_radius",
+        "range": null
+      },
+      {
+        "description": "mass a star gives its partner each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.transfer_rate",
+        "range": null
+      },
+      {
         "description": "time since the body formed",
         "dim": [
           0,
@@ -2820,6 +2876,244 @@
           0
         ],
         "id": "eye.wavelength_nm",
+        "range": null
+      },
+      {
+        "description": "distance inside which a mass captures the gas round it (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.capture_radius",
+        "range": null
+      },
+      {
+        "description": "light at which the push of radiation on infalling gas balances gravity (W)",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.eddington_luminosity",
+        "range": null
+      },
+      {
+        "description": "feeding rate that gives the Eddington luminosity (kg/s)",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.eddington_rate",
+        "range": null
+      },
+      {
+        "description": "feeding rate as a share of the Eddington rate",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.eddington_share",
+        "range": null
+      },
+      {
+        "description": "share of the rest energy of matter falling through a disc that comes out as light",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.efficiency",
+        "range": null
+      },
+      {
+        "description": "strength of the hot, puffed-up thin flow, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.flow_hot",
+        "range": null
+      },
+      {
+        "description": "strength of the thick, swollen disc, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.flow_thick",
+        "range": null
+      },
+      {
+        "description": "strength of the thin bright disc, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.flow_thin",
+        "range": null
+      },
+      {
+        "description": "density of the gas round a mass that sweeps it up (kg/m³)",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.gas_density",
+        "range": null
+      },
+      {
+        "description": "how well a hot flow shines against a thin disc fed as fast, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.hot_lit_share",
+        "range": null
+      },
+      {
+        "description": "where a disc ends on the inside: surface, last stable orbit or magnetic field (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.inner_edge",
+        "range": null
+      },
+      {
+        "description": "where a body's magnetic field takes over from its disc (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.magnetospheric_radius",
+        "range": null
+      },
+      {
+        "description": "a companion's mass over the fed body's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.mass_ratio",
+        "range": null
+      },
+      {
+        "description": "where a disc ends on the outside (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.outer_edge",
+        "range": null
+      },
+      {
+        "description": "mass falling onto a body each second through its feed (kg/s)",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.rate",
+        "range": null
+      },
+      {
+        "description": "speed of a mass through the gas round it (m/s)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.relative_speed",
+        "range": null
+      },
+      {
+        "description": "sound speed in the gas round a mass (m/s)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "feed.sound_speed",
         "range": null
       },
       {
@@ -4968,6 +5262,20 @@
         "range": null
       },
       {
+        "description": "angle round a picture from a disc's axis as seen, towards the viewer's left, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.image_angle",
+        "range": null
+      },
+      {
         "description": "cosine of the angle sunlight arrives at on a surface",
         "dim": [
           0,
@@ -5178,6 +5486,20 @@
         "range": null
       },
       {
+        "description": "seen frequency over emitted frequency of light from a moving or deep source",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.shift_factor",
+        "range": null
+      },
+      {
         "description": "light arriving at this wavelength",
         "dim": [
           -1,
@@ -5217,6 +5539,20 @@
           0
         ],
         "id": "light.upper_level_weight",
+        "range": null
+      },
+      {
+        "description": "angle between the line of sight and a disc's axis, radians (0 face on)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.view_tilt",
         "range": null
       },
       {
@@ -8293,6 +8629,34 @@
         ]
       },
       {
+        "description": "latitude on a star's surface where its magnetic activity sits",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.active_latitude",
+        "range": null
+      },
+      {
+        "description": "tilt of a spot group's pair of opposite polarities from east to west",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.active_region_tilt",
+        "range": null
+      },
+      {
         "description": "length of a star's spot and activity cycle",
         "dim": [
           0,
@@ -8349,6 +8713,20 @@
         "range": null
       },
       {
+        "description": "mass of a star's burnt-out core (helium or carbon and oxygen)",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.core_mass",
+        "range": null
+      },
+      {
         "description": "particles per cubic metre at the foot of a star's corona",
         "dim": [
           -3,
@@ -8374,6 +8752,20 @@
           0
         ],
         "id": "star.corona_temperature",
+        "range": null
+      },
+      {
+        "description": "share of a star's activity cycle gone since its minimum",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.cycle_progress",
         "range": null
       },
       {
@@ -8503,6 +8895,48 @@
         "range": null
       },
       {
+        "description": "a star's surface spin rate at a latitude over its equator's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.rotation_rate_share",
+        "range": null
+      },
+      {
+        "description": "a spot group's peak area, millionths of a hemisphere",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spot_group_area",
+        "range": null
+      },
+      {
+        "description": "how long a spot group lives",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spot_group_life",
+        "range": null
+      },
+      {
         "description": "mean magnetic field strength over a star's surface",
         "dim": [
           0,
@@ -8514,6 +8948,20 @@
           0
         ],
         "id": "star.surface_field",
+        "range": null
+      },
+      {
+        "description": "time a star's light takes to carry off its envelope's binding energy",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.thermal_timescale",
         "range": null
       },
       {

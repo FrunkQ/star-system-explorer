@@ -8,6 +8,7 @@ pub mod activity;
 pub mod air;
 pub mod aurora;
 pub mod belts;
+pub mod binary;
 pub mod chem;
 pub mod common;
 pub mod convection;
@@ -99,6 +100,26 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("group.age", "age of the universe when a group's edge is found (s)"),
     ("group.zero_velocity_radius", "radius round a group inside which galaxies have stopped moving apart and fall together (m)"),
     ("gravity.tide_per_metre", "difference in pull per metre along the line to a mass (s-2)"),
+    ("feed.efficiency", "share of the rest energy of matter falling through a disc that comes out as light"),
+    ("feed.eddington_luminosity", "light at which the push of radiation on infalling gas balances gravity (W)"),
+    ("feed.eddington_rate", "feeding rate that gives the Eddington luminosity (kg/s)"),
+    ("feed.rate", "mass falling onto a body each second through its feed (kg/s)"),
+    ("feed.eddington_share", "feeding rate as a share of the Eddington rate"),
+    ("feed.inner_edge", "where a disc ends on the inside: surface, last stable orbit or magnetic field (m)"),
+    ("feed.magnetospheric_radius", "where a body's magnetic field takes over from its disc (m)"),
+    ("feed.outer_edge", "where a disc ends on the outside (m)"),
+    ("feed.mass_ratio", "a companion's mass over the fed body's"),
+    ("feed.flow_thin", "strength of the thin bright disc, 0 to 1"),
+    ("feed.flow_hot", "strength of the hot, puffed-up thin flow, 0 to 1"),
+    ("feed.flow_thick", "strength of the thick, swollen disc, 0 to 1"),
+    ("feed.hot_lit_share", "how well a hot flow shines against a thin disc fed as fast, 0 to 1"),
+    ("feed.gas_density", "density of the gas round a mass that sweeps it up (kg/m³)"),
+    ("feed.sound_speed", "sound speed in the gas round a mass (m/s)"),
+    ("feed.relative_speed", "speed of a mass through the gas round it (m/s)"),
+    ("feed.capture_radius", "distance inside which a mass captures the gas round it (m)"),
+    ("light.view_tilt", "angle between the line of sight and a disc's axis, radians (0 face on)"),
+    ("light.image_angle", "angle round a picture from a disc's axis as seen, towards the viewer's left, radians"),
+    ("light.shift_factor", "seen frequency over emitted frequency of light from a moving or deep source"),
     ("observer.distance", "distance of a viewer from a body's centre (m)"),
     ("observer.lens_distance", "distance from a viewer to a bending mass (m)"),
     ("observer.source_distance", "distance from a viewer to the light behind a bending mass (m)"),
@@ -480,6 +501,18 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.corona_temperature", "mean temperature of a star's corona"),
     ("star.corona_base_density", "particles per cubic metre at the foot of a star's corona"),
     ("star.closed_corona_extent", "reach of a star's closed magnetic field, in stellar radii"),
+    ("star.active_latitude", "latitude on a star's surface where its magnetic activity sits"),
+    ("star.rotation_rate_share", "a star's surface spin rate at a latitude over its equator's"),
+    ("star.cycle_progress", "share of a star's activity cycle gone since its minimum"),
+    ("star.active_region_tilt", "tilt of a spot group's pair of opposite polarities from east to west"),
+    ("star.spot_group_area", "a spot group's peak area, millionths of a hemisphere"),
+    ("star.spot_group_life", "how long a spot group lives"),
+    ("star.core_mass", "mass of a star's burnt-out core (helium or carbon and oxygen)"),
+    ("star.thermal_timescale", "time a star's light takes to carry off its envelope's binding energy"),
+    ("binary.mass_ratio", "one star's mass over its partner's"),
+    ("binary.roche_lobe_radius", "radius of the sphere with the volume of a star's Roche lobe"),
+    ("binary.lobe_fill", "a star's radius over its Roche lobe's"),
+    ("binary.transfer_rate", "mass a star gives its partner each second"),
     // what stops a wind (MF6)
     ("body.ionopause_altitude", "height above the ground at which a body's air holds off the stellar wind"),
     ("magnetosphere.flaring", "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)"),

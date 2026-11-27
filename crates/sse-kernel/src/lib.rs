@@ -4084,6 +4084,11 @@ impl Kernel {
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }
+            Request::ReadLightPaths {
+                fixture,
+                bodies,
+                table,
+            } => systems::read_light_paths(fixture.as_deref(), bodies, table.unwrap_or(false))?,
             Request::ReadNebulae {
                 at_s,
                 seed,
@@ -4117,6 +4122,12 @@ impl Kernel {
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::ReadBows { items } => systems::read_bows(items)?,
+            Request::AgePair {
+                node,
+                to_myr,
+                z,
+                planets,
+            } => systems::age_pair(node, to_myr, z, planets, self.time.as_ref())?,
             Request::ReadScattering { items } => systems::read_scattering(items)?,
             Request::ReadShadowLight { items } => {
                 systems::read_shadow_light(items, &self.observe.reference)?

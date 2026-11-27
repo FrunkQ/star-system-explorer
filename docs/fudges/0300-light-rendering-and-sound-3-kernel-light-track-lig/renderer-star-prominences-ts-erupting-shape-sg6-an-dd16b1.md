@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| renderer star-prominences.ts erupting shape (SG6) | An erupting prominence's axis drawn as the circle through its two feet and its risen top, the rope round it swelling to 0.4 of its height above the surface (`ROPE_ASPECT`, the aspect ratio of Thernisien et al.'s croissant model of coronal mass ejections, from memory); points along it sized to the rope there, at most 24 px and 384 steps | an eruption that reads as a lifting bubble from any side, not a rod or a row of dots | a flux-rope eruption model with the kernel's speed and shape (the kernel gives only speed and the standing arch) | stand-in, geometry only |

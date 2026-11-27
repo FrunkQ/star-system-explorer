@@ -3,3 +3,4 @@
 export { default as ShipPicture } from "./ShipPicture.svelte";
 export { default as ShipPlans } from "./ShipPlans.svelte";
 export { default as ShipAtWorldView } from "./ShipAtWorldView.svelte";
+export { default as ShipBuilder } from "./ShipBuilder.svelte";

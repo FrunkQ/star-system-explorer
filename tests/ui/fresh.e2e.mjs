@@ -77,13 +77,17 @@ try {
     await gm.keyboard.press("Enter");
     await gm.waitForFunction(() => document.activeElement?.getAttribute("aria-pressed") === "true", null, { timeout: 30000 });
 
-    // A campaign kept from another sheet says so after a reload.
+    // A campaign kept from another sheet says so after a reload. The kept save is changed while the app is not
+    // running (a same-origin page with no app on it): the app autosaves after it settles, and a later autosave (the
+    // Sol today pack arriving, say) wrote the real fingerprint back over an edit made under it before the reload.
+    const solPlace = await gm.evaluate(() => location.hash);
+    await gm.goto(base + "no-app-here");
     await gm.evaluate(() => {
       const s = JSON.parse(localStorage.getItem("sse4.campaign"));
       s.workspace.sol_sheet = "fnv1a:00000000:0b0r";
       localStorage.setItem("sse4.campaign", JSON.stringify(s));
     });
-    await gm.reload();
+    await gm.goto(base + solPlace);
     // The reopened campaign's own note comes first; the old-Sol note takes its place once it is closed.
     await gm.locator("[data-kept-note]").waitFor({ timeout: 120000 });
     await gm.locator("[data-kept-note]").getByRole("button", { name: "OK" }).click();

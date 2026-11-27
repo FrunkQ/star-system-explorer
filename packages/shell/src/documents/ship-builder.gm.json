@@ -1,0 +1,29 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.ship-builder",
+  "label": "Ship builder",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.ship-builder",
+      "area": "chart"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "workshop",
+      "group": "workshop",
+      "label": "Ship builder",
+      "order": 9,
+      "hint": "Build a ship from real parts, from the catalogue or from nothing, and see what it can do",
+      "desks": [
+        "explore",
+        "build"
+      ]
+    }
+  ]
+}

@@ -613,6 +613,26 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Light near a mass (XO2, XO3; exotic objects design 3.5): for each body
+    /// and its far viewer, which bender applies, the sizes from the gravity
+    /// blocks, the bend table's hash and layout, the feed (what falls onto
+    /// it, through which flow, where its disc ends), the disc traced point
+    /// by point as that viewer sees it, its light by band, and the viewer's
+    /// clock rate and tide. Each of `bodies` is `sse_light::paths::PathsAsk`;
+    /// `fixture: "black-holes"` reads design 3.4's three (a 10 Sun hole fed
+    /// by a companion, a quasar, a starved galactic centre). `table: true`
+    /// adds the bend table itself (fetch it once, keyed by its hash).
+    ReadLightPaths {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        table: Option<bool>,
+    },
     /// Sensing (O9): for each target (light given as `conditions` or a ready
     /// `light`, distance, dust as A_V, bright neighbours with their sky
     /// separation) and each sensor (band, aperture, noise, stare,
@@ -665,6 +685,23 @@ pub enum Request {
     ReadBows {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
+    },
+    /// A pair of stars aged together (BX1): `node` is a star `{node: "star",
+    /// address, mass_msun}` or a pair `{node: "pair", a, b, separation_au,
+    /// eccentricity}` of nodes; the answer is its dated line from birth to
+    /// `to_myr` (each star's phase, mass, radius and lobe fill; the orbit; the
+    /// transfer; common envelopes, mergers, strippings; what each planet in
+    /// `planets` `{address, host, semi_major_axis_au}` ends up doing).
+    AgePair {
+        #[ts(type = "unknown")]
+        node: serde_json::Value,
+        to_myr: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planets: Option<Vec<serde_json::Value>>,
     },
     /// Phase tables per kind of particle (K-e): each of `items` is
     /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
@@ -2846,6 +2883,7 @@ impl Request {
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::Weather { .. } => "weather",
             Request::ReadLight { .. } => "read_light",
+            Request::ReadLightPaths { .. } => "read_light_paths",
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
@@ -2864,6 +2902,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::AgePair { .. } => "age_pair",
             Request::HazardMap { .. } => "hazard_map",
             Request::ReadScattering { .. } => "read_scattering",
             Request::ReadShadowLight { .. } => "read_shadow_light",
@@ -3108,6 +3147,11 @@ pub fn ops() -> Vec<OpInfo> {
             "per item: one or two formula blocks",
         ),
         o(
+            "age_pair",
+            Cost::Light,
+            "per pair: up to a few thousand steps of both life lines, a few formula blocks each",
+        ),
+        o(
             "read_scattering",
             Cost::Light,
             "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
@@ -3206,6 +3250,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_light",
             Cost::Light,
             "per body: one small flow run and about 2,000 Planck evaluations",
+        ),
+        o(
+            "read_light_paths",
+            Cost::Light,
+            "per body: about 100,000 rays, each a bend-table read and one formula block, then band integrals; the bend table is worked out once per process",
         ),
         o(
             "adopt",
@@ -3839,6 +3888,17 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
     },
+    /// `read_light_paths`: each of `paths` is `sse_light::paths::LightPaths`;
+    /// `bend_table`, when asked, is `{ hash, rows, cols, row_length, flat }`
+    /// with `flat` as `sse_gravity::BendTable::flat` lays it out.
+    LightPathsRead {
+        source: String,
+        #[ts(type = "unknown[]")]
+        paths: Vec<serde_json::Value>,
+        #[ts(optional, type = "unknown")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        bend_table: Option<serde_json::Value>,
+    },
     /// `detect`: each of `detections` is `sse_sense::Detection` (target by
     /// sensor, in order); `radar` is `sse_sense::RadarRanges` when asked.
     Detected {
@@ -3858,6 +3918,11 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `age_pair`: `line` is `sse_time::pair::PairLine`.
+    PairAged {
+        #[ts(type = "unknown")]
+        line: serde_json::Value,
     },
     /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
     BowsRead {

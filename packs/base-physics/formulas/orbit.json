@@ -535,6 +535,229 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.orbit.roche_lobe",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass_ratio",
+     "letter": "q"
+    },
+    {
+     "port": "separation",
+     "letter": "a"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "lobe_radius",
+     "letter": "rL"
+    }
+   ],
+   "positive": [
+    {
+     "port": "mass_ratio",
+     "says": "mass ratio"
+    },
+    {
+     "port": "separation",
+     "says": "separation"
+    }
+   ],
+   "references": [
+    "Eggleton, P. P. 1983, Approximations to the radii of Roche lobes, ApJ 268, 368: r_L/a = 0.49 q^(2/3) / (0.6 q^(2/3) + ln(1 + q^(1/3))), good to 1 % for any mass ratio. doi:10.1086/160960"
+   ],
+   "shown": "r_L = a · 0.49 q^⅔ / (0.6 q^⅔ + ln(1 + q^⅓))",
+   "equation": {
+    "name": "How big a star can swell before its partner's pull takes its gas",
+    "formula": "q3 = cbrt(q)\nq23 = q3 * q3\nrL = a * c1 * q23 / (c2 * q23 + ln(1 + q3))",
+    "inputs": {
+     "q": {
+      "kind": "binary.mass_ratio",
+      "unit": "1",
+      "name": "this star's mass over its partner's"
+     },
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "distance between the two stars"
+     },
+     "c1": {
+      "kind": "model.eggleton_c1",
+      "unit": "1",
+      "name": "fit's scale"
+     },
+     "c2": {
+      "kind": "model.eggleton_c2",
+      "unit": "1",
+      "name": "fit's balance"
+     }
+    },
+    "outputs": {
+     "rL": {
+      "kind": "binary.roche_lobe_radius",
+      "unit": "m",
+      "name": "radius of the sphere with the same volume as the star's Roche lobe"
+     }
+    },
+    "source": {
+     "text": "Eggleton, P. P. 1983, ApJ 268, 368",
+     "doi": "10.1086/160960",
+     "where": "eq. 2"
+    },
+    "explain": {
+     "curious": "Each star in a pair owns a teardrop of space. A star that swells past the tip of its teardrop starts spilling gas onto its partner.",
+     "science": "Eggleton's fit to the volume-equivalent radius of the Roche lobe, good to about 1 % for all mass ratios. Used for every pair the generator makes. Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "q": 1.0,
+      "a": 100000000000.0,
+      "rL": 37892051838.04563
+     },
+     {
+      "q": 0.3,
+      "a": 20000000000.0,
+      "rL": 5620622997.348667
+     }
+    ]
+   },
+   "models": {
+    "c1": {
+     "value": 0.49,
+     "grade": "fitted",
+     "source": "Eggleton 1983 eq. 2"
+    },
+    "c2": {
+     "value": 0.6,
+     "grade": "fitted",
+     "source": "Eggleton 1983 eq. 2"
+    }
+   }
+  },
+  {
+   "id": "sse.orbit.overflow_rate",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "fill",
+     "letter": "x"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "rate",
+     "letter": "mdot"
+    }
+   ],
+   "constants": {
+    "M_sun": "sheet/M_sun",
+    "yr": "sheet/yr_julian"
+   },
+   "models": {
+    "f": {
+     "value": 3e-06,
+     "grade": "fitted",
+     "source": "Hurley, Tout and Pols 2002 eq. 58"
+    }
+   },
+   "params": [
+    {
+     "param": "cap_msun",
+     "letter": "Mcap",
+     "default": 5.0,
+     "range": [
+      1.0,
+      50.0
+     ],
+     "description": "mass above which the rate stops growing, solar masses (5)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "fill",
+     "says": "fill"
+    }
+   ],
+   "references": [
+    "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, Evolution of binary stars and the effect of tides on binary populations, MNRAS 329, 897: overflow rate F(M) [ln(R/R_L)]³ M☉/yr with F = 3e-6 (min(M, 5))² (eq. 58), capped by the donor's thermal timescale τ_KH = 1.5e7 M (M − M_c) / (R L) yr in solar units (eq. 61). https://arxiv.org/abs/astro-ph/0201220"
+   ],
+   "shown": "Ṁ = 3×10⁻⁶ (min(M, 5))² [ln(R/R_L)]³ M☉/yr",
+   "equation": {
+    "name": "How fast gas pours off a star that overfills its lobe",
+    "formula": "mc = min(M / M_sun, Mcap)\nover = ln(max(x, 1))\nmdot = f * mc * mc * over * over * over * M_sun / yr",
+    "inputs": {
+     "M": {
+      "kind": "star.mass",
+      "unit": "kg",
+      "name": "mass of the star giving gas"
+     },
+     "x": {
+      "kind": "binary.lobe_fill",
+      "unit": "1",
+      "name": "star's radius over its Roche lobe's"
+     },
+     "M_sun": {
+      "kind": "constant.M_sun",
+      "unit": "kg",
+      "name": "the Sun's mass"
+     },
+     "yr": {
+      "kind": "constant.yr_julian",
+      "unit": "s",
+      "name": "one year"
+     },
+     "f": {
+      "kind": "model.overflow_scale",
+      "unit": "1",
+      "name": "rate at one solar mass, solar masses a year"
+     },
+     "Mcap": {
+      "kind": "model.overflow_cap",
+      "unit": "1",
+      "name": "mass above which the rate stops growing, solar masses"
+     }
+    },
+    "outputs": {
+     "mdot": {
+      "kind": "binary.transfer_rate",
+      "unit": "kg s-1",
+      "name": "mass leaving the star through its inner point"
+     }
+    },
+    "source": {
+     "text": "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, MNRAS 329, 897",
+     "url": "https://arxiv.org/abs/astro-ph/0201220",
+     "where": "eq. 58"
+    },
+    "explain": {
+     "curious": "The further a star bulges past its teardrop, the faster its gas pours across to its partner.",
+     "science": "The rule-of-thumb rate from the binary evolution code BSE, steep in the overfill so the star settles just at its lobe; capped elsewhere by how fast the star can adjust (its thermal timescale). Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "M": 2e+30,
+      "x": 1.0,
+      "mdot": 0.0
+     },
+     {
+      "M": 2e+30,
+      "x": 1.1,
+      "mdot": 165572892304369.22
+     }
+    ]
+   }
   }
  ]
 }

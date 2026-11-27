@@ -84,7 +84,7 @@ export { CardDeck, cardLabel, holdingCardsOn } from "./holding.ts";
 export type { CardKind, HoldingCard } from "./holding.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
 export type { Session } from "./session.ts";
-export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses, hasLayer, hasTool, asPlayers, lensAudience, cardFor, cardFacts, gmStamps, defaultLens, lensFits, checkLens, saved, copyLens, lensPack, lensesFromPack, allLenses } from "./lens.ts";
+export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses, tableLenses, hasLayer, hasTool, asPlayers, lensAudience, cardFor, cardFacts, gmStamps, defaultLens, lensFits, checkLens, saved, copyLens, lensPack, lensesFromPack, allLenses } from "./lens.ts";
 export type { Lens, LensCard, LayerId, ToolId, Density, LensPackMeta } from "./lens.ts";
 export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NODE_TYPES, hash32, draw, intoOctave, settle, dialled, bandFor, orbitScene, voicesFromSystem, voicesFromPlayers, score, scoreHash, checkRecipe, defaultSound, readSound, voiceLimit } from "./sound.ts";
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
@@ -188,7 +188,7 @@ export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";
 export { wattsText, powerWords, nowhereWords } from "./power.ts";
 export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";
-export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX, PICTURE_MAX, PICTURE_SIDE, checkPicture, picturesOf, shownOf, designOf, fitSide, type PictureShown } from "./picture.ts";
+export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX, PICTURE_MAX, PICTURE_SIDE, checkPicture, picturesOf, shownOf, designOf, buildOf, fitSide, type PictureShown } from "./picture.ts";
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
 // One units engine (ED1a): every figure said and read back the same way.
@@ -234,6 +234,7 @@ export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";
 export { STAR_FAMILY_WORDS, starClassWords } from "./star-class.ts";
 export * from "./approach.ts";
 export * from "./journey.ts";
+export * from "./journey-play.ts";
 export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
 export { readShape, readShapes, shapeAsk, shapeOf } from "./small-shape.ts";
@@ -245,5 +246,5 @@ export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Scul
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
 export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";
-export { clips, flownBy, partWarnings, shapeArea, shapeVolume, stretchPart } from "./parts.ts";
-export type { ConnectionPoint, FigureMark, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";
+export { clips, eraOf, flownBy, paletteByEra, partWarnings, shapeArea, shapeVolume, stretchPart } from "./parts.ts";
+export type { ConnectionPoint, Era, FigureMark, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";
