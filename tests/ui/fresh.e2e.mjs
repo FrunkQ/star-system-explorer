@@ -67,6 +67,15 @@ try {
     const styleTrue = () => gm.locator("[data-view-controls]").first().getByRole("group", { name: "View style", exact: true }).getByRole("button", { name: "True", exact: true });
     await gm.waitForFunction(() => !!document.querySelector("[data-view-controls]"), null, { timeout: 120000 });
     assert.equal(await styleTrue().getAttribute("aria-pressed"), "true", "a first visit opens in True");
+    // In True a keyboard reaches the worlds as on Chart (AF3): Tab to Earth by its name, Enter chooses it.
+    await gm.locator("[data-view-controls]").first().focus();
+    let tabs = 0;
+    while (!(await gm.evaluate(() => document.activeElement?.getAttribute("aria-label") === "Earth"))) {
+      if (++tabs > 120) throw new Error("could not reach Earth with Tab in True");
+      await gm.keyboard.press("Tab");
+    }
+    await gm.keyboard.press("Enter");
+    await gm.waitForFunction(() => document.activeElement?.getAttribute("aria-pressed") === "true", null, { timeout: 30000 });
 
     // A campaign kept from another sheet says so after a reload.
     await gm.evaluate(() => {
