@@ -93,3 +93,15 @@ test("the campaign's now travels to players as a record write, exact past 2^53",
   assert.deepEqual(intentToRequest(i), { op: "set_campaign_now", at_s: 435_494_880_000_000_123n });
   assert.ok(checkIntent({ ...i, ask: { at_s: 4.35e17 } }));
 });
+
+test("a world with a spin model carries its axes into the scene the drawing reads; others do not", async () => {
+  const { axesFrom, withPhases } = await import("../src/orbits.ts");
+  const ax: [[number, number, number], [number, number, number]] = [[0.2, -0.98, 0], [0, 0.398, 0.917]];
+  const b = (address: string, axes?: typeof ax): OrbitPlaced => ({ address, placed: true, at: [{ at_s: 0, r_m: [1, 0, 0], phase_deg: 0, ...(axes ? { axes } : {}) }] });
+  const m = axesFrom([b("earth", ax), b("mars")]);
+  assert.deepEqual([...m.keys()], ["earth"]);
+  const scene = { subjects: [{ address: "earth", label: "Earth", orbit: { a_au: 1, phase_deg: 0 } }, { address: "mars", label: "Mars", orbit: { a_au: 1.5, phase_deg: 0 } }] } as unknown as import("../src/scene.ts").SystemScene;
+  const t = withPhases(scene, new Map([["earth", 0], ["mars", 0]]), null, null, m);
+  assert.deepEqual(t.subjects[0]!.orbit!.axes, ax);
+  assert.equal(t.subjects[1]!.orbit!.axes, undefined);
+});

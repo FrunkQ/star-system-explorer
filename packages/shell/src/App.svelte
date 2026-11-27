@@ -53,7 +53,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { MOTION_STEP_S, anchorOf, drawnSecond, motionWord, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, screenYears, skyCalendar, universeSecondOf, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, anchorOf, axesFrom, drawnSecond, motionWord, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, screenYears, skyCalendar, universeSecondOf, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -906,6 +906,8 @@
   let places = $state<Map<string, [number, number, number]> | null>(null);
   // And how fast each moves (the same reply, a minute apart): a shadow's caster is read where the light passed it.
   let motions = $state<Map<string, [number, number, number]> | null>(null);
+  // And which way each world with a spin model faces (RW17 part 3): the drawn Earth turns by its real spin.
+  let spins = $state<Map<string, [[number, number, number], [number, number, number]]> | null>(null);
   // Where the bodies were placed from (RW17): "as measured" inside a published motion series, "plausible" outside it.
   let motionSay = $state<ReturnType<typeof motionWord>>(null);
   // Play asks ten times a second: one call at a time, and only the latest time waits.
@@ -919,7 +921,7 @@
     orbitsBusy = true;
     w.s.orbitsAt(w.sc.system, [w.at, w.at - BigInt(MOTION_STEP_S)], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)), (motion = { at_s: w.at_s, periods: periodsFrom(r.bodies) }), (motionSay = motionWord(r.bodies)));
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)), (motion = { at_s: w.at_s, periods: periodsFrom(r.bodies) }), (spins = axesFrom(r.bodies)), (motionSay = motionWord(r.bodies)));
       pumpOrbits();
     });
   }
@@ -931,7 +933,7 @@
     const epoch = drawnSecond(ws.birth_s, ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null), (motionSay = null));
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null), (spins = null), (motionSay = null));
     orbitsWant = { s, sc, at, at_s: Number(at - epoch), epoch, key };
     pumpOrbits();
   });
@@ -944,7 +946,7 @@
     // A real-sky system counts its days from its own anchor (time.j2000_s), never a typed copy of it.
     s.calendar().then((r) => (ws.pack_calendar = sky !== null ? skyCalendar(sky) : r.ok ? (r.calendar ?? null) : null));
   });
-  const timed = $derived(withPhases(scene, phases, places, motions, motion));
+  const timed = $derived(withPhases(scene, phases, places, motions, motion, spins));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
   let layerLabels = $state.raw<Map<string, string>>(new Map());
   $effect(() => {

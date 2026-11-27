@@ -397,6 +397,10 @@
     }
     return out;
   }
+  // A world with a spin model is turned by its real axes (RW17 part 3): x to longitude 0, z its pole, y = z × x.
+  function spinFrame([x, z]: [[number, number, number], [number, number, number]]): [Vec3, Vec3, Vec3] {
+    return [x, [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]], z];
+  }
   const relOf = (id: string): Vec3 => {
     const n = lay!.nodes.find((x) => x.id === id)!;
     return [Math.fround(n.local[0] - cam.eye[0]), Math.fround(n.local[1] - cam.eye[1]), Math.fround(n.local[2] - cam.eye[2])];
@@ -744,9 +748,9 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : b.figure ? { figure: b.figure } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: b.axes ? b.axes[1] : poleOf(b.tilt_rad), ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : b.figure ? { figure: b.figure } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
-            return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
+            return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(b.axes && !isStar ? { frame: spinFrame(b.axes) } : {}), ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });
         // The controller's settings: moving, the placed tier's; on a sharpening frame, the still passes at full size.
         void qv;
@@ -1006,6 +1010,7 @@
   data-frame={centreId}
   data-look={isTrue && using === "gpu" ? "true" : "plain"}
   data-scale={realScale ? "real" : "readable"}
+  data-turned={bodies.filter((b) => b.axes).map((b) => `${b.name}:${Math.round((Math.atan2(b.axes![0][1], b.axes![0][0]) * 180) / Math.PI)}`).join(" ") || undefined}
   data-hud={overlay ? "on" : "off"}
   data-dist={Math.round(dist * 1000) / 1000}
   data-flying={tweening ? "yes" : undefined}
