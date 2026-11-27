@@ -7,8 +7,6 @@
 //! both.
 
 use serde::{Deserialize, Serialize};
-use sse_flow::Atom;
-use std::sync::{Arc, OnceLock};
 
 /// The three creep rates, SI.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -23,26 +21,13 @@ pub struct CreepRates {
 
 const BLOCK: &str = "sse.surface.creep_diffusivity";
 
-fn block() -> Arc<sse_physics::Physics> {
-    // The physics in force inside a kernel call; outside one (unit tests) the
-    // shipped blocks, whose maths is the same.
-    sse_physics::now().unwrap_or_else(|| {
-        static BARE: OnceLock<Arc<sse_physics::Physics>> = OnceLock::new();
-        BARE.get_or_init(|| Arc::new(sse_physics::Physics::bare(Arc::default())))
-            .clone()
-    })
-}
-
 /// The creep diffusivity, m² s⁻¹, for ground wet `wet_share` of the time
 /// (0 to 1) under `pressure_pa` of air.
 pub fn diffusivity(c: &CreepRates, wet_share: f64, pressure_pa: f64) -> f64 {
-    let p = block();
-    let b = p
-        .blocks()
-        .iter()
-        .find(|a| a.decl().id == BLOCK)
-        .unwrap_or_else(|| panic!("base formula block {BLOCK} is missing"));
-    b.eval(
+    // Through the block door: the physics in force inside a kernel call,
+    // the shipped block outside one (unit tests).
+    sse_physics::run(
+        BLOCK,
         &[
             wet_share,
             pressure_pa,
@@ -50,7 +35,6 @@ pub fn diffusivity(c: &CreepRates, wet_share: f64, pressure_pa: f64) -> f64 {
             c.wet_m2_s,
             c.air_m2_s_pa,
         ],
-        &[],
     )
     .unwrap_or_else(|e| panic!("{BLOCK}: {e}"))[0]
 }
