@@ -1941,6 +1941,20 @@
         "range": null
       },
       {
+        "description": "how fast a pair's separation changes",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.separation_rate",
+        "range": null
+      },
+      {
         "description": "mass a star gives its partner each second",
         "dim": [
           0,
@@ -8825,6 +8839,20 @@
         "range": null
       },
       {
+        "description": "mass of a star's convective outer layer",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.envelope_mass",
+        "range": null
+      },
+      {
         "description": "bolometric luminosity, typical for the star's mass on the main sequence",
         "dim": [
           2,
@@ -8934,6 +8962,34 @@
           0
         ],
         "id": "star.rotation_rate_share",
+        "range": null
+      },
+      {
+        "description": "spin angular momentum a star's wind carries off each second",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spin_down_torque",
+        "range": null
+      },
+      {
+        "description": "how fast a star turns, radians a second",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spin_rate",
         "range": null
       },
       {
