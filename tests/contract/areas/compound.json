@@ -1,0 +1,128 @@
+[
+  {
+    "op": "load_stack",
+    "packs": [
+      "$pack:base-physics"
+    ]
+  },
+  {
+    "op": "open_universe",
+    "id": "cm1",
+    "seed": "cm1"
+  },
+  {
+    "op": "set_authored_batch",
+    "occurred_at_s": 100,
+    "edits": [
+      {
+        "address": "u:cm1/sys:0/ship:csm",
+        "field": "construct.mass_kg",
+        "value": 28800.0
+      },
+      {
+        "address": "u:cm1/sys:0/ship:csm",
+        "field": "port.nose.place",
+        "value": "front"
+      },
+      {
+        "address": "u:cm1/sys:0/ship:sivb",
+        "field": "construct.mass_kg",
+        "value": 119900.0
+      },
+      {
+        "address": "u:cm1/sys:0/ship:sivb",
+        "field": "part.sla.bay_length_m",
+        "value": 8.5
+      },
+      {
+        "address": "u:cm1/sys:0/ship:sivb",
+        "field": "part.sla.bay_holds_kg",
+        "value": 16000.0
+      },
+      {
+        "address": "u:cm1/sys:0/ship:eagle",
+        "field": "construct.mass_kg",
+        "value": 15100.0
+      },
+      {
+        "address": "u:cm1/sys:0/ship:eagle",
+        "field": "construct.length_m",
+        "value": 7.0
+      },
+      {
+        "address": "u:cm1/sys:0/ship:csm",
+        "field": "part.lrr.mass_kg",
+        "value": 30.0
+      }
+    ]
+  },
+  {
+    "op": "mount_construct",
+    "address": "u:cm1/sys:0/ship:sivb",
+    "on": "u:cm1/sys:0/ship:csm",
+    "place": "behind",
+    "push_m_s": 0.3,
+    "at_s": 200
+  },
+  {
+    "op": "mount_construct",
+    "address": "u:cm1/sys:0/ship:eagle",
+    "on": "u:cm1/sys:0/ship:sivb",
+    "place": "inside",
+    "at_s": 200
+  },
+  {
+    "op": "mount_construct",
+    "address": "u:cm1/sys:0/ship:csm",
+    "on": "u:cm1/sys:0/ship:eagle",
+    "place": "front",
+    "at_s": 300
+  },
+  {
+    "op": "release_construct",
+    "address": "u:cm1/sys:0/ship:sivb",
+    "from": "u:cm1/sys:0/ship:csm",
+    "at_s": 1000
+  },
+  {
+    "op": "release_construct",
+    "address": "u:cm1/sys:0/ship:eagle",
+    "at_s": 1500
+  },
+  {
+    "op": "mount_construct",
+    "address": "u:cm1/sys:0/ship:eagle",
+    "on": "u:cm1/sys:0/ship:csm",
+    "place": "front",
+    "port": "nose",
+    "lines": [
+      "people",
+      "air"
+    ],
+    "at_s": 2000
+  },
+  {
+    "op": "split_construct",
+    "address": "u:cm1/sys:0/ship:csm",
+    "key": "lrr",
+    "name": "Retroreflector",
+    "parts": [
+      "lrr"
+    ],
+    "at_s": 2500
+  },
+  {
+    "op": "join_constructs",
+    "address": "u:cm1/sys:0/ship:csm",
+    "with": "u:cm1/sys:0/ship:lrr",
+    "how": "dock",
+    "at_s": 2600
+  },
+  {
+    "op": "release_construct",
+    "address": "u:cm1/sys:0/ship:lrr",
+    "from": "u:cm1/sys:0/ship:csm",
+    "push_m_s": 0.1,
+    "at_s": 2700
+  }
+]
