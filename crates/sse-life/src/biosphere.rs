@@ -54,6 +54,36 @@ pub struct GuildDetail {
     pub can_fly: bool,
     /// Typical largest body, kg.
     pub max_mass_kg: Option<f64>,
+    /// What it eats (LE3): `gradient:<metabolism>` for a producer, else the
+    /// guilds it takes its carbon from.
+    #[serde(default)]
+    pub diet: Vec<String>,
+    /// Power flowing through it (its production or its intake), W.
+    #[serde(default)]
+    pub power_w: f64,
+    /// Power it finally spends (its intake less what is eaten from it), W:
+    /// over every guild these sum to the power the producers capture.
+    #[serde(default)]
+    pub uses_w: f64,
+    /// `uses_w` over the world's captured power.
+    #[serde(default)]
+    pub share_of_captured: f64,
+    /// Rough numbers by broad size class (energy equivalence and Kleiber).
+    /// `None`: not counted (producers wait for a rate of their own, 4.1).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sizes: Option<Vec<SizeCount>>,
+}
+
+/// One broad size class of a guild (LE3).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SizeCount {
+    pub class: String,
+    pub from_kg: f64,
+    pub to_kg: f64,
+    /// `unicell`, `ectotherm` or `endotherm`: whose metabolic rate counts it.
+    pub rate: String,
+    pub power_w: f64,
+    pub count: f64,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -134,6 +164,188 @@ const SIZE_EARTH_FLYER_KG: f64 = 250.0;
 const PLANT_EARTH_M: f64 = 130.0;
 const EARTH_G: f64 = sse_core::sheet::G0;
 const EARTH_AIR: f64 = sse_core::sheet::mixture_density::DRY_AIR;
+
+const YEAR_S: f64 = budget::YEAR_S;
+
+/// LE3, where the energy goes: each guild's diet, the power through it, the
+/// power it finally spends (its intake less what is eaten from it; a
+/// decomposer takes everything not grazed), its share of what the producers
+/// capture, and rough numbers by size class.
+fn share_out(
+    guilds: &mut [GuildDetail],
+    relations: &[Relation],
+    bp: &BudgetParams,
+    hp: &HistoryParams,
+    g: &HabitatGraph,
+) {
+    let jw = bp.j_per_g_carbon / YEAR_S;
+    let eff = bp.transfer_efficiency;
+    let captured: f64 = guilds
+        .iter()
+        .filter(|x| x.role == "producer")
+        .map(|x| x.production_gc_yr * jw)
+        .sum();
+    let mut kind_p: BTreeMap<String, f64> = BTreeMap::new();
+    for x in guilds.iter().filter(|x| x.role == "producer") {
+        *kind_p.entry(x.habitat_kind.clone()).or_default() += x.production_gc_yr * jw;
+    }
+    let consumer = |guilds: &[GuildDetail], kind: &str, lv: u32| {
+        guilds
+            .iter()
+            .find(|x| x.role == "consumer" && x.habitat_kind == kind && x.level == lv)
+            .map(|x| x.intake_gc_yr * jw)
+    };
+    let mut uses = vec![0.0; guilds.len()];
+    for (i, x) in guilds.iter().enumerate() {
+        uses[i] = match x.role.as_str() {
+            "decomposer" => {
+                let p = kind_p.get(&x.habitat_kind).copied().unwrap_or(0.0);
+                p - consumer(guilds, &x.habitat_kind, 2).unwrap_or(0.0)
+            }
+            "consumer" => {
+                let intake = x.intake_gc_yr * jw;
+                intake
+                    - consumer(guilds, &x.habitat_kind, x.level + 1).map_or(0.0, |_| intake * eff)
+            }
+            _ => 0.0,
+        };
+    }
+    let temp_of = |kind: &str| -> f64 {
+        let ts: Vec<f64> = g
+            .habitats
+            .iter()
+            .filter(|h| h.kind == kind)
+            .filter_map(|h| h.profile.temperature_k.map(|t| 0.5 * (t.lo + t.hi)))
+            .collect();
+        if ts.is_empty() {
+            hp.reference_k
+        } else {
+            ts.iter().sum::<f64>() / ts.len() as f64
+        }
+    };
+    for (i, x) in guilds.iter_mut().enumerate() {
+        x.diet = if x.role == "producer" {
+            let metab =
+                x.id.strip_prefix("producer.")
+                    .and_then(|r| r.rsplit_once('.'))
+                    .map_or(String::new(), |(m, _)| m.to_string());
+            vec![format!("gradient:{metab}")]
+        } else {
+            relations
+                .iter()
+                .filter(|r| r.kind == RelationKind::Resource && r.from == x.id)
+                .map(|r| r.to.clone())
+                .collect()
+        };
+        x.power_w = (x.production_gc_yr + x.intake_gc_yr) * jw;
+        x.uses_w = uses[i].max(0.0);
+        x.share_of_captured = if captured > 0.0 {
+            x.uses_w / captured
+        } else {
+            0.0
+        };
+        x.sizes = match (&bp.sizes, x.role.as_str()) {
+            (Some(sp), "decomposer" | "consumer") if x.uses_w > 0.0 => {
+                let t = temp_of(&x.habitat_kind);
+                Some(size_counts(sp, hp, x, t))
+            }
+            _ => None,
+        };
+    }
+}
+
+/// Spread a guild's spent power evenly over ln M from its smallest to its
+/// largest member and count each broad class at Kleiber's rate:
+/// N = (P / L) / (b0 f) x (a^-3/4 - b^-3/4) / (3/4) over [a, b], L the
+/// guild's span in ln M; one mass gets N = P / B(M).
+fn size_counts(
+    sp: &budget::SizeParams,
+    hp: &HistoryParams,
+    x: &GuildDetail,
+    t_k: f64,
+) -> Vec<SizeCount> {
+    let k_ev = 8.617_333e-5;
+    let lo = sp.smallest_kg.get(&x.grade).copied().unwrap_or(1.0e-15);
+    let hi = x.max_mass_kg.unwrap_or(lo).max(lo);
+    let on_land = x.habitat_kind == "land-surface";
+    let rate_of = |m_kg: f64| -> &'static str {
+        if m_kg < sp.cell_below_kg {
+            "unicell"
+        } else if x.grade == "animal" && on_land && m_kg >= sp.endotherm_from_kg {
+            "endotherm"
+        } else {
+            "ectotherm"
+        }
+    };
+    let b_of = |rate: &str| -> f64 {
+        let b0 = sp.b0_w.get(rate).copied().unwrap_or(0.0);
+        let t = if rate == "endotherm" {
+            sp.endotherm_body_k
+        } else {
+            t_k
+        };
+        let tref = if rate == "endotherm" {
+            sp.endotherm_body_k
+        } else {
+            sp.ref_k
+        };
+        b0 * m::exp(-hp.activation_ev / k_ev * (1.0 / t - 1.0 / tref))
+    };
+    // Cut points: class edges, and the cell and warm-blooded thresholds.
+    let mut cuts: Vec<f64> = sp.classes.iter().filter_map(|c| c.below_kg).collect();
+    cuts.push(sp.cell_below_kg);
+    cuts.push(sp.endotherm_from_kg);
+    cuts.retain(|c| *c > lo && *c < hi);
+    cuts.push(lo);
+    cuts.push(hi);
+    cuts.sort_by(|a, b| a.total_cmp(b));
+    cuts.dedup();
+    let class_of = |m_kg: f64| -> String {
+        sp.classes
+            .iter()
+            .find(|c| c.below_kg.is_none_or(|b| m_kg < b))
+            .map_or_else(|| "other".into(), |c| c.id.clone())
+    };
+    let span = m::ln(hi / lo);
+    let mut out: Vec<SizeCount> = vec![];
+    let pieces: Vec<(f64, f64)> = if span <= 0.0 {
+        vec![(lo, lo)]
+    } else {
+        cuts.windows(2).map(|w| (w[0], w[1])).collect()
+    };
+    for (a, b) in pieces {
+        let mid = m::sqrt(a * b);
+        let rate = rate_of(mid);
+        let b0 = b_of(rate);
+        if b0 <= 0.0 {
+            continue;
+        }
+        let (power, count) = if span <= 0.0 {
+            (x.uses_w, x.uses_w / (b0 * m::pow(a, 0.75)))
+        } else {
+            let p = x.uses_w * m::ln(b / a) / span;
+            let n = x.uses_w / span / b0 * (m::pow(a, -0.75) - m::pow(b, -0.75)) / 0.75;
+            (p, n)
+        };
+        let class = class_of(mid);
+        match out.iter_mut().find(|c| c.class == class && c.rate == rate) {
+            Some(c) => {
+                c.to_kg = b;
+                c.power_w += power;
+                c.count += count;
+            }
+            None => out.push(SizeCount {
+                class,
+                from_kg: a,
+                to_kg: b,
+                rate: rate.into(),
+                power_w: power,
+                count,
+            }),
+        }
+    }
+    out
+}
 
 /// Plain words for a habitat kind.
 fn plain_kind(kind: &str) -> &str {
@@ -300,6 +512,11 @@ pub fn resolve(
             grade: grade.into(),
             can_fly: false,
             max_mass_kg: None,
+            diet: vec![],
+            power_w: 0.0,
+            uses_w: 0.0,
+            share_of_captured: 0.0,
+            sizes: None,
         });
         let cap = lineage_of(metab);
         out_guilds.push(Guild {
@@ -491,6 +708,11 @@ pub fn resolve(
             },
             can_fly: false,
             max_mass_kg: None,
+            diet: vec![],
+            power_w: 0.0,
+            uses_w: 0.0,
+            share_of_captured: 0.0,
+            sizes: None,
         });
         for pid in guilds
             .iter()
@@ -568,6 +790,11 @@ pub fn resolve(
                 grade: grade.into(),
                 can_fly,
                 max_mass_kg: max_mass,
+                diet: vec![],
+                power_w: 0.0,
+                uses_w: 0.0,
+                share_of_captured: 0.0,
+                sizes: None,
             });
             for b in &below {
                 rel(&mut relations, RelationKind::Resource, &id, b);
@@ -601,6 +828,11 @@ pub fn resolve(
                 grade: "microbial".into(),
                 can_fly: false,
                 max_mass_kg: Some(1.0e-15),
+                diet: vec![],
+                power_w: 0.0,
+                uses_w: 0.0,
+                share_of_captured: 0.0,
+                sizes: None,
             });
             rel(
                 &mut relations,
@@ -628,6 +860,11 @@ pub fn resolve(
                 },
                 can_fly: false,
                 max_mass_kg: Some(if animals { 1.0 } else { 1.0e-12 }),
+                diet: vec![],
+                power_w: 0.0,
+                uses_w: 0.0,
+                share_of_captured: 0.0,
+                sizes: None,
             });
             rel(
                 &mut relations,
@@ -676,6 +913,7 @@ pub fn resolve(
         .sort_by(|a, b| (a.from.as_str(), a.to.as_str()).cmp(&(b.from.as_str(), b.to.as_str())));
     out_guilds.sort_by(|a, b| a.id.cmp(&b.id));
     guilds.sort_by(|a, b| a.id.cmp(&b.id));
+    share_out(&mut guilds, &relations, bp, hp, &g);
     // F: diversity by species-area, provinces and climate variety.
     let living: Vec<&budget::HabitatBudget> = wb
         .habitats

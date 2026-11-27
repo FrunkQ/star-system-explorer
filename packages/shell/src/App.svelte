@@ -1810,7 +1810,7 @@
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-desk={desk} data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   {#if filled}
     <!-- The top edge: the pointer there brings the bar back over the picture. -->
     <div class="fill-edge" aria-hidden="true" onpointerenter={() => (peek = true)}></div>
@@ -2688,6 +2688,22 @@
       flex-wrap: wrap;
       gap: 4px 12px;
       padding: 6px 12px;
+    }
+    /* The phone's Run frame (three desks design section 8, TM9b): the place line is its own row under the bar, the
+       stepper. */
+    .app[data-desk="run"] {
+      grid-template-rows: auto auto auto auto auto;
+    }
+    .app[data-desk="run"] > .bar {
+      flex-wrap: wrap;
+      row-gap: 0;
+      padding-top: 6px;
+      min-height: 56px;
+    }
+    .app[data-desk="run"] > .bar :global(.place.stepper) {
+      order: 10;
+      flex: 1 0 100%;
+      border-top: 1px solid var(--sse-rule);
     }
   }
 </style>
