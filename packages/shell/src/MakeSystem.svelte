@@ -15,7 +15,7 @@
   import FormationReplay from "../../views/system-chart/src/FormationReplay.svelte";
   import { createWorkspace } from "./workspace.svelte.ts";
   import StarGallery from "../../views/reference/src/StarGallery.svelte";
-  import { STAND_IN, tilesFromScheme, type GalleryStar, type StarTile } from "../../views/reference/src/star-gallery.ts";
+  import { tilesFromScheme, type GalleryStar, type StarTile } from "../../views/reference/src/star-gallery.ts";
   import { classesOnStack, className, sayNumber, type PackDoc } from "../../ui-contract/src/index.ts";
 
   let { session, context, onadopted, start = "import", view, onview, file = null }: { file?: { text: string; name: string } | null; view?: import("../../ui-contract/src/index.ts").ViewChoice; onview?: (c: import("../../ui-contract/src/index.ts").ViewChoice) => void; session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void; start?: "import" | "generate" } = $props();
@@ -91,8 +91,8 @@
     if (galleryOpen && !galleryDlg.open) galleryDlg.showModal();
     else if (!galleryOpen && galleryDlg.open) galleryDlg.close();
   });
-  // The star classes from the base atlas's star scheme on the stack, else the shipped atlas, else the stand-in list.
-  let starTiles = $state.raw<readonly StarTile[]>(STAND_IN);
+  // The star classes from the base atlas's star scheme on the stack, else the shipped atlas; none if neither can be read.
+  let starTiles = $state.raw<readonly StarTile[] | null>(null);
   $effect(() => {
     if (!galleryOpen) return;
     untrack(() => void starClassTiles().then((t) => (starTiles = t)));
@@ -105,7 +105,7 @@
     const atlasUrl = String("packs/base-atlas.json");
     const doc = await fetch(new URL(atlasUrl, document.baseURI)).then((r) => (r.ok ? (r.json() as Promise<PackDoc>) : null)).catch(() => null);
     const shipped = doc ? classesOnStack([doc]).schemes.find((s) => s.id === "star") : null;
-    return shipped ? tilesFromScheme(shipped, (c) => className(c)) : STAND_IN;
+    return shipped ? tilesFromScheme(shipped, (c) => className(c)) : [];
   }
   function pickStar(g: GalleryStar) {
     picked = g;
@@ -315,7 +315,9 @@
   <dialog class="gallery-dlg" bind:this={galleryDlg} aria-label="Choose the star" onclose={() => (galleryOpen = false)}>
     {#if galleryOpen}
       <div class="dlg-head"><h2>Choose the star</h2><button type="button" class="linkbtn" onclick={() => (galleryOpen = false)}>Close</button></div>
-      <StarGallery {session} tiles={starTiles} onpick={pickStar} pickWords="Make a system round this star" />
+      {#if starTiles === null}<p class="note">Reading the star classes…</p>
+      {:else if !starTiles.length}<p class="note" data-star-classes-none>The star classes could not be read (the class atlas is not on this campaign's stack and the shipped one did not load), so there is nothing to choose from here; give a mass instead.</p>
+      {:else}<StarGallery {session} tiles={starTiles} onpick={pickStar} pickWords="Make a system round this star" />{/if}
     {/if}
   </dialog>
 
