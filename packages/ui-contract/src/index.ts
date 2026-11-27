@@ -239,3 +239,5 @@ export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Scul
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
 export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";
+export { clips, flownBy, partWarnings, shapeArea, shapeVolume, stretchPart } from "./parts.ts";
+export type { ConnectionPoint, FigureMark, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";
