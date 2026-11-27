@@ -138,12 +138,79 @@ impl Instant {
         r
     }
 
+    /// This date moved by a span in seconds (a double is fine for a span:
+    /// it is a difference, not a date), refused past the axis's end.
+    pub fn after(self, span_s: f64) -> Result<Self, OutOfRange> {
+        let d = Instant::from_seconds_f64(span_s)?;
+        let mut ns = self.ns + d.ns;
+        let mut s = self.s.checked_add(d.s);
+        if ns >= NS_PER_S {
+            ns -= NS_PER_S;
+            s = s.and_then(|s| s.checked_add(1));
+        }
+        s.map(|s| Instant { s, ns })
+            .ok_or_else(|| refuse(format_args!("{span_s:e} seconds on from {}", self.s)))
+    }
+
     /// This date moved by whole seconds, refused past the axis's end.
     pub fn checked_add_seconds(self, ds: i64) -> Result<Self, OutOfRange> {
         self.s
             .checked_add(ds)
             .map(|s| Instant { s, ns: self.ns })
             .ok_or_else(|| refuse(format_args!("{} seconds on from {}", ds, self.s)))
+    }
+}
+
+/// Reading a date from a request: a whole number of seconds is taken
+/// exactly, a fractional one as its double's own value, and `{s, ns}` as
+/// itself. Use with `#[serde(deserialize_with = "sse_core::time::seconds")]`,
+/// or hold a `Seconds`.
+pub fn seconds<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Instant, D::Error> {
+    d.deserialize_any(SecondsVisitor)
+}
+
+/// A date as it arrives in a request or leaves in a reply: a plain number
+/// of seconds. A whole number is read exactly; written back, a date with no
+/// nanoseconds is a whole number again.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct Seconds(pub Instant);
+
+impl<'de> Deserialize<'de> for Seconds {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        seconds(d).map(Seconds)
+    }
+}
+
+impl Serialize for Seconds {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        if self.0.ns == 0 {
+            s.serialize_i64(self.0.s)
+        } else {
+            s.serialize_f64(self.0.since(Instant::ORIGIN))
+        }
+    }
+}
+
+struct SecondsVisitor;
+
+impl<'de> serde::de::Visitor<'de> for SecondsVisitor {
+    type Value = Instant;
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("a date in seconds (a number, or {s, ns})")
+    }
+    fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Instant, E> {
+        Ok(Instant::seconds(v))
+    }
+    fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Instant, E> {
+        i64::try_from(v)
+            .map(Instant::seconds)
+            .map_err(|_| E::custom(refuse(format_args!("{v} seconds"))))
+    }
+    fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Instant, E> {
+        Instant::from_seconds_f64(v).map_err(E::custom)
+    }
+    fn visit_map<A: serde::de::MapAccess<'de>>(self, map: A) -> Result<Instant, A::Error> {
+        Instant::deserialize(serde::de::value::MapAccessDeserializer::new(map))
     }
 }
 
@@ -272,6 +339,31 @@ mod tests {
         assert_eq!(big.since(Instant::ORIGIN), NOW_COSMIC as f64);
         assert!(Instant::from_seconds_f64(f64::NAN).is_err());
         assert!(Instant::from_seconds_f64(1.0e19).is_err());
+    }
+
+    #[test]
+    fn spans_move_dates() {
+        let a = Instant {
+            s: 5,
+            ns: 600_000_000,
+        };
+        assert_eq!(
+            a.after(1.5).unwrap(),
+            Instant {
+                s: 7,
+                ns: 100_000_000
+            }
+        );
+        assert_eq!(
+            a.after(-0.25).unwrap(),
+            Instant {
+                s: 5,
+                ns: 350_000_000
+            }
+        );
+        let big = Instant::seconds(NOW_COSMIC);
+        assert_eq!(big.after(1.0).unwrap().since(big), 1.0);
+        assert!(Instant::seconds(i64::MAX).after(1.0).is_err());
     }
 
     #[test]
