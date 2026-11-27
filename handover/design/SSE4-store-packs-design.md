@@ -1,6 +1,6 @@
 # SSE4 store packs: one way to make, find, stack, update and publish a pack
 
-Status: **PROPOSED 27 Nov 2026.** Not accepted; nothing here is built. Written by the thread "Design store packs" (Fable, design only) at Alex's request of 27 Nov 11:47 UTC: "a short design effort to rationalise 'store packs' - how they categorise, manifest and appear, layer and can load prerequisites securely (advantage of OUR store)... labelling the old v3 ones. How do we 'save them' and upload them - a smooth workflow as connected." Track code **SP**, a code only, never shown in the product.
+Status: **ACCEPTED by Alex 27 Nov 2026 12:02 UTC ("Otherwise yes to all"), except questions 1 and 10**, which he asked to have explained and which wait for his word. His rulings are in section 13A and win where the text differs. Nothing here is built. Written by the thread "Design store packs" (Fable, design only) at Alex's request of 27 Nov 11:47 UTC: "a short design effort to rationalise 'store packs' - how they categorise, manifest and appear, layer and can load prerequisites securely (advantage of OUR store)... labelling the old v3 ones. How do we 'save them' and upload them - a smooth workflow as connected." Track code **SP**, a code only, never shown in the product.
 
 Read with: `SSE4-explorers-paid-packs.md` (money, accepted 21 Nov; nothing here changes it), `SSE4-example-packs.md` section 2 (shelves), `SSE4-compound-ships-design.md` section 8B.3 (parts packs, CM18), `SSE4-real-catalogues-design.md` sections 5.2 to 5.3A (downloaded data, detail expansion packs, RW8), `SSE4-edits-reach-design.md` (block edits). On the Explorers side: `docs/decisions.md` D-98 and D-99 in `FrunkQ/starsystemx-creator-hub`.
 
@@ -208,13 +208,16 @@ From anywhere a thing is selected (a ship in the builder, parts, a system, a nam
 
 - **On the store.** Every V3 map, system and clip shows a **V3** mark, every V4 item a **V4** mark (the API already says `generation`). V3 items get one more button beside their existing ones: "Open in SSE4", which hands the file to SSE4's Open door, where the V3 importer that exists reads it. Nothing published is altered, moved or re-saved.
 - **In the app.** What came in says so: "Imported from V3: (title) by (maker)", with the importer's report of what was kept as authored and what was worked out again. The `sse.sse3-classic` labels pack is offered on the "this needs" sheet so worlds keep the class names their authors knew.
-- **V3 custom definitions** (`rulePackOverrides`: custom gases, body types, tech) do not become V4 packs. They are listed in the report as kept and not used. This is "no legacy" applied to rules, while worlds come across.
+- **V3 custom definitions** (`rulePackOverrides`: custom gases, body types, tech) are not converted by the importer as a file opens. They are listed in the report as kept and not used.
+- **The upgrade pass (Alex, 27 Nov 12:02 UTC).** "Once we get everything sorted out and settled we will do an upgrade of all the V3 stuff (and hand fix if needed) and upgrade them for the users as there are not many. The store will be able to serve the right version to the right app (v3 will probably move to legacy.starsystemx.com)." So: when V4 is settled, every V3 item on the store is upgraded once by us, fixed by hand where the importer falls short (custom definitions included), and kept **beside** its V3 original as the same listing. The store serves the V3 file to V3 and the V4 file to SSE4. The V3 bytes are never altered. Each upgraded item is checked against its original before it is shown, and the pass is run by Alex or on his go, as with anything that touches published worlds (SP12).
 - **Publishing the V4 version** is the owner's choice, through 9.3, as a new V4 item whose credit chain points at the V3 original. The V3 original stays.
 - Universe Sandbox and SpaceEngine files keep going through the converter, as now.
 
 ## 11. Free, paid, fan-made and never sold, as the app shows them
 
-No new rule; this is where the accepted ones surface.
+No new rule but one line; this is where the accepted ones surface.
+
+**The store says it prefers free (Alex, 27 Nov 12:02 UTC).** The upload page and the Publish sheet carry one message: "We suggest store uploads are provided free. There is a mechanism for charging; contact us if you are interested." This fits the accepted rule that selling is by invitation at first. Wording is Alex's to change.
 
 | Mark | Rule | Where it bites |
 |---|---|---|
@@ -242,10 +245,23 @@ Small, in order. Owners are proposed. Explorers packages add only; any migration
 | **SP9** | `scripts/pack.mjs` and the CI check for `store-packs/` and starter pins | SSE4 | SP3 | a folder with a missing file fails CI |
 | **SP10** | V3 marks and "Open in SSE4" on V3 items; import label and report in the app | Explorers, SSE4 UI | none | a V3 map opens from its page; the original's bytes unchanged |
 | **SP11** | Shared campaigns carry pins, not packs (F2) | SSE4, Explorers | SP5, PK1 | a published campaign holds no copy of a store pack |
+| **SP12** | The V3 upgrade pass (section 10): a V4 file kept beside each V3 original, the store serving each app its own; hand fixes; `legacy.starsystemx.com` for V3. Only when V4 is settled, and only on Alex's go | Explorers, converter | SP10, a settled V4 | every V3 original byte for byte unchanged; each upgrade compared with its original |
+
+The "we suggest free" message (section 11) goes in with SP8 on the app side and is a one-line change on the store's upload page.
 
 Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued values by reference), CM16 to CM18 (part editor and parts packs), RW8 (detail expansion packs; its "pack kind" becomes an ordinary `universe` pack found by the real data filter, and its byte-range reads stay its own).
 
-## 13. Open questions
+## 13A. Alex's rulings, 27 Nov 2026
+
+- 11:57 UTC: no Real data shelf; "it is just another campaign world and with the star catalogue importer many will have real data".
+- 11:57 to 11:58 UTC: the new shelf holds "constructs and constituent parts"; "'ships' is too narrow". Named Constructs and parts.
+- 11:58 UTC: new reference data "can travel together as a physics pack".
+- 12:02 UTC: the store carries the "we suggest free" message (section 11).
+- 12:02 UTC, question 7 amended: V3 items will be upgraded by us in one pass once V4 is settled, hand fixed where needed; the store serves the right version to the right app; V3 probably moves to legacy.starsystemx.com (section 10, SP12).
+- 12:02 UTC: "Otherwise yes to all": questions 3, 4, 5, 6, 8, 9 and 11 stand as recommended. Question 6 still needs its one database change shown to him and run by him.
+- Questions 1 and 10: he asked what they meant; explained in the thread at 12:03 UTC; **not yet ruled**. SP1 does not start until question 1 is.
+
+## 13. Questions as put
 
 1. **Kind as a permission, enforced by the kernel, with shipped packs refiled (one planned move of the core golden)?** Recommended: yes.
 2. **One new shelf, Constructs and parts, worked out from contents?** *Answered by Alex, 27 Nov 11:57 UTC: yes, and it holds all constructs and their constituent parts. Real data as a shelf was dropped the same minute; it is a filter and a mark.*

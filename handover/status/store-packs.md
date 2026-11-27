@@ -1,7 +1,7 @@
 # Status: store packs (track SP)
 
 Owner thread: "Design store packs" (Fable, design only, 27 Nov 2026) for the note. No builder thread yet.
-Design: `design/SSE4-store-packs-design.md`, **PROPOSED 27 Nov 2026, not accepted.** No package may start until Alex answers its section 13.
+Design: `design/SSE4-store-packs-design.md`, **ACCEPTED by Alex 27 Nov 2026 12:02 UTC ("Otherwise yes to all"), except questions 1 and 10**, which wait for his word; his rulings are in the note's section 13A. SP1 (question 1) may not start yet. Builders may take the others in order.
 
 What it is, in one line: one way to make, find, stack, update and publish a pack. Kind becomes a permission the kernel checks; the shelf is read from the contents; one `about` block; prerequisites fetched from Explorers on one "this needs" sheet and checked by fingerprint; one layering rule for data as for flows; campaigns pin exact versions and updates are offered, never applied unasked; Make a pack and Publish from the Packs screen; V3 items marked and opened through the importer.
 
@@ -11,14 +11,15 @@ Only the owner thread edits this file. Build threads update their rows in the sa
 
 | Package | State | Log |
 |---|---|---|
-| SP1 kind as a permission; shipped packs refiled | proposed | |
-| SP2 one layering rule for data | proposed | |
-| SP3 the `about` block, `suggests`, `changes` | proposed | |
-| SP4 resolve route and the "this needs" sheet | proposed | |
-| SP5 library and pins; updates | proposed | |
-| SP6 Packs screen in three parts | proposed | |
-| SP7 Make a pack, with "Add to my ship pack" | proposed | |
-| SP8 Connect and Publish from the app | proposed | |
-| SP9 `scripts/pack.mjs` and the CI check | proposed | |
-| SP10 V3 marks and "Open in SSE4" | proposed | |
-| SP11 shared campaigns carry pins, not packs | proposed | |
+| SP1 kind as a permission; shipped packs refiled | waits for question 1 | |
+| SP2 one layering rule for data | accepted, not started | |
+| SP3 the `about` block, `suggests`, `changes` | accepted, not started | |
+| SP4 resolve route and the "this needs" sheet | accepted, not started | |
+| SP5 library and pins; updates | accepted, not started | |
+| SP6 Packs screen in three parts | accepted, not started | |
+| SP7 Make a pack, with "Add to my ship pack" | accepted, not started | |
+| SP8 Connect and Publish from the app | accepted, not started | |
+| SP9 `scripts/pack.mjs` and the CI check | accepted, not started | |
+| SP10 V3 marks and "Open in SSE4" | accepted, not started | |
+| SP11 shared campaigns carry pins, not packs | accepted, not started | |
+| SP12 the V3 upgrade pass, on Alex's go, once V4 is settled | accepted, not started |
