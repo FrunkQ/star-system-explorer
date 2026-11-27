@@ -43,6 +43,9 @@ fi
 # Warning only until Alex says the check may fail (and join CI).
 python3 scripts/test-citations.py >/dev/null
 python3 scripts/citations.py --check --warn
+# The fudge register and the build rulings are one file per entry (scripts/registers.py).
+python3 scripts/test-registers.py >/dev/null
+python3 scripts/registers.py --check
 # The importer must still build without formation (the converter module).
 cargo build -q -p sse-convert-wasm
 echo "all checks passed"
