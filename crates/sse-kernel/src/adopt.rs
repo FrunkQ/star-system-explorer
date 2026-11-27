@@ -36,7 +36,7 @@ fn json_name<T: serde::Serialize>(v: &T) -> String {
 }
 pub const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 /// Metal mass fraction assumed when a system has no `star.metallicity_z` fact.
-pub const DEFAULT_Z: f64 = 0.0142;
+pub const DEFAULT_Z: f64 = sse_formation::hurley::Z_SUN;
 /// Most tiles one `resolved_system` builds.
 pub const MAX_TILES: usize = 24;
 

@@ -45,8 +45,8 @@ pub struct PatchEnvelope {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Inheritance {
     pub feh: f64,
-    /// Metal mass fraction on the fits' scale: Z = 0.02 x 10^[Fe/H] (HPT00 calibrate
-    /// the Sun as Z = 0.02, so this keeps the Sun solar in the fits).
+    /// Measured metal mass fraction, Z = Z_sun x 10^[Fe/H] (Z_sun = 0.0142,
+    /// Asplund et al. 2009); the fits convert it to their own scale.
     pub z: f64,
     pub age_gyr: f64,
     pub born_gyr: f64,
@@ -78,10 +78,10 @@ fn one() -> f64 {
 /// to turn a cluster mass into a member count.
 pub const MEAN_STAR_MASS: f64 = 0.6;
 
-/// Metal mass fraction from [Fe/H], scaled from Z = 0.02 at [Fe/H] = 0 (the
-/// HPT00 fits' reference). Formation and `describe_star` both use it.
+/// Measured metal mass fraction from [Fe/H], scaled from the Sun's
+/// (`hurley::Z_SUN`). Formation and `describe_star` both use it.
 pub fn z_of_feh(feh: f64) -> f64 {
-    0.02 * m::pow(10.0, feh)
+    crate::hurley::Z_SUN * m::pow(10.0, feh)
 }
 
 impl Inheritance {

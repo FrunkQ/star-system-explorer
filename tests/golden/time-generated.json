@@ -1,6 +1,6 @@
 [
   {
-    "digest": "c2e667ee3a90a61f935a122e77951d89b636f842896c18f4e20a3e6262d2100f",
+    "digest": "0a9ac610b9c34bc5fa6da8107312db35e70dadd36970eeb7f4f14feea5e0d8c8",
     "story": [
       {
         "age_myr": 0.0,
@@ -36,7 +36,7 @@
     "system": "u:g0/patch:9:solar/cohort:0/sys:0"
   },
   {
-    "digest": "90247fdc0df98c17279737b5f9479e2a462d2c75eb8e7bf899f90fd103b4ed1f",
+    "digest": "f38c93922fe9d560d03ec3dcaeb4a9b1605c7300469dc5fd22fea6a940e6c037",
     "story": [
       {
         "age_myr": 0.0,
@@ -72,7 +72,7 @@
     "system": "u:g0/patch:9:solar/cohort:0/sys:1"
   },
   {
-    "digest": "50f995acf294d2d28319799439bf5ed7273e6a79aac0abe15c55cbd5e013d50d",
+    "digest": "ff5fe6e2a59fd3c8f61fe393aa35f8946d5f578d8f4560df1ab8c35e4fe963c3",
     "story": [
       {
         "age_myr": 0.0,
@@ -173,7 +173,7 @@
     "system": "u:g0/patch:9:solar/cohort:1/sys:0"
   },
   {
-    "digest": "4fe610a327ec2e99208f6309f21bb90c369bbfcbe102e75c589f0071debb2688",
+    "digest": "61da98a79018025815453b6bc39c247b454ea75fb967c4a83a214ac1ab35cd14",
     "story": [
       {
         "age_myr": 0.0,
