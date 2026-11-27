@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatWhen, heatWhy, surfaceArea, HEAT_NODES, type HeatEnvelope, type HeatHistory, type HeatStep } from "../src/heat-flow.ts";
+import { booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatWhen, heatWhy, sunBooks, sunColumn, sunWhy, surfaceArea, HEAT_NODES, SUN_NODES, type HeatEnvelope, type HeatHistory, type HeatStep, type Sunlight } from "../src/heat-flow.ts";
 import { layoutFlow } from "../src/flow.ts";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
@@ -72,6 +72,35 @@ test("section 7's books close: every band is a published figure times the area, 
   assert.equal(booksClose(partial), false);
 });
 
+// Earth-like sunlight books, W/m² (the climate's HV2a figures): arriving = reflected + absorbed, emitted = absorbed + internal.
+const sunny = (o: Partial<Sunlight> = {}): Sunlight => ({ arriving_w_m2: 340, absorbed_w_m2: 238, reflected_w_m2: 102, bond_albedo: 0.3, internal_w_m2: 0.087, emitted_w_m2: 238.087, ...o });
+
+test("the outside half draws the climate's sunlight books, closing, at their own scale", () => {
+  const e = env(null, { label: "Earth" });
+  const b = sunBooks(e, sunny());
+  const a = surfaceArea(e);
+  assert.equal(b.arriving_w, 340 * a);
+  const into = b.rows.filter((r) => r.to === SUN_NODES.skin).reduce((x, r) => x + r.amount, 0);
+  const out = b.rows.filter((r) => r.from === SUN_NODES.skin).reduce((x, r) => x + r.amount, 0);
+  // Absolute, not a ratio: what reaches the surface and air leaves it, to a kilowatt in 10^17 W (float rounding).
+  assert.ok(Math.abs(into - out) < 1e3, `${into} in, ${out} out`);
+  assert.deepEqual(b.rows.map((r) => sunColumn(r.from)), [0, 0, 1, 1]);
+  const L = layoutFlow(b.rows, { width: 640, height: 240, column: sunColumn });
+  assert.equal(L.columns.length, 3);
+  const why = sunWhy(e, sunny());
+  assert.match(why[0]!, /reflects 30% straight back/);
+  assert.match(why[1]!, /sunlight, not its inside, sets how warm/);
+  assert.equal(sunWhy(e, sunny(), "curious").length, 2);
+  // A climate that leaves the inside heat out still compares with the core history's heat lost, and says so.
+  const left = sunWhy(e, sunny({ internal_w_m2: 0, emitted_w_m2: 238 }), "science", 35e12);
+  assert.match(left[1]!, /times the heat coming up from inside \((about )?35 TW\)/);
+  assert.ok(left.some((l) => /climate leaves out the heat from inside/.test(l)), left.join(" | "));
+  // A world warmed from inside more than by its sun says so.
+  assert.match(sunWhy(e, sunny({ absorbed_w_m2: 0.01, reflected_w_m2: 0.01, arriving_w_m2: 0.02, internal_w_m2: 2, emitted_w_m2: 2.01 }))[1]!, /its own heat, not its sun/);
+  // No sunlight at all: one honest line.
+  assert.match(sunWhy(e, sunny({ arriving_w_m2: 0, absorbed_w_m2: 0, reflected_w_m2: 0 }))[0]!, /No sunlight reaches/);
+});
+
 test("caveats follow the world's conditions, never its name", () => {
   const lid = heatCaveats(env(null, { regime_now: "stagnant-lid" }), today(4.5, 1, 0.1)).map((c) => c.id);
   assert.ok(lid.includes("lid-hot"));
@@ -102,6 +131,11 @@ test("the GM reads a world's heat history from the kernel; Earth runs down as it
     assert.ok(now.rows.length >= 2);
     assert.ok(heatWhy(earth.envelope, h, h.steps.length - 1).length >= 3);
     assert.ok(heatMarksBy(h, h.steps.length - 1).length >= heatMarksBy(h, 0).length);
+    // The outside half comes from the same survey: Earth soaks up thousands of times its inside heat.
+    assert.ok(earth.sunlight, "Earth's survey carries the climate's sunlight books");
+    const sb = sunBooks(earth.envelope, earth.sunlight);
+    assert.ok(sb.albedo > 0.2 && sb.albedo < 0.4, `Earth's albedo ${sb.albedo}`);
+    assert.ok(sb.absorbed_w > 1e3 * now.lost_w, `${sb.absorbed_w} W absorbed against ${now.lost_w} W from inside`);
     const moon = await s.surveyHeat(sys, subjects.find((b) => b.label === "Moon")!.address);
     assert.ok(moon.ok);
     const p = await Session.open(k.client, tableSeat(), { id: "kestrel", seed: "k" }, packs).catch(() => null);

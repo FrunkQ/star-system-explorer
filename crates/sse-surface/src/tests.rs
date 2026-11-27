@@ -286,3 +286,30 @@ fn companion_light_warms_a_world() {
     let r = twin / alone;
     assert!((r - m::pow(2.0, 0.25)).abs() < 1e-9, "{alone} {twin}");
 }
+
+/// HV2c: a moon's sunlight is read at its planet's distance from the star,
+/// never at its own orbit round the planet (which gave our Moon 150,000
+/// times Earth's sunlight).
+#[test]
+fn a_moon_gets_sunlight_at_its_planets_distance() {
+    let s = settings();
+    let mut b = fixtures()
+        .into_iter()
+        .find(|f| f.body.label == "Moon")
+        .unwrap()
+        .body;
+    b.orbit = Some(Orbit {
+        a_au: 0.002_57,
+        e: 0.055,
+        host_msun: 3.0e-6,
+    });
+    b.star_au = Some(1.0);
+    let e = envelope(&s, &b);
+    let (c, _) = climate::conditions(&s, &b, &e, &Default::default());
+    // Absolute: the Sun's constant at 1 AU, to a milliwatt per square metre.
+    assert!(
+        (c.flux_w_m2 - sse_core::sheet::S_SUN).abs() < 1e-3,
+        "{}",
+        c.flux_w_m2
+    );
+}

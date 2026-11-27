@@ -1048,6 +1048,8 @@ fn bodies_from_facts(
                 .unwrap_or_else(|| makeup_shares(r).map_or(0.32, |m| m.0)),
             water_fraction: makeup_shares(r).map_or(0.0, |m| m.1),
             water_from_density: makeup_shares(r).is_none(),
+            // A moon's sunlight is its planet's distance from the star (HV2c).
+            star_au: (host != star).then_some(a_star / AU),
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,

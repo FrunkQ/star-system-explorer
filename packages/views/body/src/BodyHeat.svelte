@@ -4,7 +4,9 @@
   it goes, at any point of its own life. The flow is the Flow view the ship Power card uses (RK13), fed from the core
   history the kernel publishes in the survey's envelope (the numbers that drive the world); the thermal line under it
   is the same history against time, with the history's marks, and the slider moves along the history's own steps.
-  Looking back moves nothing in the campaign. Nothing here works out physics: amounts are the kernel's, words compare
+  Looking back moves nothing in the campaign. Above the inside books sits the outside half (HV2b): the climate's own
+  sunlight books (arriving, reflected, soaked up, given off), drawn to their own scale because sunlight is usually
+  thousands of times the heat from inside, with the reflected share as a bar; life's share waits on LE2 and says so. Nothing here works out physics: amounts are the kernel's, words compare
   them. Where the kernel's books are not complete yet, it says so and draws only what is published.
 
   Desks: Explore reads it (Curious depth: names and two sentences; Science and Engine: figures, the line, the marks).
@@ -13,7 +15,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { HEAT_COLUMNS, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatWatts, heatWhen, heatWhy, booksClose, say, surfaceArea, type Depth, type HeatEnvelope, type HeatStep, type ViewSession } from "../../../ui-contract/src/index.ts";
+  import { HEAT_COLUMNS, LIFE_SHARE_MISSING, SUN_COLUMNS, sharePercent, sunBooks, sunColumn, sunRank, sunWhy, type Sunlight, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatWatts, heatWhen, heatWhy, booksClose, say, surfaceArea, type Depth, type HeatEnvelope, type HeatStep, type ViewSession } from "../../../ui-contract/src/index.ts";
   import { opensFrom } from "../../../chart-grammar/src/index.ts";
   import Flow from "../../flow/src/Flow.svelte";
 
@@ -25,6 +27,7 @@
   let busy = $state(false);
   let failed = $state<string | null>(null);
   let env = $state.raw<HeatEnvelope | null>(null);
+  let sun = $state.raw<Sunlight | null>(null);
   /** The step looked at; null follows the world's present. */
   let picked = $state<number | null>(null);
 
@@ -32,6 +35,7 @@
     void `${system}|${address}`;
     untrack(() => {
       env = null;
+      sun = null;
       gen++;
       busy = false;
       picked = null;
@@ -52,6 +56,7 @@
     if (!r.ok) return void (failed = r.message);
     // The screen's own name for the world (a catalogued world's envelope may carry only its address).
     env = { ...r.envelope, label };
+    sun = r.sunlight;
   }
   function toggle() {
     open = !open;
@@ -68,6 +73,9 @@
   const marks = $derived(h ? heatMarksBy(h, i) : []);
   const caveats = $derived(env && step ? heatCaveats(env, step) : []);
   const figures = $derived(depth !== "curious");
+  // The outside half: the climate's sunlight books, today's only (the climate is not run back through the world's life).
+  const outside = $derived(env && sun ? sunBooks(env, sun) : null);
+  const outWhy = $derived(env && sun && h ? sunWhy(env, sun, depth, heatBooks(env, h.steps[n - 1]!).lost_w) : []);
 
   // The thermal line: temperatures in one small chart, heat in another (never two scales on one axis).
   const W = 560;
@@ -120,7 +128,7 @@
   <section class="heat" aria-label="Energy flow of {label}" data-heat>
     <button type="button" class="open" bind:this={btn} aria-expanded={open} onclick={toggle} data-heat-toggle>
       <span class="h">Energy flow</span>
-      <span class="muted small">where its heat comes from and where it ends up, over its life</span>
+      <span class="muted small">sunlight in and out, and where its inside heat comes from and ends up, over its life</span>
     </button>
     {#if open}
       <div class="body" use:opensFrom={() => btn ?? null} data-heat-panel>
@@ -140,12 +148,30 @@
             {#if !when.now}<button type="button" class="link" onclick={() => (picked = null)} data-heat-now>Back to now</button>{/if}
             {#if !when.now}<span class="small muted" data-heat-looking>Looking back: nothing changes in the campaign.</span>{/if}
           </div>
-          {#if books.rows.length}
-            <Flow rows={books.rows} titles={HEAT_COLUMNS} column={heatColumn(env!)} rank={heatRank} amountWords={(w) => heatWatts(w, depth)} {figures} label="Energy flow of {label}" />
+          {#if outside && outside.rows.length}
+            <div class="half" data-heat-outside>
+              <h4 class="hh">Outside: sunlight <span class="muted small">· drawn to its own scale, {heatWatts(outside.arriving_w + outside.inside_w, depth)} in all</span></h4>
+              {#if !when.now}<p class="small muted" data-heat-today>Sunlight as it is now: the climate is worked out for today only.</p>{/if}
+              <div class="albedo" role="img" aria-label="{sharePercent(outside.albedo)} of the sunlight reflected, the rest soaked up" data-heat-albedo>
+                <span class="refl" style:width="{Math.max(0, Math.min(100, outside.albedo * 100))}%"><span class="lab">{sharePercent(outside.albedo)} reflected</span></span>
+                <span class="abs"><span class="lab">{sharePercent(1 - outside.albedo)} soaked up</span></span>
+              </div>
+              <Flow rows={outside.rows} titles={SUN_COLUMNS} column={sunColumn} rank={sunRank} amountWords={(w) => heatWatts(w, depth)} {figures} label="Sunlight on {label}" />
+              <div class="why" data-heat-sun-why>
+                {#each outWhy as line, k (k)}<p>{line}</p>{/each}
+              </div>
+              <p class="small note" data-heat-life>{LIFE_SHARE_MISSING}</p>
+            </div>
           {/if}
-          {#if !books.closes}<p class="small note" data-heat-missing>{books.missing}</p>{/if}
-          <div class="why" data-heat-why>
-            {#each why as line, k (k)}<p>{line}</p>{/each}
+          <div class="half" data-heat-inside>
+            {#if outside}<h4 class="hh">Inside: heat <span class="muted small">· drawn to its own scale; what leaves is the "heat from inside" above</span></h4>{/if}
+            {#if books.rows.length}
+              <Flow rows={books.rows} titles={HEAT_COLUMNS} column={heatColumn(env!)} rank={heatRank} amountWords={(w) => heatWatts(w, depth)} {figures} label="Energy flow of {label}" />
+            {/if}
+            {#if !books.closes}<p class="small note" data-heat-missing>{books.missing}</p>{/if}
+            <div class="why" data-heat-why>
+              {#each why as line, k (k)}<p>{line}</p>{/each}
+            </div>
           </div>
           {#if figures && temps}
             <figure class="line" data-heat-line>
@@ -284,6 +310,47 @@
     color: var(--sse-ink);
     text-decoration: underline;
     cursor: pointer;
+  }
+  .half {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    border-top: 1px solid var(--sse-line);
+    padding-top: 8px;
+  }
+  .hh {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .albedo {
+    display: flex;
+    height: 18px;
+    border: 1px solid var(--sse-line);
+    font-size: 11px;
+    font-family: var(--sse-font-mono);
+    overflow: hidden;
+  }
+  .albedo .refl {
+    background: var(--sse-ink-muted);
+    color: var(--sse-ground);
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .albedo .abs {
+    flex: 1;
+    background: var(--sse-accent);
+    color: var(--sse-ground);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .albedo .lab {
+    padding: 0 6px;
   }
   .why p {
     margin: 0 0 4px;

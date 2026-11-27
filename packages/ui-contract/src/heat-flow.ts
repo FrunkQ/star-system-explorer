@@ -275,3 +275,104 @@ export function heatCaveats(env: HeatEnvelope, s: HeatStep): HeatCaveat[] {
   out.push({ id: "readers-made", fixedBy: "HF2", words: "Landforms on the surface (volcanoes, plates, lava plains) still read the heat made inside, not the heat lost shown here." });
   return out;
 }
+
+// The outside half (HV2b; Alex, 26 Nov: "sunlight can heat a core if close enough - we cant miss it... how much is
+// absorbed, how much reflected (albedo visually)"). The climate's own sunlight books (`survey_surface` climate
+// `sunlight`, HV2a), W/m² averaged over the whole surface: arriving = reflected + absorbed, and the world gives off
+// emitted = absorbed + internal. Drawn as its own flow at its own scale beside the inside half, because sunlight is
+// usually thousands of times the heat from inside; the inside half's "out through the surface" is what this half
+// calls "heat from inside", and the words say how the two compare.
+
+/** The climate's sunlight books, W/m² of surface (sse_climate `Sunlight`). */
+export interface Sunlight {
+  arriving_w_m2: number;
+  absorbed_w_m2: number;
+  reflected_w_m2: number;
+  bond_albedo: number;
+  internal_w_m2: number;
+  emitted_w_m2: number;
+}
+
+export const SUN_NODES = {
+  sun: "Sunlight",
+  inside: "Heat from inside",
+  skin: "Its surface and air",
+  reflected: "Reflected to space",
+  emitted: "Given off as warmth",
+} as const;
+
+export const SUN_COLUMNS = ["Comes from", "", "Ends up as"] as const;
+
+export interface SunBooks {
+  rows: FlowRow[];
+  arriving_w: number;
+  absorbed_w: number;
+  reflected_w: number;
+  inside_w: number;
+  emitted_w: number;
+  /** Share of the arriving sunlight sent straight back to space, 0 to 1 (the Bond albedo the climate uses). */
+  albedo: number;
+}
+
+/** The outside half's rows, in W: what reaches the surface and air and what leaves it. */
+export function sunBooks(env: Pick<HeatEnvelope, "reference_radius_m">, sun: Sunlight): SunBooks {
+  const a = surfaceArea(env);
+  const N = SUN_NODES;
+  const b = { arriving_w: sun.arriving_w_m2 * a, absorbed_w: sun.absorbed_w_m2 * a, reflected_w: sun.reflected_w_m2 * a, inside_w: sun.internal_w_m2 * a, emitted_w: sun.emitted_w_m2 * a };
+  const rows: FlowRow[] = [];
+  const add = (from: string, to: string, amount: number, kind: string) => {
+    if (amount > 0) rows.push({ from, to, amount, kind });
+  };
+  add(N.sun, N.skin, b.arriving_w, "light");
+  add(N.inside, N.skin, b.inside_w, "heat");
+  add(N.skin, N.reflected, b.reflected_w, "light");
+  add(N.skin, N.emitted, b.emitted_w, "heat");
+  return { rows, ...b, albedo: sun.bond_albedo };
+}
+
+export function sunColumn(id: string): number {
+  if (id === SUN_NODES.sun || id === SUN_NODES.inside) return 0;
+  return id === SUN_NODES.skin ? 1 : 2;
+}
+
+export function sunRank(id: string): number {
+  const order: string[] = Object.values(SUN_NODES);
+  const i = order.indexOf(id);
+  return i < 0 ? order.length : i;
+}
+
+/** A share in whole percent, for words ("30%"). */
+export const sharePercent = (x: number) => `${sayNumber(Math.round(x * 100), 3)}%`;
+
+/**
+ * The outside half in words, from the climate's sunlight books only: what arrives, what is reflected and soaked
+ * up, and how that compares with the heat from inside (which one sets how warm the surface is). Curious gets two.
+ */
+export function sunWhy(env: HeatEnvelope, sun: Sunlight, depth: Depth = "science", insideLost_w = 0): string[] {
+  const b = sunBooks(env, sun);
+  const w = env.label || "The world";
+  const out: string[] = [];
+  if (b.arriving_w <= 0) {
+    out.push(`No sunlight reaches ${w} in the climate's books, so all the warmth it gives off comes from inside.`);
+    return out;
+  }
+  out.push(`Sunlight brings ${w} ${heatWatts(b.arriving_w, depth)}. It reflects ${sharePercent(b.albedo)} straight back to space and soaks up the rest, ${heatWatts(b.absorbed_w, depth)}.`);
+  // The heat from inside: the climate's own figure where it counts one, else the core history's heat lost (the
+  // inside half below), compared in words only; the climate's books are never changed.
+  const inside = b.inside_w > 0 ? b.inside_w : insideLost_w;
+  if (inside > 0) {
+    const r = b.absorbed_w / inside;
+    if (r >= 2) out.push(`That is about ${sayNumber(r, 2)} times the heat coming up from inside (${heatWatts(inside, depth)}), so sunlight, not its inside, sets how warm its surface is.`);
+    else if (r <= 0.5) out.push(`Its inside gives off about ${sayNumber(1 / r, 2)} times the sunlight it soaks up, so its own heat, not its sun, keeps its surface warm.`);
+    else out.push(`Sunlight and its own heat from inside are about as strong as each other at its surface.`);
+  } else {
+    out.push(`Almost no heat comes up from inside, so sunlight alone sets how warm its surface is.`);
+  }
+  if (depth === "curious") return out;
+  out.push(`In balance it gives off ${heatWatts(b.emitted_w, depth)} as warmth (infrared): what it soaks up${b.inside_w > 0 ? " plus what comes from inside" : ""}.`);
+  if (b.inside_w <= 0 && insideLost_w > 0) out.push(`The climate leaves out the heat from inside: next to the sunlight it is too small to change how warm the surface is.`);
+  return out;
+}
+
+/** What the outside half does not publish yet, in words. */
+export const LIFE_SHARE_MISSING = "How much of this energy life catches and uses is not published yet: it comes with the life energy ledger (package LE2).";
