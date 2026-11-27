@@ -156,7 +156,10 @@
     untrack(() => {
       openedKey = o.key;
       const len = typeof o.span === "string" ? SHOWS.find((x) => x.id === o.span)?.span : o.span;
-      glide(len === null || len === undefined || !(len > 0) || len === Infinity ? null : around(now, len, bounds), false);
+      // At once, not a glide: the desk or level changed the whole screen, and the ruler arrives with it.
+      cancelAnimationFrame(glideRaf);
+      anim = null;
+      win = len === null || len === undefined || !(len > 0) || len === Infinity ? null : around(now, len, bounds);
     });
   });
   // Wheel zoom about the pointer (non-passive, so the page does not scroll).
