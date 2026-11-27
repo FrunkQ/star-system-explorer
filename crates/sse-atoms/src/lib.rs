@@ -8,6 +8,7 @@ pub mod activity;
 pub mod air;
 pub mod aurora;
 pub mod belts;
+pub mod binary;
 pub mod chem;
 pub mod common;
 pub mod convection;
@@ -480,6 +481,18 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.corona_temperature", "mean temperature of a star's corona"),
     ("star.corona_base_density", "particles per cubic metre at the foot of a star's corona"),
     ("star.closed_corona_extent", "reach of a star's closed magnetic field, in stellar radii"),
+    ("star.active_latitude", "latitude on a star's surface where its magnetic activity sits"),
+    ("star.rotation_rate_share", "a star's surface spin rate at a latitude over its equator's"),
+    ("star.cycle_progress", "share of a star's activity cycle gone since its minimum"),
+    ("star.active_region_tilt", "tilt of a spot group's pair of opposite polarities from east to west"),
+    ("star.spot_group_area", "a spot group's peak area, millionths of a hemisphere"),
+    ("star.spot_group_life", "how long a spot group lives"),
+    ("star.core_mass", "mass of a star's burnt-out core (helium or carbon and oxygen)"),
+    ("star.thermal_timescale", "time a star's light takes to carry off its envelope's binding energy"),
+    ("binary.mass_ratio", "one star's mass over its partner's"),
+    ("binary.roche_lobe_radius", "radius of the sphere with the volume of a star's Roche lobe"),
+    ("binary.lobe_fill", "a star's radius over its Roche lobe's"),
+    ("binary.transfer_rate", "mass a star gives its partner each second"),
     // what stops a wind (MF6)
     ("body.ionopause_altitude", "height above the ground at which a body's air holds off the stellar wind"),
     ("magnetosphere.flaring", "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)"),

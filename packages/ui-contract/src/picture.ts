@@ -51,6 +51,16 @@ export function designOf(v: unknown): { style: string; seed: number; overrides?:
   return { style: o.style, seed: o.seed, ...(ov && Object.keys(ov).length ? { overrides: ov } : {}) };
 }
 
+/** A build kept with a construct (the ship builder, CM14a): `{ build: { format: "sse.build/1", ... } }` under the design
+ * field, in place of the old style recipe. Null when the design is not a build. */
+export function buildOf(v: unknown): Record<string, unknown> | null {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const b = (v as Record<string, unknown>).build;
+  if (!b || typeof b !== "object" || Array.isArray(b)) return null;
+  const o = b as Record<string, unknown>;
+  return o.format === "sse.build/1" && Array.isArray(o.parts) ? o : null;
+}
+
 /** Width and height that fit `side` on the longer edge, never scaling up. */
 export function fitSide(w: number, h: number, side = PICTURE_SIDE): [number, number] {
   const k = Math.min(1, side / Math.max(w, h, 1));
