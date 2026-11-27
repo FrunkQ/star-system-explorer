@@ -793,9 +793,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         seed: Option<String>,
+        /// A date in seconds: a whole number is read exactly (TP1).
         #[serde(default)]
-        #[ts(optional)]
-        at_s: Option<f64>,
+        #[ts(optional, type = "number")]
+        at_s: Option<sse_core::time::Seconds>,
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         window: Option<serde_json::Value>,

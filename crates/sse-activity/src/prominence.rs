@@ -406,7 +406,11 @@ pub fn prominences(
             for k in 0..n {
                 let i = base + k * 10;
                 let born = (b as f64 + dr.unit(i)) * bin;
-                if dr.unit(i + 1) * peak > cycle_factor(a, born, set) {
+                // Still a double date until prominences move to dates (TP1 follow-up);
+                // the cycle reads it as the exact value of that double.
+                let born_at = sse_core::time::Instant::from_seconds_f64(born)
+                    .unwrap_or(sse_core::time::Instant::ORIGIN);
+                if dr.unit(i + 1) * peak > cycle_factor(a, born_at, set) {
                     continue;
                 }
                 let life_s = log_between(dr.unit(i + 2), life);
