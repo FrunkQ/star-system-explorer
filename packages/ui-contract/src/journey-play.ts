@@ -4,7 +4,7 @@
 // as the progress bar (5.5), the one line of width while moving (5.7), and each travelled view's own answer to "put
 // your camera here" (the web cube's eye, the galaxies nearby's turn and reach). Pure: no clock, no DOM. Presentation
 // only: never read by physics, never in the state hash.
-import { say } from "./figures.ts";
+import { say, sayNumber } from "./figures.ts";
 import { constant } from "./sheet.ts";
 import { RUNGS, RUNG_INFO, RUNG_WORDS, rungRank, type LadderRung } from "./approach.ts";
 import { type JourneyCamera, type JourneyFrame, type JourneyPlan } from "./journey.ts";
@@ -68,11 +68,13 @@ function aboutFor(width_m: number): { class?: string; what?: string } {
 }
 
 /** The one line of HUD while moving (design 5.7): the picture's width in words and as a power of ten,
- * "about 10.6 million light years across · 10²³ m". */
+ * "about 10 million light years across · 3.1 × 10²³ m". */
 export function widthLine(width_m: number): { words: string; power: string; exp: number } {
-  const exp = Math.round(Math.log10(width_m));
+  let exp = Math.floor(Math.log10(width_m));
+  let lead = Math.round((width_m / 10 ** exp) * 10) / 10;
+  if (lead >= 10) ((lead = 1), (exp += 1));
   const words = `${say(width_m, "length", aboutFor(width_m), { depth: "curious", sig: 2 }).text} across`;
-  return { words, power: `10${superscript(exp)} m`, exp };
+  return { words, power: `${sayNumber(lead, 2)} × 10${superscript(exp)} m`, exp };
 }
 const SUP: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
 const superscript = (n: number) => String(n).replace(/./g, (c) => SUP[c] ?? c);

@@ -44,7 +44,12 @@ try {
   await page.keyboard.press("Space");
   // While moving: the width line counts down in light years and powers of ten.
   await page.waitForFunction(() => Number(document.querySelector("[data-journey-player]")?.getAttribute("data-journey-t")) > 0.3);
-  assert.match(await page.locator("[data-journey-width]").innerText(), /light years across · 10/);
+  assert.match(await page.locator("[data-journey-width]").innerText(), /light years across · [\d.]+ × 10/);
+  // The seam blends (it is not a cut): at some moment the galaxies nearby are partly faded in over the web.
+  await page.waitForFunction(() => {
+    const o = Number(document.querySelector("[data-journey-layer=cluster]")?.style.opacity ?? 0);
+    return o > 0.05 && o < 0.95;
+  }, null, { timeout: 60000, polling: "raf" });
   // The seam: past it the web is kept behind, with only the light within the catalogue's reach fading.
   await page.waitForFunction(() => document.querySelector("[data-journey-player]")?.getAttribute("data-journey-rung") === "cluster", null, { timeout: 60000 });
   await shot(page, "2-seam");

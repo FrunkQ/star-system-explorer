@@ -11,7 +11,7 @@ every level on the way down looks equally filled in, never only the destination.
   across the top is the progress bar (`journeySteps`: passed in ink, current underlined in the accent, coming
   pencilled, a held rung between in italic with its reason, the rest off). Zoom in / Go on (Space or Enter), Back up,
   Leave (Escape). At the start stop a caption card; while moving the width line ("about 16 million light years across
-  · 10²³ m", through the figures door). If a level below is not read when its seam comes, the journey holds just
+  · 1.5 × 10²³ m", through the figures door). If a level below is not read when its seam comes, the journey holds just
   before the seam with "Reading galaxies nearby…" (`readyHold`), never half-faded.
 - **Where it is offered**: More > "Zoom in from the cosmic web", and a link whose way in starts at the web
   (`#chart/cluster?from=web`, GZ1's link form). Nothing else on the chart room changed; no press budget moved.
@@ -49,6 +49,15 @@ headless Chromium).
 Fudge GZ-F1 is registered in `docs/fudges.md` with what does not line up yet: galaxies near home jump as they fade
 (catalogue before the step, cube after it, up to about 7 Mpc, GZ0), the cube is perspective and the galaxies nearby
 flat, and the two draw a galaxy's brightness by different rules.
+
+## After the first real-GPU capture (AC-ProArt, 27 Nov)
+
+The web drew on the GPU (WebGPU, `data-tier` gpu). Three fixes from the frames: the seam read as a hard cut, so the
+fade now spans 0.22 factors of ten either side of the seam's width (`SEAM_FADE_DECADES`, the recovered mock-up's
+blend, about 0.9 s at stately) and never less than a third of a second; the square overflowed the window by its
+room's padding; the width line's power of ten rounded 4.8 × 10²³ up to 10²⁴ and now gives the leading figure. The
+width line also stays up at the end. Frames: Alex's PC, `C:\Development\sse4-project-files\sse4\handover-screens\GZ8a-screens\`.
+Found on the way: `scripts/serve.mjs` answers 404 for "/" on Windows (the path ends in a backslash).
 
 ## Checks
 

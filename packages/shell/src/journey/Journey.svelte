@@ -89,7 +89,8 @@
 
   let box = $state(0);
   let boxH = $state(0);
-  const side = $derived(Math.max(0, Math.min(box, boxH)));
+  // The room's padding (8 px a side) is inside its client size: the square fits within it, never past the window.
+  const side = $derived(Math.max(0, Math.min(box, boxH) - 16));
 
   function goOn() {
     if (!plan) return;
@@ -165,7 +166,7 @@
           </div>
         {/if}
         {#if waiting !== null}<p class="reading" data-journey-reading>{readingWords(waiting)}</p>{/if}
-        {#if width && (frame?.width_line || atStop)}
+        {#if width && (frame?.width_line || atStop || done)}
           <p class="width" data-journey-width={width.exp}>{width.words} · {width.power}</p>
         {/if}
       </div>

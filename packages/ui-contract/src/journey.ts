@@ -16,8 +16,12 @@ import { RUNG_INFO, RUNG_WORDS, fullApproach, rungDrawn, rungRank, RUNGS, type A
 
 export const JOURNEY_SCHEMA = "sse.journey/1";
 
-/** The cross-fade at a seam, seconds (design 5.4: about a third of a second, never stopping the zoom). */
+/** The shortest cross-fade at a seam, seconds (design 5.4: about a third of a second, never stopping the zoom). */
 export const SEAM_FADE_S = 1 / 3;
+/** The cross-fade spans this many factors of ten either side of the seam's width, so it is as long in the picture at
+ * every pace: the recovered mock-up Alex liked (27 Nov) blends over 0.22 a side, about 0.9 s at stately. A third of a
+ * second read as a hard cut on the first real-GPU capture. Never shorter than `SEAM_FADE_S`. */
+export const SEAM_FADE_DECADES = 0.22;
 /** The short form, per change of rung (design 5.6: about 0.6 s). */
 export const SHORT_RUNG_S = 0.6;
 /** Seconds per factor of ten in width (5.3: stately is about two; question 8: brisk about 25 s and slow about 90 s
@@ -445,8 +449,11 @@ export function journeyPlan(ask: JourneyAsk): JourneyPlanned {
       const dur = unitTime(run.D) * k;
       for (let wi = run.from + 1; wi < run.to; wi++) {
         const wy = ways[wi]!;
-        const ts = t + timeOf(run.D, Math.abs(lg(wy.w / w0))) * k;
-        seams.push({ from_entry: wy.seam!, to_entry: wy.entry, t: ts, width_m: wy.w, fade: [ts - SEAM_FADE_S / 2, ts + SEAM_FADE_S / 2] });
+        const p = Math.abs(lg(wy.w / w0));
+        const ts = t + timeOf(run.D, p) * k;
+        const lo = Math.min(ts - SEAM_FADE_S / 2, t + timeOf(run.D, Math.max(0, p - SEAM_FADE_DECADES)) * k);
+        const hi = Math.max(ts + SEAM_FADE_S / 2, t + timeOf(run.D, Math.min(run.D, p + SEAM_FADE_DECADES)) * k);
+        seams.push({ from_entry: wy.seam!, to_entry: wy.entry, t: ts, width_m: wy.w, fade: [lo, hi] });
       }
       if (dur > 0) legs.push({ kind: "move", t0: t, t1: t + dur, w0, w1, k });
       t += dur;

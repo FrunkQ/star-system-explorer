@@ -42,8 +42,11 @@ test("the place line as progress: passed, current, coming; a held rung between s
 test("the width line: light years and a power of ten", () => {
   const w = widthLine(10 * MPC);
   assert.match(w.words, /million light years across$/);
-  assert.equal(w.power, "10²³ m");
-  assert.equal(widthLine(2e3).power, "10³ m");
+  assert.equal(w.power, "3.1 × 10²³ m");
+  assert.equal(widthLine(2e3).power, "2 × 10³ m");
+  // 51 million light years is 4.8 × 10²³ m, not 10²⁴ (the first capture's rounding).
+  assert.equal(widthLine(4.83e23).power, "4.8 × 10²³ m");
+  assert.equal(widthLine(9.97e23).power, "1 × 10²⁴ m");
 });
 
 test("at a seam the web cube and the galaxies nearby show the same width and the same line of sight", () => {
