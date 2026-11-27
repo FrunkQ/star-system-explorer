@@ -8,9 +8,9 @@ Why the track exists: three threads on 26 Nov found worlds too cold inside (Io a
 
 | Package | State | Log |
 |---|---|---|
-| HF1 lid worlds vent at their solidus: under a stagnant lid the mantle can be no hotter than the dry peridotite solidus (Hirschmann 2000) at its lid's base, the lid as thick as the rock that conducts what the mantle loses; melting carries the rest out as volcanism and the history counts it in the surface loss | in review | packages/HF1.md |
-| HF4a one tidal response block `sse.tides.maxwell_response`: a world's Im k2 and Re k2 from its rigidity, viscosity, density, gravity, radius and tidal frequency (homogeneous Maxwell body); nothing reads it yet; shared with the small-moon shape thread | in review (with HF1, PR 660) | packages/HF4a.md |
-| HF4b melt in the thermal history: young lids as cooling half-spaces, melt fraction above the solidus, melt-weakened rigidity and viscosity, lid volcanism as the melt that leaves | next | |
+| HF1 lid worlds vent at their solidus: under a stagnant lid the mantle can be no hotter than the dry peridotite solidus (Hirschmann 2000) at its lid's base, the lid as thick as the rock that conducts what the mantle loses; melting carries the rest out as volcanism and the history counts it in the surface loss | done (PR 660, on main 27 Nov 2026 07:27 UTC) | packages/HF1.md |
+| HF4a one tidal response block `sse.tides.maxwell_response`: a world's Im k2 and Re k2 from its rigidity, viscosity, density, gravity, radius and tidal frequency (homogeneous Maxwell body); nothing reads it yet; shared with the small-moon shape thread | done (with HF1, PR 660) | packages/HF4a.md |
+| HF4b melt in the thermal history, built per the accepted design (`design/SSE4-melt-and-heat-design.md`) in turns: HF4b.0 numbers and blocks (sheet rows, formula blocks, reach lines only), HF4b.1 the lid as kept state with heat fields per step, HF4b.2 melt; then C3 derived start temperature | HF4b.0 in review | packages/HF4b0.md |
 | HF4c tides read each world's own response: `sse.tides.eccentricity_heating` takes Im k2 from HF4a fed by HF4b's state; the classifier's own copy (k2 0.3, Q 100) goes | after HF4b | |
 | HF2 every world reads the heat it loses: regimes, life's vents, plumes, stains and plates read the thermal history's surface loss (made plus the world's own cooling), the history and the regimes marching forward together | next | |
 | HF3 folded into HF4a and HF4c (26 Nov: Io's heat needs melt, so tides cannot be fixed before HF4b) | folded | |
