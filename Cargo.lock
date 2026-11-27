@@ -1059,6 +1059,7 @@ dependencies = [
  "sse-climate",
  "sse-core",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-surface",
 ]

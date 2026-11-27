@@ -72,7 +72,11 @@ fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: 
 /**
  * `want: "patch"`: half the patch's width, km, round `lat`, `lon`.
  */
-half_km?: number, pins?: unknown[], 
+half_km?: number, 
+/**
+ * `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+ */
+span_days?: number, pins?: unknown[], 
 /**
  * Smoke, ash and smog sources (volcanoes, eruptions, impacts,
  * fires, industry), `sse_weather::aerosols::Sources`.
