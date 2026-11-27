@@ -928,6 +928,17 @@ fn bodies_from_facts(
             z: spec.z,
             formed_myr: 0.0,
             measured_myr: spec.age_myr,
+            // CS1: how bright the star is, from its own catalogued radius and
+            // temperature; without both, the life line's model star.
+            luminosity_lsun: match (
+                srow.get("star.effective_temperature").and_then(as_f64),
+                srow.get("body.radius").and_then(as_f64),
+            ) {
+                (Some(t), Some(r)) if t > 0.0 && r > 0.0 => {
+                    star_luminosity_w(r, t).map(|l| l / L_SUN)
+                }
+                _ => None,
+            },
         });
     let mut out = vec![];
     let system: Address = spec.system.parse().expect("spec system address");
@@ -955,11 +966,12 @@ fn bodies_from_facts(
             .get("orbit.semi_major_axis")
             .and_then(as_f64)
             .unwrap_or(AU);
-        let (a_star, e, host_msun) = if host == star {
+        let (a_star, e, host_msun, e_star) = if host == star {
             (
                 a_own,
                 r.get("orbit.eccentricity").and_then(as_f64).unwrap_or(0.0),
                 spec.star_mass,
+                None,
             )
         } else {
             let hr = match facts.get(&host) {
@@ -972,6 +984,8 @@ fn bodies_from_facts(
                     .unwrap_or(AU),
                 r.get("orbit.eccentricity").and_then(as_f64).unwrap_or(0.0),
                 hr.get("body.mass").and_then(as_f64).unwrap_or(0.0) / M_SUN_KG,
+                // CS1: the planet's own orbit carries the moon round the star.
+                Some(hr.get("orbit.eccentricity").and_then(as_f64).unwrap_or(0.0)),
             )
         };
         let mass_earth = mass / M_EARTH_KG;
@@ -986,11 +1000,11 @@ fn bodies_from_facts(
         // A catalogued world brings what was measured: its own Bond albedo,
         // its mean surface temperature and its air. Only what is missing is
         // estimated (equilibrium with the star, the pack's greenhouse).
-        let albedo = r
+        let measured_albedo = r
             .get("body.albedo")
             .and_then(as_f64)
-            .filter(|x| (0.0..1.0).contains(x))
-            .unwrap_or(s.albedo_default);
+            .filter(|x| (0.0..1.0).contains(x));
+        let albedo = measured_albedo.unwrap_or(s.albedo_default);
         let greenhouse = if oceans > 0.0 { s.greenhouse_k } else { 0.0 };
         let t_eq = teff * m::sqrt(r_star / (2.0 * a_star)) * m::pow(1.0 - albedo, 0.25);
         // A measured mean temperature belongs to the world it was measured
@@ -1045,6 +1059,8 @@ fn bodies_from_facts(
             water_from_density: makeup_shares(r).is_none(),
             // A moon's sunlight is its planet's distance from the star (HV2c).
             star_au: (host != star).then_some(a_star / AU),
+            star_e: e_star,
+            bond_albedo: measured_albedo,
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,
@@ -1113,6 +1129,17 @@ fn bodies_from_facts(
         });
     }
     out
+}
+
+/// A star's luminosity, W, from its radius (m) and effective temperature
+/// (K): the block `sse.star.luminosity` (L = 4πR²σT⁴) through the block
+/// door, with its settings in force.
+fn star_luminosity_w(radius_m: f64, teff_k: f64) -> Option<f64> {
+    sse_physics::run("sse.star.luminosity", &[radius_m, teff_k])
+        .ok()?
+        .first()
+        .copied()
+        .filter(|l| l.is_finite() && *l > 0.0)
 }
 
 /// Equilibrium temperature of a fact row (its own orbit, or its host's for a

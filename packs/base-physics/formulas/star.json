@@ -86,6 +86,88 @@
    }
   },
   {
+   "id": "sse.star.luminosity",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "teff",
+     "letter": "T"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "luminosity",
+     "letter": "L"
+    }
+   ],
+   "constants": {
+    "sigma": "constants/sigma_SB"
+   },
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "teff",
+     "says": "temperature"
+    }
+   ],
+   "references": [
+    "Stefan-Boltzmann law; definition of effective temperature, e.g. Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press, eq. 3.17. doi:10.1017/9781108380980"
+   ],
+   "shown": "L = 4π R² σ T_eff⁴",
+   "equation": {
+    "name": "How much light a star gives off",
+    "formula": "L = 4 * pi * R * R * sigma * T^4",
+    "inputs": {
+     "R": {
+      "kind": "star.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "T": {
+      "kind": "star.effective_temperature",
+      "unit": "K",
+      "name": "surface temperature"
+     },
+     "sigma": {
+      "kind": "constant.sigma_SB",
+      "unit": "W m-2 K-4",
+      "name": "Stefan-Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "L": {
+      "kind": "star.luminosity",
+      "unit": "W",
+      "name": "light the star gives off"
+     }
+    },
+    "source": {
+     "text": "Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press",
+     "doi": "10.1017/9781108380980",
+     "where": "eq. 3.17"
+    },
+    "explain": {
+     "curious": "A star's brightness follows from how big it is and how hot its surface shines: twice the size, four times the light; twice as hot, sixteen times.",
+     "science": "The Stefan-Boltzmann law over the star's surface, the definition of effective temperature read the other way. A catalogued radius and temperature give the luminosity the star actually has, rather than a model star's."
+    },
+    "examples": [
+     {
+      "R": 750000000.0,
+      "T": 6000.0,
+      "L": 5.194564329760362e+26
+     }
+    ]
+   }
+  },
+  {
    "id": "sse.star.ms_lifetime",
    "version": "1.0.0",
    "cost": "trivial",
