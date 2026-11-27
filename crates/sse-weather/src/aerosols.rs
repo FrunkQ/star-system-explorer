@@ -612,6 +612,7 @@ impl Plume {
             strength: self.height_km,
             born: self.born,
             ends: self.ends,
+            aspect: 0.0,
             count: 0,
             why: self.why.clone(),
             evidence: "rule".into(),
