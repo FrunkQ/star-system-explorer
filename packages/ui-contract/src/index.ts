@@ -43,6 +43,7 @@ export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./composite.ts";
+export * from "./picture-clock.ts";
 export * from "./part-controls.ts";
 export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey } from "./desk.ts";
 export type { DeskDoc, DeskWrites, DeskTime, OnDesks, ShellPart, DeskLevel, DeskMemory } from "./desk.ts";
@@ -238,4 +239,4 @@ export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markW
 export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Sculptor, ZoneCause } from "./profile.ts";
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
-export * from "./picture-clock.ts";
+export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";
