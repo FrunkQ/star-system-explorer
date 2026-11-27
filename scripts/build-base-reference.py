@@ -913,6 +913,9 @@ for _k, _v in emission_rows.SOURCES.items():
     assert _k not in SOURCES, _k
     SOURCES[_k] = _v
 emission_rows.apply(SUBSTANCES)
+# MP37: water ice ground, fine and coarse grains (scripts/optical_rows.py, ice_rows).
+for _m in optical_rows.ice_rows(MIXTURES):
+    MIXTURES.append(_m)
 
 
 def elements():

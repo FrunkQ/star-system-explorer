@@ -124,8 +124,10 @@ try {
     await cmp2.getByRole("group", { name: "Add a reference object" }).getByRole("button", { name: "Saturn", exact: true }).click().catch(() => {});
     for (const look of ["3d", "true", "wireframe"]) {
       await styleBar.getByRole("button", { name: { "3d": "3D", true: "True", wireframe: "Wireframe" }[look], exact: true }).click();
-      // A browser with no GPU path (Firefox headless in CI) keeps the flat lineup and says so.
-      await cmp2.locator(`canvas[data-lineup-3d="${look}"], [data-no-globes]`).first().waitFor({ timeout: 10000 });
+      // A browser with no GPU path (Firefox headless in CI) keeps the flat lineup and says so. The canvas is put up
+      // before its GPU starts, and a failed start swaps it for the flat lineup a moment later, so the wait is on the
+      // settled answer: a canvas whose GPU is ready, or the flat lineup's note.
+      await cmp2.locator(`canvas[data-lineup-3d="${look}"][data-gpu="ready"], [data-no-globes]`).first().waitFor({ timeout: 10000 });
       if (await cmp2.locator("[data-no-globes]").count()) {
         assert.equal(await cmp2.locator("canvas[data-lineup-3d]").count(), 0);
         continue;
@@ -147,7 +149,7 @@ try {
     // True at Readable: the system's own star stands as a globe, and it is the living star of the system's True (SG4b).
     await styleBar.getByRole("button", { name: "True", exact: true }).click();
     await scaleBar.getByRole("button", { name: "Readable", exact: true }).click();
-    await cmp2.locator('canvas[data-lineup-3d="true"], [data-no-globes]').first().waitFor({ timeout: 10000 });
+    await cmp2.locator('canvas[data-lineup-3d="true"][data-gpu="ready"], [data-no-globes]').first().waitFor({ timeout: 10000 });
     if (!(await cmp2.locator("[data-no-globes]").count())) {
       await gm.waitForFunction(() => Number(document.querySelector("canvas[data-lineup-3d]")?.getAttribute("data-live-stars")) > 0, null, { timeout: 20000 });
       await gm.waitForTimeout(1500);
