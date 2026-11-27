@@ -1,6 +1,6 @@
 # SSE4 store packs: one way to make, find, stack, update and publish a pack
 
-Status: **ACCEPTED by Alex 27 Nov 2026 12:02 UTC ("Otherwise yes to all"), except questions 1 and 10**, which he asked to have explained and which wait for his word. His rulings are in section 13A and win where the text differs. Nothing here is built. Written by the thread "Design store packs" (Fable, design only) at Alex's request of 27 Nov 11:47 UTC: "a short design effort to rationalise 'store packs' - how they categorise, manifest and appear, layer and can load prerequisites securely (advantage of OUR store)... labelling the old v3 ones. How do we 'save them' and upload them - a smooth workflow as connected." Track code **SP**, a code only, never shown in the product.
+Status: **ACCEPTED by Alex 27 Nov 2026 12:02 UTC ("Otherwise yes to all"), except question 1**, which he asked to have explained and which waits for his word; question 10 was answered at 12:04 (section 13A). His rulings are in section 13A and win where the text differs. Nothing here is built. Written by the thread "Design store packs" (Fable, design only) at Alex's request of 27 Nov 11:47 UTC: "a short design effort to rationalise 'store packs' - how they categorise, manifest and appear, layer and can load prerequisites securely (advantage of OUR store)... labelling the old v3 ones. How do we 'save them' and upload them - a smooth workflow as connected." Track code **SP**, a code only, never shown in the product.
 
 Read with: `SSE4-explorers-paid-packs.md` (money, accepted 21 Nov; nothing here changes it), `SSE4-example-packs.md` section 2 (shelves), `SSE4-compound-ships-design.md` section 8B.3 (parts packs, CM18), `SSE4-real-catalogues-design.md` sections 5.2 to 5.3A (downloaded data, detail expansion packs, RW8), `SSE4-edits-reach-design.md` (block edits). On the Explorers side: `docs/decisions.md` D-98 and D-99 in `FrunkQ/starsystemx-creator-hub`.
 
@@ -74,7 +74,7 @@ The small things (calendars, unit schemes, ship styles, overlays) keep the "cont
 - **The port standard is a versioned requirement like any other.** The connection-point sizes ship in `sse.base-parts`; a parts pack writes `requires: sse.base-parts ^1`. No special manifest field: a new port standard is a new major version of that pack.
 - **Per part: a licence, a first-flight year, and an era band.** `licence` on a part overrides the pack's; a part resting on downloaded data carries the non-commercial flag (section 11). `first_flight_year` is a number (or "paper" for designed and never flown); the 25-year band is worked out from it, never typed, so bands cannot drift.
 - **The default catalogue** is the shipped `sse.base-ships` plus whatever ship packs are in the campaign; each ship says which pack it came from. Sol today's real craft arrive this way.
-- **Names.** Alex's ruling stands: no named ships from film, TV or games. The store cannot know every name, so it is held in three places: the publish statement says it in words; the fan-setting field puts such a pack on the fan shelf with no price; and a moderator can hold a pack. The app warns and does not refuse.
+- **Names.** Nothing we ship carries a named ship from film, TV or games. For what users upload, see the ruling of 12:04 in section 13A: free fan content rests on the disclaimer already in place; anything for sale is scanned (SP13). The app does not check names.
 - **Saving a built ship** is section 9: "Add to my ship pack" from the builder, then Publish.
 
 ## 4. The manifest
@@ -246,6 +246,7 @@ Small, in order. Owners are proposed. Explorers packages add only; any migration
 | **SP10** | V3 marks and "Open in SSE4" on V3 items; import label and report in the app | Explorers, SSE4 UI | none | a V3 map opens from its page; the original's bytes unchanged |
 | **SP11** | Shared campaigns carry pins, not packs (F2) | SSE4, Explorers | SP5, PK1 | a published campaign holds no copy of a store pack |
 | **SP12** | The V3 upgrade pass (section 10): a V4 file kept beside each V3 original, the store serving each app its own; hand fixes; `legacy.starsystemx.com` for V3. Only when V4 is settled, and only on Alex's go | Explorers, converter | SP10, a settled V4 | every V3 original byte for byte unchanged; each upgrade compared with its original |
+| **SP13** | The sale scanner: a pack given a price is read for names of known settings, ships, brands and publishers, and for text and pictures matching known sources; findings are listed for the first-sale moderator. Free and fan packs are not scanned | Explorers | PP5, PP6 | a priced pack with a known screen-ship name reaches the moderator with the name shown; a free one is untouched |
 
 The "we suggest free" message (section 11) goes in with SP8 on the app side and is a one-line change on the store's upload page.
 
@@ -259,7 +260,8 @@ Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued value
 - 12:02 UTC: the store carries the "we suggest free" message (section 11).
 - 12:02 UTC, question 7 amended: V3 items will be upgraded by us in one pass once V4 is settled, hand fixed where needed; the store serves the right version to the right app; V3 probably moves to legacy.starsystemx.com (section 10, SP12).
 - 12:02 UTC: "Otherwise yes to all": questions 3, 4, 5, 6, 8, 9 and 11 stand as recommended. Question 6 still needs its one database change shown to him and run by him.
-- Questions 1 and 10: he asked what they meant; explained in the thread at 12:03 UTC; **not yet ruled**. SP1 does not start until question 1 is.
+- 12:04 UTC, question 10 answered: "we will need to build a scanner on the store for copyright content IF the pack is being sold. Gonna turn a blind eye to fan content for now - we have the disclaimer for that in place." So free fan content is left to the existing disclaimer, with no name checking; a pack offered **for sale** is scanned by the store for other people's names, brands and content before its first sale, and what the scanner finds goes to the moderator who already looks at every first paid version (paid packs section 7.4). The scanner informs a person; the person decides (SP13).
+- Question 1: he asked what it meant; explained in the thread at 12:03 UTC; **not yet ruled**. SP1 does not start until it is.
 
 ## 13. Questions as put
 
