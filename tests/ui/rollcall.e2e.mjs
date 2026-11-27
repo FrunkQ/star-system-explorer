@@ -7,6 +7,7 @@
 // because it is too big for local storage. Last, a fresh campaign fetches it from Explorers by itself (stack.json
 // `from_explorers`, Alex 27 Nov), checked against the listing's sha256, with no file opened.
 // Usage: node tests/ui/rollcall.e2e.mjs [chromium firefox] [--screens DIR]   (SSE_SHOTS=<dir> for screenshots)
+import "./chart-first.mjs";
 import { createHash } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";

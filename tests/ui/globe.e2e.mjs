@@ -5,6 +5,7 @@
 // Earth is mostly under water; arrow keys turn it. Tarn (a fixture world) says
 // it has no surface yet but keeps its Cutaway. On a phone the screen menu
 // reaches the Body screen.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

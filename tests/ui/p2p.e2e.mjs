@@ -6,6 +6,7 @@
 // three agree by state hash; when the GM's page goes, the players show the
 // read-only banner on the last state.
 // (Scanned, data-view grants, version mismatch and snapshot repair are proved in ui-contract/test/p2p.test.ts.)
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -1022,6 +1022,7 @@
         class:locate={realScale && overlay}
         style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, radiusPx(b, p.depth))}px"
         aria-pressed={b.id === selection}
+        aria-label="{b.name}{pencil?.(b.id) ? ', not known to the table' : ''}"
         data-body={b.id}
         data-address={b.id}
         data-x={p.x.toFixed(2)}

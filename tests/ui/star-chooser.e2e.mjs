@@ -4,6 +4,7 @@
 // walls, the life bar marks the Sun's age, and the Kinds offer what can exist at 4.57 billion years (no blue giant).
 // On Build, Red giant is one change: the card says what was set, the Sun's light changes, and Undo puts it back. On
 // Explore, a kind is a try (TM4): the what-if opens by itself and the main line does not move.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

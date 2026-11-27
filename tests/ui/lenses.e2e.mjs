@@ -8,6 +8,7 @@
 // Scanned" turns the card into the players' card. An authored stamp still
 // shows in a lens with evidence stamps off. A lens made here survives a
 // reload, leaves as a pack, and comes back from that pack identical.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";

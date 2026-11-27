@@ -6,6 +6,7 @@
 // another course redraws the chart; "Keep us safe" reorders by difficulty; a
 // chemical ship to Sable is refused with what it would need. Night chart and
 // phone (no sideways scroll) are checked too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
