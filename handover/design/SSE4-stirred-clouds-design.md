@@ -1,6 +1,6 @@
 # SSE4: clouds stirred by a giant's own winds (track WS)
 
-Status: **PROPOSED, 27 Nov 2026.** Written at the coordinator's word for Alex's ask of 26 Nov ("use physics blocks and be able to say why does this look stormy?", with a Juno picture of Jupiter's pole). Design only; nothing here is built. WS is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 27 Nov 2026 ("agree with all", 10:45 UTC).** His answers and one change are in section 11A and win where they differ from the text. Written as a proposal at the coordinator's word for Alex's ask of 26 Nov ("use physics blocks and be able to say why does this look stormy?", with a Juno picture of Jupiter's pole). Design only; nothing here is built. WS is a code only, never shown in the product.
 
 Read with: `handover/packages/VP-A2.md` (what PR 646 put on main), `SSE4-visual-polish-design.md` sections 5.4, 6 and 8 (the layers, the detail ladder, the tiers), `SSE4-weather-design.md` section 3 (giants), `crates/sse-weather/src/giants.rs`, `packages/renderer/src/giant-detail.ts` and `true-air.ts` (`flowFace`), `SSE4-edits-reach-design.md` (ER11a, baked tables), the picture clock (`packages/ui-contract/src/picture-clock.ts`).
 
@@ -24,7 +24,7 @@ Read with: `handover/packages/VP-A2.md` (what PR 646 put on main), `SSE4-visual-
 
 7. **"Why does it look like this here?"** is a kernel read. For any place on any giant it compares four rates (the band's shear, the eddies' turning, the cloud's renewal, the plumes from heat) plus the spin, and says which wins, in words, with the numbers and the blocks they came from. The same numbers drew the picture.
 
-8. **Phones skip it** and keep today's picture. Colours are untouched: the stirring moves the colours the reference pack already gave.
+8. **Every device shows the stirred picture.** Low-power devices build it once as a still and do not animate it (section 11A). Colours are untouched: the stirring moves the colours the reference pack already gave.
 
 9. **Six small packages** (section 9). **None moves `tests/golden/contract.jsonl`.** Three re-bless the giants' area goldens.
 
@@ -193,13 +193,14 @@ The new `want` names are left out of the refusal's list, as `glint` is, so the c
 
 | Tier | Stirring |
 |---|---|
-| `text`, `canvas` | none |
-| **B** `gpu-basic` (phones) | none: PR 646's picture, as today |
+| `text` | none |
+| `canvas` | the still of section 11A, built on the processor |
+| **B** `gpu-basic` (phones) | **a stirred still**, built without being asked (section 11A). Not animated |
 | **H** `gpu-high` | on. Face 1024 wide; eddies two pixels and wider (the ladder's rule), faded in over a factor of two |
 | **U** `gpu-ultra` | face 2048 wide; every eddy down to `L_d` |
 | **S** at rest | builds the finer face over 0.5 to 3 s |
 
-The governor may drop the pass under load; the picture falls back to today's. The size comparison (every giant, each frame, 256 wide) stirs only at rest. On tiers that stir, PR 646's fixed winding and the ladder's `giant.curls` are switched off; both stay as the phone tier's stand-in.
+The governor may drop the live pass under load; the picture falls back to the last stirred still, never to an unstirred one. The size comparison (every giant, each frame, 256 wide) stirs only at rest. PR 646's fixed winding and the ladder's `giant.curls` are switched off everywhere once WS5b lands; until a still is ready (a second or so) the unstirred face shows and the stirred one fades in.
 
 Cost by estimate, to be measured in WS5: about 40 backward steps, some 8 vortices near each, two generations, half a million pixels: a few milliseconds on a desktop GPU, and only when the clock has moved.
 
@@ -210,7 +211,7 @@ Cost by estimate, to be measured in WS5: about 40 backward steps, some 8 vortice
 - **Every giant, any system:** eddies, plumes, renewal, and an answer to "why". Hot giants and brown dwarfs come out fully churned (large heat), slow spinners with a few wide eddies. Nothing is special-cased for Jupiter or Saturn.
 - **Saturn:** the hexagon's wind follows its sides.
 - **Explore:** the picture, and the "why" line on a giant's card: tap a place in True, read why. **Edit (Build):** the same, with the blocks and pack rows a click away; an edit marks the line. **Play (Run):** players see the picture and the plain sentence only.
-- **No new screen, no tab, no press budget change.** The "why" line sits under the body card's extended details.
+- **No new screen, no tab, no press budget change.** The whole-world "why" sentence shows on the giant's card without a press (section 11A); the place-by-place detail sits under the card's extended details.
 - **GM's "what is interesting here":** the count of plumes and any torn band are there to be listed when that list is built.
 
 ---
@@ -259,6 +260,7 @@ Builder: the thread that built PR 646 ("Draw giant planet storms and hexagons").
 | **WS3** renewal and plumes | 3.4, 3.5; plumes in `giant_cell`'s cover and in the flow table | WS2 | area only: `weather-giants.json` field digests re-blessed (plume cover) | S |
 | **WS4** the carrying, in the kernel | 3.6 as `want: "stirred"`: the reference answer for a patch | WS2 (WS3 for the lattice's τ; a pack τ until then) | area only: new lines | S |
 | **WS5** the stirred face | Renderer: the backward pass on the GPU on H and above, held to WS4 by test; the clock; tiers; fixed winding and curls off where it runs; fudge register; screens on AC-ProArt | WS3, WS4 | none (renderer tests) | M |
+| **WS5b** the still for low power | Section 11A: one stirred face per giant on tier B and `canvas`, built unasked, rebuilt as the date moves; the governor's fallback; PR 646's winding and curls retired | WS5 | none (renderer tests) | S |
 | **WS6a** "why", kernel | 3.7 as `want: "look"` | WS3 | area only: new lines | S |
 | **WS6b** "why", the card | The line under a giant's extended details, on the three desks | WS6a | none | S |
 
@@ -281,6 +283,7 @@ Red-first tests (each seen red with its fix removed; at least one absolute):
 - WS3: plume counts over a long run of windows average section 5's row; none on a world with no internal heat.
 - WS4: the stirred patch read at a date equals the one reached in two legs, to the bit; carrying keeps area (the backward map's stretch has unit determinant within 1 per cent, absolute); with eddies off, a band edge stays a straight line; a storm's outline after one renewal keeps the kernel's `aspect` within 5 per cent.
 - WS5: the GPU's source places agree with WS4's within one pixel on a 64-cell patch; a stopped clock gives the same pixels twice; tier B draws exactly today's picture.
+- WS5b: on tier B a giant shows a stirred face with no press (red before); that face equals the H tier's at the same date within the smaller face's pixel; a stopped clock builds once and never again.
 - WS6a: Jupiter's belt says shear wins and Uranus says calm; every number in a sentence equals the block's output; an edited `eddy_efficiency` changes both the sentence and the flow table.
 
 ---
@@ -304,11 +307,25 @@ Red-first tests (each seen red with its fix removed; at least one absolute):
 
 2. **Plumes numbered by internal heat?** A new thing on every giant: Jupiter about 70 small bright storms at a time, Saturn a few, Neptune sometimes, Uranus almost never. Too many and too brief to name, so they are counted, not listed. *Recommend yes.*
 
-3. **Phones: skip, or one still picture?** Skipping keeps today's picture. Where a phone's measured speed allows, the at-rest tier could build one stirred picture when the view stops. *Recommend skip while moving, build at rest where the speed probe allows.*
+3. **Phones: skip, or one still picture?** (Answered otherwise: always a still, section 11A.) Skipping keeps today's picture. Where a phone's measured speed allows, the at-rest tier could build one stirred picture when the view stops. *Recommend skip while moving, build at rest where the speed probe allows.*
 
 4. **"Why does it look like this here?" as a line on the giant's card, by tapping a place in True?** No new screen and no change to press budgets. *Recommend yes.*
 
 5. **Accept a too-crisp Saturn until the haze optics land?** *Recommend yes; it is said in the HUD's note.*
+
+---
+
+## 11A. Alex's answers, 27 Nov 2026 (10:45 UTC)
+
+"agree with all - we wanna always have a pic - the click to get it is poor. Low power - run teh render bUT juyst a still. Should be doable?"
+
+Questions 1, 2, 4 and 5: **yes.** Question 3 is changed:
+
+- **There is always a stirred picture, on every device, with nothing to press.** No "skip" tier.
+- **Low power means a still.** Tier B and `canvas` run the same backward pass once and keep the result; they do not run it every frame.
+- **How.** It is doable because the picture depends only on the date. On a GPU the pass is run once at 512 wide (a quarter of the H tier's work, one frame's cost, spread over a few frames if the governor asks). With no GPU the same steps run on the processor from the same flow table, at 256 wide, in about a second by estimate (to be measured in WS5b). The still is cached by world and date.
+- **When the clock runs.** The still is carried row by row at the jets' speed as today (`flowFace`), so the bands still slide. It is rebuilt when the clock stops, and while playing each time the cloud has aged a tenth of its renewal time, as the budget allows. If the device cannot keep up it shows the last still, right for its own date, and the note says so. Nothing is slowed.
+- **The design thread's reading of "the click to get it is poor":** nothing about the stirred look, or the first line of "why", may wait for a press. So the giant's card always shows the one-sentence "why" for the whole world; tapping a place in True only narrows it to that place.
 
 ---
 
