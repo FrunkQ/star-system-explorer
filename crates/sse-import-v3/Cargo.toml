@@ -11,6 +11,7 @@ sse-core.workspace = true
 sse-chronicle.workspace = true
 sse-flow.workspace = true
 sse-atoms.workspace = true
+sse-physics.workspace = true
 # Only `reconstruct` (F9) needs formation; the slim browser build
 # (sse-convert-wasm) leaves it out.
 sse-formation = { workspace = true, optional = true }

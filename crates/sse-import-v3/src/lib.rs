@@ -807,11 +807,9 @@ impl Importer {
         if mass <= 0.0 || rkm <= 0.0 {
             return false;
         }
-        let atoms = sse_atoms::registry();
+        // ER2: each block in force, with its settings in force.
         let eval = |id: &str| -> Option<f64> {
-            let at = atoms.get(id)?;
-            let p: Vec<f64> = at.decl().params.iter().map(|p| p.default).collect();
-            at.eval(&[mass, rkm * 1e3], &p).ok().map(|v| v[0])
+            sse_physics::run(id, &[mass, rkm * 1e3]).ok().map(|v| v[0])
         };
         match k {
             "densityGcm3" => {
@@ -870,11 +868,7 @@ impl Importer {
                     return false;
                 };
                 let bm = num(n, "massKg").unwrap_or(0.0);
-                let atoms = sse_atoms::registry();
-                let Some(at) = atoms.get("sse.orbit.period") else {
-                    return false;
-                };
-                let Ok(p) = at.eval(&[aau * AU, hm + bm], &[]) else {
+                let Ok(p) = sse_physics::run("sse.orbit.period", &[aau * AU, hm + bm]) else {
                     return false;
                 };
                 self.diff(a, n, &field, v3, m::TAU / p[0], 5e-3, "sse.orbit.period");
