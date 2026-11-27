@@ -21,11 +21,35 @@
   import { galaxyTypePicture } from "../../../renderer/src/galaxy-types.ts";
   import { FREE_START, NEARBY_REACHES, biggestNeighbours, foamCells, turnOf, firstInfall, pathAt, satelliteStateWords, streamArc, boundPairs, meetWords, cellHalo, galaxyDistanceWords, galaxyColour, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, sci, withinReach, type HaloCell, type NearGalaxy, type NearbyRead, type NearbyReach, type NearbySeen, type NearbyTurn, type SatellitePath, type GalaxyChart, type ViewSession } from "../../../ui-contract/src/index.ts";
 
-  let { session, seen, scale, hud, look = "3d", onchart }: { session: ViewSession; seen: NearbySeen; scale: "real" | "readable"; hud: boolean; look?: "3d" | "true"; onchart: (address: string) => void } = $props();
+  let {
+    session,
+    seen,
+    scale,
+    hud,
+    look = "3d",
+    onchart,
+    aim = null,
+    onread,
+  }: {
+    session: ViewSession;
+    seen: NearbySeen;
+    scale: "real" | "readable";
+    hud: boolean;
+    look?: "3d" | "true";
+    onchart: (address: string) => void;
+    /**
+     * The journey port (grand zoom GZ8): while a journey travels through the galaxies nearby, the reach and turn it
+     * puts the drawing at (journey-play.ts `nearbyAim`). Set: only the picture is drawn (no reach buttons, no card),
+     * at that reach and turn, and every galaxy the catalogue holds out to the drawing's corners is on it.
+     */
+    aim?: { reach_mpc: number; turn: NearbyTurn } | null;
+    /** Told once the kernel's sky is read and everything here can draw (the journey port's "ready"). */
+    onread?: (ok: boolean) => void;
+  } = $props();
 
   // Free (GZ5 part 2): the turn the viewer has dragged to, starting from Tilted.
   let free = $state<NearbyTurn>({ ...FREE_START });
-  const turn = $derived(turnOf(seen, free));
+  const turn = $derived(aim ? turnOf("free", aim.turn) : turnOf(seen, free));
   const cosTilt = $derived(Math.cos((turn.tilt_deg * Math.PI) / 180));
   let drag: { x: number; y: number; at: NearbyTurn } | null = null;
   const down = (e: PointerEvent) => {
@@ -52,18 +76,21 @@
       failed = null;
     });
     void s.skyFromHere({ stars: false, galaxies: true, limit_mag: 30, satellite_paths: true }).then((r) => {
-      if (!r.ok) return void (failed = r.message);
+      if (!r.ok) return void ((failed = r.message), onread?.(false));
       const got = readNearby(r.sky);
-      if (!got) return void (failed = "the sky came back with no galaxies");
+      if (!got) return void ((failed = "the sky came back with no galaxies"), onread?.(false));
       read = got;
+      onread?.(true);
     });
   });
 
   const S = 560;
-  const proj = (p: readonly [number, number, number]) => projectNearby(p, seen, S, R, 24, free);
-  const R = $derived(NEARBY_REACHES.find((x) => x.id === reach)!.mpc);
+  const proj = (p: readonly [number, number, number]) => (aim ? projectNearby(p, "free", S, R, 24, aim.turn) : projectNearby(p, seen, S, R, 24, free));
+  const R = $derived(aim ? aim.reach_mpc : NEARBY_REACHES.find((x) => x.id === reach)!.mpc);
   const factor = $derived(readableFactor(R));
-  const inReach = $derived(read ? withinReach(read.galaxies, R) : []);
+  // On a journey the drawing is a square picture, so it holds the galaxies out to its corners, as far as the
+  // catalogue reaches.
+  const inReach = $derived(read ? withinReach(read.galaxies, aim ? Math.min(read.reach_mpc, R * Math.SQRT2 * (S / 2) / (S / 2 - 24)) : R) : []);
   const home = $derived(read && read.home_r200_mpc && read.home_halo_msun ? { r200_mpc: read.home_r200_mpc, mass_msun: read.home_halo_msun } : null);
   // Drawn far side first, so nearer galaxies sit over farther ones.
   const marks = $derived(
@@ -295,7 +322,8 @@
   const choose = (g: NearGalaxy) => (picked = picked === g.address ? null : g.address);
 </script>
 
-<div class="near" data-nearby={read ? inReach.length : ""} data-nearby-reach={reach}>
+<div class="near" class:journey={!!aim} data-nearby={read ? inReach.length : ""} data-nearby-reach={aim ? "journey" : reach}>
+  {#if !aim}
   <div class="bar">
     <div class="seg" role="group" aria-label="How far out">
       {#each NEARBY_REACHES as x (x.id)}
@@ -315,16 +343,17 @@
       <span class="hint" data-play-when>{gyrWords(tShown)}{playT === null ? " (the campaign's date)" : ""}</span>
     </div>
   {/if}
+  {/if}
 
   {#if failed}
     <p class="note" role="alert">The galaxies around home could not be read: {failed}</p>
-  {:else if !read}
+  {:else if !read && !aim}
     <p class="hint" data-nearby-reading>Reading the galaxies around home from the kernel's sky…</p>
-  {:else}
+  {:else if read}
     <div class="split">
       <figure class="map">
         <svg viewBox="0 0 {S} {S}" role="img" aria-label="Galaxies within {R} megaparsecs of home, {seen === 'above' ? 'seen from above our disc' : seen === 'edge' ? 'seen edge-on along our disc' : seen === 'free' ? 'turned freely: drag to turn' : 'seen tilted'}{isTrue ? ', each in its own light' : ''}" onpointerleave={() => (hover = null)} onpointerdown={down} onpointermove={moveDrag} onpointerup={up} onpointercancel={up} class:turning={seen === "free"} data-nearby-turn={seen === "free" ? `${Math.round(turn.yaw_deg)} ${Math.round(turn.tilt_deg)}` : ""}>
-          <rect class="ground" x="0" y="0" width={S} height={S} style:fill={isTrue ? SPACE_CSS : undefined} data-nearby-true={isTrue ? "" : undefined} />
+          {#if !aim}<rect class="ground" x="0" y="0" width={S} height={S} style:fill={isTrue ? SPACE_CSS : undefined} data-nearby-true={isTrue ? "" : undefined} />{/if}
           {#if !isTrue || hud}
             {#if turn.tilt_deg >= 89.5}
               <line class="plane" x1="24" y1={S / 2} x2={S - 24} y2={S / 2} />
@@ -408,14 +437,14 @@
             <text class="lbl" x="24" y={S - 24}>{bar.words}</text>
           {/if}
         </svg>
-        <figcaption class="hint" data-nearby-said>
+        {#if !aim}<figcaption class="hint" data-nearby-said>
           {#if playT !== null}{gyrWords(playT)}: {playCounts.inn} satellites on their orbits, {playCounts.torn} torn into streams, {playCounts.merged} merged into ours. Every place is the kernel's own orbit.
           {:else if said}<b>{nameOf(said.address)}</b>: {galaxyTypeWords(said.morphology)}, {sci(said.stellar_mass_msun)} suns of stars, {galaxyDistanceWords(said.distance_mpc)} away.
           {:else}{inReach.length} galaxies within {R} Mpc of ours, each where the sky sees it. {read.remains ? `${read.remains} satellite${read.remains === 1 ? "" : "s"} torn into streams and ${read.merged} merged into ours are counted, not drawn. ` : ""}Galaxies whose halo is under the catalogue's floor are not placed.{#if hud && edge && R > 0.5} The dashed sphere is the edge of our group, {Math.round(edge.radius_mpc * 100) / 100} Mpc out, holding {edge.members} galaxies besides ours: inside it gravity has stopped the expansion.{/if}{/if}
-        </figcaption>
+        </figcaption>{/if}
       </figure>
 
-      <aside class="card" data-galaxy-card={one?.address ?? ""}>
+      {#if !aim}<aside class="card" data-galaxy-card={one?.address ?? ""}>
         {#if one}
           <h3>{nameOf(one.address)}</h3>
           <p class="type">{galaxyTypeWords(one.morphology)[0]!.toUpperCase() + galaxyTypeWords(one.morphology).slice(1)}{one.satellite ? ", one of our own satellites" : ""}</p>
@@ -438,7 +467,7 @@
         {:else}
           <p class="hint">Press a galaxy for its card.</p>
         {/if}
-      </aside>
+      </aside>{/if}
     </div>
   {/if}
 </div>
@@ -497,6 +526,19 @@
   }
   .map {
     margin: 0;
+  }
+  /* On a journey: only the picture, filling the square the player gives it. */
+  .near.journey,
+  .near.journey .split,
+  .near.journey .map {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .near.journey svg {
+    max-width: none;
+    width: 100%;
+    height: 100%;
   }
   svg {
     width: 100%;
