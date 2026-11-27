@@ -1,0 +1,1 @@
+{"key": "pollack1996", "citation": "Pollack et al. 1996", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/body.rs"], "claims": ["/// for runaway gas accretion, Pollack et al. 1996)."], "tier": 3}

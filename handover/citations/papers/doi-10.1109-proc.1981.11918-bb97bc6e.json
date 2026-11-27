@@ -1,0 +1,1 @@
+{"key": "doi:10.1109/proc.1981.11918", "citation": "10.1109/proc.1981.11918", "doi": ["10.1109/proc.1981.11918"], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["packages/renderer/src/passes.ts"], "claims": ["doi: \"10.1109/PROC.1981.11918\","], "tier": 3}

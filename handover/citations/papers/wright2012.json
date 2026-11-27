@@ -1,0 +1,1 @@
+{"key": "wright2012", "citation": "Wright et al. 2012", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/growth.rs"], "claims": ["/// giants beyond 1 AU and the rarity of hot Jupiters (about 1 percent, Wright et al. 2012)."], "tier": 3}

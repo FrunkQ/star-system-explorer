@@ -1,0 +1,1 @@
+{"key": "libeskind2018", "citation": "Libeskind et al. 2018", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/dm3_tests.rs"], "claims": ["/// themselves depend on how the web is classified: Libeskind et al. 2018,"], "tier": 3}

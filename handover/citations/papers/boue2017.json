@@ -1,0 +1,1 @@
+{"key": "boue2017", "citation": "Boué 2017", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-kernel/src/stability.rs"], "claims": ["//!   Boué 2017): the family's deficit against each neighbour pair's"], "tier": 3}
