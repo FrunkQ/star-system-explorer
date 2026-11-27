@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { MOTION_STEP_S, motionsFrom, orbitBodies, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -826,6 +826,8 @@
   // to each host). Views draw from the scene, so the phases go onto it and the chart, 3D view and sound move together.
   // A fixture scene sends its own elements, with its drawn phases as their places at the campaign's start.
   let phases = $state<Map<string, number> | null>(null);
+  // The clock time those phases are for and each body's period, so the pictures run the bodies on between answers (CLK1).
+  let motion = $state<{ at_s: number; periods: Map<string, number> } | null>(null);
   // And where each is in three dimensions, for shadows and eclipses in True (renderer eclipse.ts).
   let places = $state<Map<string, [number, number, number]> | null>(null);
   // And how fast each moves (the same reply, a minute apart): a shadow's caster is read where the light passed it.
@@ -833,7 +835,7 @@
   // Play asks ten times a second: one call at a time, and only the latest time waits.
   let orbitsFor = "";
   let orbitsBusy = false;
-  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; epoch: bigint; key: string } | null = null;
+  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; at_s: number; epoch: bigint; key: string } | null = null;
   function pumpOrbits() {
     if (orbitsBusy || !orbitsWant) return;
     const w = orbitsWant;
@@ -841,7 +843,7 @@
     orbitsBusy = true;
     w.s.orbitsAt(w.sc.system, [w.at, w.at - BigInt(MOTION_STEP_S)], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)));
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)), (motion = { at_s: w.at_s, periods: periodsFrom(r.bodies) }));
       pumpOrbits();
     });
   }
@@ -852,8 +854,8 @@
     const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null));
-    orbitsWant = { s, sc, at, epoch, key };
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null));
+    orbitsWant = { s, sc, at, at_s: Number(at - epoch), epoch, key };
     pumpOrbits();
   });
   // A pack's calendar (kernel calendar), read again whenever the pack stack changes.
@@ -863,7 +865,7 @@
     if (!s) return;
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
-  const timed = $derived(withPhases(scene, phases, places, motions));
+  const timed = $derived(withPhases(scene, phases, places, motions, motion));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
   let layerLabels = $state.raw<Map<string, string>>(new Map());
   $effect(() => {
@@ -921,6 +923,9 @@
   $effect(() => {
     if (share?.state.link) share.setClock(campaignYr);
   });
+  // The picture's clock (CLK1) follows the time in view however it was moved (a step, a bookmark, a save opened, a
+  // campaign shifted to another system's present); play and the Run desk's clock set its rate.
+  $effect(() => ws.followClock?.());
   // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
   // so stepping and playing through days does not call the kernel's derivations at every frame.
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
@@ -1149,6 +1154,36 @@
     if (i > 0 && railScale !== "system") toScale(PLACE_SCALES[i - 1]!);
   }
   const recentElsewhere = $derived(place ? recent.filter((r) => !samePlace(r, place)) : recent);
+  // Fill the screen (TM9a, three desks design question 11): on the Run desk F leaves the picture alone, full screen when
+  // the browser allows. The bar comes back while the pointer is at the top edge; F or Esc brings everything back.
+  let filled = $state(false);
+  let peek = $state(false);
+  let fillNote = $state(false);
+  let fillTimer: ReturnType<typeof setTimeout> | undefined;
+  const canFill = $derived(partShows("fill-screen", desk));
+  function setFilled(on: boolean) {
+    if (on === filled) return;
+    filled = on;
+    peek = false;
+    clearTimeout(fillTimer);
+    fillNote = on;
+    if (on) fillTimer = setTimeout(() => (fillNote = false), 3000);
+    try {
+      if (on) void document.documentElement.requestFullscreen?.()?.catch(() => {});
+      else if (document.fullscreenElement) void document.exitFullscreen?.()?.catch(() => {});
+    } catch {
+      /* a browser without full screen: the picture alone in the window is still the picture alone */
+    }
+  }
+  $effect(() => {
+    if (!canFill) untrack(() => setFilled(false));
+  });
+  // Leaving full screen the browser's own way (its Esc) brings the bar back too.
+  $effect(() => {
+    const sync = () => !document.fullscreenElement && filled && setFilled(false);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  });
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
@@ -1758,9 +1793,10 @@
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
       b: () => document.querySelector<HTMLElement>("[data-bookmarks] > button")?.click(),
+      f: () => canFill && setFilled(!filled),
       "?": () => openHelp("keys"),
       // Esc clears the selection, then goes up a step.
-      Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
+      Escape: () => (filled ? setFilled(false) : ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
     };
     const f = keys[e.key];
     if (f) {
@@ -1773,8 +1809,14 @@
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
-  <header class="bar">
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+  {#if filled}
+    <!-- The top edge: the pointer there brings the bar back over the picture. -->
+    <div class="fill-edge" aria-hidden="true" onpointerenter={() => (peek = true)}></div>
+    {#if fillNote}<p class="fill-note" role="status" data-fill-note>The picture alone. F or Esc brings everything back; the bar is at the top edge.</p>{/if}
+  {/if}
+  <!-- svelte-ignore a11y_no_static_element_interactions (the pointer leaving the bar only hides it again in Fill the screen) -->
+  <header class="bar" onpointerleave={() => (peek = false)}>
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <PlaceLine
       {railScale}
@@ -1795,6 +1837,7 @@
       {goTo}
       {toScale}
       switchSystem={(sys) => (showSystem(sys), toSystem())}
+      stepper={partShows("stepper", desk)}
     />
     <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
     {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker" class:gone={kickerW < 140} bind:clientWidth={kickerW} title="{scene.subtitle} · {formatYears(ws.now_yr)}">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
@@ -1915,7 +1958,7 @@
         {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
       {:else}
         <!-- The Run desk's clock in the ruler's place (three desks design 7.3): the campaign's now in human time. Above the system nothing moves in human time, so it shows the date only. -->
-        <div class="ruler-view"><CampaignClock campaignNow={campaignYr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} /></div>
+        <div class="ruler-view"><CampaignClock campaignNow={campaignYr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} onrate={(r) => ws.setRate?.(r)} /></div>
       {/if}
       <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. On Run only Sound stays, beside the clock; a what-if left open elsewhere still shows, so it can be kept or thrown away. -->
       <div class="ruler-side" aria-label="Time tools" role="group">
@@ -2137,6 +2180,62 @@
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+  }
+  /* Fill the screen (TM9a): the picture alone. The bar waits above the top edge and slides in while the pointer is there. */
+  .app[data-filled] {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  /* The bar is out of the flow and the ruler and status are gone, so the stage takes the one row. */
+  .app[data-filled] > .middle,
+  .app[data-filled] > .problem {
+    grid-row: 1;
+  }
+  .app[data-filled] > .bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    z-index: 40;
+    transform: translateY(-100%);
+    transition: transform var(--sse-motion-short, 160ms) ease-out;
+  }
+  .app[data-filled][data-peek] > .bar {
+    transform: none;
+  }
+  .app[data-filled] > .area-ruler,
+  .app[data-filled] > .status,
+  .app[data-filled] :global([data-chart-overlay]),
+  .app[data-filled] :global(.area-card) {
+    display: none;
+  }
+  .fill-edge {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    z-index: 39;
+  }
+  .fill-note {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 38;
+    margin: 0;
+    padding: 6px 12px;
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    font-size: 13px;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app[data-filled] > .bar {
+      transition: none;
+    }
   }
   .bar {
     display: flex;

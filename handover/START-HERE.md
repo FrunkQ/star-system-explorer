@@ -129,6 +129,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
 | `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, RK1, RK2, RK10, citation checks |
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a, V14 |
+| `status/picture-clock.md` | "Run all animation off the clock" (opened 26 Nov 2026) | CLK: one clock for everything that moves on screen, the campaign's (seconds since its epoch, `ui-contract/src/picture-clock.ts`); still while stopped; rates from the physics; motions faster than the pictures named in the note; CLK is a code only |
 | `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/detail-ladder.md` | Build detail ladder and world textures (split from the renderer) | VP6 the detail ladder, VP3 texture ladder and relief normals |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
