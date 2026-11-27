@@ -50,6 +50,8 @@ export interface GlobeRunOptions {
   air?: AirFacts | null;
   /** The world's aurora (aurora.ts `planAurora` from read_field), its radius, and the star's light at it in W/m² (for Eye). */
   aurora?: { plan: AuroraPlan; radius_m: number; flux_w_m2?: number } | null;
+  /** A small body's lump (small-body.ts `smallBodyShape`, RW16a): the GPU tiers draw the globe as it. */
+  shape?: { key: string; at: (d: [number, number, number]) => number } | null;
 }
 
 export interface GlobeStatus {
@@ -210,6 +212,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       // The still passes where the recipe has them (finer mesh, more air samples), at full size.
       const sr = cur.doc.tiers.includes("still") ? plan(cur.doc, o.library, "still", 0, o.knobs) : { ...cur.plan, render_scale: 1 };
       const a = atm(sr);
+      gpu.setShape(o.shape ?? null);
       gpu.draw(shown, sr, lon, lat, full(), a && airPhys ? airRender(airPhys, Number(a.thickness ?? 1)) : null, step.jitter);
       restLayer.add(canvas, step.k, canvas.width, canvas.height);
     } else if (kind === "canvas") {
@@ -366,6 +369,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       drew = true;
     } else if (want === "gpu" && gpu && canvas && !switching) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
+      gpu.setShape(o.shape ?? null);
       gpu.draw(drawn, pl, lon, lat, full(), airNow, undefined, auNow);
       drew = true;
     }

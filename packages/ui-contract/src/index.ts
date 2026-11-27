@@ -9,7 +9,7 @@ export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, update
 export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
 export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
 export type { Split, Display } from "./displays.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, ClassSample, ClassSampled, PackCalendar, StabilityCheck } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, ClassSample, ClassSampled, PackCalendar, StabilityCheck, SmallDesign } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
 export type { Preview } from "./physics-edit.ts";
@@ -236,6 +236,8 @@ export * from "./approach.ts";
 export * from "./journey.ts";
 export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export { readShape, readShapes, shapeAsk, shapeOf } from "./small-shape.ts";
+export type { ShapeAsk, ShapeReader, SmallShape } from "./small-shape.ts";
 export { chartFate, fateLine, fatePlan, withFate, FATE_LIMIT_MYR } from "./formation-fate.ts";
 export type { ChartFate, FateMark, FatePlan, FateWorld } from "./formation-fate.ts";
 export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markWords, moveJoin, profileMass, profileSpans, sculptorOf, setDensity, setShare, srgb } from "./profile.ts";

@@ -921,6 +921,58 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         e: Option<f64>,
+        /// RW16a, the small-body designer's pins (each optional; left out,
+        /// the field decides): `pair` single, contact or separated; `makeup`
+        /// mass shares of metal, rock, carbon and ice; `structure`
+        /// rubble-pile, monolith or relaxed; one turn in `spin_hours`;
+        /// `battered` 0 to 1 within its structure's relief range; a pair's
+        /// `size_ratio`. A pin is never refused: the answer's `takes` says
+        /// what an implausible one would need. In a system with no
+        /// formation record the body is made of a designed field.
+        #[serde(default)]
+        #[ts(optional)]
+        pair: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        makeup: Option<Vec<f64>>,
+        #[serde(default)]
+        #[ts(optional)]
+        structure: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        battered: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        size_ratio: Option<f64>,
+    },
+    /// RW16a: the shape of any body below the size at which it pulls itself
+    /// round (a small moon, an imported or catalogued asteroid), from its
+    /// address, so it is the same lump on every device and in every view.
+    /// Give what is known: `diameter_km`, `mass_kg` (with both, the makeup
+    /// follows the bulk density), an `ice` share, `spin_hours`, `a_au`. The
+    /// answer is the body as `make_small_body` makes it (single, never a
+    /// pair) with `round` and `round_km`. Needs no formation record.
+    SmallShape {
+        system: String,
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        diameter_km: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ice: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        a_au: Option<f64>,
     },
     /// Natural resource inventory (TG11, MP8b): for each world of `system`
     /// (or `body`), the kilograms of each resource kind in `kinds` (pack
@@ -2802,6 +2854,7 @@ impl Request {
             Request::ReadInventory { .. } => "read_inventory",
             Request::SmallBody { .. } => "small_body",
             Request::MakeSmallBody { .. } => "make_small_body",
+            Request::SmallShape { .. } => "small_shape",
             Request::RingStructure { .. } => "ring_structure",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
@@ -3123,6 +3176,11 @@ pub fn ops() -> Vec<OpInfo> {
             "make_small_body",
             Cost::Trivial,
             "one body: the same as small_body on a one-member field",
+        ),
+        o(
+            "small_shape",
+            Cost::Trivial,
+            "one body: the same as make_small_body, no formation run needed",
         ),
         o(
             "ring_structure",

@@ -76,7 +76,7 @@ leave the browser.
   - **Core.** `requests.json` (closed at 380 cases, `CORE_CASES` in `crates/sse-kernel/src/tests.rs`; kernel PR 536) and `tests/golden/contract.jsonl` are closed: the test `the_core_sequence_is_closed` fails on an appended case. Their lines still move when an op's output really changes (a physics change, a new field), and that is a core change: one at a time, in the coordinator's order.
   - **Parallel.** A PR that changes only its own area's golden (and its own crate's goldens, such as `nav.json`) may merge as soon as it is green, in parallel with other areas. After merging main it re-blesses; only its own area file should show in the diff. If core lines move too, it queues in the core lane.
   - **Frozen physics.** The contract runs on the frozen `tests/fixtures/packs/base-physics.json`, so editing the live `packs/base-physics` text does not move it. Formula blocks are compiled in, though, so a changed or new formula still moves the manifest and stack hashes in core.
-  - **Masked lines.** The op lists (hello, unknown op) are masked and checked against `ops()`. The reach report's lists are one line per block in `tests/golden/contract-reach.txt`.
+  - **Masked lines.** The op lists (hello, unknown op) are masked and checked against `ops()`. The reach report's lists are one file per block in `tests/golden/reach/<constant>/<block>.txt` (27 Nov; before, one line per block in `contract-reach.txt`, where neighbouring new blocks conflicted). A new block is a new file: bless with `SSE_BLESS=1 cargo test -p sse-kernel contract_matches_golden`.
   - **Areas so far:** `kernel`, `small-bodies`. Map of areas to threads: `handover/packages/GS2-golden-split-part-two.md`.
 - **Data sheet UI copy:** after any change to the data sheet or `scripts/build-ui-reference.py`, merge main, run `python3 scripts/build-ui-reference.py`, then `--check`, before merging.
 - **"Call me if there is a stop"** (Alex): if a stage is blocked on him, ask him; don't wait silently.
@@ -138,6 +138,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
 | `status/small-bodies.md` | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt and ring members resolved up close, notable bodies (a shattered world's core), small body kinds for the Add list, comets whole (takes VP-P3), VP-R1 to VP-R5 |
+| `status/coorbital.md` | Add co-orbital asteroids as general physics | CO: Trojans at L4 and L5 for any world round any star (stability, width, capture in migrations, survival against neighbours) |
 | `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
