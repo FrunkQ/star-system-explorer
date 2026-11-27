@@ -70,17 +70,16 @@
     const keepIt = { style: r.style, seed: r.seed, ...(r.overrides && Object.keys(r.overrides).length ? { overrides: r.overrides } : {}) } as unknown as Json;
     pending = setTimeout(async () => {
       pending = null;
-      const s = await session.send({ kind: "set_value", address: construct.address, field: DESIGN_FIELD, value: keepIt, at_yr: ws.campaign_now_yr ?? ws.now_yr });
-      if (s.status === "applied") ((note = "Design kept with the ship."), ws.revision++);
-      else note = s.status === "refused" ? s.reason : "Sent to the game master.";
+      await keep(keepIt, "Design kept with the ship.");
     }, 500);
   }
   $effect(() => () => pending && clearTimeout(pending));
-  async function keepBuild(r: BuildRecipe) {
-    const s = await session.send({ kind: "set_value", address: construct.address, field: DESIGN_FIELD, value: { build: r } as unknown as Json, at_yr: ws.campaign_now_yr ?? ws.now_yr });
-    if (s.status === "applied") ((note = "Build kept with the ship."), ws.revision++);
+  async function keep(value: Json, kept: string) {
+    const s = await session.send({ kind: "set_value", address: construct.address, field: DESIGN_FIELD, value, at_yr: ws.campaign_now_yr ?? ws.now_yr });
+    if (s.status === "applied") ((note = kept), ws.revision++);
     else note = s.status === "refused" ? s.reason : "Sent to the game master.";
   }
+  const keepBuild = (r: BuildRecipe) => keep({ build: r } as unknown as Json, "Build kept with the ship.");
 </script>
 
 <Pictures {ctx} subject={construct} {name} {editing} {views} hint={station ? "The shape and remix are kept with it." : views.length ? "Built from parts; the build is kept with the ship." : undefined}>
