@@ -240,22 +240,14 @@ fn group_edge(
     seen: &[(f64, serde_json::Value)],
     t_gyr: f64,
 ) -> Result<serde_json::Value, Response> {
-    use sse_flow::Atom as _;
-    // Through the physics in force (ER1): the block from its library, read
-    // once here, and the Sun's mass from the sheet in force (`m_sun`). The
-    // block has no settings, so none are shipped defaults.
-    let physics = sse_physics::now().ok_or_else(|| err("eval", "no physics in force"))?;
-    let block = physics
-        .blocks()
-        .iter()
-        .find(|a| a.decl().id == ZERO_VELOCITY_BLOCK)
-        .ok_or_else(|| err("eval", format!("{ZERO_VELOCITY_BLOCK} is not loaded")))?;
+    // Through the physics in force: the block by the block door (ER2), with
+    // the settings in force, and the Sun's mass from the sheet in force
+    // (`m_sun`).
     let t_s = t_gyr * 1.0e9 * sse_core::quantity::consts::JULIAN_YEAR;
     let radius_mpc = |msun: f64| -> Result<f64, Response> {
         let kg = msun.max(0.0) * m_sun;
-        let r = block
-            .eval(&[kg, t_s], &[])
-            .map_err(|x| err("eval", format!("{ZERO_VELOCITY_BLOCK}: {}", x.0)))?;
+        let r = sse_physics::run(ZERO_VELOCITY_BLOCK, &[kg, t_s])
+            .map_err(|x| err("eval", format!("{ZERO_VELOCITY_BLOCK}: {x}")))?;
         Ok(r.first().copied().unwrap_or(0.0) / MPC_M)
     };
     let mut others: Vec<(f64, f64, &str)> = seen
