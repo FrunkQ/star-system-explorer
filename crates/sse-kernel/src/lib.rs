@@ -53,6 +53,8 @@ mod life;
 mod life_tests;
 #[cfg(test)]
 mod matter_tests;
+#[cfg(test)]
+mod mount_tests;
 mod names;
 #[cfg(test)]
 mod names_tests;
@@ -1205,10 +1207,14 @@ fn bench_unit(i: u32) -> f64 {
 /// blocks (J2). Ids never clash: `toy.*`, `sse.*`, `logic.*`, `world.*`,
 /// `chance.*`.
 fn kernel_atoms() -> sse_flow::AtomRegistry {
+    kernel_atoms_in_force(&sse_physics::Blocks::shipped())
+}
+
+/// The same with the block library in force (ER2): each block with the
+/// settings the stack gives it, so a flow compiled against it follows them.
+fn kernel_atoms_in_force(blocks: &sse_physics::Blocks) -> sse_flow::AtomRegistry {
     let mut r = sse_flow::toy::registry();
-    for a in sse_atoms::atoms() {
-        r.insert(a);
-    }
+    blocks.insert_into(&mut r);
     // J2: the logic set (`logic.*`, `world.*`, `chance.*`).
     sse_logic::register(&mut r);
     r
@@ -3310,9 +3316,26 @@ impl Kernel {
                                 issues: clashes,
                             });
                         }
+                        // ER2: the block library in force, each block with
+                        // the settings this stack's `provides.blocks` give it.
+                        // Flows compile against it, so they follow an edit.
+                        let blocks = match sse_physics::Blocks::from_packs(&ms) {
+                            Ok(b) => std::sync::Arc::new(b),
+                            Err(es) => {
+                                let issues: Vec<sse_pack::StackIssue> = es
+                                    .into_iter()
+                                    .map(|(pack, message)| sse_pack::StackIssue { pack, message })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: issues.iter().map(|i| i.to_string()).collect(),
+                                });
+                            }
+                        };
+                        let atoms = kernel_atoms_in_force(&blocks);
                         let _sheet = sse_flow::sheet::Scope::new(sheet_of(&observe.reference));
                         let cx = Context {
-                            atoms: &self.atoms,
+                            atoms: &atoms,
                             kinds: &stack.kinds,
                             units: &stack.units,
                         };
@@ -3373,6 +3396,17 @@ impl Kernel {
                                 issues: problems,
                             });
                         }
+                        // The physics in force from here on: the rest of the
+                        // load (codes, adopting a universe) reads the new one.
+                        let flows = std::sync::Arc::new(flows);
+                        let physics = std::sync::Arc::new(sse_physics::Physics::build_with(
+                            &ms,
+                            Some(&stack),
+                            observe.reference.clone(),
+                            flows.clone(),
+                            blocks,
+                        ));
+                        let _in_force = sse_physics::Scope::new(&physics);
                         let codes = match sse_codes::Codes::load(&ms) {
                             Ok(c) => c,
                             Err(problems) => {
@@ -3400,13 +3434,8 @@ impl Kernel {
                             fictional_kinds: stack.fictional_kinds.iter().cloned().collect(),
                             adopted,
                         };
-                        let flows = std::sync::Arc::new(flows);
-                        self.physics = std::sync::Arc::new(sse_physics::Physics::build(
-                            &ms,
-                            Some(&stack),
-                            observe.reference.clone(),
-                            flows.clone(),
-                        ));
+                        self.physics = physics;
+                        self.atoms = atoms;
                         self.stack = Some((stack, flows));
                         self.reports = reports;
                         self.observe = observe;
@@ -6516,6 +6545,86 @@ impl Kernel {
                         .and_then(|v| v.as_str().map(str::to_string))
                         .unwrap_or_default(),
                     event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::MountConstruct {
+                address,
+                on,
+                place,
+                port,
+                own_port,
+                bay,
+                along_m,
+                clock_deg,
+                stand_off_m,
+                bond,
+                lines,
+                push_m_s,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let h = in_universe(&u.root, &on)?;
+                let at = UniverseTime::seconds(at_s);
+                let d = sse_trigger::mount::mount(
+                    &mut u.chronicle,
+                    &u.root,
+                    &sse_trigger::mount::MountAsk {
+                        carried: &a,
+                        carrier: &h,
+                        place: Some(place),
+                        port: port.as_deref(),
+                        own_port: own_port.as_deref(),
+                        bay: bay.as_deref(),
+                        along_m,
+                        clock_deg,
+                        stand_off_m,
+                        bond,
+                        lines: lines.as_deref().unwrap_or(&[]),
+                        push_m_s,
+                        at,
+                    },
+                    &Publisher::new("gm", "mount", "1"),
+                )
+                .map_err(|e| err("mount_refused", e))?;
+                let st = u.chronicle.state_at(at);
+                Response::ConstructMounted {
+                    address: a.to_string(),
+                    mount: d.mount.to_json(),
+                    compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
+                    notes: d.notes,
+                    event_id: d.event.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::ReleaseConstruct {
+                address,
+                from,
+                push_m_s,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let from = from.map(|f| in_universe(&u.root, &f)).transpose()?;
+                let at = UniverseTime::seconds(at_s);
+                let d = sse_trigger::mount::release(
+                    &mut u.chronicle,
+                    &u.root,
+                    &a,
+                    from.as_ref(),
+                    push_m_s,
+                    at,
+                    &Publisher::new("gm", "release", "1"),
+                )
+                .map_err(|e| err("release_refused", e))?;
+                let st = u.chronicle.state_at(at);
+                Response::ConstructReleased {
+                    address: a.to_string(),
+                    mount: d.mount.to_json(),
+                    compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
+                    notes: d.notes,
+                    event_id: d.event.hex(),
                     state_hash: latest_hash(&u.chronicle),
                 }
             }

@@ -28,7 +28,6 @@ use std::collections::BTreeSet;
 
 pub const MODEL: &str = "gradients/1";
 const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
-const R_GAS: f64 = sse_atoms::chem::R_GAS;
 
 /// A light gradient (`life_gradients.light`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -90,13 +89,8 @@ pub struct ReactionGradient {
 pub struct GradientParams {
     /// Minimum free energy per turnover, kJ per mol of reaction as written.
     pub min_quantum_kj: f64,
-    /// Maintenance power per C-mol of biomass at `maintenance_ref_k`, and
-    /// its activation energy (Arrhenius), W and J per mol.
-    pub maintenance_w_per_cmol: f64,
-    pub maintenance_ea_j_mol: f64,
-    pub maintenance_ref_k: f64,
-    /// Smallest population worth calling life, C-mol.
-    pub min_population_cmol: f64,
+    // Maintenance and the smallest population moved to the shared
+    // `life_budget.maintenance` block (LE1): both models read one number.
     /// Share of a catabolic reaction's free energy that ends up in built biomass.
     pub growth_efficiency: f64,
     /// Habitat material key to thermodynamic species, for supplies (mol per year).
@@ -182,11 +176,11 @@ pub struct Catalogue {
     pub dropped: u32,
 }
 
-/// Maintenance power per gram of biomass carbon at `t_k`, W (Arrhenius in
-/// temperature, Tijhuis et al. 1993).
-pub fn maintenance_w_per_gc(gp: &GradientParams, t_k: f64) -> f64 {
-    let f = m::exp(gp.maintenance_ea_j_mol / R_GAS * (1.0 / gp.maintenance_ref_k - 1.0 / t_k));
-    gp.maintenance_w_per_cmol * f / 12.0
+/// Starved (basal) maintenance power per gram of biomass carbon at `t_k`,
+/// W, from the shared block (LE1): the test "can anything live on this
+/// gradient at all" and the most biomass its power can hold.
+pub fn maintenance_w_per_gc(bp: &BudgetParams, t_k: f64) -> Option<f64> {
+    bp.maintenance.as_ref().map(|mt| mt.starved_w_per_gc(t_k))
 }
 
 fn mid_t(p: &LifeRequirementProfile) -> Option<f64> {
@@ -301,6 +295,9 @@ pub fn habitat_catalogue_using(
         feeding_levels: None,
         missing: vec![],
         secondary_gc_yr: None,
+        keep_alive_w: None,
+        barely: false,
+        biomass_limited_by: None,
     };
     let mut cat = Catalogue {
         habitat: p.habitat.clone(),
@@ -325,8 +322,12 @@ pub fn habitat_catalogue_using(
         missing.push(format!("material.{}", bp.p_material));
     }
     let t = mid_t(p);
-    let maint = t.map(|t| maintenance_w_per_gc(gp, t));
-    let min_power = maint.map(|w| w * gp.min_population_cmol * 12.0);
+    let maint = t.and_then(|t| maintenance_w_per_gc(bp, t));
+    let min_power = maint.and_then(|w| {
+        bp.maintenance
+            .as_ref()
+            .map(|mt| w * mt.min_population_cmol * 12.0)
+    });
     let mut gradients: Vec<Gradient> = vec![];
     // Light-limited production of each light gradient, before its donor.
     let mut photon_gc: BTreeMap<String, f64> = BTreeMap::new();

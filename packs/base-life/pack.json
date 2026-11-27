@@ -454,6 +454,24 @@
     "transfer_efficiency": 0.1,
     "min_viable_g_m2_yr": 0.1,
     "low_power_levels": 2,
+    "maintenance": {
+     "about": "The keep-alive test (life-from-energy design section 4, LE1), shared by listed/1 and gradients/1: captured power below the starved maintenance of the smallest population closes a habitat; below the laboratory maintenance of the thinnest population life is found at, spread through the habitat, it is alive, barely (no feeding levels). Standing biomass is at most the captured power over the starved maintenance per gram. Baseline, refined per chemistry in 4.1 (LE10).",
+     "laboratory_w_per_cmol": 1.25,
+     "starved_w_per_cmol": 1.2e-05,
+     "ea_j_mol": 69400.0,
+     "ref_k": 298.15,
+     "min_population_cmol": 1e-09,
+     "thinnest_life_gc_m3": 1e-05,
+     "surface_layer_m": 1.0,
+     "sources": {
+      "laboratory_w_per_cmol": "Tijhuis, L., van Loosdrecht, M. C. M. and Heijnen, J. J. 1993, Biotechnology and Bioengineering 42, 509: a thermodynamically based correlation for maintenance Gibbs energy requirements in aerobic and anaerobic chemotrophic growth (4.5 kJ per C-mol per hour at 298 K, activation energy 69.4 kJ per mol). https://doi.org/10.1002/bit.260420415 (recalled, to verify)",
+      "starved_w_per_cmol": "Basal power of cells in deep marine sediment, about 1e-20 W per cell (LaRowe, D. E. and Amend, J. P. 2015, Frontiers in Microbiology 6, 718: power limits for microbial life; Hoehler, T. M. and Jorgensen, B. B. 2013, Nature Reviews Microbiology 11, 83: microbial life under extreme energy limitation), at about 1e-14 g C per cell: 1e-6 W per g C. Unverified (paper search out until 1 Dec 2026); measured maintenance spans about seven orders of magnitude between these two values",
+      "ea_j_mol": "Tijhuis et al. 1993, as above; applied to the starved value too (fudge register: one activation energy for both)",
+      "min_population_cmol": "Smallest population worth calling life: 1e-9 C-mol, about a million cells (a judgement, not a measurement; fudge register)",
+      "thinnest_life_gc_m3": "The thinnest living populations counted, about 1e3 cells per cubic centimetre in South Pacific Gyre sediment (D'Hondt, S. et al. 2009, PNAS 106, 11651; Kallmeyer, J. et al. 2012, PNAS 109, 16213), at about 1e-14 g C per cell. Unverified (paper search out until 1 Dec 2026)",
+      "surface_layer_m": "A surface habitat has an area and no volume; its living layer is taken as 1 m (soil and canopy). Baseline, refined in 4.1 (fudge register)"
+     }
+    },
     "metabolisms": [
      {
       "id": "oxygenic",
@@ -1527,10 +1545,6 @@
    "life_gradients": {
     "about": "The gradient catalogue (evolution design section 3, stage E1): what free energy each habitat offers, from light, from redox pairs it supplies and from organic carbon arriving from producers, with the three tests (energy per turnover, power against maintenance, materials). Used when life_budget.life_model is gradients/1; the listed model stays the default until the fidelity contract is reviewed.",
     "min_quantum_kj": 20.0,
-    "maintenance_w_per_cmol": 1.25,
-    "maintenance_ea_j_mol": 69400.0,
-    "maintenance_ref_k": 298.15,
-    "min_population_cmol": 1e-09,
     "growth_efficiency": 0.2,
     "supplies": {
      "h2_mol_yr": "h2_aq",
@@ -1770,7 +1784,7 @@
     "sources": {
      "reach": "E2 (evolution design 5.1): new chemical steps beyond a biosphere's existing ones. 0 for the oldest metabolisms (hydrogen-using methanogenesis and fermentation-like organic methanogenesis; Weiss et al. 2016, LUCA was a hydrogen-dependent anaerobe); 1 for one new pathway (anoxygenic photosynthesis by 3.4 Gyr ago, Tice and Lowe 2004; sulfate reduction by 3.47 Gyr ago, Shen et al. 2001; aerobic respiration and the aerobic chemolithotrophs, whose oxygen reductases descend from older nitric oxide reductases, Ducluzeau et al. 2014); 3 for oxygenic photosynthesis, which couples two photosystems to a water-splitting manganese cluster (Fischer, Hemp and Johnson 2016). The steps are counts judged from those sources, not measurements.",
      "min_quantum_kj": "Schink, B. 1997, Microbiology and Molecular Biology Reviews 61, 262: energetics of syntrophic cooperation in methanogenic degradation (about -20 kJ per mol per turnover). https://doi.org/10.1128/mmbr.61.2.262-280.1997 (recalled; Hoehler 2004 argues lower)",
-     "maintenance": "Tijhuis, L., van Loosdrecht, M. C. M. and Heijnen, J. J. 1993, Biotechnology and Bioengineering 42, 509: a thermodynamically based correlation for maintenance Gibbs energy requirements in aerobic and anaerobic chemotrophic growth (4.5 kJ per C-mol per hour at 298 K, activation energy 69.4 kJ per mol). https://doi.org/10.1002/bit.260420415 (recalled, to verify); natural settings run far lower (LaRowe and Amend 2015), so the power test uses a minimal population only",
+     "maintenance": "Moved to life_budget.maintenance (LE1), shared by both life models; the power test here uses its starved value and smallest population",
      "growth_efficiency": "Calibrated: 0.2 of the catabolic free energy built into biomass reproduces L1a's growth yields (about 0.1 C per H2 aerobically, 0.01 C per H2 for methanogens; McCollom and Amend 2005). Roden and Jin 2011 find yield rises in step with energy, which this assumes; their slope is to be read (fudge register)",
      "activities": "Typical modern seawater and pore water: dissolved O2 near air saturation, nanomolar H2, millimolar bicarbonate, 28 mM sulfate, micromolar reduced species; Fe2+ at Archean-ocean levels (about 50 micromolar). Assumptions to replace with world chemistry; a habitat may set activity.<species>",
      "export": "Ocean: about a fifth of sunlit production sinks out of the surface layer (biological pump, about 10 of 50 Gt C per year; Henson et al. 2011, https://doi.org/10.1029/2011GL046735, recalled); land: nearly all plant production reaches the soil as litter and roots (Schlesinger and Andrews 2000, https://doi.org/10.1023/A:1006247623877, recalled)",

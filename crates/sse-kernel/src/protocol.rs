@@ -2015,6 +2015,60 @@ pub enum Request {
         how: Option<sse_trigger::split::How>,
         at_s: i64,
     },
+    /// CM1: capture. `address` is mounted on `on` at `at_s`, at one of the
+    /// five places (`front`, `behind`, `inside`, `hull`, `outside`), at the
+    /// carrier's `port` and its own `own_port` if named, in `bay` for
+    /// inside, at `along_m` and `clock_deg` on the hull or outside (and
+    /// `stand_off_m` for outside), held by `bond` (default: fixed on the
+    /// axis, rest in a bay, latch on the hull or outside), passing `lines`
+    /// (propellant, power, air, people). Nothing moves between the two.
+    MountConstruct {
+        address: String,
+        on: String,
+        #[ts(type = "\"front\" | \"behind\" | \"inside\" | \"hull\" | \"outside\"")]
+        place: sse_trigger::mount::Place,
+        #[serde(default)]
+        #[ts(optional)]
+        port: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        own_port: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bay: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        along_m: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        clock_deg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        stand_off_m: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "\"fixed\" | \"latch\" | \"rest\"")]
+        bond: Option<sse_trigger::mount::Bond>,
+        #[serde(default)]
+        #[ts(optional)]
+        lines: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        push_m_s: Option<f64>,
+        at_s: i64,
+    },
+    /// CM1: release. `address` leaves what carries it at `at_s` (`from`,
+    /// when named, must be its carrier); `push_m_s` overrides the mount's
+    /// separation push. Nothing moves; a dock (`docked.to`) is released the same way.
+    ReleaseConstruct {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        from: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        push_m_s: Option<f64>,
+        at_s: i64,
+    },
     /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
     IntentDecide {
         proposal: String,
@@ -2743,6 +2797,8 @@ impl Request {
             Request::PreviewTree { .. } => "preview_tree",
             Request::SplitConstruct { .. } => "split_construct",
             Request::JoinConstructs { .. } => "join_constructs",
+            Request::MountConstruct { .. } => "mount_construct",
+            Request::ReleaseConstruct { .. } => "release_construct",
             Request::Programs { .. } => "programs",
             Request::AttachProgram { .. } => "attach_program",
             Request::DetachProgram { .. } => "detach_program",
@@ -3150,6 +3206,8 @@ pub fn ops() -> Vec<OpInfo> {
         o("rehost", Cost::Light, "GM machine only; the system's orbits at one time, one universe event"),
         o("split_construct", Cost::Trivial, "GM machine only; one universe event"),
         o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
+        o("mount_construct", Cost::Trivial, "GM machine only; one universe event"),
+        o("release_construct", Cost::Trivial, "GM machine only; one universe event"),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
         o("attach_program", Cost::Trivial, "GM machine only; one record event"),
         o("hold", Cost::Trivial, "GM machine only; one record event"),
@@ -4109,6 +4167,32 @@ pub enum Response {
     /// `split_construct`: the new construct's address.
     ConstructSplit {
         address: String,
+        event_id: String,
+        state_hash: String,
+    },
+    /// `mount_construct` and `release_construct`: the mount made or ended
+    /// (`{on, place, bond, lines, port?, own_port?, bay?, along_m?,
+    /// clock_deg?, stand_off_m?, push_m_s?, docked?}`), the compound the
+    /// carrier is in after the event (`{root, members: [{address, depth,
+    /// mount?, mass_kg?}], mass_kg, mass_unknown}`), and notes on what could
+    /// not be checked.
+    ConstructMounted {
+        address: String,
+        #[ts(type = "unknown")]
+        mount: serde_json::Value,
+        #[ts(type = "unknown")]
+        compound: serde_json::Value,
+        notes: Vec<String>,
+        event_id: String,
+        state_hash: String,
+    },
+    ConstructReleased {
+        address: String,
+        #[ts(type = "unknown")]
+        mount: serde_json::Value,
+        #[ts(type = "unknown")]
+        compound: serde_json::Value,
+        notes: Vec<String>,
         event_id: String,
         state_hash: String,
     },

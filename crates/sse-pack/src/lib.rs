@@ -47,6 +47,31 @@ pub struct Replacement {
     pub range: String,
 }
 
+/// A block edit (ER2, edits-reach design 3.1): new settings for a block
+/// wherever it runs in this stack. A setting typed on one node of one flow
+/// still wins there. Like a flow override it names what it replaces, so no
+/// block changes silently: the shipped blocks belong to `sse.base-physics`,
+/// and a pack that edits a block another pack already edited names that pack.
+/// The block id, the setting names and their allowed ranges are checked
+/// when the stack loads (`sse-physics`), where the library is known.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct BlockEdit {
+    /// The block's id, e.g. `sse.light.stellar_wind`.
+    pub id: String,
+    /// Setting name to its new value, in SI.
+    pub settings: BTreeMap<String, f64>,
+    /// The pack whose version of the block this edit replaces, and the
+    /// versions of it the edit is written against.
+    pub replaces: BlockReplaces,
+}
+
+/// What a block edit replaces: the pack the block comes from and its range.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct BlockReplaces {
+    pub pack: String,
+    pub range: String,
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub struct Provides {
     #[serde(default)]
@@ -69,6 +94,10 @@ pub struct Provides {
     /// without it hashes as before.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub reference: BTreeMap<String, Value>,
+    /// Block edits (ER2): new settings for a block wherever it runs. Left
+    /// out when empty, so a pack without them hashes as before.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub blocks: Vec<BlockEdit>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
