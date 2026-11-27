@@ -234,6 +234,7 @@ export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";
 export { STAR_FAMILY_WORDS, starClassWords } from "./star-class.ts";
 export * from "./approach.ts";
 export * from "./journey.ts";
+export * from "./journey-play.ts";
 export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
 export { readShape, readShapes, shapeAsk, shapeOf } from "./small-shape.ts";

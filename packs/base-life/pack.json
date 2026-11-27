@@ -48,6 +48,8 @@
     "air_reductant_mol_yr_per_w": 0.064,
     "reducing_above_h2": 0.1,
     "reducing_hill": 4.0,
+    "heat_epoch_step": 0.2,
+    "heat_epoch_cap": 8,
     "sources": {
      "band_edges_deg": "Five bands of latitude, tropics to 30 degrees and poles from 60: enough to separate a world's warm and cold lands without the 18 bands of the climate grid",
      "crust_depth_m": "A continental crust about 30 to 40 km thick (Christensen and Mooney 1995); the deep-crust habitat only reads its top 5 km",
@@ -66,6 +68,8 @@
      "recycling_gyr": "How long a surface lasts: about 0.8 Gyr under plate tectonics (the L1d fixture's Earth), about 50 Myr for an active ice shell (Europa's surface age, Zahnle et al. 2003); none for a stagnant lid",
      "reducing_above_h2": "The H2 mixing ratio at which air counts half as reducing: in hydrogen air methane is what carbon becomes without life (a giant's air), so methane there is no sign of anything (Krissansen-Totton et al. 2018, Science Advances 4, eaao5747). Graded as x^n / (x^n + this^n); methane alone weighs as evidence by its likelihood ratio to the power (1 - that) times nothing-seen's to the power of that. Fudge L3-grades",
      "reducing_hill": "How sharply air turns reducing with its hydrogen (the n above): 4 puts Earth's half a part per million at nothing and Jupiter's 86% at all but one in five thousand. Authored, fudge L3-grades",
+     "heat_epoch_step": "L3-heat: a chart world's deep-time history starts a new epoch where its interior's heat flow (the core history's heat out of the top) has moved by more than a fifth since the last; vents, their hydrogen and iron, and the crust's warmth follow it. A judgement on resolution, not physics: each epoch costs a habitat graph and its budgets",
+     "heat_epoch_cap": "At most eight heat epochs per history (the step is widened until they fit), to keep the history's budget cache small",
      "air_reductant_mol_yr_per_w": "The air box's volcanic reducing gases, 3e12 mol O2-equivalent a year (life_feedback) over Earth's 47 TW: a world's volcanism scales with its heat"
     }
    },
