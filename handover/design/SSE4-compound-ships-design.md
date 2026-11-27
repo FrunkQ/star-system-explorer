@@ -1,6 +1,6 @@
 # SSE4: compound ships that separate and rejoin (track CM)
 
-Status: **PROPOSED**, 27 Nov 2026 (section 8A added the same night from Alex's 00:23 follow-up). Questions 17 and 18 answered yes at 00:31 UTC; the rest wait on Alex. His note on the look: "If we can get the right shader this could look so cool", so CM14's paint, decals, lights and wear are drawn by the renderer's physically based ship shader, with the coating's real absorptance and emittance setting how it reads in each band. Design only (Fable); nothing here is built. CM is a code only and is never shown in the product.
+Status: **ACCEPTED by Alex, 27 Nov 2026 00:43 UTC** ("Otherwise yes to all"), with his amendment to question 1 and his blueprint note, both in section 14A, which wins where it differs. Questions 17 and 18 were answered yes at 00:31 UTC ("Yes on all! If we can get the right shader this could look so cool"): paint, decals, lights and wear are drawn by the renderer's physically based ship shader, with each coating's real absorptance and emittance setting how it reads in each band. Design only (Fable); nothing here is built. CM is a code only and is never shown in the product.
 
 Alex's ask (27 Nov 2026, 00:02 to 00:05 UTC, thread "Design compound ships that separate and rejoin"):
 
@@ -327,7 +327,7 @@ Alex's guess is right in substance. Skylab was built from a Saturn V third stage
 
 An Edit desk tool for making stations, ships, habitats, cruisers and exploration ships out of real parts. Alex (00:25): "Lego meets KSP"; (00:27): "2d builder will have also be actual 3d. Clip together bounded by connection points be able to freely rotate it and give it a lick of paint." It is the 2D picture and the 3D designer of section 8 turned into one canvas with two views of the same recipe, so it is not a second designer. Unlike a flight game, nobody flies what they build by hand: the planner flies its sequence and the physics says what it can do.
 
-- **Two views, one model.** A 2D view (top and side, fast, good on a phone) and a 3D view the user can freely rotate, zoom and orbit. Both edit the same recipe; a change in one shows in the other at once.
+- **Two views, one model.** A 2D view (top and side, fast, good on a phone) and a 3D view the user can freely rotate, zoom and orbit, with the top and side profiles cast behind it as blueprint shadows on the background (ruling 14A.2). Both edit the same recipe; a change in one shows in the other at once.
 - **Clip together at connection points.** Every primitive has its connection points: its ports, its front and back faces on the axis, its hull stations, its bay mouths. In 3D a dragged part shows the points it can clip to, glowing; it snaps there and takes that point's place (front, behind, inside, hull, outside), so placement is always bounded by connection points and never free-floating. A part can be turned about its connection (to a clock angle, in steps a style sets) but not dragged off it.
 
 - **A palette of primitives**, each a real part or module from the reference pack and the spaceflight pack: tanks, engines, habitat cans, docking nodes, trusses, solar arrays, radiators, shields, landing legs, bays. Each carries its real figures (size, dry mass, volume, power, waste heat) and its source.
@@ -477,6 +477,8 @@ Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (
 
 ## 14. Questions for Alex, each with a recommendation
 
+**All answered yes, 27 Nov 2026 00:43 UTC; question 1 amended (section 14A). Each recommendation is now a ruling.**
+
 1. **Anything that can fly on its own is a construct; anything that cannot is a part.** Stages, landers, fighters and modules become constructs from the moment they are made, held together by mounts, instead of parts split off later. Recommended: yes. It is the one rule that makes release and capture move nothing, so budgets cannot drift.
 2. **The five placements: in front, behind, inside, on the hull (touching), outside (held clear on an arm or tether).** I read your "outside" and "the hull" as those two. Recommended: yes, with the sky crane's tether as the proof that "outside" is needed.
 3. **Release and capture as the only two rules,** with `merge` kept only for permanent fusion. Recommended: yes.
@@ -498,6 +500,13 @@ Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (
 19. **Replace the ship generator with the builder,** keeping the generator as "Build it for me", an assembler of palette parts, so procedural fleets still cost one press; old saves draw as before until rebuilt. Recommended: yes.
 20. **A separate part editor,** with uploads of glTF models and textures for a part's shape, while the physics reads only the part's figures and warns when the shape disagrees. Recommended: yes; it brings forward the 23 Nov "uploads later" now that packs carry files.
 21. **Parts packs and ship packs in the shop,** free or paid under the existing licence check, with a shared port size standard so parts from different makers fit. Recommended: yes; the base app ships the real parts of every decade free.
+
+### 14A. Alex's rulings, 27 Nov 2026 00:43 UTC
+
+All 21 questions are answered yes, on the recommendations above (question 10: Traveller rules held until the base is built), with these two changes, which win:
+
+1. **Question 1, amended.** Alex: "1 yes. But land structures and space stations are constructs cannot technically move and only one is a spaceship." So the rule is: **anything that can exist on its own, flying, in orbit or standing on the ground, is a construct; anything that cannot is a part.** A construct's kind (ship, station, land structure) stays as now. Whether it can move itself is read from its parts (a drive with a tank or a power source), never from its kind or the word "ship". A station module is a construct that cannot manoeuvre: it rides its orbit and is moved only by what it is mounted on or by a tug. A land structure is a construct whose log is `landed`, and mounts work on the ground the same way (a surface base built from modules, a rover in a garage, a lander standing on a pad). So "release" from a land structure is a rover driving out or a lander lifting off, and "capture" is the reverse, with no other change.
+2. **The builder's look.** Alex: "Builder is Lego like and 3d BUT have the profiles as shadows on the background. That would look cool like a blueprint behind." The 3D builder (8A.4) draws the build's top and side profiles behind it as blueprint shadows on the background planes, updating live as parts clip on, in the blueprint style of the 2D picture (thin lines, call-outs, a scale bar). The 2D view and these shadows are the same drawing.
 
 ## 15. Not in this design
 
