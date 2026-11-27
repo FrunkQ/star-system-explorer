@@ -13,7 +13,7 @@
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, fullSave, pruneKeptPacks, readStored, setAside, slimSave, writeStored } from "./campaign-store.ts";
   import YourData from "./YourData.svelte";
-  import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
+  import { clearAll, downloadText, opening as markOpening, resetSettings, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
   import { CONVERTER_URL, checkPackDoc, creditWords, fetchExplorers, previewStack, reportWords, sniffFile, stackPacks as addPacks, v3SaveText, type ExplorersListing, type PackDoc, type Sniffed, type StackPreview } from "../../ui-contract/src/index.ts";
   import TableStatus from "./run/TableStatus.svelte";
@@ -26,7 +26,7 @@
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
-  import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
+  import { readSol, solBatches, solFingerprint, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
   import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, baseBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
@@ -467,6 +467,7 @@
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
     ws.playbook = playbookFrom(save.workspace.playbook);
     ws.layouts = layoutsFrom(save.workspace.layouts);
+    solEntered = typeof save.workspace.sol_sheet === "string" ? save.workspace.sol_sheet : null;
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -485,7 +486,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, could_quiet: ws.could_quiet ?? [], party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [] })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, could_quiet: ws.could_quiet ?? [], party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [], ...(solEntered ? { sol_sheet: solEntered } : {}) })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -654,6 +655,31 @@
     const bad = writeStored(await slimSave(offered.save));
     if (bad) return void (offered = { ...offered, problems: [`it could not be kept to reopen: ${bad}`], save: null });
     location.reload();
+  }
+  // Start fresh (alpha aid; Alex 27 Nov 2026: "just during alpha - at beta we can calm down"). One door from the start
+  // sheet and the top of More: forget this device's remembered choices (the campaign stays), or forget everything.
+  // Each says what it clears; neither runs without the second press in its dialog. Revisit at beta.
+  let freshDialog: HTMLDialogElement | undefined = $state();
+  let freshWhich = $state<"settings" | "everything" | null>(null);
+  function openFresh() {
+    freshWhich = null;
+    freshDialog?.showModal();
+  }
+  function reloadClean() {
+    // The place in the address bar would reopen where the old visit was: a fresh start opens at the door.
+    history.replaceState(null, "", location.pathname);
+    location.reload();
+  }
+  function freshSettings() {
+    resetSettings();
+    reloadClean();
+  }
+  async function freshEverything() {
+    clearTimeout(saveTimer);
+    // No autosave between here and the reload.
+    session = null;
+    await clearAll();
+    reloadClean();
   }
   function startFresh() {
     clearStored();
@@ -1302,9 +1328,18 @@
       .then((r) => (r.ok ? r.json() : null))
       .then((p) => (p ? readSol(p) : null))
       .catch(() => null));
+  // The sheet the campaign entered Sol from (kept with the save). Once entered, Sol's values live in the chronicle, so a
+  // newer sheet (more moons, ring structure, J2) does not reach a kept campaign by itself: the GM is told, and Start
+  // fresh brings today's. Fudge (alpha): a real top-up of changed catalogue values, keeping the GM's own edits, needs
+  // stable addresses for the sheet's rows (they are numbered in sheet order today); noted in the package log.
+  let solEntered = $state<string | null>(null);
+  let solNow = $state<string | null>(null);
+  const solStale = $derived(!!solNow && adoptedSystems.some((x) => x.system === SOL) && solEntered !== solNow);
+  let solStaleQuiet = $state(false);
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
+    solNow = solFingerprint(sheet);
     const laid = solBatches(sheet, SOL);
     solUnverified = new Set(laid.unverified.map((k) => k.split("#")[0]!));
     solIds = new Map(Object.entries(laid.addresses).map(([id, a]) => [a, id]));
@@ -1313,6 +1348,10 @@
   // Opened from the system list after a reload, the sheet is read for its marks.
   $effect(() => {
     if (viewing?.system === SOL && !solUnverified) solSheet().then(() => ws.revision++, () => {});
+  });
+  // A kept campaign that holds Sol: read the sheet once to tell whether it was entered from this one.
+  $effect(() => {
+    if (solNow === null && adoptedSystems.some((x) => x.system === SOL)) solSheet().catch(() => {});
   });
   async function openSol() {
     const s = session;
@@ -1328,6 +1367,7 @@
       } catch (e) {
         return void (whatNote = `Could not open the Solar System: ${e instanceof Error ? e.message : String(e)}`);
       }
+      solEntered = solNow;
       adoptedSystems = [...adoptedSystems, { system: SOL, title: SOL_TITLE }];
       whatNote = "The Solar System, as measured.";
     }
@@ -1349,7 +1389,21 @@
     });
   });
   const keptSave = readStored(`u:${base.universe.id}`).save;
-  const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
+  // Carry on goes back to where the last visit was (the newest remembered place), and says where: before, it opened the
+  // base system whatever the campaign was last looking at, so a GM working in the Solar System came back to Kestrel.
+  const carryTo = untrack(() => recent[0] ?? null);
+  const carryWhere = carryTo ? (carryTo.label ?? (carryTo.system === SOL ? SOL_TITLE : carryTo.system ? null : base.title)) : null;
+  const carryOn = keptSave ? { title: carryWhere ?? keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
+  // A place asked for before the campaign has opened (Carry on pressed early): gone to once it has.
+  let pendingPlace = $state<Place | null>(null);
+  $effect(() => {
+    const p = pendingPlace;
+    if (!p || !session) return;
+    untrack(() => {
+      pendingPlace = null;
+      goPlace(p);
+    });
+  });
   /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
   function someWorld(): string | undefined {
     const sel = scene.subjects.find((x) => x.address === ws.selection);
@@ -1373,6 +1427,7 @@
         if (a.door === "sol") void openSol();
         else if (a.door === "grow") openMake("generate");
         else if (a.door === "bring") openCampaign();
+        else if (a.door === "carry" && carryOn && carryTo) pendingPlace = carryTo;
       } else if ("desk" in a) chooseDesk(a.desk);
       else if ("screen" in a) (toSystem(), go(a.screen));
       else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
@@ -1857,7 +1912,7 @@
 
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
-{#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
+{#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} onfresh={openFresh} />{/if}
 <div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-desk={desk} data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   {#if filled}
     <!-- The top edge: the pointer there brings the bar back over the picture. -->
@@ -1915,6 +1970,7 @@
       <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new in Help"></span>{/if}</button>
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
+          <button type="button" data-more-fresh onclick={() => ((moreOpen = false), openFresh())} title="Alpha: forget this browser's remembered choices, or everything, and open as a new visitor">Start fresh… <small>alpha</small></button>
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
           <div class="depth-more" data-always={partShows("depth", desk) ? undefined : ""}><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
@@ -2033,6 +2089,8 @@
     </footer>
     {#if fetchNote}<p class="kept-note" role="status" data-explorers-fetch-note>{fetchNote} <button type="button" class="linkbtn" onclick={() => (fetchNote = null)}>OK</button></p>{/if}
     {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
+    <!-- One note at a time in the same place: the kept campaign's note first, then the old-Sol one. -->
+    {#if solStale && !solStaleQuiet && !keptNote}<p class="kept-note" role="status" data-sol-stale>The Solar System in this campaign {solEntered ? "was" : "may have been"} entered from an older catalogue, so newer data (such as Saturn's small moons and ring structure) is not in it. <button type="button" class="linkbtn" onclick={openFresh}>Start fresh…</button> · <button type="button" class="linkbtn" onclick={() => (solStaleQuiet = true)}>Keep it</button></p>{/if}
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
       {#if partShows("status-line", desk, "seat")}<span>Seat: {session.seat.label}</span>{/if}
@@ -2111,6 +2169,22 @@
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
   {#if makeOpen && session}<MakeSystem {session} start={makeStart} file={makeFile} view={ws.view} onview={setView} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={freshDialog} class="help seats-dialog" aria-labelledby="fresh-title" data-fresh>
+  <h2 id="fresh-title">Start fresh</h2>
+  <p class="hint">An alpha aid. This browser remembers your choices and your campaign between visits, so a new build can open looking as you left it.</p>
+  {#if freshWhich === "settings"}
+    <p role="alert">This forgets your remembered choices: view style, desk, depth, lenses, light, sound, theme and skipping the start sheet. Your campaign, where you were in it, and agent keys stay.</p>
+    <p class="row"><button type="button" data-fresh-settings onclick={freshSettings}>Reset settings</button> <button type="button" onclick={() => (freshWhich = null)}>Back</button></p>
+  {:else if freshWhich === "everything"}
+    <p role="alert">This forgets everything SSE4 keeps in this browser: the campaign and any worlds you made or changed in it, a set-aside copy, installed packs, your settings and your agent keys. It cannot be undone. Download a backup first to keep the campaign.</p>
+    <p class="row"><button type="button" onclick={saveFile}>Download a backup</button> <button type="button" data-fresh-everything onclick={freshEverything}>Clear everything</button> <button type="button" onclick={() => (freshWhich = null)}>Back</button></p>
+  {:else}
+    <p class="row"><button type="button" onclick={() => (freshWhich = "settings")}>Reset settings… <small>keeps your campaign</small></button></p>
+    <p class="row"><button type="button" onclick={() => (freshWhich = "everything")}>Clear everything… <small>campaign too</small></button></p>
+  {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
