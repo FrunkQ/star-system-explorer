@@ -157,7 +157,7 @@ export { copyClip, readClip, placeClip, clipWords, missingPacks, subtree, CLIP_V
 export type { Clip, ClipNode, ClipEvent, ClipSource, ClipRead, Copied, PlacedBody } from "./clip.ts";
 export { pickLine, shownLines, opensKey, checkStartLines } from "./start.ts";
 export type { StartLine, StartLinesDoc, StartOpens } from "./start.ts";
-export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./sol.ts";
+export { readSol, solBatches, solFingerprint, solSourceText, SOL_TITLE, type SolSheet } from "./sol.ts";
 // The performance readout and its reports (PF1).
 export * from "./perf.ts";
 // The master data sheet's constants (MP22): one door to a constant's value for every package.
