@@ -15,6 +15,7 @@
 import type { FlowRow } from "./flow.ts";
 import { say, sayNumber } from "./figures.ts";
 import type { Depth } from "./depth.ts";
+import type { LifeEnergy, LifeView } from "./life.ts";
 
 /** One step of the core history, as the kernel publishes it. */
 export interface HeatStep {
@@ -273,5 +274,184 @@ export function heatCaveats(env: HeatEnvelope, s: HeatStep): HeatCaveat[] {
     out.push({ id: "inner-core-early", fixedBy: "the core nucleation fudge (fudge register)", words: "Inner cores freeze too early and grow too big: a stand-in rule for when the core's centre starts to freeze. Earth's comes out about 3,000 km in radius against 1,221 km measured." });
   }
   out.push({ id: "readers-made", fixedBy: "HF2", words: "Landforms on the surface (volcanoes, plates, lava plains) still read the heat made inside, not the heat lost shown here." });
+  return out;
+}
+
+// The outside half (HV2b; Alex, 26 Nov: "sunlight can heat a core if close enough - we cant miss it... how much is
+// absorbed, how much reflected (albedo visually)"). The climate's own sunlight books (`survey_surface` climate
+// `sunlight`, HV2a), W/m² averaged over the whole surface: arriving = reflected + absorbed, and the world gives off
+// emitted = absorbed + internal. Drawn as its own flow at its own scale beside the inside half, because sunlight is
+// usually thousands of times the heat from inside; the inside half's "out through the surface" is what this half
+// calls "heat from inside", and the words say how the two compare.
+
+/** The climate's sunlight books, W/m² of surface (sse_climate `Sunlight`). */
+export interface Sunlight {
+  arriving_w_m2: number;
+  absorbed_w_m2: number;
+  reflected_w_m2: number;
+  bond_albedo: number;
+  internal_w_m2: number;
+  emitted_w_m2: number;
+}
+
+export const SUN_NODES = {
+  sun: "Sunlight",
+  inside: "Heat from inside",
+  skin: "Its surface and air",
+  reflected: "Reflected to space",
+  emitted: "Given off as warmth",
+} as const;
+
+export const SUN_COLUMNS = ["Comes from", "", "Ends up as"] as const;
+
+export interface SunBooks {
+  rows: FlowRow[];
+  arriving_w: number;
+  absorbed_w: number;
+  reflected_w: number;
+  inside_w: number;
+  emitted_w: number;
+  /** Share of the arriving sunlight sent straight back to space, 0 to 1 (the Bond albedo the climate uses). */
+  albedo: number;
+}
+
+/** The outside half's rows, in W: what reaches the surface and air and what leaves it. */
+export function sunBooks(env: Pick<HeatEnvelope, "reference_radius_m">, sun: Sunlight): SunBooks {
+  const a = surfaceArea(env);
+  const N = SUN_NODES;
+  const b = { arriving_w: sun.arriving_w_m2 * a, absorbed_w: sun.absorbed_w_m2 * a, reflected_w: sun.reflected_w_m2 * a, inside_w: sun.internal_w_m2 * a, emitted_w: sun.emitted_w_m2 * a };
+  const rows: FlowRow[] = [];
+  const add = (from: string, to: string, amount: number, kind: string) => {
+    if (amount > 0) rows.push({ from, to, amount, kind });
+  };
+  add(N.sun, N.skin, b.arriving_w, "light");
+  add(N.inside, N.skin, b.inside_w, "heat");
+  add(N.skin, N.reflected, b.reflected_w, "light");
+  add(N.skin, N.emitted, b.emitted_w, "heat");
+  return { rows, ...b, albedo: sun.bond_albedo };
+}
+
+export function sunColumn(id: string): number {
+  if (id === SUN_NODES.sun || id === SUN_NODES.inside) return 0;
+  return id === SUN_NODES.skin ? 1 : 2;
+}
+
+export function sunRank(id: string): number {
+  const order: string[] = Object.values(SUN_NODES);
+  const i = order.indexOf(id);
+  return i < 0 ? order.length : i;
+}
+
+/** A share in whole percent, for words ("30%"). */
+export const sharePercent = (x: number) => `${sayNumber(Math.round(x * 100), 3)}%`;
+
+/**
+ * The outside half in words, from the climate's sunlight books only: what arrives, what is reflected and soaked
+ * up, and how that compares with the heat from inside (which one sets how warm the surface is). Curious gets two.
+ */
+export function sunWhy(env: HeatEnvelope, sun: Sunlight, depth: Depth = "science", insideLost_w = 0): string[] {
+  const b = sunBooks(env, sun);
+  const w = env.label || "The world";
+  const out: string[] = [];
+  if (b.arriving_w <= 0) {
+    out.push(`No sunlight reaches ${w} in the climate's books, so all the warmth it gives off comes from inside.`);
+    return out;
+  }
+  out.push(`Sunlight brings ${w} ${heatWatts(b.arriving_w, depth)}. It reflects ${sharePercent(b.albedo)} straight back to space and soaks up the rest, ${heatWatts(b.absorbed_w, depth)}.`);
+  // The heat from inside: the climate's own figure where it counts one, else the core history's heat lost (the
+  // inside half below), compared in words only; the climate's books are never changed.
+  const inside = b.inside_w > 0 ? b.inside_w : insideLost_w;
+  if (inside > 0) {
+    const r = b.absorbed_w / inside;
+    if (r >= 2) out.push(`That is about ${sayNumber(r, 2)} times the heat coming up from inside (${heatWatts(inside, depth)}), so sunlight, not its inside, sets how warm its surface is.`);
+    else if (r <= 0.5) out.push(`Its inside gives off about ${sayNumber(1 / r, 2)} times the sunlight it soaks up, so its own heat, not its sun, keeps its surface warm.`);
+    else out.push(`Sunlight and its own heat from inside are about as strong as each other at its surface.`);
+  } else {
+    out.push(`Almost no heat comes up from inside, so sunlight alone sets how warm its surface is.`);
+  }
+  if (depth === "curious") return out;
+  out.push(`In balance it gives off ${heatWatts(b.emitted_w, depth)} as warmth (infrared): what it soaks up${b.inside_w > 0 ? " plus what comes from inside" : ""}.`);
+  if (b.inside_w <= 0 && insideLost_w > 0) out.push(`The climate leaves out the heat from inside: next to the sunlight it is too small to change how warm the surface is.`);
+  return out;
+}
+
+// Life's share (LE-U1; Alex, 26 Nov: energy available "will control the pace of development/evolution as it is the
+// "first step" of the energy gradient"). The kernel's energy ledger (LE2, `life_view` `view.energy.world`): usable
+// energy reaching places life could live, what its kinds of life could catch, what they catch, what staying alive
+// costs, and what is spare. These nest inside one another and span many powers of ten, so they are drawn as a ladder
+// of bars on a log scale under the sunlight soaked up, never as bands of the sunlight flow (they would be hairlines).
+
+export interface LifeRung {
+  id: "absorbed" | "arriving" | "offered" | "captured" | "keep_alive" | "surplus";
+  label: string;
+  w: number;
+}
+
+/** The ladder, biggest first; a line the kernel leaves null is left out. Surplus only when there is some. */
+export function lifeLadder(e: LifeEnergy, absorbed_w: number | null): LifeRung[] {
+  const w = e.world;
+  const out: LifeRung[] = [];
+  const add = (id: LifeRung["id"], label: string, v: number | null | undefined) => {
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) out.push({ id, label, w: v });
+  };
+  add("absorbed", "Sunlight soaked up", absorbed_w);
+  add("arriving", "Usable energy where life could live", w.arriving_w);
+  add("offered", "What its kinds of life could catch", w.offered_w);
+  add("captured", "What life catches", w.captured_w);
+  add("keep_alive", "What staying alive costs", w.keep_alive_w);
+  add("surplus", "Spare, for growing and spreading", w.surplus_w);
+  return out;
+}
+
+/** Bar lengths on a log scale, 0 to 1, over the ladder's own span (at least three powers of ten). */
+export function ladderLengths(rungs: LifeRung[]): number[] {
+  if (!rungs.length) return [];
+  const logs = rungs.map((r) => Math.log10(r.w));
+  const hi = Math.max(...logs);
+  const lo = Math.min(Math.min(...logs), hi - 3) - 0.5;
+  return logs.map((l) => (l - lo) / (hi - lo));
+}
+
+/**
+ * The pace of evolution against Earth's, from the kernel's own opportunity clock (box D: opportunity gathers in
+ * Earth-Myr, so Earth-Myr gathered per Myr is the pace against Earth's), over the last two points of the timeline.
+ * Null when there is no life now or the clock has stopped.
+ */
+export function lifePace(v: Pick<LifeView, "timeline">): number | null {
+  const t = v.timeline;
+  if (t.length < 2) return null;
+  const a = t[t.length - 2]!;
+  const b = t[t.length - 1]!;
+  if (!b.alive || b.at_myr <= a.at_myr) return null;
+  const r = (b.opportunity - a.opportunity) / (b.at_myr - a.at_myr);
+  return r > 0 && Number.isFinite(r) ? r : null;
+}
+
+/** Life's share in words: what it catches against the sunlight, whether it pays its keep, and how fast it evolves. */
+export function lifeWhy(e: LifeEnergy, absorbed_w: number | null, pace: number | null, depth: Depth = "science"): string[] {
+  const w = e.world;
+  const out: string[] = [];
+  const cap = w.captured_w;
+  if (cap === null) {
+    out.push(`How much energy life catches here is not known: ${e.unknown.length ? "some places life could live lack the figures it needs" : "the kernel leaves it out"}.`);
+    return out;
+  }
+  if (cap <= 0) {
+    out.push(w.arriving_w && w.arriving_w > 0 ? `No life catches any of the ${heatWatts(w.arriving_w, depth)} of usable energy reaching places it could live.` : `No usable energy reaches anywhere life could live, so nothing catches any.`);
+    return out;
+  }
+  out.push(absorbed_w && absorbed_w > cap ? `Life catches ${heatWatts(cap, depth)}: about 1 part in ${sayNumber(absorbed_w / cap, 2)} of the sunlight it soaks up.` : `Life catches ${heatWatts(cap, depth)}.`);
+  const keep = w.keep_alive_w;
+  // "Alive, barely" when every habitat where life catches anything is barely alive (LE1).
+  const living = e.habitats.filter((h) => !h.closed && (h.captured_w ?? 0) > 0);
+  const barely = living.length > 0 && living.every((h) => h.barely);
+  if (keep !== null && keep > 0) {
+    if (barely) out.push(`Staying alive costs ${heatWatts(keep, depth)} at the thinnest population ever counted, more than it catches: it is alive, barely.`);
+    // The kernel's own surplus (summed where life pays its keep), never caught less kept here.
+    else if ((w.surplus_w ?? 0) > 0) out.push(`Staying alive costs ${heatWatts(keep, depth)}; where life pays its keep it has ${heatWatts(w.surplus_w!, depth)} spare for growing and spreading.`);
+    else out.push(`Staying alive costs ${heatWatts(keep, depth)}, more than it catches: life here is doubtful.`);
+  }
+  if (depth === "curious") return out;
+  if (pace !== null) out.push(pace >= 0.5 && pace <= 2 ? `Its life evolves at about Earth's pace.` : `Its life evolves at about ${sayNumber(pace, 2)} times Earth's pace: more energy caught means more chances to try new things.`);
   return out;
 }

@@ -230,3 +230,44 @@ export function deskMemoryKey(desk: Desk, what: DeskMemory, level?: DeskLevel): 
   if (per === "desk" && level !== undefined) throw new Error(`${what} is remembered per desk, not per level`);
   return level === undefined ? `desk.${desk}.${what}` : `desk.${desk}.${level}.${what}`;
 }
+
+/** The level a rail scale remembers under; the Workshop changes the tool, not the universe, and has none. */
+export function deskLevelOf(scale: string): DeskLevel | null {
+  return (DESK_LEVELS as readonly string[]).includes(scale) ? (scale as DeskLevel) : null;
+}
+
+/**
+ * What a desk remembers, read back (TM6, design question 9): the desk's own value if it has one, else the last value
+ * chosen anywhere on this device (the plain key), so a desk or level visited for the first time starts from the
+ * viewer's latest choice rather than from nothing. `load` is the shell's `loadPref`.
+ */
+export function recallForDesk(load: (key: string) => string | null, desk: Desk, what: DeskMemory, level?: DeskLevel | null): { value: string | null; own: boolean } {
+  if (DESK_MEMORY[what] === "level" && !level) return { value: load(what), own: false };
+  const own = load(deskMemoryKey(desk, what, DESK_MEMORY[what] === "level" ? level! : undefined));
+  return own !== null ? { value: own, own: true } : { value: load(what), own: false };
+}
+
+/** The keys a choice is kept under: the desk's own (when it has a level, or needs none) and the plain key. */
+export function keepForDesk(desk: Desk, what: DeskMemory, level?: DeskLevel | null): string[] {
+  if (DESK_MEMORY[what] === "level" && !level) return [what];
+  return [deskMemoryKey(desk, what, DESK_MEMORY[what] === "level" ? level! : undefined), what];
+}
+
+/**
+ * What the ruler opens on (top-level design 12.1), for a desk at a level: the span this desk last chose there, else the
+ * desk's default. Explore at a system, world or site opens on human time ("week", a Show id the ruler knows), with
+ * "Whole life ›" beside it; Build, and every desk above the system, on the whole history (null). Run has the clock, not
+ * the ruler. `kept` is what `keepRulerSpan` wrote: a length of time, or "whole".
+ */
+export function rulerOpens(desk: Desk, level: DeskLevel | null, kept: string | null): number | string | null {
+  if (kept === "whole") return null;
+  const n = kept === null ? NaN : Number(kept);
+  if (Number.isFinite(n) && n > 0) return n;
+  const human = level === "system" || level === "world" || level === "site";
+  return desk === "explore" && human ? "week" : null;
+}
+
+/** A span the GM chose, as `rulerOpens` reads it back. */
+export function keepRulerSpan(span: number | null): string {
+  return span === null || !(span > 0) || !Number.isFinite(span) ? "whole" : String(span);
+}

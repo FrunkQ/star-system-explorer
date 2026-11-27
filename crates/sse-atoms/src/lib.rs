@@ -96,6 +96,8 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("gravity.distance", "distance from a mass's centre (m)"),
     ("gravity.clock_rate_hovering", "rate of a clock held still near a mass, against a far clock"),
     ("gravity.clock_rate_orbiting", "rate of a clock on a circular orbit near a mass, against a far clock"),
+    ("group.age", "age of the universe when a group's edge is found (s)"),
+    ("group.zero_velocity_radius", "radius round a group inside which galaxies have stopped moving apart and fall together (m)"),
     ("gravity.tide_per_metre", "difference in pull per metre along the line to a mass (s-2)"),
     ("observer.distance", "distance of a viewer from a body's centre (m)"),
     ("observer.lens_distance", "distance from a viewer to a bending mass (m)"),
@@ -458,6 +460,11 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
     ("flare.energy", "total energy released by a flare, all wavelengths"),
     ("flare.rate_above", "flares per unit time with at least the given energy"),
+    // prominences (SG6)
+    ("star.surface_field", "mean magnetic field strength over a star's surface"),
+    ("star.corona_temperature", "mean temperature of a star's corona"),
+    ("star.corona_base_density", "particles per cubic metre at the foot of a star's corona"),
+    ("star.closed_corona_extent", "reach of a star's closed magnetic field, in stellar radii"),
     // what stops a wind (MF6)
     ("body.ionopause_altitude", "height above the ground at which a body's air holds off the stellar wind"),
     ("magnetosphere.flaring", "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)"),

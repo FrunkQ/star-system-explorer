@@ -29,14 +29,10 @@ fn num(v: Option<&Value>) -> Option<f64> {
     }
 }
 
-/// The star's wind at `d` metres, from the stellar wind block's defaults.
+/// The star's wind at `d` metres, from the stellar wind block's settings
+/// in force.
 fn wind_at(d: f64) -> Option<sse_field::Wind> {
-    let atoms = sse_atoms::atoms();
-    let a = atoms
-        .iter()
-        .find(|a| a.decl().id == "sse.light.stellar_wind")?;
-    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-    let out = a.eval(&[d], &p).ok()?;
+    let out = sse_physics::run("sse.light.stellar_wind", &[d]).ok()?;
     Some(sse_field::Wind {
         density_kg_m3: out[0],
         speed_m_s: out[1],

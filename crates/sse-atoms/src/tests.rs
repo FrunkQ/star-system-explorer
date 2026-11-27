@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 177,
+        n, 182,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1628,4 +1628,47 @@ fn ice_ground_blocks_match_their_sums() {
     // Callisto's old ground is dark, Europa's young ground bright.
     assert!(ig::lagged_reflectance(0.95, 0.0572, ig::lag_share(1.4e17, ig::LAG_TAU_S)) < 0.25);
     assert!(ig::lagged_reflectance(0.95, 0.0572, ig::lag_share(1.9e15, ig::LAG_TAU_S)) > 0.9);
+}
+
+#[test]
+fn prominence_blocks_match_their_sums() {
+    use crate::activity as a;
+    for ro in [0.02, 0.13, 0.5, 1.8, 3.0] {
+        let got = run("sse.activity.surface_field", &[ro])[0];
+        let want = a::surface_field(ro, 2050.0, -0.11, 199.0, -1.26, 0.13);
+        assert!(
+            (got - want).abs() <= 1e-12 * want,
+            "{ro}: {got} against {want}"
+        );
+    }
+    // The Sun: about a hundred gauss, a corona near 1.7 MK about 2e14 per m³ at its foot.
+    let b = a::surface_field(1.8, 2050.0, -0.11, 199.0, -1.26, 0.13);
+    assert!((0.008..0.011).contains(&b), "{b}");
+    let lx = m::pow(10.0, a::SUN_LOG_RX) * L_SUN;
+    let g = GM_SUN / (R_SUN * R_SUN);
+    let t = run("sse.activity.corona_temperature", &[lx, R_SUN])[0];
+    assert!(
+        (t - a::corona_temperature(lx, R_SUN, 0.11, 0.26)).abs() < 1e-6,
+        "{t}"
+    );
+    assert!((1.4e6..2.0e6).contains(&t), "{t}");
+    let n = run("sse.activity.corona_base_density", &[lx, R_SUN, t, g])[0];
+    let nw = a::corona_base_density(lx, R_SUN, t, g, 1.2e-35, 0.6);
+    assert!((n - nw).abs() <= 1e-9 * nw, "{n} against {nw}");
+    assert!((5e13..1e15).contains(&n), "{n}");
+    // The Sun's co-rotation radius is far outside its closed field; AB Doradus's is inside.
+    let day = sse_core::sheet::DAY;
+    let rk = run(
+        "sse.orbit.semi_major_axis_from_period",
+        &[26.09 * day, M_SUN],
+    )[0];
+    assert!((rk - a::corotation_radius(M_SUN, 26.09 * day)).abs() <= 1e-9 * rk);
+    assert!((30.0..45.0).contains(&(rk / R_SUN)), "{}", rk / R_SUN);
+    for bf in [b, 0.285] {
+        let got = run("sse.activity.closed_corona_radius", &[bf])[0];
+        let want = a::closed_corona_radius(bf, 2.5, 95.0, 1.0 / 3.0);
+        assert!((got - want).abs() <= 1e-12 * want, "{got} against {want}");
+    }
+    let rk_abdor = a::corotation_radius(0.86 * M_SUN, 0.514 * day) / (0.96 * R_SUN);
+    assert!(rk_abdor < a::closed_corona_radius(0.285, 2.5, 95.0, 1.0 / 3.0));
 }

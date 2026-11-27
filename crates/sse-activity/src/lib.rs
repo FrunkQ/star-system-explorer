@@ -22,6 +22,7 @@ use sse_core::{Address, Seed};
 use sse_flow::Reference;
 use sse_light::{LightDescription, Part};
 
+pub mod prominence;
 #[cfg(test)]
 mod tests;
 
