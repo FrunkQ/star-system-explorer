@@ -106,8 +106,13 @@ export interface Workspace {
   followClock?(): void;
   /** Set how fast time passes on screen, clock seconds per real second (0 stops it). */
   setRate?(rate: number): void;
-  /** The top pack's calendar, when a pack gives one (kernel `calendar`); the ruler counts dates in it. */
+  /** The top pack's calendar, when a pack gives one (kernel `calendar`), or a real-sky system's own; dates count in it. */
   pack_calendar?: PackCalendar | null;
+  /**
+   * The universe second the viewed system was born (kernel `resolved_system`'s `birth_s`): the screen's years count
+   * from it, so the second drawn is the birth second plus the screen's age (`drawnSecond`). Absent or null for the campaign's own scene.
+   */
+  birth_s?: bigint | null;
   mode: "edit" | "view";
   /** The GM's desk (Explore, Build, Run): the "Known to" eyes show on Build and Run only (SV2). */
   desk?: "explore" | "build" | "run";

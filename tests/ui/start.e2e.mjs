@@ -7,7 +7,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { more } from "./nav.mjs";
+import { more, pinClock } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -25,7 +25,7 @@ const shot = async (page, n) => {
 
 try {
   for (const [vp, viewport] of [["desk", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
-    const browser = await chromium.launch();
+    const browser = pinClock(await chromium.launch());
     const context = await browser.newContext({ viewport });
     const gm = await context.newPage();
     const errors = [];

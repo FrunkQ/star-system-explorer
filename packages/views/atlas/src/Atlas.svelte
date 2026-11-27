@@ -102,7 +102,7 @@
   const titleOf = (a: string | null) => lines.find((l) => l.address === a)?.title ?? "";
 
   // The date the page speaks for: the ruler's time, in the campaign's calendar. A printed page says it in its footer.
-  const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar, ws.birth_s ?? null) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   const date = $derived(dateWords(ws.now_yr, calendar));
   const footer = $derived(`${edition.name} · ${titleOf(lines[0]?.address ?? null)} · as known to ${audienceWords}, ${date}`);
 

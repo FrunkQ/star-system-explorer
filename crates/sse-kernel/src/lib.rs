@@ -3297,6 +3297,7 @@ impl Kernel {
             facts: r.facts,
             evidence: r.evidence,
             spec: r.spec,
+            birth_s: r.birth_s,
             surfaces: r.surfaces,
             tiles: r.tiles,
             refused: r.refused,
