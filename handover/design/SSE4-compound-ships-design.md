@@ -1,6 +1,6 @@
 # SSE4: compound ships that separate and rejoin (track CM)
 
-Status: **PROPOSED**, 27 Nov 2026. Design only (Fable); nothing here is built. CM is a code only and is never shown in the product.
+Status: **PROPOSED**, 27 Nov 2026 (section 8A added the same night from Alex's 00:23 follow-up). Design only (Fable); nothing here is built. CM is a code only and is never shown in the product.
 
 Alex's ask (27 Nov 2026, 00:02 to 00:05 UTC, thread "Design compound ships that separate and rejoin"):
 
@@ -296,6 +296,57 @@ Alex: "a topology that would allow you to actually build multi-stage ships using
 
 Carriers with fighters are the inside case: a hangar bay sized from twelve fighter layouts, each fighter mounted inside with bond `rest` and lines `propellant, power`. "Launch all" is a sequence of twelve releases at a spacing (a pack value for a launch rate, see section 11 on the game pack).
 
+## 8A. Stations, depots and a quick 2D builder (Alex, 27 Nov 00:23)
+
+Alex, after reading the proposal: "I think we could use mounts for constructing modular space stations... Put Starship in orbit as a refuelling tank; refuel from it using the system; be able to fly anywhere in the system. Have Skylab... effectively a discarded Saturn 5 stage?... describing the ISS as its compound components and where the mounts are located will actually allow you to construct an ISS. I like this idea, we need to double down. This really bridges the gap between now and far future spaceships. The practicality is tin cans in space and this is actually what tin cans in space is." And: "a quick 2D module creation system... a palette of primitives based on the real ship specs, fuel tank size, so you can offer them one fuel tank or you can offer them that fuel tank broken up into lots of smaller fuel tanks and they can distribute them around the ship." And at 00:23: "Parts from every decade and predict into the future."
+
+### 8A.1 A station is a compound that is never released
+
+Nothing new is needed for stations. A module is a construct; a station is modules captured at ports on each other's hulls and never released. The ISS becomes its modules, each with its real size and ports, mounted where they really are, each mount dated on the day it was made. The drawing engine then **builds the ISS from that description**: the trusses on the hull of Unity, Destiny in front of Unity, the visiting Soyuz and Dragon at their ports on their dates. Scrub the clock from 1998 to today and the station assembles itself, which is the RS feasibility's "about 40 dated joins" (unverified) made visible.
+
+The same holds for any station in any setting: a ring habitat is modules on the hull of a hub, a cruiser is modules in front of and behind a spine. "Tin cans in space" is a fair name for the near-future end of the palette, and the far-future end uses the same mounts with the future-tech figures.
+
+### 8A.2 A depot is a construct with a propellant line
+
+"Starship in orbit as a refuelling tank" is the propellant line of section 5.2 between two constructs, no special:
+
+1. A tanker (or several) is captured on the depot's hull with a `propellant` line; each transfer is a dated amount from the tanker's tanks to the depot's.
+2. The ship that will travel is captured at the depot, and the transfer goes the other way.
+3. It releases with full tanks. Its own Δv, from its own tanks and the staging block, now reaches places it could not from the ground, and the voyage planner offers them.
+
+The physics that matters is already in the budgets: what is lost to boil-off while the depot waits (a small block on the tank's insulation and sunlight, cited, marked estimated until read), and how many tanker flights it took (each tanker's delivered amount after its own climb). How many tanker flights a real Starship refill needs is uncertain in the sources (unverified, figures vary widely), and the pack would carry it as a range with its sources.
+
+### 8A.3 Skylab, and stages reused
+
+Alex's guess is right in substance. Skylab was built from a Saturn V third stage, the S-IVB, but fitted out on the ground and launched as a finished workshop on a two-stage Saturn V. Fitting out a stage after it had been used in orbit, the "wet workshop", was planned and then dropped (both from memory, unverified). In CM terms both are the same construct with a different history:
+
+- **Dry workshop (what flew):** the S-IVB's tanks become a habitat on the ground. It is a module built from a stage template, launched in front of the S-II.
+- **Wet workshop (the plan):** the stage flies as a stage, spends its tanks, is released into orbit, and is then captured as a module. Its emptied tank becomes a pressurised volume by a dated refit (MC6's refit log already records changes to a construct). A GM can do this to any spent stage. That is the "implausible is not a limit" rule: the physics says what it takes (the tank's volume, what it must be fitted with, the air to fill it).
+
+### 8A.4 The quick 2D builder
+
+An Edit desk tool for making stations, ships, habitats, cruisers and exploration ships out of real parts. It is the 2D picture of section 8 turned into a canvas, so it is not a second designer.
+
+- **A palette of primitives**, each a real part or module from the reference pack and the spaceflight pack: tanks, engines, habitat cans, docking nodes, trusses, solar arrays, radiators, shields, landing legs, bays. Each carries its real figures (size, dry mass, volume, power, waste heat) and its source.
+- **Drag onto a place.** Drop a primitive in front of, behind, inside, on the hull of, or outside another; it snaps to ports and stations. A primitive that cannot fly alone becomes a part of the module it is dropped on. A module with its own ports, drive or crew space becomes a construct with a mount, so the same canvas builds both one ship and a compound.
+- **One tank or many.** Any tank on the palette can be split into N smaller tanks of the same total volume, to spread round the hull. The cost is not invented: for a tank whose walls are set by pressure, the wall mass goes with pressure times volume, so splitting costs little wall; insulation, fittings and boil-off go with surface area, which grows as N^(1/3) for the same total volume. Both are small cited blocks (thin-wall pressure vessel; surface-to-volume), marked unverified until the builder reads them. So the canvas shows honestly what splitting buys (balance, room, survivability later) and what it costs (mass, boil-off).
+- **Live totals** under the canvas, from the kernel: mass, Δv per stage, thrust to weight, power and waste heat, air and supplies days, and the fit notes of section 8.2. Steer, never stop: a ship that cannot leave the ground still saves, and says so.
+- **Saved as a recipe**, never a drawing: constructs, parts, mounts and the style and seed. The 3D view and the 2D picture are drawn from it, as for every ship.
+- **Phone:** the palette is a sheet from the bottom; drop places are larger targets.
+
+### 8A.5 Parts from every decade, and predicted into the future
+
+Every primitive carries **the year it first flew** (or was first built at working scale, the future-tech design's "first generation"). The palette has an era control: pick 1965 and only what had flown by 1965 is offered at its real figures. That lets a GM build a 1970s station that could have been built in the 1970s, and lets the history pack's craft be rebuilt from their own decade's parts.
+
+**Past now, the figures are predicted, never typed:**
+
+- The future-tech design (accepted 23 Nov) already has the tech ladder and the limits: each figure (thrust for engine weight, exhaust speed, watts per kilogram of power plant, tank mass fraction, radiator temperature) has a physics ceiling from the limits table.
+- The flown parts give each figure a dated series (V-2 to Merlin for thrust to weight, SNAP-10A to the Kilopower designs for space reactors; the future-tech design section 5 quotes these, all to be checked by FT1's citation check).
+- A predicted part for a future decade takes the trend fitted to that series and bends it toward its ceiling (a curve that rises and saturates, the simplest honest shape; the fit and its form are one cited block, editable). Each predicted figure carries the mark `predicted`, with the series it came from, so a Science-depth reader can see why a 2080 tank weighs what it does.
+- Past the trend's reach, the ladder's own levels take over, and an advance (gravity plates, a better radiator) is the future-tech design's dated gain, not a palette entry.
+
+So the palette runs continuously from 1957 to far future, which is the bridge Alex named: the same mounts, the same budgets and the same canvas, with the figures moving from flown to predicted to the setting's own tech.
+
 ## 9. The real craft, from the one mechanism
 
 None of these needs a special. The left column is what the pack needs (RS feasibility sections 6 and 8); the right is how CM gives it.
@@ -309,7 +360,7 @@ None of these needs a special. The left column is what the pack needs (RS feasib
 | Cassini-Huygens | Huygens released, lands on Titan | Hull mount (Huygens sat on Cassini's side; unverified), release, Huygens' own entry and landing |
 | Curiosity | Cruise stage, heat shield, back shell, sky crane lowering the rover on bridles, crane flies away | Behind (cruise stage), front (heat shield), inside (rover in the back shell), outside (rover on the crane's tether), releases in order |
 | JWST, Juno, Dawn | Upper or kick stage drops | Behind mount, release |
-| ISS | About 40 modules joined over 13 years (unverified count), visiting crews come and go | Modules are constructs captured at ports on the hull and never released; each visit is a capture and a release; people move through `people` lines; station air pooled |
+| ISS | About 40 modules joined over 13 years (unverified count), visiting crews come and go; the drawing engine builds it from its modules and mounts (8A.1) | Modules are constructs captured at ports on the hull and never released; each visit is a capture and a release; people move through `people` lines; station air pooled |
 | Apollo-Soyuz | Two crews meet through a docking module | Capture at a port, people line, a transfer of people both ways |
 | Hubble servicing | The Shuttle captures Hubble into its bay and releases it | Capture inside, release |
 | V-2, SNAP-10A | Single craft | A compound of one: nothing to add |
@@ -341,6 +392,7 @@ Phone: the Carried fold is a list; the sequence strip scrolls sideways; the 2D p
 | The staging block and the sequence, the planner flying it (CM5, CM6) | Damage that breaks a mount (4.2) |
 | The designer's placement, bays, ports and the 2D sequence strip (CM7, CM8) | Interior views of bays (Alex: no deck plans) |
 | The real pack's showcase craft as compounds, and the "SSE4 says" line for them (CM9, CM10; with RS5 and RS7) | Economy autopilots running carriers and shuttles (4.1) |
+| Stations and depots, the palette, the 2D builder, parts by decade (CM12 to CM15) | Building from parts in play, at a shipyard, over time (4.1 economy) |
 | Making the pack installable (CM0) | Launch-and-recovery tactics in combat (4.2) |
 
 **Game-pack features, flagged for Alex** (4.0's only game pack is Traveller): carriers, small craft, drop tanks and launch tubes are common in Traveller's ship rules (from memory, unverified). The **mechanism** (mounts, bays, releases, capture, drop tanks as a propellant line behind) is base and general. Any **Traveller rule** on top (hangar capacity in displacement tons, launch and recovery rates per combat round, the cost of a docking clamp, drop tank prices) is a game-pack feature and goes to Alex before it is built (question 10). It never carries the TAS logo.
@@ -368,9 +420,13 @@ Phone: the Carried fold is a list; the sequence strip scrolls sideways; the 2D p
 | **CM8** | The 2D picture for compounds: outlines per construct, joints, call-outs, the sequence strip; the Carried fold on the Ships and stations card; object menu actions | CM6, CM7 | renderer, manifest and navigation threads | none |
 | **CM9** | The showcase craft as compounds: Apollo 11, STS-1, Falcon 9, Curiosity, Cassini-Huygens, ISS assembly, with constructs, mounts and recorded sequences from the existing logs; the RS2 `to_read` figures they need | CM1 to CM6, RS2 | spaceflight pack thread | none (pack data) |
 | **CM10** | The "SSE4 says" line for the showcase craft: the sequence flown by SSE4's own maths beside the recorded one, the difference reported as the future-tech test | CM9, RS5 (ascent), RS7 | spaceflight pack thread with the chart room and future-tech | none |
-| **CM11** | Compound templates in packs: a base set (two-stage rocket, lander and orbiter, carrier and wing, station and visitor) for any campaign | CM1, CM7 | pack thread | none |
+| **CM11** | Compound templates in packs: a base set (two-stage rocket, lander and orbiter, carrier and wing, station and visitor, depot and tanker) for any campaign | CM1, CM7 | pack thread | none |
+| **CM12** | Stations and depots: ISS and Skylab as compounds in the pack (modules with real sizes and ports, dated mounts), boil-off block, a depot sequence (tankers in, ship refilled, released) | CM3, CM9 | spaceflight pack thread with the kernel for the block | none |
+| **CM13** | The palette: primitives from the reference and spaceflight packs with real figures, first-flight year and source; splitting a tank into N with its cited wall and surface blocks | CM1, RS2 | pack thread with the data sheet thread | none |
+| **CM14** | The quick 2D builder on the Edit desk: drag primitives onto places and ports, promote to construct, live totals, fit notes, recipe save; phone sheet | CM7, CM8, CM13 | renderer | none |
+| **CM15** | Parts by decade and predicted: the era control; trend fits per figure toward the future-tech ceilings, marked `predicted`, as one cited editable block | CM13, FT1 | future-tech owner with the kernel | none |
 
-Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (the three that join up what exists), then CM3 to CM6, then CM8 to CM11. RS5 (ascent) stays its own package in the travel thread and should be designed after CM5, because the ascent block reads the compound's mass table.
+Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (the three that join up what exists), then CM3 to CM6, then CM8 to CM11, then CM12 to CM15 (CM13 can start early, since it is pack data). RS5 (ascent) stays its own package in the travel thread and should be designed after CM5, because the ascent block reads the compound's mass table.
 
 ## 14. Questions for Alex, each with a recommendation
 
@@ -385,7 +441,11 @@ Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (
 9. **Make the pack installable first (CM0)**, before any of the compound work, since today it can be reached only through Roll call's address. Recommended: yes; it is the biggest thing between the pack and its users and needs no new design.
 10. **Traveller carriers, small craft and drop tanks:** the mechanism is base; any Traveller rule on top (hangar tons, launch rates per round, prices) is a game-pack feature for you to approve before it is built. Recommended: hold the Traveller rules until CM1 to CM8 are on main, then decide.
 11. **Release:** CM0 to CM11 in 4.0; spacewalks, damage breaking mounts and combat launch tactics later. Recommended: yes.
-12. **Owners:** kernel for CM1, CM4, CM5; travel for CM2 and CM6; manifest for CM3; renderer for CM7 and CM8; the spaceflight pack thread for CM0, CM9, CM10. Recommended: yes, with the coordinator queuing CM1's golden slot.
+12. **Owners:** kernel for CM1, CM4, CM5; travel for CM2 and CM6; manifest for CM3; renderer for CM7, CM8 and CM14; the spaceflight pack thread for CM0, CM9, CM10 and CM12; pack and data sheet threads for CM13; future-tech for CM15. Recommended: yes, with the coordinator queuing CM1's golden slot.
+13. **Stations are compounds that are never released, and the drawing engine builds them from their modules and dated mounts** (the ISS assembling as the clock runs). Recommended: yes.
+14. **A depot is a construct with propellant lines; refuelling is a transfer, with boil-off as a small cited block.** Recommended: yes.
+15. **The quick 2D builder is the 2D picture made editable on the Edit desk**, not a second designer, with primitives that become parts or constructs by whether they can fly alone, and tanks split into N with real costs. Recommended: yes, in 4.0 after CM8, since it is mostly the designer's own layout plus a palette.
+16. **Parts by decade:** every primitive carries its first-flight year; future decades are predicted from the flown series bent toward the future-tech ceilings, marked `predicted`. Recommended: yes; it is the bridge from tin cans to far-future ships with no hand-typed future figures.
 
 ## 15. Not in this design
 
