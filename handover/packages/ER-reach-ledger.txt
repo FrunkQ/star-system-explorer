@@ -91,7 +91,6 @@ untested plan_voyage
 untested programs
 untested programs_step
 untested promote_star
-untested read_activity
 untested read_air_optics
 untested read_bows
 untested read_composition

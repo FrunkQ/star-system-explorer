@@ -4101,7 +4101,8 @@ impl Kernel {
                 seed,
                 at_s,
                 window,
-            } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
+                prominences,
+            } => systems::read_activity(stars, seed.as_deref(), at_s, window, prominences)?,
             Request::ReadField {
                 bodies,
                 fixture,
