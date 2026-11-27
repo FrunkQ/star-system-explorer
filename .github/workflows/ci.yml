@@ -156,6 +156,7 @@ jobs:
       - run: node tests/ui/postcards.e2e.mjs --screens ui-screens/postcards
       - run: node tests/ui/hold-grounds.e2e.mjs --screens ui-screens/hold-grounds
       - run: node tests/ui/campaign.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/fresh.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/biosphere.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/time.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/desk-memory.e2e.mjs chromium firefox --screens ui-screens
@@ -181,6 +182,8 @@ jobs:
       - run: node tests/ui/heat.e2e.mjs --screens ui-screens
       # The grand zoom, first part (GZ8): the cosmic web down to the galaxies nearby, one picture, the place line as progress.
       - run: node tests/ui/journey.e2e.mjs --screens ui-screens/journey
+      # The ship builder (CM14a): a catalogue ship opened as parts, stretched and clipped, a plan's budgets, 3D, the kernel's verdicts.
+      - run: node tests/ui/ship-builder.e2e.mjs --screens ui-screens/ship-builder
       # Ship manifest and crew (track MC): aboard, life support, Known to, pictures, fuel and the ship's log.
       - run: SSE_SHOTS=ui-screens/manifest node tests/ui/manifest.e2e.mjs
       # The star chooser (PR 615): pick a star for a new system.

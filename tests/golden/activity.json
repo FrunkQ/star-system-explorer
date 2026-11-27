@@ -137,15 +137,20 @@
           "speed_m_s": 1009118.5272147168,
           "mass_kg": 16056340350670.936,
           "direction": [
-            0.8689273140286528,
-            0.3226776128786205,
-            -0.3752925273462106
+            0.6851720199678212,
+            0.6363608815192732,
+            -0.3543785144802508
           ],
           "half_width_rad": 0.5235987755982988,
           "hits": [],
           "misses": [
             "u:t/sys:1/body:1"
           ]
+        },
+        "site": {
+          "region": "u:t/sys:1/star:0/region:-2.5",
+          "lat_deg": -20.755359783301397,
+          "lon_deg": 123.42696547741687
         }
       },
       {
@@ -197,15 +202,20 @@
           "speed_m_s": 859667.752757471,
           "mass_kg": 9926860852863.04,
           "direction": [
-            -0.7812689168840815,
-            -0.5719353778088486,
-            -0.2500176056229315
+            0.3660010090433104,
+            -0.6765148325596756,
+            0.6390390776048307
           ],
           "half_width_rad": 0.5235987755982988,
           "hits": [],
           "misses": [
             "u:t/sys:1/body:1"
           ]
+        },
+        "site": {
+          "region": "u:t/sys:1/star:0/region:-2.15",
+          "lat_deg": 39.72020320097944,
+          "lon_deg": 148.18169547885776
         }
       },
       {
@@ -252,6 +262,11 @@
               "doi": "10.1103/RevModPhys.93.025010"
             }
           ]
+        },
+        "site": {
+          "region": "u:t/sys:1/star:0/region:-2.10",
+          "lat_deg": 74.2119512741447,
+          "lon_deg": 195.26495436265736
         }
       }
     ],
@@ -263,7 +278,7 @@
     "stand_ins": [
       "flare durations scale as E^0.39 from 600 s at 10²⁵ J; rise is a tenth of decay",
       "flare light is a 10000 K black body plus 10 % extra in soft X-rays; no radio burst yet",
-      "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving within 30° of the star's equator; planets on circular orbits in that equator",
+      "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving from over the flare's active region (anywhere within 30° of the equator in a spell with none); planets on circular orbits in that equator",
       "largest possible flare 1e29 J"
     ],
     "references": [

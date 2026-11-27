@@ -11,4 +11,10 @@ Only the owner thread edits this file. Packages are in design section 13; owners
 | CM2 the flight log joined up: `mounted` pieces, position from the compound's root, capture checked for reach and speed with a rendezvous offered, release seeding the carried log (including from a course) with the push | done 27 Nov, PR 690 | packages/CM2-flight-log-join-up.md |
 | CM3 budgets across mounts | not started | |
 | CM4 the absolute conservation check (found and fixed a dock loop in RS4); propellant terms arrive with CM3 | done 27 Nov, PR 690 | packages/CM4-conservation-check.md |
-| CM5 to CM18 | accepted, not started (design section 13) | |
+| CM5, CM6 | accepted, not started (design section 13) | |
+| CM7 the designer places each construct by its mount; bays, ports, turned panels | done 27 Nov, PR 686 | packages/CM7-placement.md |
+| CM8 to CM12 | accepted, not started; CM8 (renderer owner, the builder thread) waits on CM6 | |
+| CM13 the palette: part 1 the one part format and 61 base parts, PR 697 (done 27 Nov); part 2 the tank wall, split surface, dish gain and link rate blocks, PR 704 (core lane). Eras of spaceflight, not decades (ruling 14A.8): `palette.eras` in base-parts | part 1 done; part 2 in the lane | packages/CM13-palette.md, packages/CM13-part2-blocks.md |
+| CM14a first builder slice (ruling 14A.7): catalogue-first start, Build it and Build to a plan on one canvas, the Build desk pictures are the builder, Style and Remix gone, catalogue ships converted to parts on open | in progress, builder thread | packages/CM14a-builder.md |
+| CM14 the full builder (compounds, staging, sequence) | waits on CM8 | |
+| CM15 to CM18 | accepted, not started (design section 13); CM15 reads eras, not decades | |
