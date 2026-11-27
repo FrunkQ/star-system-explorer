@@ -2,7 +2,9 @@
  "format": "sse.pack/1",
  "id": "sse.base-time",
  "version": "0.1.0",
- "kind": ["base-physics"],
+ "kind": [
+  "base-physics"
+ ],
  "kernel_range": "^0.1",
  "licence": "Apache-2.0",
  "provides": {
@@ -159,7 +161,7 @@
         "examples": [
          {
           "H": 2.1927112672380573e-18,
-          "t": 4.560563969097498e+17
+          "t": 456056396909749800
          }
         ]
        }
@@ -234,8 +236,8 @@
        "preview_tree",
        "split_construct",
        "join_constructs",
-     "mount_construct",
-     "release_construct",
+       "mount_construct",
+       "release_construct",
        "intent_decide",
        "programs",
        "attach_program",
@@ -262,27 +264,48 @@
      "wind_steps": 400,
      "core_start_fraction": 0.4
     },
-    "main_sequence_step_myr": 250.0,
+    "main_sequence_step_myr": 250,
     "subgiant_steps": 8,
     "giant_steps": 80,
     "tide_substeps": 8,
     "white_dwarf_steps": 24,
     "window_hill": 3.4641016151377544,
-    "window_years": 200.0,
-    "window_steps_per_orbit": 120.0,
+    "window_years": 200,
+    "window_steps_per_orbit": 120,
     "window_rewrite_da": 0.02,
-    "horizon_myr": 60.0,
+    "horizon_myr": 60,
     "runaway_greenhouse_flux": 1.1,
     "colours": [
-     [30000.0, "blue"],
-     [10000.0, "blue-white"],
-     [7500.0, "white"],
-     [6000.0, "yellow-white"],
-     [5000.0, "yellow"],
-     [3700.0, "orange"],
-     [0.0, "red"]
+     [
+      30000,
+      "blue"
+     ],
+     [
+      10000,
+      "blue-white"
+     ],
+     [
+      7500,
+      "white"
+     ],
+     [
+      6000,
+      "yellow-white"
+     ],
+     [
+      5000,
+      "yellow"
+     ],
+     [
+      3700,
+      "orange"
+     ],
+     [
+      0,
+      "red"
+     ]
     ],
-    "pollution_delay_myr": 100.0,
+    "pollution_delay_myr": 100,
     "sources": {
      "reimers_eta": "Reimers 1975; eta near 0.5 fits the red giant branch mass loss implied by horizontal branch stars in globular clusters (McDonald and Zijlstra 2015 give 0.477)",
      "window_hill": "2 sqrt(3) mutual Hill radii: Gladman 1993's stability limit for two planets on circular orbits",
