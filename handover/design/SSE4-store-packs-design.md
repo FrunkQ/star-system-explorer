@@ -55,7 +55,7 @@ The table reads as "carrying this makes a pack that kind":
 
 A pack of more than one kind shows every line that applies. The shipped packs' written kinds are wrong today (`base-ships` says `base-physics`); because kinds are now worked out, nothing has to be refiled and no golden moves. Their written kinds are corrected whenever a pack is next edited for another reason.
 
-**Shelves** are for people and are read from the contents, as the store already does for tag sets. The author may name a shelf in `about.shelf`; the store refuses a shelf the contents do not support and otherwise takes the first that fits:
+**Shelves** are for people and are read from the contents, as the store already does for tag sets. The author may name a shelf in `about.shelf`; that is its main shelf if the contents support it, and it is also listed on every other shelf its contents give it:
 
 | Shelf | Holds |
 |---|---|
