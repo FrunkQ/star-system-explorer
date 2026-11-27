@@ -705,6 +705,7 @@ dependencies = [
  "sse-field",
  "sse-flow",
  "sse-formation",
+ "sse-formula",
  "sse-hazard",
  "sse-import-v3",
  "sse-life",

@@ -14,6 +14,7 @@ sse-pack.workspace = true
 sse-reference.workspace = true
 sse-atoms.workspace = true
 sse-physics.workspace = true
+sse-formula = { path = "../sse-formula" }
 sse-observe = { path = "../sse-observe" }
 sse-record = { path = "../sse-record" }
 sse-trigger = { path = "../sse-trigger" }

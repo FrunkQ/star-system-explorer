@@ -60,6 +60,9 @@ mod names;
 mod names_tests;
 mod nav;
 mod orbits;
+mod pace;
+#[cfg(test)]
+mod pace_tests;
 #[cfg(test)]
 mod physics_tests;
 #[cfg(test)]
@@ -7804,6 +7807,7 @@ impl Kernel {
             Request::AtmosphereAdvice { body, at_s, facts } => {
                 self.atmosphere_advice(&body, at_s, facts.as_ref())?
             }
+            Request::PaceLadder => pace::ladder()?,
             Request::ReadCatalogue {
                 text,
                 packed_b64,
