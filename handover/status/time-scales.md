@@ -25,7 +25,7 @@ Not audited line by line: weather, surface, life, navigation (time inputs read o
 
 ## Packages
 
-Nothing is built. Golden notes are expectations. Released to build on Alex's yes: all of TP1 to TP9; TP10 needs its own short design first. Order: TP1 first and alone; then TP2 and TP4 side by side; then TP3, TP5 and TP9; then TP6; then TP7 and TP8. Core golden (`tests/golden/contract.jsonl`): TP2, TP5, TP8, and TP9 if `UniverseTime`'s stored form changes; TP1 is expected to move none.
+Built: TP1, TP2a (first slice) and TP4 (both below), all on main; TP4b (web and native read a JSON number alike, `packages/TP4b-web-numbers.md`). Nothing else is built. Golden notes are expectations. Released to build on Alex's yes: all of TP1 to TP9; TP10 needs its own short design first. Order: TP1 first and alone; then TP2 and TP4 side by side; then TP3, TP5 and TP9; then TP6; then TP7 and TP8. Core golden (`tests/golden/contract.jsonl`): TP2, TP5, TP8, and TP9 if `UniverseTime`'s stored form changes; TP1 is expected to move none.
 
 | Package | State | Owner (proposed) |
 |---|---|---|
@@ -34,13 +34,21 @@ Nothing is built. Golden notes are expectations. Released to build on Alex's yes
 | TP2a first slice (RW17 part 2, thread "Make eclipses happen on time"): `present_s` stated in base-cosmology; `birth_s` reported by `resolved_system` for every system; the screens draw at `birth_s` + age; the Sol door opens on the device's present through `set_campaign_now` | built, see below | eclipses thread |
 | TP2 the rest: `time.present_s` on the root, `system.birth_s` as a written fact, `dated`'s convention removed, Sol moved onto `present_s` (list below) | released; needs TP2a, TP1b, TP3 and the Sol today anchor mapping; core golden slot | kernel |
 | TP3 the clock object `sse.clock/1`; the screens write `set_campaign_now`; `now_yr`, `campaign_now_yr`, `campaign_epoch_yr`, `clock_yr` become whole seconds; save migration | released; needs TP2; agree with CLK and three desks | chart room |
-| TP4 process declarations (shape, own time, anchor) and the pace ladder; op `pace_ladder`; shrink-only check | released; needs TP1; area `time` | kernel |
+| TP4 process declarations (shape, own time, anchor) and the pace ladder; op `pace_ladder`; shrink-only check | built 27 Nov (thread "Build the time line's next step"); log `packages/TP4.md`; area `time`, core golden unchanged | kernel |
 | TP5 marches made path-free (grid from the star alone, full orbit state, checkpoints, exact-date write-back); two-legs test seen red first | released; needs TP1; core golden slot | kernel |
 | TP6 `happenings`: one op for marks from lines, streams, kept look-aheads, voyages and rule ticks | released; needs TP4; area `time` | kernel |
 | TP7 pacing on the ruler and the Run desk clock (Free, Catch, Stop at); natural paces by name; "what you passed"; the pace ladder strip; the ruler's break, the late marks after it and "next change". Mock-up to Alex first | released; needs TP3, TP6; with TM3b | chart room, three desks |
 | TP8 follow, jump or window as one kernel rule; the supernova and fast nebula as jumps; the general window; the coordinator used | released; needs TP5; core golden slot | kernel |
 | TP10 every scale's future: galaxy rings and merger trees run forward, the web's horizon, late streams at cited rates, black hole ends (the note's 12B) | needs its own short design first (Fable, with the cosmos and galaxy owners), then TP9 | cosmos, galaxy |
 | TP9 time to the end: checked conversions; deep time past 292 billion years with one ordering; look-aheads and marks across the change-over; far eras as marks; until TP10, the galaxy past the present labelled and registered | released; needs TP1 (marks part needs TP6); core golden slot if the stored form changes | kernel |
+
+## TP4, what it left (27 Nov 2026)
+
+- Six declarations in `packs/base-time` (`provides.other.processes`): `star.life`, `system.ageing` (march, follows `star.life`), `orbit.kepler`, `star.activity` (stream), `cosmos.expansion`, `campaign.record` (paced by its own marks). Op `pace_ladder`.
+- The check `every_dated_op_is_declared_or_on_the_ledger` (`crates/sse-kernel/src/pace_tests.rs`): 98 ops take a date, 68 declared, 30 on `packages/TP4-undeclared-ops.txt` (only shrinks). **Any thread adding an op with a date field declares its process in the same PR** (time design section 10); an owner who declares a ledgered op deletes its line.
+- Owed by the 30: weather, formation, surface, navigation and voyages, the night sky and star cells, the galaxy chart (its own time needs the galaxy's mass inside the Sun's radius as a stack value), nebulae, fields, composition and inventory, and the reads of a resolved system and the sifters.
+- TP4b: a JSON number is read as the nearest double first, everywhere (free-form values and packs); typed seconds are untouched. For TP2: from the web, times past 2^53 s cannot name every second (64 s apart today); they need to travel as text.
+- For TP6: the declared `marks` are the kinds each process will publish. For TP7: a view names its ops; the ladder says which processes they read.
 
 ## TP2a, as built (RW17 part 2, 26 Nov 2026)
 

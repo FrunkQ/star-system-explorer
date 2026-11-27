@@ -69,6 +69,9 @@ mod names;
 mod names_tests;
 mod nav;
 mod orbits;
+mod pace;
+#[cfg(test)]
+mod pace_tests;
 #[cfg(test)]
 mod physics_tests;
 #[cfg(test)]
@@ -2346,7 +2349,7 @@ impl Kernel {
         let mut ms = Vec::new();
         for (i, p) in packs.iter().enumerate() {
             ms.push(
-                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                sse_pack::PackManifest::from_value(p)
                     .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
             );
         }
@@ -2560,7 +2563,7 @@ impl Kernel {
         let mut ms = Vec::new();
         for (i, p) in packs.iter().enumerate() {
             ms.push(
-                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                sse_pack::PackManifest::from_value(p)
                     .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
             );
         }
@@ -3322,7 +3325,7 @@ impl Kernel {
                 let mut ms = Vec::new();
                 for (i, p) in packs.iter().enumerate() {
                     ms.push(
-                        serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                        sse_pack::PackManifest::from_value(p)
                             .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
                     );
                 }
@@ -8056,6 +8059,7 @@ impl Kernel {
             Request::AtmosphereAdvice { body, at_s, facts } => {
                 self.atmosphere_advice(&body, at_s, facts.as_ref())?
             }
+            Request::PaceLadder => pace::ladder()?,
             Request::ReadCatalogue {
                 text,
                 packed_b64,

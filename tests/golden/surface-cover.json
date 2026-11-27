@@ -41,12 +41,12 @@
         "Sea of Zenorna",
         "Sea of Isis"
       ],
-      "layers": "01cb2dbf739335b969c0eee9f70af2ad4816bb074ab019491f505f996afb46e9",
-      "register": "2e4f90ca40f5239c23336185bf861e05dde76f3817adbfac1696f78f252ed2c3",
+      "layers": "4157ae9c7f082713d2f9f7e44f4b5d8acc497f0bb1b444e751f1da08affaab5b",
+      "register": "4c58a513db00a245f33a03198b899ccc6f469aa4a3e6bc69f3efdbb9dea22663",
       "tiles": [
-        "7799ee3f8a2d38b8c2e8fc5d31f73b337baa34f8527883127c4ea78be3084608",
-        "a112c699f89542306916ef9318e2458c71f5e20883e308b48f5d2568eff24970",
-        "7ae8c9f274ef78b5a6636c88760a686ca0ba3140b65fba13530af43a8a46e8b9"
+        "e8f9ee92b4321d20fc2f3e84b88f84852ada9201010453d4fd8e33c1613f416e",
+        "b9f93f370164867d2b52a800302f43705b0d3d349c8638dbcdafb330353a7e7a",
+        "50fb6aca1748721eea64637790ba02d6ce68217497c0cc449a1a9a960a4706f3"
       ]
     },
     {
@@ -71,7 +71,7 @@
         "Mount Mior",
         "Ororbe Range"
       ],
-      "layers": "73cb3034c11869f17225df5e01d2c129c782880d4a2d2600db997ac33cb135d1",
+      "layers": "04dea6930f8299464f9bba3131c580ef57fbcc22a3e96c5f043d26678c209afe",
       "register": "3ddfcb83ec7d32088056ebe08ae7e335d79935417a137835318b1c0247df9ec7",
       "tiles": [
         "d3d22032b3c96ba2542bb2cb8192d033b58af9b5f2eed78d66998d5fa72e3120",

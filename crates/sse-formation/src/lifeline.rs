@@ -84,6 +84,7 @@ pub struct StarState {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct LifeLine {
     pub initial_mass: f64,
+    /// Measured metal mass fraction (Asplund et al. 2009 scale).
     pub z: f64,
     /// Birth to zero-age main sequence (Kelvin-Helmholtz time), Myr.
     pub t_zams: f64,
@@ -350,7 +351,9 @@ impl LifeLine {
                 // radius from the Nauenberg-type law, floored at a neutron star.
                 let age = (t - self.t_end).max(0.0);
                 let mr = self.remnant_mass;
-                let l = 635.0 * mr * m::pow(self.z, 0.4) / m::pow(4.0 * (age + 0.1), 1.4);
+                // Z on the fits' scale, as HPT00 fit it.
+                let zf = crate::hurley::fit_z(self.z);
+                let l = 635.0 * mr * m::pow(zf, 0.4) / m::pow(4.0 * (age + 0.1), 1.4);
                 let x = m::pow(M_CH / mr, 2.0 / 3.0) - m::pow(mr / M_CH, 2.0 / 3.0);
                 let r = (0.0115 * m::sqrt(x.max(0.0))).max(1.4e-5);
                 (l, r, Level::Standard, mr)

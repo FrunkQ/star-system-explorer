@@ -406,6 +406,139 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.star.magnetic_braking",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "envelope",
+     "letter": "Me"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "spin",
+     "letter": "w"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "torque",
+     "letter": "jdot"
+    }
+   ],
+   "constants": {
+    "M_sun": "sheet/M_sun",
+    "R_sun": "sheet/R_sun",
+    "yr": "sheet/yr_julian"
+   },
+   "models": {
+    "k": {
+     "value": 5.83e-16,
+     "grade": "fitted",
+     "source": "Hurley, Tout and Pols 2002 eq. 50"
+    }
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, MNRAS 329, 897, eq. 50: magnetic braking J̇ = −5.83e-16 (M_env/M) (R ω)³ M☉ R☉² yr⁻² (R in R☉, ω in yr⁻¹), after Rappaport, Verbunt and Joss 1983, ApJ 275, 713. https://arxiv.org/abs/astro-ph/0201220"
+   ],
+   "shown": "J̇ = −5.83×10⁻¹⁶ (M_env/M) (R ω)³ M☉ R☉² yr⁻²",
+   "equation": {
+    "name": "How fast a star's magnetised wind brakes its spin",
+    "formula": "rw = R / R_sun * w * yr\njdot = -k * (Me / M) * rw * rw * rw * M_sun * R_sun * R_sun / (yr * yr)",
+    "inputs": {
+     "M": {
+      "kind": "star.mass",
+      "unit": "kg",
+      "name": "mass of the star"
+     },
+     "Me": {
+      "kind": "star.envelope_mass",
+      "unit": "kg",
+      "name": "mass of its convective envelope"
+     },
+     "R": {
+      "kind": "star.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "w": {
+      "kind": "star.spin_rate",
+      "unit": "s-1",
+      "name": "how fast it turns, radians a second"
+     },
+     "M_sun": {
+      "kind": "constant.M_sun",
+      "unit": "kg",
+      "name": "the Sun's mass"
+     },
+     "R_sun": {
+      "kind": "constant.R_sun",
+      "unit": "m",
+      "name": "the Sun's radius"
+     },
+     "yr": {
+      "kind": "constant.yr_julian",
+      "unit": "s",
+      "name": "one year"
+     },
+     "k": {
+      "kind": "model.magnetic_braking_scale",
+      "unit": "1",
+      "name": "braking strength in solar units"
+     }
+    },
+    "outputs": {
+     "jdot": {
+      "kind": "star.spin_down_torque",
+      "unit": "kg m2 s-2",
+      "name": "spin angular momentum carried off each second (negative)"
+     }
+    },
+    "source": {
+     "text": "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, MNRAS 329, 897",
+     "url": "https://arxiv.org/abs/astro-ph/0201220",
+     "where": "eq. 50"
+    },
+    "explain": {
+     "curious": "A star with a churning outer layer flings its wind out along its magnetic field, like a skater flinging out arms, and slows down.",
+     "science": "The Skumanich-type braking law used by the binary code BSE. In a close pair the tides lock the star's spin to the orbit, so the brake drains the orbit itself and the stars draw together: how cataclysmic variables above the period gap are fed. Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "M": 2e+30,
+      "Me": 4e+28,
+      "R": 700000000.0,
+      "w": 2.9e-06,
+      "jdot": -8.797809179625897e+21
+     },
+     {
+      "M": 9.94204935e+29,
+      "Me": 5.96522961e+29,
+      "R": 313065000.0,
+      "w": 0.0002,
+      "jdot": -7.744639688750917e+27
+     }
+    ]
+   }
   }
  ]
 }

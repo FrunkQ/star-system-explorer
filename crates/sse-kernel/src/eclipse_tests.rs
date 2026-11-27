@@ -472,3 +472,76 @@ fn eclipse_on_time_at_the_universes_present() {
         .expect("a moon with no series");
     assert_eq!(distinct(plain), 64, "{}", plain["address"]);
 }
+
+/// RW17 part 3: the axes `orbits_at` gives Earth turn the drawn world, so the
+/// shadow of 8 April 2024 falls on Nazas, Durango, in Earth's own frame read
+/// from the reply alone; and the pole leans 23.44 degrees from the ecliptic's
+/// pole, toward the Sun at the June solstice.
+#[test]
+fn the_drawn_earth_faces_the_shadow() {
+    let mut sky = Sky::new();
+    let want = at_s(2_460_408.5) + 18 * 3600 + 18 * 60 + 29;
+    let got = solar(&mut sky, jd(want));
+    let axes_at = |sky: &mut Sky, t: i64| -> (V, V) {
+        let r: serde_json::Value = serde_json::from_str(&sky.k.handle_json(
+            &serde_json::json!({"op":"orbits_at","system":SOL,"at_s":[t]}).to_string(),
+        ))
+        .unwrap();
+        let e = r["bodies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|b| b["address"] == EARTH)
+            .unwrap()
+            .clone();
+        let v = |i: usize| -> V {
+            let x = &e["at"][0]["axes"][i];
+            [
+                x[0].as_f64().unwrap(),
+                x[1].as_f64().unwrap(),
+                x[2].as_f64().unwrap(),
+            ]
+        };
+        (v(0), v(1))
+    };
+    let (x, z) = axes_at(&mut sky, got.at_s);
+    let y = [
+        z[1] * x[2] - z[2] * x[1],
+        z[2] * x[0] - z[0] * x[2],
+        z[0] * x[1] - z[1] * x[0],
+    ];
+    let fixed = |v: V| [dot(v, x), dot(v, y), dot(v, z)];
+    let (sun, earth, moon, _) = sky.at(&[got.at_s])[0];
+    let k = axis_ratio();
+    let squash = |v: V| [v[0], v[1], v[2] / k];
+    let m = squash(fixed(sub(moon, earth)));
+    let dd = unit(squash(fixed(unit(sub(moon, sun)))));
+    let b = dot(m, dd);
+    let c = dot(m, m) - re() * re();
+    let s = -b - (b * b - c).max(0.0).sqrt();
+    let p = add(m, mul(dd, s));
+    let g = EarthOrientation::ground([p[0], p[1], p[2] * k], k);
+    let msg = format!(
+        "shadow on the drawn Earth at {:.2}, {:.2}",
+        g.lat_deg, g.lon_deg
+    );
+    eprintln!("{msg}");
+    assert!((g.lat_deg - 25.29).abs() <= 0.15, "{msg}");
+    assert!((g.lon_deg + 104.13).abs() <= 0.15, "{msg}");
+
+    // 20 June 2024, 20:51 UTC (June solstice): the pole is 23.44 degrees off
+    // the ecliptic's and leans toward the Sun.
+    let t = at_s(2_460_481.5) + 20 * 3600 + 52 * 60;
+    let (_, z) = axes_at(&mut sky, t);
+    let tilt = sse_core::math::acos(z[2]).to_degrees();
+    assert!((tilt - 23.44).abs() < 0.01, "tilt {tilt}");
+    let (sun, earth, _, _) = sky.at(&[t])[0];
+    let to_sun = unit(sub(sun, earth));
+    let lean = unit([z[0], z[1], 0.0]);
+    let c = dot(lean, unit([to_sun[0], to_sun[1], 0.0]));
+    assert!(
+        c > 0.9999,
+        "the pole leans toward the Sun at the solstice: cos {c}, {:.3} deg",
+        sse_core::math::acos(c).to_degrees()
+    );
+}

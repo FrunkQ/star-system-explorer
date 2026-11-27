@@ -154,7 +154,7 @@ fn hands_over_to_early_worlds() {
     let c = &f.cases[0];
     let r = run(&request(c)).unwrap();
     let sys = crate::scenario::system(77);
-    let fits = crate::hurley::Fits::new(0.02);
+    let fits = crate::hurley::Fits::new(crate::hurley::Z_SUN);
     let host = crate::lifeline::LifeLine::new(&fits, 1.0).unwrap();
     let pp = protoplanets(&r, &sys, None);
     assert_eq!(pp.len(), r.bodies.len());

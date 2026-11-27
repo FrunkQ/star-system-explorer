@@ -1,0 +1,202 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.time-sheet",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "reference": {
+   "about": "The time area's sheet (TP4): the rows the pace ladder's reference subjects read, copied unchanged from packs/base-reference on 26 Nov 2026 and frozen, as base-physics is for the core golden.",
+   "groups": [
+    {
+     "id": "nature",
+     "name": "Constants of nature",
+     "about": "What the universe gives."
+    },
+    {
+     "id": "convention",
+     "name": "Definitions and conventions",
+     "about": "Exact by agreement: c in SI, the astronomical unit, the Julian year, the IAU's nominal Sun."
+    },
+    {
+     "id": "factor",
+     "name": "Conversion factors",
+     "about": "Pure arithmetic from the rows above."
+    },
+    {
+     "id": "cosmos",
+     "name": "Cosmos",
+     "about": "The measured parameters of the universe. Dark matter and dark energy are marked theoretical: their amounts are measured through gravity, their nature is unknown. Change one and the cosmos chain follows: expansion, growth, the web, halo counts, every galaxy's gas supply."
+    }
+   ],
+   "constants": [
+    {
+     "id": "G",
+     "name": "Newtonian constant of gravitation",
+     "group": "nature",
+     "value": {
+      "v": 6.6743e-11,
+      "unit": "m3 kg-1 s-2",
+      "src": "codata2018",
+      "check": "unverified",
+      "uncertainty": 1.5e-15
+     }
+    },
+    {
+     "id": "au",
+     "name": "astronomical unit",
+     "group": "convention",
+     "value": {
+      "v": 149597870700,
+      "unit": "m",
+      "src": "iau2012b2",
+      "check": "unverified",
+      "exact": true
+     }
+    },
+    {
+     "id": "pc",
+     "name": "parsec",
+     "group": "factor",
+     "value": {
+      "v": 30856775814913670,
+      "unit": "m",
+      "src": "iau2015b2",
+      "check": "unverified"
+     },
+     "derived_from": "au 648000 / pi"
+    },
+    {
+     "id": "GM_sun",
+     "name": "nominal solar mass parameter",
+     "group": "convention",
+     "value": {
+      "v": 132712440000000000000,
+      "unit": "m3 s-2",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "M_sun",
+     "name": "solar mass",
+     "group": "nature",
+     "value": {
+      "v": 1.988409870698051e+30,
+      "unit": "kg",
+      "src": "iau2015b3"
+     },
+     "checked_by": "GM_sun / G"
+    },
+    {
+     "id": "L_sun",
+     "name": "nominal solar luminosity",
+     "group": "convention",
+     "value": {
+      "v": 3.828e+26,
+      "unit": "W",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "GM_earth",
+     "name": "nominal Earth mass parameter",
+     "group": "convention",
+     "value": {
+      "v": 398600400000000,
+      "unit": "m3 s-2",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "M_earth",
+     "name": "Earth mass",
+     "group": "nature",
+     "value": {
+      "v": 5.972167867791379e+24,
+      "unit": "kg",
+      "src": "iau2015b3"
+     },
+     "checked_by": "GM_earth / G"
+    },
+    {
+     "id": "a_moon",
+     "name": "Moon semi-major axis",
+     "group": "nature",
+     "value": {
+      "v": 384400000,
+      "unit": "m",
+      "src": "nssdca-moon"
+     }
+    },
+    {
+     "id": "H0",
+     "name": "Hubble constant",
+     "group": "cosmos",
+     "value": {
+      "v": 67.66,
+      "unit": "km s-1 Mpc-1",
+      "src": "planck2018",
+      "uncertainty": 0.42
+     },
+     "note": "In km/s per megaparsec, as astronomers quote it; H0_si is the same rate per second."
+    },
+    {
+     "id": "H0_si",
+     "name": "Hubble constant per second",
+     "group": "cosmos",
+     "value": {
+      "v": 2.1927112672380573e-18,
+      "unit": "s-1",
+      "src": "planck2018"
+     },
+     "derived_from": "H0 1000 / (1e6 pc)"
+    }
+   ],
+   "sources": [
+    {
+     "id": "codata2018",
+     "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018",
+     "status": "verified",
+     "doi": "10.1103/RevModPhys.93.025010"
+    },
+    {
+     "id": "iau2012b2",
+     "text": "IAU 2012 Resolution B2: re-definition of the astronomical unit of length, 149 597 870 700 m exactly",
+     "status": "unverified",
+     "url": "https://www.iau.org/static/resolutions/IAU2012_English.pdf"
+    },
+    {
+     "id": "iau2015b2",
+     "text": "IAU 2015 Resolution B2: the parsec is 648000/π au",
+     "status": "unverified",
+     "url": "https://www.iau.org/static/resolutions/IAU2015_English.pdf"
+    },
+    {
+     "id": "iau2015b3",
+     "text": "Prša, A. et al. 2016, AJ 152, 41: nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
+     "status": "verified",
+     "doi": "10.3847/0004-6256/152/2/41"
+    },
+    {
+     "id": "nssdca-moon",
+     "text": "NASA NSSDCA Moon fact sheet (mass 0.07346e24 kg, mean radius 1737.4 km, semi-major axis 0.3844e6 km)",
+     "status": "verified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+    },
+    {
+     "id": "planck2018",
+     "text": "Planck Collaboration 2020, A&A 641, A6: Planck 2018 results VI, cosmological parameters. Table 2, last column (TT,TE,EE+lowE+lensing+BAO, 68% limits): Omega_b h2 0.02242 +- 0.00014, Omega_c h2 0.11933 +- 0.00091, n_s 0.9665 +- 0.0038, H0 67.66 +- 0.42, Omega_Lambda 0.6889 +- 0.0056, Omega_m 0.3111 +- 0.0056, Omega_m h2 0.14240 +- 0.00087, sigma8 0.8102 +- 0.0060, age 13.787 +- 0.020 Gyr. Section 2.1: one massive neutrino of 0.06 eV",
+     "status": "verified",
+     "doi": "10.1051/0004-6361/201833910",
+     "url": "https://www.aanda.org/articles/aa/full_html/2020/09/aa33910-18/T2.html"
+    }
+   ]
+  }
+ }
+}

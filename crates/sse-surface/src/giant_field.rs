@@ -113,7 +113,7 @@ impl Default for GiantDynamo {
             alpha: 1.0e-5,
             cp: 1.4e4,
             steps: 400,
-            z_default: 0.0142,
+            z_default: sse_formation::hurley::Z_SUN,
         }
     }
 }

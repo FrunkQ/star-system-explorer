@@ -24,6 +24,25 @@ pub const MOTION_FIELD: &str = "orbit.motion";
 /// universe time.
 pub const ANCHOR_FIELD: &str = "time.j2000_s";
 
+/// The fact that names a body's spin model: which way it faces at a date
+/// (RW17 part 3). The one the kernel holds is `earth-orientation`.
+pub const SPIN_FIELD: &str = "spin.model";
+
+/// A body's own axes at `at_s` for the spin model `id`, in its system's
+/// frame (the J2000 ecliptic the motion tables use): x toward longitude 0 on
+/// its equator, z its north pole. None for a model the kernel does not hold.
+pub fn axes(id: &str, at_s: i64, anchor_s: i64) -> Option<[[f64; 3]; 2]> {
+    if id != earth().id() {
+        return None;
+    }
+    let jd = jd(at_s, anchor_s);
+    let e = earth();
+    Some([
+        e.from_earth_fixed([1.0, 0.0, 0.0], jd),
+        e.from_earth_fixed([0.0, 0.0, 1.0], jd),
+    ])
+}
+
 /// Every motion model the kernel holds, by id.
 pub fn models() -> &'static BTreeMap<String, Series> {
     static CELL: OnceLock<BTreeMap<String, Series>> = OnceLock::new();

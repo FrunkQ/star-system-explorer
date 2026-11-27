@@ -1941,6 +1941,20 @@
         "range": null
       },
       {
+        "description": "how fast a pair's separation changes",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.separation_rate",
+        "range": null
+      },
+      {
         "description": "mass a star gives its partner each second",
         "dim": [
           0,
@@ -5626,6 +5640,20 @@
         "range": null
       },
       {
+        "description": "downslope creep driven by wind, per pascal of surface air (m² s⁻¹ Pa⁻¹)",
+        "dim": [
+          3,
+          -1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.air_creep_diffusivity",
+        "range": null
+      },
+      {
         "description": "a formation material's summed CI weight over its riders, bound oxygen included",
         "dim": [
           0,
@@ -5637,6 +5665,20 @@
           0
         ],
         "id": "material.ci_weight",
+        "range": null
+      },
+      {
+        "description": "a ground's downslope creep under one process, as a topographic diffusivity (m² s⁻¹)",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.creep_diffusivity",
         "range": null
       },
       {
@@ -8797,6 +8839,20 @@
         "range": null
       },
       {
+        "description": "mass of a star's convective outer layer",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.envelope_mass",
+        "range": null
+      },
+      {
         "description": "bolometric luminosity, typical for the star's mass on the main sequence",
         "dim": [
           2,
@@ -8909,6 +8965,34 @@
         "range": null
       },
       {
+        "description": "spin angular momentum a star's wind carries off each second",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spin_down_torque",
+        "range": null
+      },
+      {
+        "description": "how fast a star turns, radians a second",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spin_rate",
+        "range": null
+      },
+      {
         "description": "a spot group's peak area, millionths of a hemisphere",
         "dim": [
           0,
@@ -8990,6 +9074,20 @@
           0
         ],
         "id": "star.xray_luminosity",
+        "range": null
+      },
+      {
+        "description": "how fast loose ground creeps downslope, as a topographic diffusivity (m² s⁻¹)",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.creep_diffusivity",
         "range": null
       },
       {
@@ -9102,6 +9200,20 @@
           0
         ],
         "id": "surface.weathering_factor_650",
+        "range": null
+      },
+      {
+        "description": "share of the time ground had liquid water on it, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wet_share",
         "range": null
       },
       {

@@ -25,7 +25,13 @@
 //!   core mixes in fresh fuel: Hurley, Tout and Pols 2002 section 7.1);
 //!   a giant keeps its core and its line, its envelope the mass it has; a
 //!   donor stripped to its core becomes a white dwarf of that core;
-//! - a planet round either star is swallowed when the star swells past it.
+//! - a planet round either star is swallowed when the star swells past it;
+//! - BX3: gravitational waves (`sse.orbit.gw_decay`, Peters 1964) and, for a
+//!   tidally locked main-sequence star with a convective envelope over a
+//!   radiative core, magnetic braking (`sse.star.magnetic_braking`) drain the
+//!   orbit; a red or brown dwarf so brought into touch with a white dwarf
+//!   gives just what keeps it at its lobe (a cataclysmic variable), and a
+//!   main-sequence donor onto a compact star has its own critical ratio.
 //!
 //! A node is a star or a pair of nodes; a pair inside a pair acts one level
 //! up as one body at its centre of mass, its mass the sum it has at each
@@ -69,6 +75,26 @@ pub struct PairSettings {
     pub max_steps: u32,
     /// Rows kept: a new row when a mass or the separation moves by this share, or a phase changes.
     pub row_share: f64,
+    /// BX3 `sse.orbit.gw_decay`: Peters' factor (64/5).
+    pub gw_factor: f64,
+    /// BX3 `sse.star.magnetic_braking`: the braking strength in solar units.
+    pub braking_scale: f64,
+    /// BX3: main-sequence stars between these masses (solar) have a convective
+    /// envelope over a radiative core and brake; below the lower one a star is
+    /// convective through and its field no longer brakes it (the period gap).
+    pub braking_mass_msun: [f64; 2],
+    /// BX3: tides hold a star's spin to the orbit (so braking drains the orbit)
+    /// when the period is shorter than this many days.
+    pub lock_period_days: f64,
+    /// BX3: a main-sequence star feeding a compact one may give up to this many
+    /// times its own thermal rate when the orbit's loss drives it.
+    pub driven_thermal_factor: f64,
+    /// BX3: a low-mass dwarf's radius goes as its mass to this power while it
+    /// gives gas away (it is assumed to stay in balance).
+    pub donor_radius_exponent: f64,
+    /// BX3: a brown dwarf donor's radius goes as its mass to this power (−1/3,
+    /// a degenerate body): the orbit then widens again (the period bounce).
+    pub degenerate_radius_exponent: f64,
 }
 
 impl Default for PairSettings {
@@ -84,6 +110,13 @@ impl Default for PairSettings {
             strip_share: 0.01,
             max_steps: 400_000,
             row_share: 0.02,
+            gw_factor: 12.8,
+            braking_scale: 5.83e-16,
+            braking_mass_msun: [0.35, 1.25],
+            lock_period_days: 10.0,
+            driven_thermal_factor: 100.0,
+            donor_radius_exponent: 0.8,
+            degenerate_radius_exponent: -1.0 / 3.0,
         }
     }
 }
@@ -344,6 +377,64 @@ impl Star {
     }
 }
 
+/// BX3: a main-sequence star's convective envelope, solar masses: all of it
+/// below the lower braking mass, a share falling to none at the upper one
+/// (after Hurley, Pols and Tout 2000, `M_env,0`), none otherwise.
+fn convective_envelope(mass: f64, phase: Phase, set: &PairSettings) -> f64 {
+    let [lo, hi] = set.braking_mass_msun;
+    if !matches!(phase, Phase::MainSequence | Phase::PreMainSequence) || mass >= hi {
+        return 0.0;
+    }
+    if mass < lo {
+        return mass;
+    }
+    let x = (hi - mass) / (hi - lo);
+    lo * x * x
+}
+
+/// BX3: the orbit's angular momentum lost each year (solar masses au² a year,
+/// as J = m1 m2 sqrt(G a / M) in those units), and the separation's own
+/// rate from gravitational waves (au a year), both negative.
+fn orbit_losses(
+    s: &[Star; 2],
+    t: f64,
+    a: f64,
+    set: &PairSettings,
+    braking: &mut bool,
+) -> (f64, f64) {
+    let (m1, m2) = (s[0].mass, s[1].mass);
+    let ms = msun_kg();
+    let adot = bx::gw_decay(m1 * ms, m2 * ms, a * AU, set.gw_factor) / AU * JULIAN_YEAR;
+    let mut jdot = 0.0;
+    let p_days = kepler_days(a, m1 + m2);
+    *braking = false;
+    if p_days < set.lock_period_days {
+        let omega = 2.0 * m::PI / (p_days * DAY);
+        for k in 0..2 {
+            let n = s[k].now(t);
+            if s[k].bare.is_some() {
+                continue;
+            }
+            let env = convective_envelope(s[k].mass, n.phase, set);
+            // A star convective through has no braking field (disrupted braking).
+            if env <= 0.0 || env >= s[k].mass {
+                continue;
+            }
+            let si = bx::magnetic_braking(
+                s[k].mass * ms,
+                env * ms,
+                n.radius_rsun * R_SUN,
+                omega,
+                set.braking_scale,
+            );
+            // kg m2 s-2 to solar masses au2 per year, per year.
+            jdot += si / (ms * AU * AU) * JULIAN_YEAR * JULIAN_YEAR;
+            *braking = true;
+        }
+    }
+    (jdot, adot)
+}
+
 fn kepler_days(a_au: f64, m: f64) -> f64 {
     m::sqrt(a_au * a_au * a_au / m.max(1e-9)) * JULIAN_YEAR / DAY
 }
@@ -351,7 +442,7 @@ fn kepler_days(a_au: f64, m: f64) -> f64 {
 /// Lobe fill of `d` against `acc` at periastron.
 fn fill(d: &Star, acc: &Star, t: f64, peri: f64) -> f64 {
     let n = d.now(t);
-    if n.phase.is_remnant() || n.phase == Phase::BrownDwarf || d.bare.is_some() {
+    if n.phase.is_remnant() || d.bare.is_some() {
         return 0.0;
     }
     n.radius_rsun * rsun_au() / bx::roche_lobe(d.mass / acc.mass, peri)
@@ -408,6 +499,12 @@ fn age_two(
     let mut steps = 0u32;
     let mut rate_now = 0.0;
     let mut last_row: Option<(f64, f64, f64, String, String, bool)> = None;
+    // BX3: how far angular momentum loss has drawn the orbit in since the last
+    // episode, whether a star is braking, and the share of the orbit lost a year.
+    let mut drawn_in = 0.0;
+    let mut braking = false;
+    let mut loss_rate = 0.0;
+    let mut a_episode = sep_au;
     loop {
         // A row when something has moved enough.
         let fills = if merged {
@@ -480,6 +577,15 @@ fn age_two(
         let m_after = s[0].mass + if merged { 0.0 } else { s[1].mass };
         if !merged {
             a *= m_before / m_after;
+            // BX3: gravitational waves and magnetic braking draw the orbit in.
+            let (jdot, adot) = orbit_losses(&s, t1, a, set, &mut braking);
+            let mt = s[0].mass + s[1].mass;
+            let j = s[0].mass * s[1].mass * m::sqrt(G_AU * a / mt);
+            let a0 = a;
+            let jr = (1.0 + jdot * step * 1e6 / j).max(0.5);
+            a = (a * jr * jr + adot * step * 1e6).max(1e-9);
+            drawn_in += (a0 - a).max(0.0);
+            loss_rate = ((a0 - a) / a0).max(0.0) / (step * 1e6).max(1e-30);
         }
         rate_now = 0.0;
         if !merged {
@@ -500,10 +606,16 @@ fn age_two(
                     let (md, ma) = (s[di].mass, s[ai].mass);
                     // A new contact (or the other star's turn): the critical ratio decides again.
                     if donor.is_none() && episode != Some(di) {
-                        let qc = q_crit(rules, nd.phase, md, nd.core);
                         let q = md / ma;
                         let main_seq =
                             matches!(nd.phase, Phase::MainSequence | Phase::PreMainSequence);
+                        // BX3: a dwarf feeding a compact star has its own limit.
+                        let onto_compact = s[ai].remnant(t1);
+                        let qc = if main_seq && onto_compact {
+                            rules.q_crit_main_sequence_onto_degenerate
+                        } else {
+                            q_crit(rules, nd.phase, md, nd.core)
+                        };
                         let mut numbers = BTreeMap::new();
                         numbers.insert("donor_mass".into(), md);
                         numbers.insert("accretor_mass".into(), ma);
@@ -511,7 +623,7 @@ fn age_two(
                         numbers.insert("critical_ratio".into(), qc);
                         numbers.insert("separation_au".into(), a);
                         let phase = nd.phase.label();
-                        if q >= qc && main_seq {
+                        if q >= qc && main_seq && !onto_compact {
                             // Two main-sequence stars run away into one.
                             let total = md + ma;
                             let keep = if md >= ma { di } else { ai };
@@ -554,6 +666,8 @@ fn age_two(
                                 s[di].strip(t1, nd.core);
                                 a = a_f;
                                 e = 0.0;
+                                drawn_in = 0.0;
+                                a_episode = a;
                                 donor = None;
                                 t = t1;
                                 dt = dt.min(1e-3);
@@ -581,14 +695,49 @@ fn age_two(
                         a *= 1.0 - e * e;
                         e = 0.0;
                         episode = Some(di);
-                        out.events.push(event(
-                            t1,
-                            "stable-mass-transfer",
-                            &s[di].address,
-                            &s[ai].address,
-                            format!("The {phase} star swelled to fill its Roche lobe and began pouring gas onto its {ma:.2} solar mass companion. The mass ratio {q:.2} is below the critical {qc:.2}, so the flow is stable."),
-                            numbers,
-                        ));
+                        // BX3: brought into touch by the orbit shrinking, not the star swelling.
+                        let pulled = drawn_in > 0.1 * a;
+                        let how = if pulled {
+                            let why = if braking {
+                                "magnetic braking and gravitational waves"
+                            } else {
+                                "gravitational waves"
+                            };
+                            format!("{why} drew the orbit in from {a_episode:.4} to {a:.4} au until the {phase} star filled its Roche lobe")
+                        } else {
+                            format!("The {phase} star swelled to fill its Roche lobe")
+                        };
+                        let how = {
+                            let mut c = how.chars();
+                            c.next().map_or(String::new(), |f| {
+                                f.to_uppercase().collect::<String>() + c.as_str()
+                            })
+                        };
+                        let feeds_dwarf = s[ai].remnant(t1)
+                            && s[ai].now(t1).phase == Phase::WhiteDwarf
+                            && main_seq;
+                        numbers.insert("period_days".into(), kepler_days(a, md + ma));
+                        out.events.push(if feeds_dwarf {
+                            event(
+                                t1,
+                                "cataclysmic-variable",
+                                &s[di].address,
+                                &s[ai].address,
+                                format!("{how}, and began feeding its {ma:.2} solar mass white dwarf companion: a cataclysmic variable, with a period of {:.2} hours. The mass ratio {q:.2} is below the critical {qc:.2}, so the flow is stable; what the white dwarf does with the gas (novae) is not worked out yet.", kepler_days(a, md + ma) * 24.0),
+                                numbers,
+                            )
+                        } else {
+                            event(
+                                t1,
+                                "stable-mass-transfer",
+                                &s[di].address,
+                                &s[ai].address,
+                                format!("{how} and began pouring gas onto its {ma:.2} solar mass companion. The mass ratio {q:.2} is below the critical {qc:.2}, so the flow is stable."),
+                                numbers,
+                            )
+                        });
+                        drawn_in = 0.0;
+                        a_episode = a;
                     }
                     donor = Some(di);
                     // The overflow rate, no faster than the envelope can adjust.
@@ -597,7 +746,9 @@ fn age_two(
                         / msun_kg()
                         * JULIAN_YEAR;
                     let thermal = s[di].thermal_rate(t1, true, set.thermal_share);
-                    let giant = !matches!(nd.phase, Phase::MainSequence | Phase::PreMainSequence);
+                    let dwarf = nd.phase == Phase::BrownDwarf;
+                    let giant =
+                        !dwarf && !matches!(nd.phase, Phase::MainSequence | Phase::PreMainSequence);
                     let rate = if giant {
                         over.min(thermal)
                     } else {
@@ -605,6 +756,53 @@ fn age_two(
                     };
                     let envelope = (md - nd.core).max(0.0);
                     let mut dm = (rate * step * 1e6).min(envelope);
+                    // BX3: a dwarf fed to a compact star by the orbit's loss gives just
+                    // what keeps it at its lobe: the gas lost from beside the accretor
+                    // and the dwarf shrinking with its mass widen the lobe back to it.
+                    if !giant && s[ai].remnant(t1) {
+                        let r0 = nd.radius_rsun * rsun_au();
+                        let fill_after = |dm: f64| {
+                            let (md2, ma2) = (md - dm, ma);
+                            let mt = md + ma;
+                            let j = md * ma * m::sqrt(G_AU * a / mt);
+                            let jl = dm * (md / mt) * (md / mt) * m::sqrt(G_AU * mt * a);
+                            let mt2 = md2 + ma2;
+                            let x = (j - jl).max(1e-12) * mt2 / (md2 * ma2);
+                            let a2 = x * x / (G_AU * mt2);
+                            // A brown dwarf is held up by degeneracy: it swells as it shrinks.
+                            let zeta = if dwarf {
+                                set.degenerate_radius_exponent
+                            } else {
+                                set.donor_radius_exponent
+                            };
+                            let r2 = r0 * m::pow(md2 / md, zeta);
+                            r2 / bx::roche_lobe(md2 / ma2, a2)
+                        };
+                        // A brown dwarf has no thermal brake on how fast it can give.
+                        let thermal_cap = if dwarf {
+                            f64::INFINITY
+                        } else {
+                            s[di].thermal_rate(t1, false, set.thermal_share)
+                                * set.driven_thermal_factor
+                                * step
+                                * 1e6
+                        };
+                        let cap = thermal_cap.min(set.transfer_step * envelope.max(1e-6));
+                        dm = if fill_after(cap) > 1.0 {
+                            cap
+                        } else {
+                            let (mut lo, mut hi) = (0.0, cap);
+                            for _ in 0..40 {
+                                let mid = 0.5 * (lo + hi);
+                                if fill_after(mid) > 1.0 {
+                                    lo = mid;
+                                } else {
+                                    hi = mid;
+                                }
+                            }
+                            hi
+                        };
+                    }
                     // Keep each step small: take what the step allows, and shorten the next.
                     let most = set.transfer_step * envelope.max(1e-6);
                     if dm > most {
@@ -700,6 +898,9 @@ fn age_two(
             let envelope = (s[d].mass - s[d].now(t1).core).max(1e-6);
             dt = dt.min(set.transfer_step * envelope / rate_now / 1e6);
         }
+        if !merged && loss_rate > 0.0 {
+            dt = dt.min(set.radius_step / loss_rate / 1e6);
+        }
         dt = dt.max(1e-9);
         last_r = r_now;
         t = t1;
@@ -755,6 +956,8 @@ fn stand_ins(set: &PairSettings) -> Vec<String> {
         "a donor stripped to its core is a white dwarf of that core from then (a helium star stage is left out)".into(),
         "a main-sequence star rebuilt at its new mass keeps its share of the main sequence; an accretor's share falls as the mass ratio (fresh fuel mixed into its core)".into(),
         "a pair acting as one body one level up trades no gas; a death is still the life line's slow mass loss (jumps and kicks are BX2)".into(),
+        format!("orbits shrink by gravitational waves (Peters 1964) and, below a {}-day period where tides lock spin to orbit, by magnetic braking of main-sequence stars between {} and {} solar masses (Hurley, Tout and Pols 2002 eq. 50); a star convective through brakes no more", set.lock_period_days, set.braking_mass_msun[0], set.braking_mass_msun[1]),
+        format!("a dwarf feeding a compact star gives just what keeps it at its lobe, its radius going as its mass to the {} (a brown dwarf's to the {:.2}), up to {} times its thermal rate; it never swells out of balance, so it does not detach at the period gap's top", set.donor_radius_exponent, set.degenerate_radius_exponent, set.driven_thermal_factor),
         "ages in millions of years like F7's events, until the time scales design (TP1) converts both".into(),
     ]
 }

@@ -165,6 +165,19 @@
       win = len === null || len === undefined || !(len > 0) || len === Infinity ? null : around(now, len, bounds);
     });
   });
+  // The time in view can move from outside the ruler: the Sol door opens on today, a jump of tens of millions of years
+  // from the system before; a campaign's now set elsewhere. When it leaves the window, the window goes with it at its
+  // span, at once, as the ruler's own moves keep it on screen (set). A time still inside the window moves nothing, so a
+  // zoom or a step is never re-centred.
+  $effect(() => {
+    const v = now;
+    untrack(() => {
+      if (!win || (v >= wt.from && v <= wt.to)) return;
+      cancelAnimationFrame(glideRaf);
+      anim = null;
+      win = around(v, span, bounds);
+    });
+  });
   // Wheel zoom about the pointer (non-passive, so the page does not scroll).
   $effect(() => {
     const el = track;
@@ -247,7 +260,7 @@
   const campaignWords = $derived(campaignNow === undefined ? "" : timeWords(campaignNow, cal, Math.min(span, 1e4 - 1)));
 </script>
 
-<div class="ruler" class:compact data-span={span} data-linked={linked ? "yes" : "no"}>
+<div class="ruler" class:compact data-span={span} data-from={wt.from} data-to={wt.to} data-linked={linked ? "yes" : "no"}>
   <div class="readout">
     <div class="now" data-viewing={now}>{nowWords}</div>
     {#if campaignNow !== undefined}

@@ -19,6 +19,7 @@ pub mod climate;
 pub mod composition;
 pub mod core;
 pub mod cover;
+pub mod creep;
 pub mod detail;
 pub mod frames;
 pub mod giant_field;
@@ -120,6 +121,8 @@ pub struct SurfaceSettings {
     pub atlas: atlas::AtlasSettings,
     pub plates: plates::PlateSettings,
     pub wear: wear::WearSettings,
+    /// Downslope creep rates (sheet references), read by crater fading and slope wear.
+    pub creep: creep::CreepRates,
     pub impacts: impacts::ImpactSettings,
     pub regime_features: regimes::RegimeSettings,
     pub cover: cover::CoverSettings,

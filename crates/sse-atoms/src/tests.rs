@@ -1934,4 +1934,31 @@ fn pair_blocks_match_their_sums() {
     // The Sun settles in about 15 million years (HTP02's 1.5e7 yr).
     let sun = b::thermal_timescale(m, 0.0, R_SUN, L_SUN, 0.5) / JULIAN_YEAR;
     assert!((1.2e7..1.9e7).contains(&sun), "{sun}");
+    for (m1, m2, a) in [(m, m, R_SUN), (0.6 * m, 0.2 * m, 0.5 * R_SUN)] {
+        let got = run("sse.orbit.gw_decay", &[m1, m2, a])[0];
+        let want = b::gw_decay(m1, m2, a, 12.8);
+        assert!(
+            (got - want).abs() <= 1e-12 * want.abs(),
+            "{got} against {want}"
+        );
+    }
+    for (ms, me, r, w) in [
+        (m, 0.02 * m, R_SUN, 2.9e-6),
+        (0.5 * m, 0.3 * m, 0.45 * R_SUN, 2e-4),
+    ] {
+        let got = run("sse.star.magnetic_braking", &[ms, me, r, w])[0];
+        let want = b::magnetic_braking(ms, me, r, w, 5.83e-16);
+        assert!(
+            (got - want).abs() <= 1e-12 * want.abs(),
+            "{got} against {want}"
+        );
+    }
+    // Absolute: the Hulse-Taylor pulsar's pair (1.44 + 1.39 Msun, a = 1.95e9 m)
+    // would shrink 0.3 m a year if circular (its e = 0.617 makes it about 12 times
+    // faster, the measured 3.5 m a year); a 0.6 + 0.2 pair 0.5 Rsun
+    // apart merges by waves alone in a few hundred million years (a / 4|adot|).
+    let ht = -b::gw_decay(1.44 * m, 1.39 * m, 1.95e9, 12.8) * JULIAN_YEAR;
+    assert!((0.25..0.35).contains(&ht), "{ht}");
+    let t = 0.5 * R_SUN / (4.0 * -b::gw_decay(0.6 * m, 0.2 * m, 0.5 * R_SUN, 12.8)) / JULIAN_YEAR;
+    assert!((1e7..3e9).contains(&t), "{t}");
 }
