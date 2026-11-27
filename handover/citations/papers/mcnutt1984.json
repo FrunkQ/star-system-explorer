@@ -1,0 +1,1 @@
+{"key": "mcnutt1984", "citation": "McNutt 1984, JGR 89, 11180", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/wear.rs"], "claims": ["/// (McNutt 1984, JGR 89, 11180; Watts 2001, Isostasy and Flexure of the"], "tier": 3}

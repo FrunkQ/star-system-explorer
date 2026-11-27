@@ -1,0 +1,1 @@
+{"key": "lamb1932", "citation": "Lamb 1932, art. 348", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "textbook (docs/citations.md)", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-kernel/src/sea.rs"], "claims": ["/// stops (Lamb 1932, art. 348)."], "tier": 3}

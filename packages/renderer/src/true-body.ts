@@ -5,8 +5,7 @@
 import { smallBodyColour, smallBodyMesh, type SmallFigure } from "./small-body.ts";
 import type { GpuItem } from "./gpu.ts";
 import type { Vec3 } from "./frames.ts";
-import { ringProfile, type RingBand } from "./rings.ts";
-import { cutRings, ringMarks, type RingMoon } from "./ring-structure.ts";
+import { kernelProfile, ringProfile, type KernelRing, type RingBand, type RingLookData } from "./rings.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { drawnGlow, hotGlow } from "./hot-glow.ts";
 import { plumeBrightness, plumeGrains, type PlumeFacts } from "./plumes.ts";
@@ -51,9 +50,11 @@ export interface TrueBody {
    * as that shape, seeded by `key` (use the body's address), instead of a sphere.
    */
   figure?: SmallFigure;
-  /** The world's mass, kg, and its moons: with both, its rings are cut where the moons' resonances and gaps fall (ring-structure.ts). */
-  mass_kg?: number;
-  moons?: readonly RingMoon[];
+  /**
+   * Its ring, whole, from the kernel (`ring_structure`, VP-R3): zones, gaps and wave trains placed by its moons,
+   * optical depth across it and its grains' colour. When given it is drawn instead of `rings`, and lit per pixel (VP-R2).
+   */
+  ring_kernel?: KernelRing;
   /** How much its spin flattens it (true-shape.ts `readTrueShape`, TA6). */
   flatten?: number;
   /** Its seas' glint, as the kernel works it out (weather op `glint`: slope variance and reflectance), when read. */
@@ -83,7 +84,7 @@ export function meanColour(t: TrueTexture): [number, number, number] {
   return n ? [r / n / 255, g / n / 255, b / n / 255] : [0.5, 0.5, 0.5];
 }
 
-type Profile = { inner: number; outer: number; width: number; data: Uint8ClampedArray; assumed: boolean };
+type Profile = { inner: number; outer: number; width: number; data: Uint8ClampedArray; assumed: boolean; look?: RingLookData };
 const profiles = new Map<string, Profile | null>();
 // The air's look-up tables, worked out once per world and air (about a tenth of a second each).
 const tables = new Map<string, AirLuts>();
@@ -94,18 +95,25 @@ const tables = new Map<string, AirLuts>();
  * register, "Rings in True").
  */
 function ringsOf(b: TrueBody): (Profile & { key: string }) | null {
-  if (!b.rings?.length || !(b.radius_m && b.radius_m > 0)) return null;
-  const shaped = !!(b.moons?.length && b.mass_kg && b.mass_kg > 0);
-  const key = `${b.key}|${JSON.stringify(b.rings)}|${b.radius_m}|${b.surface ? "s" : "-"}${shaped ? `|${b.mass_kg}|${JSON.stringify(b.moons)}` : ""}`;
-  if (!profiles.has(key)) {
-    let rings = b.rings;
-    if (shaped) {
-      const lo = Math.min(...rings.map((r) => r.inner_m));
-      const hi = Math.max(...rings.map((r) => r.outer_m));
-      rings = cutRings(rings, ringMarks(b.moons!, b.mass_kg!, lo, hi));
+  if (!(b.radius_m && b.radius_m > 0)) return null;
+  const k = b.ring_kernel;
+  if (k && k.profile.tau.length) {
+    // One texture per world for its kernel ring (the ring shadow binds it once: PR 617's seam); a new answer for the
+    // same world, at the same size, is a new key only when its numbers change.
+    let sum = 0;
+    for (let i = 0; i < k.profile.tau.length; i += 7) sum += k.profile.tau[i]!;
+    const key = `${b.key}|kring|${k.profile.tau.length}|${k.profile.lo_m}|${k.profile.hi_m}|${k.zones.length}|${sum}`;
+    if (!profiles.has(key)) {
+      const p = kernelProfile(k);
+      profiles.set(key, { inner: p.inner_m / b.radius_m, outer: p.outer_m / b.radius_m, width: p.width, data: p.data, assumed: p.assumed, look: p.look });
     }
-    // Finer when the moons cut it, so a gap a few tens of km wide still shows.
-    const p = ringProfile(rings, b.surface ? meanColour(b.surface) : [0.5, 0.5, 0.5], shaped ? 2048 : 512);
+    const p = profiles.get(key);
+    return p ? { ...p, key } : null;
+  }
+  if (!b.rings?.length) return null;
+  const key = `${b.key}|${JSON.stringify(b.rings)}|${b.radius_m}|${b.surface ? "s" : "-"}`;
+  if (!profiles.has(key)) {
+    const p = ringProfile(b.rings, b.surface ? meanColour(b.surface) : [0.5, 0.5, 0.5], 512);
     profiles.set(key, p ? { inner: p.inner_m / b.radius_m, outer: p.outer_m / b.radius_m, width: p.width, data: p.data, assumed: p.assumed } : null);
   }
   const p = profiles.get(key);
@@ -139,7 +147,7 @@ export function trueLook(b: TrueBody): TrueLook {
     out.air = { key, shape: b.air, luts: tables.get(key)! };
   }
   const r = b.star ? null : ringsOf(b);
-  if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };
+  if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data, ...(r.look ? { look: r.look } : {}) };
   if (!b.star && b.heat) {
     const g = drawnGlow(hotGlow(b.heat.t_k, b.heat.star));
     if (g) out.glow = g.rgb;

@@ -1,0 +1,1 @@
+{"key": "sheeley2001", "citation": "Sheeley et al. 2001 trough density near 10 per cm³ at L = 5", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-atoms/src/tests.rs"], "claims": ["// Sheeley et al. 2001 trough density near 10 per cm³ at L = 5."], "tier": 3}

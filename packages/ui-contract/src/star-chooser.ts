@@ -1,5 +1,5 @@
 // The star chooser (ED6 part 2, editing design section 9): a star's mass strip drawn in the real colour of the star
-// at each mass today, the spectral letters under it and the walls where the answer changes kind; the life bar for the
+// at each mass today, the spectral letters under it (the kernel's own class) and the walls where the answer changes kind; the life bar for the
 // chosen mass with the system's present age marked; and Kinds chips that find the mass which is that kind now. All of
 // it is read off the kernel's life line (`describe_star`, K18): a catalogued star's temperature and luminosity are
 // authored facts, so nothing here is worked out from the star's own record, and nothing is typed.
@@ -11,12 +11,27 @@ import type { Json } from "./json.ts";
 
 export type StarPhase = "pre-main-sequence" | "main-sequence" | "hertzsprung-gap" | "giant" | "wolf-rayet" | "brown-dwarf" | "white-dwarf" | "neutron-star" | "black-hole";
 
+/**
+ * A star's formal class as the kernel reads it (sse_formation::spectral): "G2 V", "K1 III", "T5", "DX 4.5", "NS", "BH".
+ * `family` is the atlas star scheme's base class (star/<family>), `kind` its child (star/<family>/<kind>).
+ */
+export interface StarClass {
+  code: string;
+  letter: string;
+  subclass?: number;
+  luminosity: string;
+  family: string;
+  kind: string;
+  why: string;
+  notes?: string[];
+}
+
 /** `describe_star`'s answer (sse_formation::describe::Description). */
 export interface StarDescription {
   mass_msun: number;
   feh: number;
   age_yr: number;
-  now: { phase: StarPhase; label: string; teff_k: number; luminosity_w: number; radius_m: number; mass_kg: number; mass_msun: number; luminosity_lsun: number; radius_rsun: number };
+  now: { phase: StarPhase; label: string; teff_k: number; luminosity_w: number; radius_m: number; mass_kg: number; mass_msun: number; luminosity_lsun: number; radius_rsun: number; class: StarClass };
   phases: { phase: StarPhase; label: string; from_yr: number; to_yr: number | null }[];
   remnant: { phase: StarPhase; label: string; mass_msun: number; from_yr: number | null };
   walls: { deuterium_msun: number; hydrogen_msun: number; white_dwarf_msun: number; black_hole_msun: number; fits_msun: number };
@@ -35,10 +50,10 @@ export interface StarKind {
 }
 export const STAR_KINDS: readonly StarKind[] = data.kinds as StarKind[];
 
-/** The spectral letter for a surface temperature (O to M, then L, T, Y); none for a remnant. */
-export function spectralLetter(teff_k: number, phase?: StarPhase): string | null {
-  if (phase === "white-dwarf" || phase === "neutron-star" || phase === "black-hole") return null;
-  return data.letters.find((l) => teff_k >= l.from_k)?.letter ?? null;
+/** The spectral letter of a described star (O to M, then L, T, Y), read off the kernel's class; none for a remnant. */
+export function letterOf(d: Pick<StarDescription, "now">): string | null {
+  const l = d.now.class?.letter ?? "";
+  return /^[OBAFGKMLTY]$/.test(l) ? l : null;
 }
 
 /** One mass along the strip, as it is at the asked age. */
@@ -58,7 +73,7 @@ function sample(d: StarDescription): StarSample {
     phase: d.now.phase,
     label: d.now.label,
     teff_k: d.now.teff_k,
-    letter: spectralLetter(d.now.teff_k, d.now.phase),
+    letter: letterOf(d),
     colour: d.now.phase === "black-hole" || !(d.now.teff_k > 0) ? null : thermalColour(d.now.teff_k),
   };
 }

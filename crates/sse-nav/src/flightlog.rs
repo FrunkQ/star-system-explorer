@@ -15,7 +15,9 @@
 //! landers, probes and station modules: a split names the new constructs,
 //! each with its own log from that moment. Times are whole universe seconds.
 
-use crate::kepler::{lambert, propagate, state, to_ecliptic, Elements, V3};
+use crate::kepler::{
+    cross, dot, lambert, norm, propagate, scale, state, sub, to_ecliptic, Elements, V3,
+};
 use crate::NavSystem;
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -161,6 +163,15 @@ pub enum State {
     Docked {
         to: String,
     },
+    /// Carried by another construct (CM2, compound ships design 6.1): where
+    /// it is, is where its carrier is. `place` is one of the mount's five
+    /// (front, behind, inside, hull, outside); a dock reads as the hull.
+    Mounted {
+        to: String,
+        place: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        port: Option<String>,
+    },
     BetweenStars {
         leg: serde_json::Value,
     },
@@ -275,7 +286,7 @@ pub struct FlightLog {
 /// Where a craft was, in the star's frame.
 #[derive(Clone, PartialEq, Debug, Serialize)]
 pub struct At {
-    /// The piece's kind (orbit, course, landed, docked, between_stars, track, gone), or `before` its log.
+    /// The piece's kind (orbit, course, landed, docked, mounted, between_stars, track, gone), or `before` its log.
     pub kind: String,
     /// Position and velocity around the star, when the log can say.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -295,6 +306,10 @@ pub trait Ephemeris {
     /// `t` is a whole-second date (TP1), so a body moves every second at any age.
     fn body(&self, name: &str, t: Instant) -> Option<(V3, V3, f64)>;
     fn star_mu(&self) -> f64;
+    /// A body's GM, which does not change with the date.
+    fn mu_of(&self, name: &str) -> Option<f64> {
+        self.body(name, Instant::ORIGIN).map(|b| b.2)
+    }
 }
 
 impl Ephemeris for NavSystem {
@@ -440,6 +455,17 @@ impl FlightLog {
                 }
             }
             State::Docked { to } => blank("docked", Some(to.clone()), format!("docked with {to}")),
+            State::Mounted { to, place, .. } => blank(
+                "mounted",
+                Some(to.clone()),
+                match place.as_str() {
+                    "front" => format!("carried at the front of {to}"),
+                    "behind" => format!("carried behind {to}"),
+                    "inside" => format!("carried inside {to}"),
+                    "outside" => format!("held clear outside {to}"),
+                    _ => format!("carried on the hull of {to}"),
+                },
+            ),
             State::BetweenStars { .. } => blank("between_stars", None, "between stars".into()),
             State::Track { file } => blank("track", None, format!("on a recorded track ({file})")),
             State::Gone { how } => blank(
@@ -477,4 +503,117 @@ impl FlightLog {
         }
         out
     }
+}
+
+/// Settings for mounts (CM2; `provides.other.nav.mounts` in base-nav): the
+/// separation push a release gives when the mount does not say, how close
+/// and how slow two craft must be for a capture, and the flight times tried
+/// for a rendezvous, as fractions of the target's orbital period.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct MountSettings {
+    pub push_m_s: f64,
+    pub capture_reach_m: f64,
+    pub capture_speed_m_s: f64,
+    pub rendezvous_tof_fractions: Vec<f64>,
+}
+
+impl MountSettings {
+    /// The `mounts` block of a nav settings block, checked.
+    pub fn from_nav(nav: &serde_json::Value) -> Result<Self, String> {
+        let s: MountSettings = serde_json::from_value(nav["mounts"].clone())
+            .map_err(|e| format!("nav.mounts: {e}"))?;
+        let ok = |x: f64| x.is_finite() && x >= 0.0;
+        if !(ok(s.push_m_s) && ok(s.capture_reach_m) && ok(s.capture_speed_m_s))
+            || s.rendezvous_tof_fractions
+                .iter()
+                .any(|f| !(f.is_finite() && *f > 0.0))
+        {
+            return Err(
+                "nav.mounts: pushes, reaches and speeds of 0 or more, flight times above 0".into(),
+            );
+        }
+        Ok(s)
+    }
+}
+
+/// The way a release pushes the released craft, from where it was carried.
+/// The stack's attitude is not modelled, so the push is taken along the
+/// flight for the front, against it behind, and straight out from the body
+/// orbited for the hull, a bay or a tether (fudge register: "release push
+/// direction from the place").
+pub fn push_direction(place: &str, r: V3, v: V3) -> V3 {
+    let unit = |x: V3| {
+        let n = norm(x);
+        if n > 0.0 {
+            scale(x, 1.0 / n)
+        } else {
+            [0.0; 3]
+        }
+    };
+    match place {
+        "front" => unit(v),
+        "behind" => scale(unit(v), -1.0),
+        _ => unit(r),
+    }
+}
+
+/// Orbital elements from a position and velocity around a body of GM `mu`
+/// (the parent's frame), with `epoch_s` the moment of the state. None for an
+/// exactly parabolic or degenerate state. The inverse of
+/// [`OrbitElements::state`]: argument of periapsis and mean anomaly are given
+/// (`peri_deg`, `m0_deg`); a hyperbola has `e` above 1 and `a_m` below 0.
+/// A circular orbit measures from the node, an equatorial one from the x axis.
+pub fn elements_from_state(r: V3, v: V3, mu: f64, epoch_s: i64) -> Option<OrbitElements> {
+    let rn = norm(r);
+    let h = cross(r, v);
+    let hn = norm(h);
+    if !(rn > 0.0 && hn > 0.0 && mu > 0.0) {
+        return None;
+    }
+    let v2 = dot(v, v);
+    let ev = scale(sub(scale(r, v2 - mu / rn), scale(v, dot(r, v))), 1.0 / mu);
+    let e = norm(ev);
+    let energy = v2 / 2.0 - mu / rn;
+    if energy == 0.0 {
+        return None;
+    }
+    let a = -mu / (2.0 * energy);
+    let small = 1e-11;
+    let inc = m::acos((h[2] / hn).clamp(-1.0, 1.0));
+    let node_v = [-h[1], h[0], 0.0];
+    let (node, refd) = if norm(node_v) > small * hn {
+        (
+            m::atan2(node_v[1], node_v[0]),
+            scale(node_v, 1.0 / norm(node_v)),
+        )
+    } else {
+        (0.0, [1.0, 0.0, 0.0])
+    };
+    // The angle from `from` to `to` in the orbit's own plane, counted with the motion.
+    let angle = |from: V3, to: V3| m::atan2(dot(cross(from, to), h) / hn, dot(from, to));
+    let (argp, nu) = if e > small {
+        (angle(refd, ev), angle(ev, r))
+    } else {
+        (0.0, angle(refd, r))
+    };
+    let mean = if e < 1.0 {
+        let big_e = m::atan2(m::sqrt(1.0 - e * e) * m::sin(nu), e + m::cos(nu));
+        big_e - e * m::sin(big_e)
+    } else if e > 1.0 {
+        let hh = m::asinh(m::sqrt(e * e - 1.0) * m::sin(nu) / (1.0 + e * m::cos(nu)));
+        e * m::sinh(hh) - hh
+    } else {
+        return None;
+    };
+    Some(OrbitElements {
+        a_m: a,
+        e,
+        i_deg: inc.to_degrees(),
+        node_deg: node.to_degrees(),
+        peri_deg: Some(argp.to_degrees()),
+        m0_deg: Some(mean.to_degrees()),
+        varpi_deg: None,
+        mean_longitude_deg: None,
+        epoch_s,
+    })
 }

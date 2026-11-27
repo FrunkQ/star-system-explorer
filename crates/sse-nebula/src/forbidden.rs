@@ -7,7 +7,6 @@
 
 use sse_atoms::nebula as nb;
 use sse_core::math as m;
-use sse_flow::Atom;
 use sse_light::table::LightTable;
 use sse_light::{LightDescription, LineEmission, Reference, Zone};
 use std::sync::OnceLock;
@@ -33,9 +32,8 @@ const CELLS: usize = 32;
 const ENERGY_STEPS: usize = 160;
 
 fn run(id: &str, inputs: &[f64]) -> Result<Vec<f64>, String> {
-    sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
+    // ER2: the block in force, with the settings this universe gives it.
+    sse_physics::block(id)
         .ok_or_else(|| format!("base formula block {id} is missing"))?
         .eval(inputs, &[])
         .map_err(|e| format!("{id}: {e}"))
@@ -267,10 +265,7 @@ pub fn add_forbidden_lines(
         "sse.nebular.photoionisation_cross_section",
         "sse.nebular.ion_balance",
     ] {
-        if let Some(a) = sse_atoms::formulas::loaded()
-            .iter()
-            .find(|a| a.decl().id == id)
-        {
+        if let Some(a) = sse_physics::block(id) {
             light.references.extend(a.decl().references.iter().cloned());
         }
     }

@@ -1,0 +1,1 @@
+{"key": "kuriliene1981", "citation": "Kuriliene 1981", "doi": [], "arxiv": [], "marks": ["unverified"], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/spectral.rs"], "claims": ["/// Kuriliene 1981, Gray and Corbally 2009. Unverified."], "tier": 3}
