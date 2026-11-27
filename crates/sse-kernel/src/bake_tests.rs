@@ -140,3 +140,25 @@ fn values_false_leaves_the_numbers_out() {
     assert!(r["table"]["values"].is_null(), "numbers left out");
     assert_eq!(r["table"]["hash"].as_str().unwrap().len(), 64);
 }
+
+/// A browser's JSON writes 1476600000.0 as 1476600000: either spelling is
+/// one subject, kept once and echoed the same.
+#[test]
+fn a_whole_number_and_its_decimal_spelling_are_one_subject() {
+    let mut k = kernel(&BASE);
+    let as_int = r#"{"op":"bake","table":"sse.light.disc","values":false,"subject":{"gravitational_radius_m":14766,"rate_kg_s":1000000000000000,"inner_m":88596,"outer_m":1476600000}}"#;
+    let as_dec = as_int
+        .replace("14766,", "14766.0,")
+        .replace("1000000000000000,", "1e15,")
+        .replace("88596,", "88596.0,")
+        .replace("1476600000}", "1476600000.0}");
+    let a: Value = serde_json::from_str(&k.handle_json(as_int)).unwrap();
+    let b: Value = serde_json::from_str(&k.handle_json(&as_dec)).unwrap();
+    assert_eq!(a["type"], "baked", "{a}");
+    assert_eq!(b["kept"], true, "{b}");
+    assert_eq!(a["table"]["subject"], b["table"]["subject"]);
+    assert_eq!(
+        a["table"]["subject"].to_string(),
+        b["table"]["subject"].to_string()
+    );
+}

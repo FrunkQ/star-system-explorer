@@ -81,7 +81,10 @@ pub fn bake(
         }
         Response::Baked { table: v, kept }
     };
-    let subject = subject.unwrap_or(serde_json::Value::Null);
+    // Numbers as doubles, so 281, 281.0 and 2.81e2 are one subject: the same
+    // key, and the same echo whichever way the request was spelled (a
+    // browser's JSON writes 1476600000.0 as 1476600000).
+    let subject = as_doubles(subject.unwrap_or(serde_json::Value::Null));
     let size = Size::of_tier(tier.as_deref());
     let hash = physics.hash().hex();
     // serde_json keeps object keys sorted (no preserve_order), so this is
@@ -99,4 +102,18 @@ pub fn bake(
         cache.kept.remove(0);
     }
     Ok(out(&table, false, &tier))
+}
+
+/// Every number in `v` as a double.
+fn as_doubles(v: serde_json::Value) -> serde_json::Value {
+    use serde_json::Value;
+    match v {
+        Value::Number(n) => n
+            .as_f64()
+            .and_then(serde_json::Number::from_f64)
+            .map_or(Value::Number(n), Value::Number),
+        Value::Array(a) => Value::Array(a.into_iter().map(as_doubles).collect()),
+        Value::Object(o) => Value::Object(o.into_iter().map(|(k, v)| (k, as_doubles(v))).collect()),
+        other => other,
+    }
 }
