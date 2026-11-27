@@ -9,6 +9,10 @@
 //! fails: use `Instant::since` or `angle_since`, or a whole-second field. A
 //! count below its line fails too, so the ledger is lowered in the same
 //! change that removes a use (and a line at 0 is deleted).
+//!
+//! The screens' lines are also checked by `tests/ui/float-dates.test.ts` (in
+//! `npm run ui:test`), because CI skips the Rust jobs for a screens-only
+//! change; keep the two walks and word rules the same.
 
 use std::collections::BTreeMap;
 use std::fs;

@@ -1,6 +1,6 @@
 # Status: one time pipeline for every scale (track TP)
 
-Owner thread: "Check how time scales fit together" (Fable, audit and design only, 26 Nov 2026) for the note. No builder thread yet.
+Owner thread: "Check how time scales fit together" (Fable, audit and design only, 26 Nov 2026) for the note. TP1 builder: thread "Stop dates losing their seconds" (Opus, 26 Nov 2026), coordinator's word.
 Design: `design/SSE4-time-scales-design.md`, **ACCEPTED by Alex 26 Nov 2026 23:27 UTC** ("i agree with all": the eight questions of its section 12), with his four rulings in its section 12A and `decisions.md`: the Big Bang is defined to the second so "now is now"; time is not capped (fine time in whole seconds, then a slower deep time to the end); the ruler ends in a break with late events as dated marks after it; everything runs to the end of time that way, galaxies included (the note's section 12B lists what still happens late). TP is a code only, never shown in the product.
 
 What it is, in one line: the kernel's handling of many time scales is half in place (whole-second universe time, life lines read at any date, event streams keyed by time bin, look-ahead branches, one accepted clock), but the joining is not; this track makes one axis with named anchors, keeps floats to differences, allows three shapes of process (line, stream, march), gives one hand-over rule between scales (follow, jump, window), one op for "what happens between two dates" (marks), and one clock that paces play from those marks.
@@ -30,7 +30,7 @@ Built: TP1 (on main), TP4 (see below). Nothing else is built. Golden notes are e
 | Package | State | Owner (proposed) |
 |---|---|---|
 | TP0 the audit, the note in `handover/design/`, this file, the row in START-HERE | done, 26 Nov | this thread |
-| TP1 `Instant` in `sse-core`; integer subtraction in `orbits_at`, flares, spin, nav; the one-second test at 13.8 Gyr seen red first; shrink-only ledger of `at_s as f64` | released; first and alone, it protects PR 649's eclipses | kernel |
+| TP1 `Instant` in `sse-core` (`since`, `angle_since`, checked `from_years`); `orbits_at` on dates; the one-second test at 4.61 and 13.8 Gyr seen red first; shrink-only ledger `packages/TP1-float-dates.txt` (a cargo test). Log `packages/TP1.md`. TP1b: flares and the flight log on dates (one core golden line, `activity_read`); nav's own ops and the screens wait for TP3; prominences (PR 658) to follow | TP1 done 26 Nov (PR 661, no golden moved; PR 672 ledger catch-up); TP1b in review (PR 676) | kernel |
 | TP2 the anchors (`time.present_s`, `system.birth_s`); `dated`'s convention removed; Sol's reference date per question 2 | released; needs TP1, and PR 649 parts 2 and 3 merged; core golden slot | kernel |
 | TP3 the clock object `sse.clock/1`; the screens write `set_campaign_now`; `now_yr`, `campaign_now_yr`, `campaign_epoch_yr`, `clock_yr` become whole seconds; save migration | released; needs TP2; agree with CLK and three desks | chart room |
 | TP4 process declarations (shape, own time, anchor) and the pace ladder; op `pace_ladder`; shrink-only check | built 27 Nov (thread "Build the time line's next step"); log `packages/TP4.md`; area `time`, core golden unchanged | kernel |

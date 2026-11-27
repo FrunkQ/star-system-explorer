@@ -55,6 +55,26 @@ export interface SheetBand {
 /** Every band any screen, sensor or recipe names, in the sheet's order. Light rows run end to end without gaps. */
 export const SHEET_BANDS: readonly SheetBand[] = doc.bands as SheetBand[];
 
+/** A line a sheet row gives off (its `optical.emission`), wavelength in metres. */
+export interface SheetLine {
+  id: string;
+  /** The sheet row that gives it off ("co+"). */
+  row: string;
+  at_m: number;
+  medium: "air" | "vacuum";
+  src: string;
+}
+
+/** Every line the sheet's rows give off, in the sheet's order. */
+export const SHEET_LINES: readonly SheetLine[] = doc.lines as SheetLine[];
+
+/** A line on the sheet by its id; throws when the sheet has none, so no screen types its own wavelength. */
+export function sheetLine(id: string): SheetLine {
+  const l = SHEET_LINES.find((x) => x.id === id);
+  if (!l) throw new Error(`the data sheet gives off no line ${id}`);
+  return l;
+}
+
 /**
  * A sheet reference in a document: `{ "sheet": "constants/au" }` or `{ "sheet": "units/day" }`, with an optional
  * `"in": "<unit id>"` to give the value in that unit. The same form packs use (sse-reference refs), so a document

@@ -66,6 +66,7 @@ test("the shell's parts say which desks each is on now", () => {
     ["clock", ["run"]],
     ["light", ["explore", "build"]],
     ["fill-screen", ["run"]],
+    ["card-sheet", ["run"]],
   ]);
   // The stage's edit tools are Build's; Select and Keyboard shortcuts are off Run; the ruler is on every desk until TM3.
   assert.deepEqual(DESKS.filter((d) => partShows("tools", d, "cut")), ["build"]);
@@ -144,4 +145,19 @@ test("the ruler opens by desk and level (top-level 12.1), and keeps the GM's spa
   assert.equal(rulerOpens("explore", "system", keepRulerSpan(null)), null, "a kept whole history comes back");
   assert.equal(rulerOpens("explore", "system", "nonsense"), "week", "an odd kept value falls back to the default");
   assert.equal(keepRulerSpan(Infinity), "whole");
+});
+
+test("a start-sheet verb lands on a desk that has what it opens (TM9c): the desk in front first, else Explore, Build, Run", async () => {
+  const { deskFor } = await import("../src/desk.ts");
+  const { screenOnDesk } = await import("../src/screen.ts");
+  const life = { rail: [{ scale: "world", group: "understand", label: "Life", order: 1, desks: ["explore", "build"] }] } as Pick<ScreenDoc, "rail">;
+  const sky = { rail: [{ scale: "world", group: "look", label: "Sky", order: 1 }] } as Pick<ScreenDoc, "rail">;
+  assert.deepEqual(DESKS.map((d) => screenOnDesk(life, d)), [true, true, false]);
+  assert.ok(DESKS.every((d) => screenOnDesk(sky, d) && screenOnDesk({}, d)), "no desks: every desk; no rail entry: every desk");
+  assert.equal(deskFor("run", (d) => screenOnDesk(life, d)), "explore", "Life from Run lands on Explore");
+  assert.equal(deskFor("build", (d) => screenOnDesk(life, d)), "build", "the desk in front keeps it when it has it");
+  assert.equal(deskFor("run", (d) => screenOnDesk(sky, d)), "run");
+  assert.equal(deskFor("explore", (d) => d === "run"), "run", "only Run has it: Run");
+  assert.equal(deskFor("build", () => false), "build", "nowhere: stay");
+  assert.equal(deskFor("run", (d) => partShows("light", d)), "explore", "Light is off Run");
 });

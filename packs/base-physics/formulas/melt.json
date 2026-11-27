@@ -1,0 +1,1867 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.melt",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.melt.fraction",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "solidus",
+     "letter": "Ts"
+    },
+    {
+     "port": "liquidus",
+     "letter": "Tl"
+    },
+    {
+     "port": "latent_heat",
+     "letter": "L"
+    },
+    {
+     "port": "heat_capacity",
+     "letter": "c"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "fraction",
+     "letter": "F"
+    }
+   ],
+   "constants": {},
+   "params": [
+    {
+     "param": "exponent",
+     "letter": "be",
+     "default": 1.0,
+     "range": [
+      1.0,
+      2.0
+     ],
+     "description": "how the melt share grows between solidus and liquidus: 1 in a straight line (Morschhauser et al. 2011), about 1.5 (Katz et al. 2003)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "heat_capacity",
+     "says": "heat it takes to warm a kilogram by one kelvin"
+    }
+   ],
+   "references": [
+    "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541: crustal recycling, mantle dehydration and the thermal evolution of Mars. doi:10.1016/j.icarus.2010.12.028",
+    "Katz, R. F., Spiegelman, M. and Langmuir, C. H. 2003, Geochemistry, Geophysics, Geosystems 4, 1073: a new parameterization of hydrous mantle melting. doi:10.1029/2002GC000433",
+    "Hirschmann, M. M. 2000, Geochemistry, Geophysics, Geosystems 1, 1042: mantle solidus. doi:10.1029/2000GC000070"
+   ],
+   "shown": "F = clamp((T − T_sol) / (T_liq − T_sol + L/c), 0, 1)^β",
+   "equation": {
+    "name": "How much of a rock has melted",
+    "formula": "F = clamp((T - Ts) / (Tl - Ts + L / c), 0, 1) ^ be",
+    "inputs": {
+     "T": {
+      "kind": "interior.parcel_temperature",
+      "unit": "K",
+      "name": "temperature of the rock"
+     },
+     "Ts": {
+      "kind": "melt.solidus_temperature",
+      "unit": "K",
+      "name": "where the rock starts to melt at this depth (solidus)"
+     },
+     "Tl": {
+      "kind": "melt.liquidus_temperature",
+      "unit": "K",
+      "name": "where the rock is wholly molten at this depth (liquidus)"
+     },
+     "L": {
+      "kind": "range.latent_fusion",
+      "unit": "J kg-1",
+      "name": "heat it takes to melt a kilogram (latent heat of fusion)"
+     },
+     "c": {
+      "kind": "layer.specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "heat it takes to warm a kilogram by one kelvin"
+     },
+     "be": {
+      "kind": "model.melt_fraction_exponent",
+      "unit": "1",
+      "name": "how the melt share grows between solidus and liquidus (1: in a straight line)"
+     }
+    },
+    "outputs": {
+     "F": {
+      "kind": "melt.fraction",
+      "unit": "1",
+      "name": "share of the rock that is molten"
+     }
+    },
+    "source": {
+     "text": "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541",
+     "doi": "10.1016/j.icarus.2010.12.028",
+     "where": "the linear melt fraction between solidus and liquidus used in parametrised Mars models; the latent term from Katz et al. 2003"
+    },
+    "explain": {
+     "curious": "Rock does not melt all at once. It starts at the solidus and is wholly liquid at the liquidus, and between them the molten share grows. Melting soaks up heat, so a rock warmed past its solidus melts less than its temperature alone suggests.",
+     "science": "Melt fraction of a parcel at temperature T between the pressure-dependent solidus and liquidus, with the latent heat of fusion in the denominator (L/c ≈ 330 K for rock), so the parcel's cooling as it melts is counted. Linear (β = 1) as in parametrised models; Katz et al. 2003 give β ≈ 1.5 and a kink at clinopyroxene exhaustion. Water lowers the solidus; that enters with the mantle's water budget."
+    },
+    "examples": [
+     {
+      "T": 1900.0,
+      "Ts": 1700.0,
+      "Tl": 2100.0,
+      "L": 400000.0,
+      "c": 1200.0,
+      "F": 0.27272727272727276
+     },
+     {
+      "T": 1600.0,
+      "Ts": 1700.0,
+      "Tl": 2100.0,
+      "L": 400000.0,
+      "c": 1200.0,
+      "F": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.heat.lid_base_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mantle_temperature",
+     "letter": "Tm"
+    },
+    {
+     "port": "activation_energy",
+     "letter": "E"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "lid_base_temperature",
+     "letter": "Tl"
+    }
+   ],
+   "constants": {
+    "Rg": "sheet/R_gas"
+   },
+   "params": [
+    {
+     "param": "rheological_scale",
+     "letter": "a",
+     "default": 2.24,
+     "range": [
+      1.0,
+      4.0
+     ],
+     "description": "how many viscous temperature scales R T²/E the lid's base sits below the mantle (Davaille and Jaupart 1993: about 2.2)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "mantle_temperature",
+     "says": "temperature of the convecting mantle"
+    },
+    {
+     "port": "activation_energy",
+     "says": "how strongly the rock's stiffness depends on temperature (activation energy)"
+    }
+   ],
+   "references": [
+    "Davaille, A. and Jaupart, C. 1993, Journal of Fluid Mechanics 253, 141: transient high-Rayleigh-number thermal convection with large viscosity variations. doi:10.1017/S0022112093001740",
+    "Solomatov, V. S. and Moresi, L.-N. 2000, JGR 105, 21795: scaling of time-dependent stagnant lid convection. doi:10.1029/2000JB900197"
+   ],
+   "shown": "T_l = T_m − a_rh R T_m² / E",
+   "equation": {
+    "name": "Where a world's stiff lid ends and its mantle starts to flow",
+    "formula": "Tl = Tm - a * Rg * Tm * Tm / E",
+    "inputs": {
+     "Tm": {
+      "kind": "interior.mantle_temperature",
+      "unit": "K",
+      "name": "temperature of the convecting mantle"
+     },
+     "E": {
+      "kind": "interior.creep_activation_energy",
+      "unit": "J mol-1",
+      "name": "how strongly the rock's stiffness depends on temperature (activation energy)"
+     },
+     "Rg": {
+      "kind": "constant.R_gas",
+      "unit": "J mol-1 K-1",
+      "name": "gas constant"
+     },
+     "a": {
+      "kind": "model.rheological_temperature_scale",
+      "unit": "1",
+      "name": "how many viscous temperature scales the lid's base sits below the mantle"
+     }
+    },
+    "outputs": {
+     "Tl": {
+      "kind": "layer.base_temperature",
+      "unit": "K",
+      "name": "temperature at the base of the stiff lid"
+     }
+    },
+    "source": {
+     "text": "Davaille, A. and Jaupart, C. 1993, Journal of Fluid Mechanics 253, 141",
+     "doi": "10.1017/S0022112093001740",
+     "where": "the rheological temperature scale ΔT_rh = R T²/E, and the lid's base about 2.2 of them below the mantle"
+    },
+    "explain": {
+     "curious": "A cold world's top is too stiff to stir. Below a certain temperature the rock stops flowing with the mantle and joins the lid; this says how far below the mantle's temperature that is.",
+     "science": "In stagnant-lid convection the lid's base sits a fixed number a_rh ≈ 2.2 of rheological temperature scales R T_m²/E below the interior temperature, independent of the lid's thickness (Davaille and Jaupart 1993; Solomatov and Moresi 2000)."
+    },
+    "examples": [
+     {
+      "Tm": 1700.0,
+      "E": 300000.0,
+      "Tl": 1520.5849826537174
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.heat.lid_growth",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "heat_capacity",
+     "letter": "c"
+    },
+    {
+     "port": "mantle_temperature",
+     "letter": "Tm"
+    },
+    {
+     "port": "lid_base_temperature",
+     "letter": "Tl"
+    },
+    {
+     "port": "base_flux",
+     "letter": "qb"
+    },
+    {
+     "port": "mantle_flux",
+     "letter": "qm"
+    },
+    {
+     "port": "intruded_flux",
+     "letter": "qi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "growth_rate",
+     "letter": "dD"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "density",
+     "says": "density of the rock joining the lid"
+    },
+    {
+     "port": "heat_capacity",
+     "says": "heat it takes to warm a kilogram by one kelvin"
+    }
+   ],
+   "references": [
+    "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press. doi:10.1017/CBO9780511843877",
+    "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541: crustal recycling, mantle dehydration and the thermal evolution of Mars. doi:10.1016/j.icarus.2010.12.028",
+    "Solomatov, V. S. and Moresi, L.-N. 2000, JGR 105, 21795: scaling of time-dependent stagnant lid convection. doi:10.1029/2000JB900197"
+   ],
+   "shown": "ρ c (T_m − T_l) dD/dt = q_base − q_m − q_intruded",
+   "equation": {
+    "name": "How fast a world's stiff lid thickens or thins",
+    "formula": "dD = (qb - qm - qi) / (rho * c * (Tm - Tl))",
+    "inputs": {
+     "rho": {
+      "kind": "layer.density",
+      "unit": "kg m-3",
+      "name": "density of the rock joining the lid"
+     },
+     "c": {
+      "kind": "layer.specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "heat it takes to warm a kilogram by one kelvin"
+     },
+     "Tm": {
+      "kind": "interior.mantle_temperature",
+      "unit": "K",
+      "name": "temperature of the convecting mantle"
+     },
+     "Tl": {
+      "kind": "layer.base_temperature",
+      "unit": "K",
+      "name": "temperature at the base of the stiff lid"
+     },
+     "qb": {
+      "kind": "heat.lid_base_flux",
+      "unit": "W m-2",
+      "name": "heat conducted away from the lid's base"
+     },
+     "qm": {
+      "kind": "heat.mantle_flux",
+      "unit": "W m-2",
+      "name": "heat the convecting mantle delivers to the lid's base"
+     },
+     "qi": {
+      "kind": "heat.intruded_flux",
+      "unit": "W m-2",
+      "name": "heat of melt freezing inside the lid"
+     }
+    },
+    "outputs": {
+     "dD": {
+      "kind": "heat.lid_growth_rate",
+      "unit": "m s-1",
+      "name": "how fast the lid's base moves down (negative: the lid thins)"
+     }
+    },
+    "source": {
+     "text": "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition",
+     "doi": "10.1017/CBO9780511843877",
+     "where": "the Stefan condition at a moving boundary (section 4.18), here with the mantle's convective flux and intrusions on one side; as used in parametrised stagnant-lid models (Morschhauser et al. 2011)"
+    },
+    "explain": {
+     "curious": "A world's lid grows when its base loses heat faster than the mantle below supplies it: rock at the base cools, stiffens and joins the lid. When the mantle supplies more, or melt freezing inside the lid warms it, the lid thins.",
+     "science": "Energy balance at the lid's base: the rock crossing it changes temperature by T_m − T_l. A young lid (D → 0) conducts a lot and grows as √t, so its surface heat flow falls as 1/√t: a cooling half-space, its heat coming from the rock joining it, not from the mantle. A steady lid has q_base = q_m."
+    },
+    "examples": [
+     {
+      "rho": 3400.0,
+      "c": 1200.0,
+      "Tm": 1700.0,
+      "Tl": 1520.0,
+      "qb": 0.03,
+      "qm": 0.02,
+      "qi": 0.0,
+      "dD": 1.3616557734204791e-11
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.heat.lid_conduction_with_burial",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "conductivity",
+     "letter": "k"
+    },
+    {
+     "port": "base_temperature",
+     "letter": "Tl"
+    },
+    {
+     "port": "surface_temperature",
+     "letter": "Ts"
+    },
+    {
+     "port": "thickness",
+     "letter": "D"
+    },
+    {
+     "port": "lid_heating",
+     "letter": "h"
+    },
+    {
+     "port": "burial_speed",
+     "letter": "v"
+    },
+    {
+     "port": "diffusivity",
+     "letter": "kap"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "surface_flux",
+     "letter": "qs"
+    },
+    {
+     "port": "base_flux",
+     "letter": "qb"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "conductivity",
+     "says": "how well the lid's rock conducts heat"
+    },
+    {
+     "port": "thickness",
+     "says": "thickness of the lid"
+    },
+    {
+     "port": "diffusivity",
+     "says": "how fast heat spreads through the lid's rock"
+    }
+   ],
+   "references": [
+    "O'Reilly, T. C. and Davies, G. F. 1981, Geophysical Research Letters 8, 313: magma transport of heat on Io, a mechanism allowing a thick lithosphere. doi:10.1029/GL008i004p00313",
+    "Moore, W. B. and Webb, A. A. G. 2013, Nature 501, 501: heat-pipe Earth. doi:10.1038/nature12473",
+    "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press. doi:10.1017/CBO9780511843877"
+   ],
+   "shown": "Pe = v D/κ;  q_top = k ΔT/D · Pe/(e^Pe − 1) + h/2;  q_base = k ΔT/D · Pe e^Pe/(e^Pe − 1) − h/2",
+   "equation": {
+    "name": "Heat a world's lid conducts, when lava may be burying it",
+    "formula": "Pe = v * D / kap\nfs = if Pe > 0 then Pe / expm1(Pe) else 1\nq0 = k * (Tl - Ts) / D\nqs = q0 * fs + h / 2\nqb = q0 * fs * exp(Pe) - h / 2",
+    "inputs": {
+     "k": {
+      "kind": "interior.thermal_conductivity",
+      "unit": "W m-1 K-1",
+      "name": "how well the lid's rock conducts heat"
+     },
+     "Tl": {
+      "kind": "layer.base_temperature",
+      "unit": "K",
+      "name": "temperature at the base of the lid"
+     },
+     "Ts": {
+      "kind": "layer.top_temperature",
+      "unit": "K",
+      "name": "temperature at the surface"
+     },
+     "D": {
+      "kind": "layer.thickness",
+      "unit": "m",
+      "name": "thickness of the lid"
+     },
+     "h": {
+      "kind": "heat.lid_heating",
+      "unit": "W m-2",
+      "name": "heat made inside the lid, per square metre of surface (its crust's radioactivity)"
+     },
+     "v": {
+      "kind": "heat.burial_speed",
+      "unit": "m s-1",
+      "name": "how fast erupted lava buries the surface"
+     },
+     "kap": {
+      "kind": "interior.thermal_diffusivity",
+      "unit": "m2 s-1",
+      "name": "how fast heat spreads through the lid's rock"
+     }
+    },
+    "outputs": {
+     "qs": {
+      "kind": "heat.lid_surface_flux",
+      "unit": "W m-2",
+      "name": "heat conducted out of the surface"
+     },
+     "qb": {
+      "kind": "heat.lid_base_flux",
+      "unit": "W m-2",
+      "name": "heat conducted away from the lid's base"
+     }
+    },
+    "source": {
+     "text": "O'Reilly, T. C. and Davies, G. F. 1981, Geophysical Research Letters 8, 313",
+     "doi": "10.1029/GL008i004p00313",
+     "where": "steady conduction through a layer advected downward at the resurfacing speed; the h/2 split of heat made inside a layer from Turcotte and Schubert 2014, chapter 4"
+    },
+    "explain": {
+     "curious": "Heat leaks up through a world's cold lid. Where lava keeps pouring out and burying the surface, the cold top is pushed down faster than heat can climb, so the surface conducts almost nothing and the lava carries the heat instead: this is how Io holds up mountains while losing heat fast.",
+     "science": "Steady conduction in a layer of thickness D moving downward at v: the Péclet number Pe = vD/κ chokes the top flux by Pe/(e^Pe − 1) and raises the base flux by e^Pe. At Pe → 0 both are k ΔT/D. Heat made inside the lid (h, W/m² of surface) splits half up and half down, exact for a uniform source without burial and kept as the first-order split with it."
+    },
+    "examples": [
+     {
+      "k": 3.0,
+      "Tl": 1500.0,
+      "Ts": 220.0,
+      "D": 100000.0,
+      "h": 0.005,
+      "v": 0.0,
+      "kap": 1e-06,
+      "qs": 0.0409,
+      "qb": 0.035899999999999994
+     },
+     {
+      "k": 3.0,
+      "Tl": 1500.0,
+      "Ts": 220.0,
+      "D": 100000.0,
+      "h": 0.005,
+      "v": 2e-11,
+      "kap": 1e-06,
+      "qs": 0.014520554963174321,
+      "qb": 0.08632055496317431
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.heat.boundary_layer_speed",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "diffusivity",
+     "letter": "kap"
+    },
+    {
+     "port": "mantle_depth",
+     "letter": "D"
+    },
+    {
+     "port": "conductivity",
+     "letter": "k"
+    },
+    {
+     "port": "temperature_drop",
+     "letter": "dT"
+    },
+    {
+     "port": "mantle_flux",
+     "letter": "q"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "speed",
+     "letter": "u"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "diffusivity",
+     "says": "how fast heat spreads through the rock"
+    },
+    {
+     "port": "mantle_depth",
+     "says": "depth of the convecting mantle"
+    },
+    {
+     "port": "conductivity",
+     "says": "how well the rock conducts heat"
+    },
+    {
+     "port": "temperature_drop",
+     "says": "temperature drop across the mantle's top boundary layer"
+    },
+    {
+     "port": "mantle_flux",
+     "says": "heat the convecting mantle delivers through that layer"
+    }
+   ],
+   "references": [
+    "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press. doi:10.1017/CBO9780511843877",
+    "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541: crustal recycling, mantle dehydration and the thermal evolution of Mars. doi:10.1016/j.icarus.2010.12.028"
+   ],
+   "shown": "δ = k ΔT/q;  u = κ D/δ²",
+   "equation": {
+    "name": "How fast a world's mantle turns over",
+    "formula": "d = k * dT / q\nu = kap * D / (d * d)",
+    "inputs": {
+     "kap": {
+      "kind": "interior.thermal_diffusivity",
+      "unit": "m2 s-1",
+      "name": "how fast heat spreads through the rock"
+     },
+     "D": {
+      "kind": "interior.mantle_depth",
+      "unit": "m",
+      "name": "depth of the convecting mantle"
+     },
+     "k": {
+      "kind": "interior.thermal_conductivity",
+      "unit": "W m-1 K-1",
+      "name": "how well the rock conducts heat"
+     },
+     "dT": {
+      "kind": "heat.boundary_layer_temperature_drop",
+      "unit": "K",
+      "name": "temperature drop across the mantle's top boundary layer"
+     },
+     "q": {
+      "kind": "heat.mantle_flux",
+      "unit": "W m-2",
+      "name": "heat the convecting mantle delivers through that layer"
+     }
+    },
+    "outputs": {
+     "u": {
+      "kind": "interior.convection_speed",
+      "unit": "m s-1",
+      "name": "typical speed of the mantle's flow"
+     }
+    },
+    "source": {
+     "text": "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition",
+     "doi": "10.1017/CBO9780511843877",
+     "where": "boundary-layer theory of convection (section 6.21): a boundary layer of thickness δ grows for δ²/κ while the flow crosses the depth D"
+    },
+    "explain": {
+     "curious": "A mantle's slow churning brings fresh rock up to where it can melt. How fast it churns follows from how much heat it carries: a thin, steep top layer means a fast flow.",
+     "science": "The boundary layer's thickness δ follows from the heat it conducts, q = k ΔT/δ; it grows for a time δ²/κ while the flow crosses the mantle's depth D, so u = κD/δ². No new constant: the speed the heat flow already implies."
+    },
+    "examples": [
+     {
+      "kap": 1e-06,
+      "D": 1700000.0,
+      "k": 3.0,
+      "dT": 100.0,
+      "q": 0.02,
+      "u": 7.555555555555555e-09
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.melt.supply",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "speed",
+     "letter": "u"
+    },
+    {
+     "port": "mean_fraction",
+     "letter": "F"
+    },
+    {
+     "port": "zone_volume",
+     "letter": "V"
+    },
+    {
+     "port": "fertile_share",
+     "letter": "x"
+    },
+    {
+     "port": "mantle_depth",
+     "letter": "D"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "production",
+     "letter": "P"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "mantle_depth",
+     "says": "depth of the convecting mantle"
+    }
+   ],
+   "references": [
+    "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541: crustal recycling, mantle dehydration and the thermal evolution of Mars. doi:10.1016/j.icarus.2010.12.028"
+   ],
+   "shown": "Π = u F̄ V_zone x / D",
+   "equation": {
+    "name": "Melt made as the mantle's flow carries rock through its melting zone",
+    "formula": "P = u * F * V * x / D",
+    "inputs": {
+     "u": {
+      "kind": "interior.convection_speed",
+      "unit": "m s-1",
+      "name": "typical speed of the mantle's flow"
+     },
+     "F": {
+      "kind": "melt.zone_mean_fraction",
+      "unit": "1",
+      "name": "mean molten share across the melting zone"
+     },
+     "V": {
+      "kind": "melt.zone_volume",
+      "unit": "m3",
+      "name": "volume of the melting zone under the lid"
+     },
+     "x": {
+      "kind": "melt.fertile_share",
+      "unit": "1",
+      "name": "share of the rock that can still melt (falls as basalt is taken)"
+     },
+     "D": {
+      "kind": "interior.mantle_depth",
+      "unit": "m",
+      "name": "depth of the convecting mantle"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "melt.production_rate",
+      "unit": "m3 s-1",
+      "name": "melt made, volume per second"
+     }
+    },
+    "source": {
+     "text": "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541",
+     "doi": "10.1016/j.icarus.2010.12.028",
+     "where": "crust production from the convective speed through the melt zone (they divide by the planet's radius; the mantle's depth here, registered as a fudge)"
+    },
+    "explain": {
+     "curious": "A mantle melts only where rock rises high enough under the lid. The faster the flow carries rock through that zone, the more melt it makes, and once rock has given up its basalt it gives little more.",
+     "science": "Volume of melt made per second by convective supply: the flow sweeps the melt zone's volume once per D/u, each pass extracting the zone's mean melt fraction from the share x of fertile rock. The length the mantle turns over on (D here, the planet's radius in Morschhauser et al.) is registered as a fudge."
+    },
+    "examples": [
+     {
+      "u": 1e-09,
+      "F": 0.1,
+      "V": 1e+19,
+      "x": 1.0,
+      "D": 1700000.0,
+      "P": 588.2352941176471
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.melt.in_place",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "surplus",
+     "letter": "N"
+    },
+    {
+     "port": "share",
+     "letter": "s"
+    },
+    {
+     "port": "melt_density",
+     "letter": "rho"
+    },
+    {
+     "port": "latent_heat",
+     "letter": "L"
+    },
+    {
+     "port": "heat_capacity",
+     "letter": "c"
+    },
+    {
+     "port": "mantle_temperature",
+     "letter": "Tm"
+    },
+    {
+     "port": "lid_base_temperature",
+     "letter": "Tl"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "production",
+     "letter": "P"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "melt_density",
+     "says": "density of the melt"
+    },
+    {
+     "port": "latent_heat",
+     "says": "heat it takes to melt a kilogram"
+    }
+   ],
+   "references": [
+    "Moore, W. B. and Webb, A. A. G. 2013, Nature 501, 501: heat-pipe Earth. doi:10.1038/nature12473",
+    "Bierson, C. J. and Nimmo, F. 2016, JGR Planets 121, 2211: a test for Io's magma ocean. doi:10.1002/2016JE005005"
+   ],
+   "shown": "Π = share · max(N, 0) / (ρ_melt (L + c (T_m − T_l)))",
+   "equation": {
+    "name": "Melt made where extra heat lands inside the melting zone",
+    "formula": "P = s * max(N, 0) / (rho * (L + c * (Tm - Tl)))",
+    "inputs": {
+     "N": {
+      "kind": "heat.surplus_power",
+      "unit": "W",
+      "name": "heat the mantle gains beyond what it loses (only a gain melts rock)"
+     },
+     "s": {
+      "kind": "melt.heat_share",
+      "unit": "1",
+      "name": "share of that heat landing in the melting zone (its volume share; all of a tide's heat)"
+     },
+     "rho": {
+      "kind": "melt.density",
+      "unit": "kg m-3",
+      "name": "density of the melt"
+     },
+     "L": {
+      "kind": "range.latent_fusion",
+      "unit": "J kg-1",
+      "name": "heat it takes to melt a kilogram"
+     },
+     "c": {
+      "kind": "layer.specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "heat it takes to warm a kilogram by one kelvin"
+     },
+     "Tm": {
+      "kind": "interior.mantle_temperature",
+      "unit": "K",
+      "name": "temperature of the convecting mantle"
+     },
+     "Tl": {
+      "kind": "layer.base_temperature",
+      "unit": "K",
+      "name": "temperature at the base of the lid"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "melt.production_rate",
+      "unit": "m3 s-1",
+      "name": "melt made, volume per second"
+     }
+    },
+    "source": {
+     "text": "Moore, W. B. and Webb, A. A. G. 2013, Nature 501, 501",
+     "doi": "10.1038/nature12473",
+     "where": "heat beyond what conduction can carry leaves as melt (the heat-pipe balance); graded here by the share of the heat landing in the melting zone"
+    },
+    "explain": {
+     "curious": "When a world is heated faster than it can lose heat, the part of that heat landing in rock already at its melting point does not warm it further: it melts more of it. That is why a tidally squeezed world like Io erupts instead of boiling.",
+     "science": "Melt made in place by a heat surplus N: its share inside the melt zone (the zone's volume share for radiogenic and core heat; 1 for tidal heat, made where the rock is soft) pays the latent heat plus warming from the lid's base to the mantle. With the whole mantle above its solidus this is HF1's venting at the solidus."
+    },
+    "examples": [
+     {
+      "N": 1000000000000.0,
+      "s": 0.1,
+      "rho": 2800.0,
+      "L": 400000.0,
+      "c": 1200.0,
+      "Tm": 1700.0,
+      "Tl": 1520.0,
+      "P": 57.97773654916512
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.melt.retained",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "production",
+     "letter": "P"
+    },
+    {
+     "port": "area",
+     "letter": "A"
+    },
+    {
+     "port": "melt_viscosity",
+     "letter": "eta"
+    },
+    {
+     "port": "grain_size",
+     "letter": "b"
+    },
+    {
+     "port": "density_contrast",
+     "letter": "dr"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "permeability_exponent",
+     "letter": "n"
+    },
+    {
+     "port": "permeability_constant",
+     "letter": "C"
+    },
+    {
+     "port": "lockup_share",
+     "letter": "pc"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "retained",
+     "letter": "phi"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "area",
+     "says": "area of the melting zone's top"
+    },
+    {
+     "port": "melt_viscosity",
+     "says": "how runny the melt is (its viscosity)"
+    },
+    {
+     "port": "grain_size",
+     "says": "size of the rock's grains"
+    },
+    {
+     "port": "density_contrast",
+     "says": "how much denser the rock is than its melt"
+    },
+    {
+     "port": "gravity",
+     "says": "gravity where the melt is"
+    },
+    {
+     "port": "permeability_exponent",
+     "says": "how fast the rock's permeability grows with its melt share"
+    },
+    {
+     "port": "permeability_constant",
+     "says": "the permeability law's constant: permeability is b² φⁿ / C"
+    }
+   ],
+   "references": [
+    "Miller, K. J., Zhu, W., Montesi, L. G. J. and Gaetani, G. A. 2014, Earth and Planetary Science Letters 388, 273: permeability of partially molten mantle rock. doi:10.1016/j.epsl.2013.12.003",
+    "Bierson, C. J. and Nimmo, F. 2016, JGR Planets 121, 2211: a test for Io's magma ocean. doi:10.1002/2016JE005005"
+   ],
+   "shown": "φ = min( (Π/A · η_melt C / (b² Δρ g))^(1/n), φ_c )",
+   "equation": {
+    "name": "How much melt stays in the rock while it seeps out",
+    "formula": "phi = min((P / A * eta * C / (b * b * dr * g)) ^ (1 / n), pc)",
+    "inputs": {
+     "P": {
+      "kind": "melt.production_rate",
+      "unit": "m3 s-1",
+      "name": "melt made, volume per second"
+     },
+     "A": {
+      "kind": "melt.zone_top_area",
+      "unit": "m2",
+      "name": "area of the melting zone's top"
+     },
+     "eta": {
+      "kind": "melt.viscosity",
+      "unit": "kg m-1 s-1",
+      "name": "how runny the melt is (its viscosity)"
+     },
+     "b": {
+      "kind": "melt.grain_size",
+      "unit": "m",
+      "name": "size of the rock's grains"
+     },
+     "dr": {
+      "kind": "melt.density_contrast",
+      "unit": "kg m-3",
+      "name": "how much denser the rock is than its melt"
+     },
+     "g": {
+      "kind": "layer.gravity",
+      "unit": "m s-2",
+      "name": "gravity where the melt is"
+     },
+     "n": {
+      "kind": "melt.permeability_exponent",
+      "unit": "1",
+      "name": "how fast the rock's permeability grows with its melt share"
+     },
+     "C": {
+      "kind": "melt.permeability_constant",
+      "unit": "1",
+      "name": "the permeability law's constant: permeability is b² φⁿ / C"
+     },
+     "pc": {
+      "kind": "melt.lockup_share",
+      "unit": "1",
+      "name": "melt share at which the grains stop touching"
+     }
+    },
+    "outputs": {
+     "phi": {
+      "kind": "melt.retained_share",
+      "unit": "1",
+      "name": "share of the rock that is melt waiting to leave"
+     }
+    },
+    "source": {
+     "text": "Miller, K. J., Zhu, W., Montesi, L. G. J. and Gaetani, G. A. 2014, Earth and Planetary Science Letters 388, 273",
+     "doi": "10.1016/j.epsl.2013.12.003",
+     "where": "the permeability law k = b² φⁿ / C (n ≈ 2.6, C ≈ 58), in Darcy's law for buoyant melt as in Bierson and Nimmo 2016"
+    },
+    "explain": {
+     "curious": "Melt seeps up between the grains of the rock like water through sand. A world making little melt drains it as fast as it is made and holds only a trace; a world making a lot, like Io, holds more, and that is what softens it.",
+     "science": "Darcy percolation at a speed (b² φⁿ / C) Δρ g / η_melt through the melt zone's top; melt crosses the zone far faster than a step, so the share held is the one at which that flux carries the melt being made. Capped at lock-up, where the mush stops being a solid. A negative Δρ (water under ice) drains down instead; the same law with the sign. Grain size is the number this is most sensitive to."
+    },
+    "examples": [
+     {
+      "P": 1.0,
+      "A": 10000000000000.0,
+      "eta": 10.0,
+      "b": 0.01,
+      "dr": 500.0,
+      "g": 3.7,
+      "n": 2.6,
+      "C": 58.0,
+      "pc": 0.4,
+      "phi": 0.00022116375153551112
+     },
+     {
+      "P": 52000.0,
+      "A": 42000000000000.0,
+      "eta": 10.0,
+      "b": 0.01,
+      "dr": 500.0,
+      "g": 1.8,
+      "n": 2.6,
+      "C": 58.0,
+      "pc": 0.4,
+      "phi": 0.010944792048503595
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.melt.softening",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "retained",
+     "letter": "phi"
+    },
+    {
+     "port": "lockup_share",
+     "letter": "pc"
+    },
+    {
+     "port": "weakening",
+     "letter": "a"
+    },
+    {
+     "port": "viscosity",
+     "letter": "eta0"
+    },
+    {
+     "port": "rigidity",
+     "letter": "mu0"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "softened_viscosity",
+     "letter": "eta"
+    },
+    {
+     "port": "softened_rigidity",
+     "letter": "mu"
+    }
+   ],
+   "constants": {},
+   "params": [
+    {
+     "param": "rigidity_floor",
+     "letter": "fl",
+     "default": 0.05,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "the least share of its rigidity a partly molten rock keeps below lock-up (a stand-in)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "lockup_share",
+     "says": "melt share at which the grains stop touching"
+    },
+    {
+     "port": "viscosity",
+     "says": "the rock's viscosity with no melt"
+    },
+    {
+     "port": "rigidity",
+     "says": "the rock's rigidity with no melt"
+    }
+   ],
+   "references": [
+    "Mei, S., Bai, W., Hiraga, T. and Kohlstedt, D. L. 2002, Earth and Planetary Science Letters 201, 491: influence of melt on the creep behaviour of olivine-basalt aggregates. doi:10.1016/S0012-821X(02)00722-0",
+    "Costa, A., Caricchi, L. and Bagdassarov, N. 2009, Geochemistry, Geophysics, Geosystems 10, Q03010: rheology of partially molten rocks. doi:10.1029/2008GC002138",
+    "Bierson, C. J. and Nimmo, F. 2016, JGR Planets 121, 2211: a test for Io's magma ocean. doi:10.1002/2016JE005005"
+   ],
+   "shown": "η = η₀ e^(−a φ);  μ = μ₀ max(1 − φ/φ_c, floor)",
+   "equation": {
+    "name": "How melt between the grains softens a rock",
+    "formula": "eta = eta0 * exp(-a * min(phi, pc))\nmu = mu0 * max(1 - phi / pc, fl)",
+    "inputs": {
+     "phi": {
+      "kind": "melt.retained_share",
+      "unit": "1",
+      "name": "share of the rock that is melt"
+     },
+     "pc": {
+      "kind": "melt.lockup_share",
+      "unit": "1",
+      "name": "melt share at which the grains stop touching"
+     },
+     "a": {
+      "kind": "melt.weakening_exponent",
+      "unit": "1",
+      "name": "how strongly melt weakens the rock's flow"
+     },
+     "eta0": {
+      "kind": "interior.viscosity",
+      "unit": "kg m-1 s-1",
+      "name": "the rock's viscosity with no melt"
+     },
+     "mu0": {
+      "kind": "interior.rigidity",
+      "unit": "kg m-1 s-2",
+      "name": "the rock's rigidity with no melt"
+     },
+     "fl": {
+      "kind": "model.rigidity_floor",
+      "unit": "1",
+      "name": "the least share of its rigidity a mush keeps before lock-up"
+     }
+    },
+    "outputs": {
+     "eta": {
+      "kind": "interior.viscosity",
+      "unit": "kg m-1 s-1",
+      "name": "viscosity of the partly molten rock"
+     },
+     "mu": {
+      "kind": "interior.rigidity",
+      "unit": "kg m-1 s-2",
+      "name": "rigidity of the partly molten rock"
+     }
+    },
+    "source": {
+     "text": "Mei, S., Bai, W., Hiraga, T. and Kohlstedt, D. L. 2002, Earth and Planetary Science Letters 201, 491",
+     "doi": "10.1016/S0012-821X(02)00722-0",
+     "where": "viscosity falls as exp(−a φ), a ≈ 26 (diffusion creep); the rigidity law is a linear stand-in going to zero at lock-up (Costa et al. 2009), registered as a fudge until a measured form is read at source"
+    },
+    "explain": {
+     "curious": "A little melt between the grains makes rock flow much more easily: five per cent melt makes it hundreds of times runnier. It also makes the rock less springy, until at about forty per cent the grains stop touching and it flows like a thick liquid.",
+     "science": "Melt-weakened viscosity η₀ exp(−a φ) (Mei et al. 2002) and a linear rigidity loss to zero at the lock-up share φ_c, floored. The same softened viscosity feeds the convection scaling and the tidal response: one viscosity, read in both places. The rigidity law is a stand-in, flagged in the fudge register."
+    },
+    "examples": [
+     {
+      "phi": 0.05,
+      "pc": 0.4,
+      "a": 26.0,
+      "eta0": 1e+19,
+      "mu0": 65000000000.0,
+      "eta": 2.7253179303401257e+18,
+      "mu": 56875000000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.melt.processed",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "melt_density",
+     "letter": "rho"
+    },
+    {
+     "port": "production",
+     "letter": "P"
+    },
+    {
+     "port": "step",
+     "letter": "dt"
+    },
+    {
+     "port": "mean_fraction",
+     "letter": "F"
+    },
+    {
+     "port": "mantle_mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "processed",
+     "letter": "p"
+    },
+    {
+     "port": "kept",
+     "letter": "k"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "mean_fraction",
+     "says": "mean molten share of the rock that melted"
+    },
+    {
+     "port": "mantle_mass",
+     "says": "mass of the mantle"
+    }
+   ],
+   "references": [
+    "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541: crustal recycling, mantle dehydration and the thermal evolution of Mars. doi:10.1016/j.icarus.2010.12.028"
+   ],
+   "shown": "processed = ρ Π dt / (F̄ M_mantle);  kept = e^(−processed)",
+   "equation": {
+    "name": "How much of a mantle has had its melt taken",
+    "formula": "p = rho * P * dt / (F * M)\nk = exp(-p)",
+    "inputs": {
+     "rho": {
+      "kind": "melt.density",
+      "unit": "kg m-3",
+      "name": "density of the melt"
+     },
+     "P": {
+      "kind": "melt.production_rate",
+      "unit": "m3 s-1",
+      "name": "melt made, volume per second"
+     },
+     "dt": {
+      "kind": "time.step",
+      "unit": "s",
+      "name": "length of the step"
+     },
+     "F": {
+      "kind": "melt.zone_mean_fraction",
+      "unit": "1",
+      "name": "mean molten share of the rock that melted"
+     },
+     "M": {
+      "kind": "interior.mantle_mass",
+      "unit": "kg",
+      "name": "mass of the mantle"
+     }
+    },
+    "outputs": {
+     "p": {
+      "kind": "melt.processed_share",
+      "unit": "1",
+      "name": "share of the mantle that passed through the melting zone this step"
+     },
+     "k": {
+      "kind": "melt.kept_factor",
+      "unit": "1",
+      "name": "share of the mantle's fertile rock, water and heat-making elements left behind"
+     }
+    },
+    "source": {
+     "text": "Morschhauser, A., Grott, M. and Breuer, D. 2011, Icarus 212, 541",
+     "doi": "10.1016/j.icarus.2010.12.028",
+     "where": "mantle depletion and dehydration by crust production: the mass that melted over its mean melt fraction is the mass processed"
+    },
+    "explain": {
+     "curious": "Melt carries away what rock gives up most easily: its basalt, its water and its radioactive elements. A world that melts a lot dries out and runs low on fuel for more melt; one that barely melts stays wet.",
+     "science": "Mass of mantle passed through the melt zone in a step is the melt mass over the mean melt fraction. Fertile share, water (incompatible almost wholly) and U, Th and K are each multiplied by exp(−processed) per step, which conserves mass and keeps them positive. This replaces a fixed degassing time."
+    },
+    "examples": [
+     {
+      "rho": 2800.0,
+      "P": 1.0,
+      "dt": 31560000000000.0,
+      "F": 0.1,
+      "M": 4.9e+23,
+      "p": 1.8034285714285713e-06,
+      "k": 0.9999981965730548
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.melt.erupted_share",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "production",
+     "letter": "P"
+    },
+    {
+     "port": "surface_area",
+     "letter": "A"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "erupted",
+     "letter": "Pe"
+    },
+    {
+     "port": "intruded",
+     "letter": "Pi"
+    },
+    {
+     "port": "burial_speed",
+     "letter": "v"
+    }
+   ],
+   "constants": {},
+   "params": [
+    {
+     "param": "erupted_share",
+     "letter": "f",
+     "default": 0.2,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "share of the melt that reaches the surface (White et al. 2006: about 1 in 5)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "surface_area",
+     "says": "area of the world's surface"
+    }
+   ],
+   "references": [
+    "White, S. M., Crisp, J. A. and Spera, F. J. 2006, Geochemistry, Geophysics, Geosystems 7, Q03010: long-term volumetric eruption rates and magma budgets. doi:10.1029/2005GC001002",
+    "Moore, W. B. and Webb, A. A. G. 2013, Nature 501, 501: heat-pipe Earth. doi:10.1038/nature12473"
+   ],
+   "shown": "Π_erupted = f_ext Π;  Π_intruded = (1 − f_ext) Π;  v = f_ext Π / A",
+   "equation": {
+    "name": "How much melt reaches the surface, and how fast it buries it",
+    "formula": "Pe = f * P\nPi = (1 - f) * P\nv = f * P / A",
+    "inputs": {
+     "P": {
+      "kind": "melt.production_rate",
+      "unit": "m3 s-1",
+      "name": "melt made, volume per second"
+     },
+     "A": {
+      "kind": "body.surface_area",
+      "unit": "m2",
+      "name": "area of the world's surface"
+     },
+     "f": {
+      "kind": "model.erupted_share",
+      "unit": "1",
+      "name": "share of the melt that reaches the surface"
+     }
+    },
+    "outputs": {
+     "Pe": {
+      "kind": "melt.erupted_rate",
+      "unit": "m3 s-1",
+      "name": "melt erupted at the surface, volume per second"
+     },
+     "Pi": {
+      "kind": "melt.intruded_rate",
+      "unit": "m3 s-1",
+      "name": "melt frozen inside the lid, volume per second"
+     },
+     "v": {
+      "kind": "heat.burial_speed",
+      "unit": "m s-1",
+      "name": "how fast erupted lava buries the surface"
+     }
+    },
+    "source": {
+     "text": "White, S. M., Crisp, J. A. and Spera, F. J. 2006, Geochemistry, Geophysics, Geosystems 7, Q03010",
+     "doi": "10.1029/2005GC001002",
+     "where": "intrusive to extrusive ratios of about 5 to 1 in long-term magma budgets; one editable share in the fudge register until the magma's own head decides it (HF8)"
+    },
+    "explain": {
+     "curious": "Most melt never reaches the surface: it freezes on the way up, inside the lid. About one part in five erupts as lava, and that lava slowly buries the ground below it.",
+     "science": "Erupted and intruded melt volumes from one share f_ext (about 0.2; White et al. 2006), registered as a fudge: the physics that should set it is the melt's buoyancy against the column it rises through. The erupted volume over the surface area is the burial speed that chokes the lid's conduction."
+    },
+    "examples": [
+     {
+      "P": 52.0,
+      "A": 41700000000000.0,
+      "Pe": 10.4,
+      "Pi": 41.6,
+      "v": 2.49400479616307e-13
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.melt.heat_carried",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "melt_density",
+     "letter": "rho"
+    },
+    {
+     "port": "erupted",
+     "letter": "Pe"
+    },
+    {
+     "port": "intruded",
+     "letter": "Pi"
+    },
+    {
+     "port": "latent_heat",
+     "letter": "L"
+    },
+    {
+     "port": "heat_capacity",
+     "letter": "c"
+    },
+    {
+     "port": "mantle_temperature",
+     "letter": "Tm"
+    },
+    {
+     "port": "lid_base_temperature",
+     "letter": "Tl"
+    },
+    {
+     "port": "surface_temperature",
+     "letter": "Ts"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "mantle_loss",
+     "letter": "hm"
+    },
+    {
+     "port": "erupted_heat",
+     "letter": "he"
+    },
+    {
+     "port": "intruded_heat",
+     "letter": "hi"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "melt_density",
+     "says": "density of the melt"
+    }
+   ],
+   "references": [
+    "Moore, W. B. and Webb, A. A. G. 2013, Nature 501, 501: heat-pipe Earth. doi:10.1038/nature12473",
+    "O'Reilly, T. C. and Davies, G. F. 1981, Geophysical Research Letters 8, 313: magma transport of heat on Io, a mechanism allowing a thick lithosphere. doi:10.1029/GL008i004p00313"
+   ],
+   "shown": "mantle: ρ Π (L + c(T_m − T_l));  surface: ρ Π_e (L + c(T_m − T_s));  lid: ρ Π_i (L + c(T_m − T_l))",
+   "equation": {
+    "name": "Heat that melt carries out of a world's mantle",
+    "formula": "hm = rho * (Pe + Pi) * (L + c * (Tm - Tl))\nhe = rho * Pe * (L + c * (Tm - Ts))\nhi = rho * Pi * (L + c * (Tm - Tl))",
+    "inputs": {
+     "rho": {
+      "kind": "melt.density",
+      "unit": "kg m-3",
+      "name": "density of the melt"
+     },
+     "Pe": {
+      "kind": "melt.erupted_rate",
+      "unit": "m3 s-1",
+      "name": "melt erupted at the surface"
+     },
+     "Pi": {
+      "kind": "melt.intruded_rate",
+      "unit": "m3 s-1",
+      "name": "melt frozen inside the lid"
+     },
+     "L": {
+      "kind": "range.latent_fusion",
+      "unit": "J kg-1",
+      "name": "heat it takes to melt a kilogram"
+     },
+     "c": {
+      "kind": "layer.specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "heat it takes to warm a kilogram by one kelvin"
+     },
+     "Tm": {
+      "kind": "interior.mantle_temperature",
+      "unit": "K",
+      "name": "temperature of the convecting mantle"
+     },
+     "Tl": {
+      "kind": "layer.base_temperature",
+      "unit": "K",
+      "name": "temperature at the base of the lid"
+     },
+     "Ts": {
+      "kind": "layer.top_temperature",
+      "unit": "K",
+      "name": "temperature at the surface"
+     }
+    },
+    "outputs": {
+     "hm": {
+      "kind": "heat.melt_mantle_loss",
+      "unit": "W",
+      "name": "heat the mantle loses to the melt"
+     },
+     "he": {
+      "kind": "heat.melt_erupted",
+      "unit": "W",
+      "name": "heat erupted lava gives the surface"
+     },
+     "hi": {
+      "kind": "heat.melt_intruded",
+      "unit": "W",
+      "name": "heat frozen melt gives the lid"
+     }
+    },
+    "source": {
+     "text": "Moore, W. B. and Webb, A. A. G. 2013, Nature 501, 501",
+     "doi": "10.1038/nature12473",
+     "where": "the heat-pipe balance: melt carries its latent heat and its warmth above the ground it erupts onto; the split between surface and lid as in the melt design's section 3.8"
+    },
+    "explain": {
+     "curious": "Molten rock is a hot-water bottle on the move: it takes its heat up with it. Lava gives all of it to the surface; melt that freezes underground warms the lid from inside, and that heat leaks out later.",
+     "science": "The rows of the melt design's heat table (3.8) for one step. The mantle loses the melt's latent heat plus its warmth above the lid's base; erupted melt delivers latent heat plus its warmth above the surface temperature (the extra c(T_l − T_s) is the lid's buried cooling); intruded melt delivers latent heat plus warmth above the lid's base to the lid. A steady heat pipe's surface total equals the mantle's loss."
+    },
+    "examples": [
+     {
+      "rho": 2800.0,
+      "Pe": 10.0,
+      "Pi": 42.0,
+      "L": 400000.0,
+      "c": 1200.0,
+      "Tm": 1700.0,
+      "Tl": 1520.0,
+      "Ts": 220.0,
+      "hm": 89689600000.0,
+      "he": 60928000000.0,
+      "hi": 72441600000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.tides.andrade_response",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "rigidity",
+     "letter": "mu"
+    },
+    {
+     "port": "viscosity",
+     "letter": "eta"
+    },
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "frequency",
+     "letter": "w"
+    },
+    {
+     "port": "andrade_exponent",
+     "letter": "al"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "im_k2",
+     "letter": "ki"
+    },
+    {
+     "port": "re_k2",
+     "letter": "kr"
+    }
+   ],
+   "constants": {},
+   "params": [
+    {
+     "param": "transient_creep",
+     "letter": "s",
+     "default": 1.0,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "the rock's slow (Andrade) creep: 1 on, 0 off, which gives the Maxwell body"
+    }
+   ],
+   "positive": [
+    {
+     "port": "rigidity",
+     "says": "how stiff the world's rock or ice is (shear modulus)"
+    },
+    {
+     "port": "viscosity",
+     "says": "how slowly the world's insides flow"
+    },
+    {
+     "port": "density",
+     "says": "mean density"
+    },
+    {
+     "port": "gravity",
+     "says": "gravity at the surface"
+    },
+    {
+     "port": "radius",
+     "says": "radius of the world"
+    },
+    {
+     "port": "frequency",
+     "says": "how fast the tide flexes it (the orbit's mean motion for a locked moon)"
+    }
+   ],
+   "references": [
+    "Castillo-Rogez, J. C., Efroimsky, M. and Lainey, V. 2011, JGR 116, E09008: the tidal history of Iapetus, Andrade rheology. doi:10.1029/2010JE003664",
+    "Efroimsky, M. 2012, ApJ 746, 150: tidal dissipation compared to seismic dissipation, in small bodies, earths and super-earths. doi:10.1088/0004-637X/746/2/150",
+    "Henning, W. G., O'Connell, R. J. and Sasselov, D. D. 2009, ApJ 707, 1000: tidally heated terrestrial exoplanets. doi:10.1088/0004-637X/707/2/1000"
+   ],
+   "shown": "J = 1/μ − i/(ηω) + s μ^(α−1) η^(−α) (iω)^(−α) Γ(1+α);  k₂ = (3/2) / (1 + 19/(2ρgR J))",
+   "equation": {
+    "name": "How much a world gives and lags under a tide, with the rock's slow creep",
+    "formula": "X = w * eta / mu\nz = al + 3\nq = z * z\nlg = (z - 1/2) * ln(z) - z + ln(2 * pi) / 2 + (1 - (1 - 2 / (7 * q)) / (30 * q)) / (12 * z)\nY = s * exp(lg) / ((z - 2) * (z - 1)) * X ^ (-al)\nh = al * pi / 2\nj1 = 1 + Y * cos(h)\nj2 = 1 / X + Y * sin(h)\nB = 19 * mu / (2 * rho * g * R) / (j1 * j1 + j2 * j2)\nu = 1 + B * j1\nv = B * j2\ne = 3/2 / (u * u + v * v)\nki = e * v\nkr = e * u",
+    "inputs": {
+     "mu": {
+      "kind": "interior.rigidity",
+      "unit": "kg m-1 s-2",
+      "name": "how stiff the world's rock or ice is (shear modulus)"
+     },
+     "eta": {
+      "kind": "interior.viscosity",
+      "unit": "kg m-1 s-1",
+      "name": "how slowly the world's insides flow"
+     },
+     "rho": {
+      "kind": "body.bulk_density",
+      "unit": "kg m-3",
+      "name": "mean density"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the surface"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "w": {
+      "kind": "tides.frequency",
+      "unit": "s-1",
+      "name": "how fast the tide flexes it (the orbit's mean motion for a locked moon)"
+     },
+     "al": {
+      "kind": "interior.andrade_exponent",
+      "unit": "1",
+      "name": "how the rock's slow creep spreads over time scales (Andrade exponent)"
+     },
+     "s": {
+      "kind": "model.transient_creep",
+      "unit": "1",
+      "name": "the rock's slow creep: 1 on, 0 off (a Maxwell body)"
+     }
+    },
+    "outputs": {
+     "ki": {
+      "kind": "tides.im_k2",
+      "unit": "1",
+      "name": "share of the tide's work turned to heat (Im k2, the k2/Q of the heating law)"
+     },
+     "kr": {
+      "kind": "tides.re_k2",
+      "unit": "1",
+      "name": "how far the world's shape follows the tide (Re k2)"
+     }
+    },
+    "source": {
+     "text": "Castillo-Rogez, J. C., Efroimsky, M. and Lainey, V. 2011, JGR 116, E09008",
+     "doi": "10.1029/2010JE003664",
+     "where": "the Andrade compliance J = 1/μ − i/(ηω) + μ^(α−1) η^(−α) (iω)^(−α) Γ(1+α), in the homogeneous incompressible body's Love number (Efroimsky 2012); Γ(1+α) by Stirling's series from Γ(α+3), good to a part in 10⁶"
+    },
+    "explain": {
+     "curious": "Rock is not only springy and runny: it also creeps slowly in between, the way a shelf sags under books. That slow creep turns a little of every tide into heat, even when the rock is far too stiff to flow, so cold worlds warm a little and warm ones a lot more than the simplest model says.",
+     "science": "Uniform incompressible body with an Andrade rheology: Maxwell's elastic and viscous compliances plus a transient term μ^(α−1) η^(−α) (iω)^(−α) Γ(1+α), its strength tied to the viscosity as in Castillo-Rogez et al. 2011. Written as real and imaginary parts. With s = 0 it is the Maxwell block sse.tides.maxwell_response exactly. A layered world needs the layered block."
+    },
+    "examples": [
+     {
+      "mu": 65000000000.0,
+      "eta": 1e+19,
+      "rho": 3530.0,
+      "g": 1.796,
+      "R": 1821600.0,
+      "w": 4.11e-05,
+      "al": 0.3,
+      "ki": 0.0007999846846093989,
+      "kr": 0.0291023281804293
+     },
+     {
+      "mu": 65000000000.0,
+      "eta": 10000000000000.0,
+      "rho": 3530.0,
+      "g": 1.796,
+      "R": 1821600.0,
+      "w": 4.11e-05,
+      "al": 0.3,
+      "s": 0.0,
+      "ki": 0.45335677143759573,
+      "kr": 1.3438583359544456
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.tides.host_power_ceiling",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mean_motion",
+     "letter": "n"
+    },
+    {
+     "port": "host_k2_over_q",
+     "letter": "kq"
+    },
+    {
+     "port": "mass",
+     "letter": "m"
+    },
+    {
+     "port": "host_radius",
+     "letter": "Rh"
+    },
+    {
+     "port": "semi_major_axis",
+     "letter": "a"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "ceiling",
+     "letter": "P"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "params": [],
+   "positive": [
+    {
+     "port": "mean_motion",
+     "says": "the moon's orbital rate (mean motion)"
+    },
+    {
+     "port": "host_k2_over_q",
+     "says": "how strongly the host flexes and loses energy under the moon's tide (its k2/Q)"
+    },
+    {
+     "port": "mass",
+     "says": "mass of the moon"
+    },
+    {
+     "port": "host_radius",
+     "says": "radius of the host"
+    },
+    {
+     "port": "semi_major_axis",
+     "says": "size of the moon's orbit"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817",
+    "Lainey, V. et al. 2009, Nature 459, 957: strong tidal dissipation in Io and Jupiter from astrometric observations. doi:10.1038/nature08108"
+   ],
+   "shown": "P_max = n (3/2) (k2/Q)_host G m² R_host⁵ / a⁶",
+   "equation": {
+    "name": "The most heat a host's spin can feed a moon held in step",
+    "formula": "r5 = Rh * Rh * Rh * Rh * Rh\na6 = a * a * a * a * a * a\nP = n * 3/2 * kq * G * m * m * r5 / a6",
+    "inputs": {
+     "n": {
+      "kind": "tides.frequency",
+      "unit": "s-1",
+      "name": "the moon's orbital rate (mean motion)"
+     },
+     "kq": {
+      "kind": "tides.host_k2_over_q",
+      "unit": "1",
+      "name": "how strongly the host flexes and loses energy under the moon's tide (its k2/Q)"
+     },
+     "m": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the moon"
+     },
+     "Rh": {
+      "kind": "tides.host_radius",
+      "unit": "m",
+      "name": "radius of the host"
+     },
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "size of the moon's orbit"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "tides.host_power_ceiling",
+      "unit": "W",
+      "name": "the most heat the host's tide can keep feeding the moon"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "the tidal torque of a satellite on its planet (section 4.9) times the orbital rate: the power the host's spin passes into the orbit, the most a moon held in resonance can dissipate for long; Jupiter's k2/Q from Lainey et al. 2009"
+    },
+    "explain": {
+     "curious": "A moon's tidal heat is paid for by its host's spin. The host's own tide passes energy to the moon's orbit, and for a moon held in step by its neighbours that is the most it can turn into heat for long: Io gives off about nine tenths of what Jupiter can feed it.",
+     "science": "The tidal torque (3/2)(k2/Q)_host G m² R_host⁵ / a⁶ times the mean motion n. For a moon in a resonance that pumps its eccentricity, its heat is set mostly by the host, and the moon's interior decides the eccentricity it settles at. A check and an explanation, never a clamp."
+    },
+    "examples": [
+     {
+      "n": 4.11e-05,
+      "kq": 1.1e-05,
+      "m": 8.93e+22,
+      "Rh": 70000000.0,
+      "a": 421700000.0,
+      "P": 107870576931873.23
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -201,3 +201,24 @@ fn life_view_carries_the_energy_ledger() {
         assert!(h["surplus_w"].as_f64().unwrap() < 0.0, "{h}");
     }
 }
+
+/// LE3 and LE4 on the chart's own Earth: the guilds share out the captured
+/// power, and Earth reads about one times Earth's pace.
+#[test]
+fn life_view_shares_the_energy_and_reads_earths_pace() {
+    let mut k = open_sol(&[]);
+    let e = life(&mut k, "Earth");
+    let v = &e["view"];
+    let guilds = v["guilds"].as_array().unwrap();
+    let share: f64 = guilds
+        .iter()
+        .map(|g| g["share_of_captured"].as_f64().unwrap())
+        .sum();
+    assert!((share - 1.0).abs() < 1e-9, "{share}");
+    let pace = v["speed"]["pace_x_earth"].as_f64().unwrap();
+    assert!((0.33..3.0).contains(&pace), "{}", v["speed"]["words"]);
+    assert!(v["speed"]["words"]
+        .as_str()
+        .unwrap()
+        .contains("Earth's pace"));
+}

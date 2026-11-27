@@ -1,0 +1,1 @@
+G follows {"block":"sse.gravity.zero_velocity_radius","reads":["G"],"uses_it":true}
