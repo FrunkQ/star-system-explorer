@@ -49,7 +49,7 @@
         }
       ],
       "polygon_waves": 5.999922657465071,
-      "systems": "a3813bc0b0b324940ad1049d2bd27bc538fcbf69b5c3e120f1ffa3a0a3641ca2",
+      "systems": "3c4e82115e954462afb352dec23bf1a36d570c6ef9ce6e3e01f070970bad44b2",
       "systems_day_1000": 12,
       "systems_day_9000": 8,
       "world": "Saturn"
@@ -57,7 +57,7 @@
     {
       "a_over_ld": 12.85794767083858,
       "burger": 0.006048625445322366,
-      "field": "ec38467687391e3868c07de48eb3ad49c2004be63a98e0a1fcef2dc553cec9a2",
+      "field": "072d102f96219f67f195384b4ffa2a38136789563c639fbf53cc76cc71aa9e01",
       "jets": 3,
       "layout": "0eefa9872550482faaff59f069232e8051a4c07d684dca9231ceb5760eed91f4",
       "polar_jet_lat_deg": 65.53051872750527,
@@ -84,7 +84,7 @@
     {
       "a_over_ld": 17.523551434724634,
       "burger": 0.0032565349591163026,
-      "field": "89b401ad146a3d291b8769be770ae147120f253055ab8b7146e77c96cde5c39b",
+      "field": "58105bfb7690c308f7371c8efac909c02143b3330bc9c330f74386796527be0a",
       "jets": 3,
       "layout": "0f9fa6d156dac3d29812a6af5d570a6689d97daab7f32c6c8e7417c95d35db71",
       "polar_jet_lat_deg": 65.83996386060205,
@@ -103,7 +103,7 @@
         }
       ],
       "polygon_waves": 8.109792553105695,
-      "systems": "10732b128bdafb575734b02e564befaa87b708d95bf77fed851915d8bc308bbf",
+      "systems": "0a697433f2fbbf322802c9a0c61de955ea46ae4379d3cf5ed803e944d4ffada3",
       "systems_day_1000": 2,
       "systems_day_9000": 3,
       "world": "Neptune"

@@ -25,6 +25,8 @@ pub struct Now {
     pub radius_rsun: f64,
     pub mass_msun: f64,
     pub level: Level,
+    /// Its formal class now (sse_formation::spectral): "G2 V", "DX 5", "NS".
+    pub class: crate::spectral::StarClass,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -130,16 +132,23 @@ pub fn describe(mass_msun: f64, age_yr: f64, feh: f64) -> Result<Description, Ou
             from_yr: yr(a),
             to_yr: b.map(yr),
         };
-        (
-            vec![
-                span(Phase::PreMainSequence, 0.0, Some(line.t_zams)),
-                span(Phase::MainSequence, line.t_zams, Some(line.t_tms)),
-                span(Phase::HertzsprungGap, line.t_tms, Some(line.t_bgb)),
-                span(Phase::Giant, line.t_bgb, Some(line.t_end)),
-                span(line.remnant, line.t_end, None),
-            ],
-            Some(yr(line.t_end)),
-        )
+        // Phases a star skips (a red dwarf's giant branch, a stripped star's
+        // red giant) are left out rather than listed with no length.
+        let mut v = vec![
+            span(Phase::PreMainSequence, 0.0, Some(line.t_zams)),
+            span(Phase::MainSequence, line.t_zams, Some(line.t_tms)),
+        ];
+        for (p, a, b) in [
+            (Phase::HertzsprungGap, line.t_tms, line.t_bgb),
+            (Phase::Giant, line.t_bgb, line.t_strip),
+            (Phase::WolfRayet, line.t_strip, line.t_end),
+        ] {
+            if b > a {
+                v.push(span(p, a, Some(b)));
+            }
+        }
+        v.push(span(line.remnant, line.t_end, None));
+        (v, Some(yr(line.t_end)))
     };
     Ok(Description {
         mass_msun,
@@ -158,6 +167,7 @@ pub fn describe(mass_msun: f64, age_yr: f64, feh: f64) -> Result<Description, Ou
             radius_rsun: s.radius,
             mass_msun: s.mass,
             level: s.level,
+            class: crate::spectral::classify(s.teff, s.mass, s.mass * M_SUN, s.radius * R_SUN, s.phase),
         },
         phases,
         remnant: Remnant {

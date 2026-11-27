@@ -28,7 +28,7 @@ export interface SkyAsk {
 
 /** One ask of the kernel `weather` op (presentation reads; nothing is recorded). */
 export interface WeatherAsk {
-  want: "climate" | "systems" | "field" | "report" | "column" | "sound";
+  want: "climate" | "systems" | "field" | "report" | "glint" | "column" | "sound";
   world?: string;
   system?: string;
   body?: string;
@@ -184,6 +184,8 @@ export interface ViewSession {
   surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
+  /** A world's heat books over its life (track HF's screen): the quick survey's envelope with its core history, the same numbers that drive the world, and the climate's sunlight books (HV2b); GM only. */
+  surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope; sunlight: import("./heat-flow.ts").Sunlight | null } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
@@ -309,13 +311,16 @@ export interface ViewSession {
   /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
-  readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
+  readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number }; prominences?: { from_s: number; to_s: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
   readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
   /** SB2: one member of a belt, ring or cloud resolved into a definite body (kernel `small_body`): by `member` address,
    * or `cloud` and `rank` (1 the largest); with neither, the notable bodies formation made. `r_au` sets where an icy
    * body's activity is worked out (perihelion when left out). Nothing is stored; the same body comes back every time. */
   smallBody(ask: { system: string; member?: string; cloud?: string; rank?: number; r_au?: number }): Promise<{ ok: true; body: Json | null; notables: Json[] } | { ok: false; code: string; message: string }>;
+  /** VP-R3: one ring, whole (kernel `ring_structure`): its zones, the marks its moons leave, optical depth across it
+   * and its grains' colour. Give `ask` (sse-small RingAsk), or `system` and `cloud` for a ring formation made. Read only. */
+  ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }>;
   /** XO18: the Hazard map's reading (kernel `hazard_map`): a measured Solar System body by `fixture` and `body`, or
    * handed `asks`; along `line` ("equator" or "poles"); with `ship`, or the stated stock ship. Read only. */
   hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }>;
@@ -837,6 +842,17 @@ export class Session implements ViewSession {
     return c ? { ok: true, climate: c } : { ok: false, code: "no_climate", message: "this world has no climate in its survey" };
   }
 
+  async surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope; sunlight: import("./heat-flow.ts").Sunlight | null } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
+    // The same quick survey the climate reads (cached by the kernel): its envelope carries the core history.
+    const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit: 1 });
+    if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const sv = (r as unknown as { survey?: { envelope?: import("./heat-flow.ts").HeatEnvelope; climate?: { sunlight?: import("./heat-flow.ts").Sunlight } } }).survey;
+    const e = sv?.envelope;
+    // The climate's sunlight books (HV2a) are the outside half; a world with no climate has none.
+    return e ? { ok: true, envelope: e, sunlight: sv?.climate?.sunlight ?? null } : { ok: false, code: "no_envelope", message: "this world has no envelope in its survey" };
+  }
+
   /** The open universe as a document to keep (kernel `export_chronicle`, `sse.chronicle-export/1`); GM only. Open branches are not in it. */
   async exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master saves the campaign" };
@@ -949,7 +965,7 @@ export class Session implements ViewSession {
     return { ok: true, want: x.want, world: x.world, provenance: x.provenance, data: x.data };
   }
 
-  async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
+  async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number }; prominences?: { from_s: number; to_s: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_activity", ...ask } as Json);
     return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -958,6 +974,11 @@ export class Session implements ViewSession {
     const r = await this.#call({ op: "small_body", ...ask } as Json);
     const o = r as unknown as { body?: Json; notables?: Json[] };
     return r.type === "small_body_is" ? { ok: true, body: o.body ?? null, notables: o.notables ?? [] } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "ring_structure", ...ask } as Json);
+    return r.type === "ring_structure_is" ? { ok: true, ring: (r as unknown as { ring: Json }).ring } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {

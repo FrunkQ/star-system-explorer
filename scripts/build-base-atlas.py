@@ -82,6 +82,10 @@ AXES = {
     "terraformed": ax("history.terraformed", "flag", label="terraformed (authored)", prov=True),
     "life": ax("life.stage", "category", label="biosphere stage", prov=True),
     "population": ax("settlements.population", "linear", (0, 1e12), "population", prov=True),
+    # The star scheme reads the kernel's star class (sse_formation::spectral),
+    # published for every star at the date read.
+    "star_family": ax("star.class_family", "category", label="star family (from temperature, gravity and phase)"),
+    "star_kind": ax("star.class_kind", "category", label="spectral letter or remnant kind"),
 }
 
 
@@ -241,6 +245,88 @@ cls("habitable/filter-mask", H, [n("pp_o2", 0.16, 0.5), n("pp_co2", 0, 0.05)], p
 cls("habitable/shirt-sleeve", H, [n("pp_co2", 0, 0.005), n("tsurf", 263, 313, 255, 318), n("gravity", 0.3, 1.5, 0.2, 1.8), n("dose", 0, 20, 0, 50)], parent="habitable/filter-mask",
     summary="Step outside in a shirt.")
 
+
+# ---- star: every star and remnant (the kernel's star class) ----
+# The kernel reads each star's class off its life-line results
+# (sse_formation::spectral: temperature against a scale, surface gravity
+# against the luminosity-class lines, the phase). This scheme names, explains
+# and samples those classes; tests/golden/star-classes.json carries the
+# kernel's own tables and one life-line star per family and kind.
+STARS = json.loads((ROOT / "tests/golden/star-classes.json").read_text())
+ST = "star"
+FAM = [
+    ("pre-main-sequence", "", "A young star still contracting towards the main sequence, lit by its own squeeze (a T Tauri or Herbig star)."),
+    ("main-sequence", "V", "A dwarf: burning hydrogen in its core, as the Sun does. Luminosity class V."),
+    ("subgiant", "IV", "Its core hydrogen spent, swelling and cooling on the way to being a giant. Luminosity class IV."),
+    ("giant", "III", "Swollen to many times its old size, with a low surface gravity. Luminosity class III."),
+    ("bright-giant", "II", "Between the giants and the supergiants in gravity. Luminosity class II."),
+    ("supergiant", "I", "A massive star swollen enormous, with the lowest surface gravity of all. Luminosity class Ia, Iab or Ib."),
+    ("brown-dwarf", "", "Too light ever to burn hydrogen: it glows from its formation heat and fades for ever. Spectral types L, T and Y (young ones read as late M)."),
+    ("white-dwarf", "", "The Earth-sized, white-hot core a sun-like star leaves behind, cooling for ever. D for degenerate, a letter for what its spectrum shows, and the temperature index 50400 / T."),
+    ("neutron-star", "", "What is left when a star of about 8 to 25 solar masses collapses: about 1.4 solar masses in a ball some 20 km across."),
+    ("black-hole", "", "What is left when the most massive stars collapse: nothing escapes from inside its horizon."),
+]
+assert [f for f, _, _ in FAM] == ["pre-main-sequence", "main-sequence", "subgiant", "giant", "bright-giant", "supergiant", "brown-dwarf", "white-dwarf", "neutron-star", "black-hole"]
+COLOUR = {"O": "blue", "B": "blue-white", "A": "white", "F": "yellow-white", "G": "yellow", "K": "orange", "M": "red", "L": "deep red", "T": "magenta, methane-dark", "Y": "the coldest, barely glowing"}
+DW = STARS["tables"]["dwarf_teff_k"]
+LETTERS = ["O", "B", "A", "F", "G", "K", "M"]
+
+
+def span_k(letter):
+    """The letter's temperature span on the dwarf scale, in words."""
+    row = DW[letter]
+    nxt = ["O", "B", "A", "F", "G", "K", "M", "L", "T", "Y"]
+    i = nxt.index(letter)
+    lo = DW[nxt[i + 1]][0] if i + 1 < len(nxt) else None
+    hi = row[0]
+    k = lambda x: f"{round(x, -2):,.0f} K"
+    if i == 0:
+        return f"hotter than about {k(DW['B'][0])}"
+    return f"about {k(lo)} to {k(hi)}" if lo else f"below about {k(row[0])}"
+
+
+KINDS = {f: [] for f, _, _ in FAM}
+for f in ["pre-main-sequence", "main-sequence", "subgiant", "giant", "bright-giant", "supergiant"]:
+    KINDS[f] = LETTERS
+KINDS["brown-dwarf"] = ["M", "L", "T", "Y"]
+KINDS["white-dwarf"] = ["DX", "DC"]
+KINDS["black-hole"] = ["BH", "IMBH", "SMBH"]
+BH = STARS["tables"]["black_hole_msun"]
+WDK = STARS["tables"]["white_dwarf_featureless_k"]
+KIND_TEXT = {
+    "DX": f"A white dwarf hot enough to show lines (above about {WDK:,.0f} K). Whether they are hydrogen (DA) or helium (DB, DO) needs the hydrogen layer left on it, which the kernel does not yet track: X says it cannot be said.",
+    "DC": f"A white dwarf cooler than about {WDK:,.0f} K: too cool for lines, so its spectrum is featureless whatever its atmosphere.",
+    "BH": f"A stellar-mass black hole, under {BH[0]:,.0f} solar masses: the collapsed core of a star that began above about 25 solar masses.",
+    "IMBH": f"An intermediate-mass black hole, {BH[0]:,.0f} to {BH[1]:,.0f} solar masses. No single star leaves one.",
+    "SMBH": f"A supermassive black hole, above {BH[1]:,.0f} solar masses: the kind at a galaxy's heart. No single star leaves one.",
+}
+SAMPLE = {(x["family"], x["kind"]): x for x in STARS["samples"]}
+
+
+def star_facts(fam, kind, code):
+    return {"star.class_family": fam, "star.class_kind": kind, "star.spectral_class": code}
+
+
+FAM_WORDS = {"pre-main-sequence": "pre-main-sequence star", "main-sequence": "main-sequence star", "subgiant": "subgiant",
+             "giant": "giant", "bright-giant": "bright giant", "supergiant": "supergiant", "brown-dwarf": "brown dwarf",
+             "white-dwarf": "white dwarf", "neutron-star": "neutron star", "black-hole": "black hole"}
+KIND_WORDS = {"DX": "White dwarf with lines (DX)", "DC": "Featureless white dwarf (DC)", "BH": "Stellar-mass black hole",
+              "IMBH": "Intermediate-mass black hole", "SMBH": "Supermassive black hole"}
+for fam, lum, about in FAM:
+    cls(f"star/{fam}", ST, [cat("star_family", fam)], summary=about, plain=FAM_WORDS[fam][0].upper() + FAM_WORDS[fam][1:] + (f" ({lum})" if lum else ""))
+    for kind in KINDS[fam]:
+        if kind in KIND_TEXT:
+            text = KIND_TEXT[kind]
+        elif fam == "brown-dwarf":
+            text = f"A {kind} brown dwarf: {COLOUR[kind]}, {span_k(kind)}."
+        else:
+            text = f"{kind}-type: {COLOUR[kind]}, {span_k(kind)} on the dwarf scale" + (" (giants of G, K and M are a little cooler at the same type)" if fam in ("giant", "bright-giant", "supergiant") and kind in "GKM" else "") + "."
+        smp = SAMPLE.get((fam, kind))
+        if not smp:
+            text += " The life line does not make one today, so it has no sample star."
+        cls(f"star/{fam}/{kind}", ST, [cat("star_kind", kind)], parent=f"star/{fam}", summary=text,
+            plain=KIND_WORDS.get(kind) or f"{kind} {FAM_WORDS[fam]}" + (f" ({kind} {lum})" if lum and lum != "I" else ""))
+
 # ---- examples ----
 by_id = {c["id"]: c for c in CLASSES}
 
@@ -329,6 +415,42 @@ example("air/dense", "illustrative: Earth at 2 bar", like(earth, atmosphere__sur
 example("air/very-dense", "illustrative: Earth at 5 bar", like(earth, atmosphere__surface_pressure=5e5))
 example("gas-giant/water-clouds", "Jupiter", facts["Jupiter"], "out")
 
+
+# Star examples: the kernel's life-line sample for the class (its first "in"
+# example carries star.sample_mass_msun, star.sample_age_yr, star.sample_feh
+# for the class gallery), else an illustrative one; and real stars where they
+# fit.
+for fam, _, _ in FAM:
+    first = None
+    for kind in KINDS[fam]:
+        smp = SAMPLE.get((fam, kind))
+        cid = f"star/{fam}/{kind}"
+        if smp:
+            vals = star_facts(fam, kind, smp["code"]) | {"star.sample_mass_msun": smp["mass_msun"], "star.sample_age_yr": smp["age_yr"], "star.sample_feh": smp["feh"]}
+            name = f"a {smp['mass_msun']:.3g} solar-mass star at {smp['age_yr'] / 1e6:.3g} million years ({smp['code']})"
+            example(cid, name, vals)
+            first = first or (name, vals)
+        else:
+            example(cid, f"illustrative: a {kind} {fam.replace('-', ' ')}", star_facts(fam, kind, kind))
+    if first:
+        example(f"star/{fam}", *first)
+    elif fam == "neutron-star" and (fam, "NS") in SAMPLE:
+        smp = SAMPLE[(fam, "NS")]
+        example(f"star/{fam}", f"a {smp['mass_msun']:.3g} solar-mass star at {smp['age_yr'] / 1e6:.3g} million years ({smp['code']})",
+                star_facts(fam, "NS", "NS") | {"star.sample_mass_msun": smp["mass_msun"], "star.sample_age_yr": smp["age_yr"], "star.sample_feh": smp["feh"]})
+    else:
+        example(f"star/{fam}", f"illustrative: a {fam.replace('-', ' ')}", star_facts(fam, KINDS[fam][0] if KINDS[fam] else "", ""))
+for cid, name, fam, kind, code in [
+    ("star/main-sequence/G", "the Sun", "main-sequence", "G", "G2 V"),
+    ("star/main-sequence/M", "Proxima Centauri", "main-sequence", "M", "M5.5 V"),
+    ("star/main-sequence/A", "Sirius A", "main-sequence", "A", "A1 V"),
+    ("star/giant/K", "Arcturus", "giant", "K", "K1.5 III"),
+    ("star/supergiant/B", "Rigel", "supergiant", "B", "B8 Ia"),
+    ("star/supergiant/M", "Betelgeuse", "supergiant", "M", "M1-2 Ia-ab"),
+    ("star/white-dwarf/DX", "Sirius B (DA2, hydrogen shows)", "white-dwarf", "DX", "DA2"),
+]:
+    example(cid, name, star_facts(fam, kind, code))
+
 # Cross-references (C3): what another suite or the author must settle before
 # a body can be placed in the class. "life:<capability>" asks the life suite;
 # "authored:<what>" can only be an authored intervention.
@@ -348,12 +470,13 @@ SCHEMES = [
     {"id": "surface", "question": "What is its surface like?"},
     {"id": "air", "question": "What is its air made of, and how much is there?"},
     {"id": "habitability", "question": "What do people need to live here?"},
+    {"id": "star", "question": "What kind of star is this?"},
 ]
 pack = {
     "format": "sse.pack/1", "id": "sse.base-atlas", "version": "0.1.0", "kind": ["base-physics"],
     "kernel_range": "^0.1", "licence": "Apache-2.0",
     "provides": {"other": {
-        "about": "SSE4's shipped class atlas (C2): physical type, surface state, gas mix and pressure, and human habitability profiles. Generated by scripts/build-base-atlas.py.",
+        "about": "SSE4's shipped class atlas (C2): physical type, surface state, gas mix and pressure, human habitability profiles, and every star and remnant's class. Generated by scripts/build-base-atlas.py.",
         "schemes": SCHEMES, "axes": [[k, v] for k, v in sorted(AXES.items())], "classes": CLASSES}},
 }
 text = json.dumps(pack, indent=1) + "\n"

@@ -78,8 +78,16 @@ try {
         await gm.waitForFunction(() => /^(gpu-high|gpu-basic|gpu-ultra)\|\d+\|/.test(document.querySelector("[aria-roledescription='3D chart'] canvas.gpu")?.getAttribute("data-quality") ?? ""), null, { timeout: 30000 });
         const live = view.locator("[data-star-live]");
         await live.waitFor({ timeout: 30000 });
+        // CLK1: everything moves on the campaign's clock. Stopped, the star stands still and the note says so; played
+        // (a day a second), it turns on its own spin, and stopped again it holds.
         const turn0 = await live.getAttribute("data-star-turn");
+        assert.match(await view.locator("[data-clock-rate]").innerText(), /clock is stopped, so the picture is still/);
+        await gm.waitForTimeout(600);
+        assert.equal(await live.getAttribute("data-star-turn"), turn0, "a stopped clock is a still picture");
+        await gm.getByRole("button", { name: "Play", exact: true }).click();
         await gm.waitForFunction((t) => document.querySelector("[data-star-live]")?.getAttribute("data-star-turn") !== t, turn0, { timeout: 10000 });
+        assert.match(await view.locator("[data-clock-rate]").innerText(), /on the campaign's clock, a day a second/);
+        await gm.getByRole("button", { name: "Pause", exact: true }).click();
         // SG1 to SG3: the star's glow is the eye's glare, said beside the view, and its flares and ejections are named.
         assert.match(await live.innerText(), /glare/, "the glow says what it is");
         assert.match(await live.innerText(), /flare/, "the flares are named");
@@ -106,10 +114,13 @@ try {
       // Every body takes a click (Alex, 24 Nov: only two did): the pointer picks the nearest body, so pins that overlap
       // at Real scale no longer hide the worlds beneath them. Checked on each pin clear of its neighbours by 6 px.
       // A click also flies in to the body's close-up (Alex, 24 Nov); "‹ Sun" comes back out before the next one.
-      // The camera's distance holds still for a few frames: the fly-in or fly-out has finished (a loaded runner takes
-      // longer than the tween's 620 ms, so the test waits on the camera, not on a clock).
+      // The fly-in has finished (the chart says data-flying while it is under way) and the camera's distance then holds
+      // still for a few polls. A loaded runner can go longer than 600 ms between frames, so the camera holding still
+      // alone once passed mid-flight and the next click landed on pins that were still moving.
       const settled = () => gm.waitForFunction(() => {
         const v = document.querySelector("[aria-roledescription='3D chart']");
+        const w0 = /** @type {any} */ (window);
+        if (v?.hasAttribute("data-flying")) return (w0.__distWas = null), false;
         const d = v?.getAttribute("data-dist");
         const w = /** @type {any} */ (window);
         if (w.__distWas !== d) { w.__distWas = d; w.__distSame = 0; return false; }

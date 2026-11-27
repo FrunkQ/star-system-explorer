@@ -82,6 +82,13 @@ export function phasesFrom(bodies: readonly OrbitPlaced[]): Map<string, number> 
   return out;
 }
 
+/** Each placed body's period from the kernel's reply (seconds), for running it on between answers (CLK1). */
+export function periodsFrom(bodies: readonly OrbitPlaced[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const b of bodies) if (b.placed && typeof b.period_s === "number" && Number.isFinite(b.period_s) && b.period_s > 0) out.set(b.address, b.period_s);
+  return out;
+}
+
 /** Each placed body's place from its host's centre at the reply's first time (metres): eclipses need the third axis. */
 export function placesFrom(bodies: readonly OrbitPlaced[]): Map<string, [number, number, number]> {
   const out = new Map<string, [number, number, number]>();
@@ -92,16 +99,42 @@ export function placesFrom(bodies: readonly OrbitPlaced[]): Map<string, [number,
   return out;
 }
 
-/** The scene with each body moved to its phase (and its place, when given); bodies the kernel could not place keep theirs. */
-export function withPhases(scene: SystemScene, phases: ReadonlyMap<string, number> | null, places?: ReadonlyMap<string, [number, number, number]> | null): SystemScene {
+/** Seconds between the two times the shell asks for, so each body's velocity is its move between them. */
+export const MOTION_STEP_S = 60;
+
+/**
+ * Each placed body's velocity from its host (m/s): its move from the reply's second time to its first, over the time
+ * between (the shell asks for now and MOTION_STEP_S earlier). Shadows read a caster where it was when the light went by.
+ */
+export function motionsFrom(bodies: readonly OrbitPlaced[]): Map<string, [number, number, number]> {
+  const out = new Map<string, [number, number, number]>();
+  for (const b of bodies) {
+    const [a, z] = [b.placed ? b.at?.[0] : undefined, b.placed ? b.at?.[1] : undefined];
+    const dt = a && z ? a.at_s - z.at_s : 0;
+    if (!a || !z || !(dt !== 0) || a.r_m.length !== 3 || z.r_m.length !== 3) continue;
+    const v: [number, number, number] = [(a.r_m[0] - z.r_m[0]) / dt, (a.r_m[1] - z.r_m[1]) / dt, (a.r_m[2] - z.r_m[2]) / dt];
+    if (v.every((x) => Number.isFinite(x))) out.set(b.address, v);
+  }
+  return out;
+}
+
+/**
+ * The scene with each body moved to its phase (and its place and velocity, when given); bodies the kernel could not
+ * place keep theirs. Given `clock` (the clock time the phases are for, seconds since the campaign's epoch, and each
+ * body's period), each orbit carries them, so a view can run the body on smoothly between answers (picture-clock.ts
+ * `phaseAt`, CLK1).
+ */
+export function withPhases(scene: SystemScene, phases: ReadonlyMap<string, number> | null, places?: ReadonlyMap<string, [number, number, number]> | null, motions?: ReadonlyMap<string, [number, number, number]> | null, clock?: { at_s: number; periods: ReadonlyMap<string, number> } | null): SystemScene {
   if (!phases || !phases.size) return scene;
   let moved = false;
   const subjects = scene.subjects.map((s) => {
     const p = s.orbit ? phases.get(s.address) : undefined;
     const r = s.orbit ? places?.get(s.address) : undefined;
-    if (p === undefined || !s.orbit || (p === s.orbit.phase_deg && !r)) return s;
+    const v = s.orbit ? motions?.get(s.address) : undefined;
+    const period_s = clock?.periods.get(s.address);
+    if (p === undefined || !s.orbit || (p === s.orbit.phase_deg && !r && period_s === undefined)) return s;
     moved = true;
-    return { ...s, orbit: { ...s.orbit, phase_deg: p, ...(r ? { r_m: r } : {}) } };
+    return { ...s, orbit: { ...s.orbit, phase_deg: p, ...(r ? { r_m: r } : {}), ...(v ? { v_m_s: v } : {}), ...(period_s !== undefined && clock ? { period_s, at_s: clock.at_s } : {}) } };
   });
   return moved ? { ...scene, subjects } : scene;
 }

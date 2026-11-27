@@ -8,6 +8,9 @@ use sse_weather::{Conditions, Date, Pin, WeatherBlock};
 
 type Out = Result<Response, Response>;
 
+/// What `want` may be, as the refusal names them.
+const WANTS: &str = "climate, systems, field, patch, glint, report, column or sound";
+
 fn to_json<T: serde::Serialize>(t: &T) -> serde_json::Value {
     serde_json::to_value(t).expect("plain data")
 }
@@ -21,6 +24,7 @@ pub(crate) struct Ask {
     pub n: Option<u32>,
     pub lat: f64,
     pub lon: f64,
+    pub half_km: Option<f64>,
     pub pins: Vec<serde_json::Value>,
     pub sources: Option<serde_json::Value>,
     pub block: Option<serde_json::Value>,
@@ -133,6 +137,17 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             let n = a.n.unwrap_or(16).clamp(1, 64);
             to_json(&chosen.field(&c, date, key, n, &pins))
         }
+        "patch" => {
+            rule_only("patch")?;
+            let half = a.half_km.filter(|h| *h > 0.0).ok_or_else(|| {
+                err(
+                    "bad_patch",
+                    "a patch needs `half_km` > 0 round `lat`, `lon`",
+                )
+            })?;
+            let n = a.n.unwrap_or(16).clamp(1, 64);
+            to_json(&block.patch(&c, date, a.lat, a.lon, half, n, &pins))
+        }
         "report" => {
             rule_only("report")?;
             let r = block.report(&c, date, a.lat, a.lon, &pins, None);
@@ -154,6 +169,13 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             }
             out
         }
+        "glint" => {
+            // The sun's glint off the seas, for the view's drawing (EC2).
+            let cs = &block.settings.climate;
+            let core = climates.orbit(cs, &c, a.epoch_myr);
+            let g = crate::sea::glint(&a.sheet, cs, core);
+            g.unwrap_or(serde_json::Value::Null)
+        }
         "column" => {
             rule_only("column")?;
             to_json(&sse_weather::hooks::column(
@@ -166,12 +188,7 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
                 &block, &c, date, a.lat, a.lon, &pins, None,
             ))
         }
-        other => {
-            return Err(err(
-                "bad_want",
-                format!("weather want {other}: climate, systems, field, report, column or sound"),
-            ))
-        }
+        other => return Err(err("bad_want", format!("weather want {other}: {WANTS}"))),
     };
     Ok(Response::WeatherRead {
         want: a.want,

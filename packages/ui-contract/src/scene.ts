@@ -44,8 +44,13 @@ export interface SceneSubject {
   /** One-line description, e.g. "III · temperate ocean world". */
   subtitle?: string;
   parent?: string;
-  /** `r_m`: where the kernel places it from its host's centre (orbits_at, metres, the system's frame), when placed by date. */
-  orbit?: { a_au: number; phase_deg: number; r_m?: [number, number, number] };
+  /**
+   * Its orbit: distance and phase at the time in view. `r_m`: where the kernel places it from its host's centre
+   * (orbits_at, metres, the system's frame), when placed by date; `v_m_s` its velocity from its host. `period_s` and `at_s` (clock seconds since the
+   * campaign's epoch that the phase is for, picture-clock.ts) come with `orbits_at` too, so a view can run the body on
+   * between answers at its own mean motion (CLK1).
+   */
+  orbit?: { a_au: number; phase_deg: number; r_m?: [number, number, number]; v_m_s?: [number, number, number]; period_s?: number; at_s?: number };
   /** Radial extent of a belt or zone, in AU. */
   band_au?: [number, number];
   /**
@@ -59,7 +64,16 @@ export interface SceneSubject {
    * A ring round a world (a belt whose host is a planet, not the star): its edges from the planet's centre in metres,
    * its normal optical depth and its particles' albedo when the universe holds them (null when it does not).
    */
-  ring?: { inner_m: number; outer_m: number; tau: number | null; albedo: number | null };
+  ring?: {
+    inner_m: number;
+    outer_m: number;
+    tau: number | null;
+    albedo: number | null;
+    /** The measured range of its optical depth, when printed (VP-R3: structure inside the band stays within it). */
+    tau_range?: [number, number];
+    /** A ring formation made: its cloud's address, so the kernel's `ring_structure` reads it from the run. */
+    cloud?: string;
+  };
   /** A world's axial tilt to its orbit, radians, when the universe holds it (its rings lie in its equator). */
   tilt_rad?: number;
   facts: SceneFact[];

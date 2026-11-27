@@ -332,6 +332,24 @@ pub struct GiantLayout {
     /// Condensates of the low, middle and high layer.
     pub layers: [String; 3],
     pub why: Vec<String>,
+    /// Spins backwards: every wind and vortex is mirrored, as the Coriolis
+    /// term's sign is (visual polish check 10).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub retrograde: bool,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+/// +1 for a world spinning forwards, -1 backwards: the sign of f = 2Ω sin φ
+/// in the northern hemisphere, which every wind and vortex sense follows.
+fn spin_sign(l: &GiantLayout) -> f64 {
+    if l.retrograde {
+        -1.0
+    } else {
+        1.0
+    }
 }
 
 fn draws(c: &Conditions, stream: &str) -> Draws {
@@ -470,6 +488,7 @@ pub fn layout(gs: &GiantSettings, c: &Conditions) -> GiantLayout {
         poles,
         layers: chem,
         why,
+        retrograde: c.retrograde(),
     }
 }
 
@@ -608,7 +627,51 @@ fn blend_jet(l: &GiantLayout, base: f64, dist_km: f64) -> f64 {
 /// Eastward wind at a latitude, m/s: bands plus the circumpolar jet.
 pub fn zonal_wind(gs: &GiantSettings, l: &GiantLayout, a_m: f64, lat: f64) -> f64 {
     let dist = (lat.abs() - l.polar_jet_lat_deg).abs() / DEG * a_m / 1000.0;
-    blend_jet(l, band_wind(gs, l, lat), dist)
+    spin_sign(l) * blend_jet(l, band_wind(gs, l, lat), dist)
+}
+
+/// Relative vorticity of the zonal wind at a latitude, s⁻¹ (anticlockwise
+/// seen from above the north pole positive): ζ = -(1 / a cos φ) d(u cos φ)/dφ.
+pub fn zonal_vorticity(gs: &GiantSettings, l: &GiantLayout, a_m: f64, lat: f64) -> f64 {
+    let h = 0.1;
+    let uc = |p: f64| zonal_wind(gs, l, a_m, p) * m::cos(p / DEG);
+    let c = m::cos(lat / DEG).max(1e-6);
+    -(uc(lat + h) - uc(lat - h)) / (2.0 * h / DEG) / (a_m * c)
+}
+
+/// The east-west over north-south extent of a vortex patch in the zonal
+/// wind's shear, from the steady elliptical patch in shear (Moore and Saffman
+/// 1971, as Marcus 1993 applies it to Jupiter's ovals; worked here from the
+/// Kirchhoff ellipse's inner flow, papers not re-read: unverified):
+/// ζ / ω = λ (λ - 1) / (λ + 1), ζ the background's vorticity and ω the
+/// vortex's. Shear of the vortex's own sense stretches it along the wind
+/// (λ > 1); the other sense squeezes it (λ < 1), and past ζ / ω = 2√2 - 3 no
+/// steady patch exists: it is drawn at that edge, λ = √2 - 1. The vortex's
+/// vorticity is its core's, 2 √e v / R, for the weather block's Gaussian
+/// vortex v(r) = v_peak (r / R) exp((1 - r²/R²) / 2).
+#[allow(clippy::too_many_arguments)]
+pub fn sheared_aspect(
+    gs: &GiantSettings,
+    l: &GiantLayout,
+    a_m: f64,
+    lat: f64,
+    size_km: f64,
+    strength: f64,
+    cyclonic: bool,
+) -> f64 {
+    let r = 0.5 * size_km * 1000.0;
+    if r <= 0.0 || strength <= 0.0 || r.is_nan() || strength.is_nan() {
+        return 0.0;
+    }
+    let h = if lat >= 0.0 { 1.0 } else { -1.0 };
+    let sense = if cyclonic { 1.0 } else { -1.0 };
+    let omega = sense * h * spin_sign(l) * 2.0 * m::exp(0.5) * strength / r;
+    let q = zonal_vorticity(gs, l, a_m, lat) / omega;
+    let disc = q * q + 6.0 * q + 1.0;
+    if q < 0.0 && disc < 0.0 {
+        return m::sqrt(2.0) - 1.0;
+    }
+    ((1.0 + q) + m::sqrt(disc.max(0.0))) / 2.0
 }
 
 /// The jets by latitude, for drawing the curls and drift (visual polish
@@ -892,6 +955,12 @@ fn family(
                     strength,
                     born,
                     ends,
+                    // Ovals and dark spots are anticyclones (giant_cell spins them so).
+                    aspect: if f.kind == "oval" || f.kind == "dark-spot" {
+                        sheared_aspect(gs, l, a, lat, size, strength, false)
+                    } else {
+                        0.0
+                    },
                     count: if members > 1 { members } else { 0 },
                     why: format!(
                         "Rule: {}. This one sits at {:.0}°{} and drifts {:+.0} m/s with the local wind; drawn from the pack's rate of {} a year, it lasts {:.1} years.",
@@ -949,6 +1018,7 @@ fn outbreaks(
             strength: o.strength_m_s,
             born,
             ends,
+            aspect: 0.0,
             count: 0,
             why: format!(
                 "Rule: {} ({:.0} K at 1 bar, at or below {:.0} K); at most one per orbit of {:.0} days, onset and latitude drawn; it wraps the planet in about {:.0} days.",
@@ -985,6 +1055,7 @@ fn polar_systems(gs: &GiantSettings, c: &Conditions, l: &GiantLayout) -> Vec<Wea
                 strength,
                 born: ALWAYS,
                 ends: f64::MAX,
+                aspect: 0.0,
                 count,
                 why: why.clone(),
                 evidence: ev.into(),
@@ -1187,7 +1258,27 @@ pub fn giant_cell(
     let l = &p.layout;
     let cl = &gs.clouds;
     let a = c.radius_m;
-    let w = zone_weight(l, lat);
+    // The circumpolar jet is a prograde jet like the others, so it too sits on the poleward edge of a zone, with a
+    // belt poleward of it (Vasavada and Showman 2005, as the bands): following its polygon where it has one. The
+    // edge is a quarter of the jet's deformation radius wide and its pull fades over two of them.
+    let north = lat >= 0.0;
+    let pole = l.poles.iter().find(|q| q.north == north);
+    let r_jet = (90.0 - l.polar_jet_lat_deg) / DEG * a / 1000.0;
+    let r_pole = (90.0 - lat.abs()) / DEG * a / 1000.0;
+    let edge = match pole {
+        Some(q) if q.polygon_sides > 0 => {
+            polygon_edge_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon)
+        }
+        _ => r_jet,
+    };
+    let w = {
+        let ld = l.jet_deformation_km.max(1.0);
+        let sgn = r_pole - edge;
+        let side = 0.5 + 0.5 * m::tanh(sgn / (0.25 * ld));
+        let pull = m::exp(-(sgn / (2.0 * ld)) * (sgn / (2.0 * ld)));
+        let band = zone_weight(l, lat);
+        band + (side - band) * pull
+    };
     let deck = |cover: f64, cond: &str, tau: f64| Layer {
         cloud_cover: cover,
         cloud_type: "deck".into(),
@@ -1209,23 +1300,13 @@ pub fn giant_cell(
         ),
     ];
     // The circumpolar jet follows the polygon where this pole has one.
-    let north = lat >= 0.0;
-    let pole = l.poles.iter().find(|q| q.north == north);
-    let r_jet = (90.0 - l.polar_jet_lat_deg) / DEG * a / 1000.0;
-    let r_pole = (90.0 - lat.abs()) / DEG * a / 1000.0;
-    let jet_dist = match pole {
-        Some(q) if q.polygon_sides > 0 => {
-            let edge = polygon_edge_km(r_jet, q.polygon_sides, q.orient_lon_deg, lon);
-            if r_pole < edge {
-                // Inside the polygon the high cloud thins (Saturn's hexagon interior).
-                ly[2].cloud_cover = ly[2].cloud_cover.min(cl.belt_cover);
-                ly[2].optical_depth = ly[2].optical_depth.min(cl.belt_tau);
-            }
-            (r_pole - edge).abs()
-        }
-        _ => (r_pole - r_jet).abs(),
-    };
-    let u = blend_jet(l, band_wind(gs, l, lat), jet_dist);
+    if matches!(pole, Some(q) if q.polygon_sides > 0) && r_pole < edge {
+        // Inside the polygon the high cloud thins (Saturn's hexagon interior).
+        ly[2].cloud_cover = ly[2].cloud_cover.min(cl.belt_cover);
+        ly[2].optical_depth = ly[2].optical_depth.min(cl.belt_tau);
+    }
+    let jet_dist = (r_pole - edge).abs();
+    let u = spin_sign(l) * blend_jet(l, band_wind(gs, l, lat), jet_dist);
     let mut wind = [u, 0.0];
     let mut turb = 0.1 + 0.15 * (1.0 - w);
     let mut aerosols = vec![];
@@ -1241,10 +1322,20 @@ pub fn giant_cell(
         }
     }
     let mut precip = "none";
+    let turn = spin_sign(l);
     for s in &p.systems {
         let dist = distance_km(a, lat, lon, s.lat_deg, s.lon_deg);
         let rr = 0.5 * s.size_km.max(1.0);
-        let r = dist / rr;
+        // A sheared vortex is an ellipse of the same area, longer along the wind.
+        let r = if s.aspect > 0.0 {
+            let k = m::sqrt(s.aspect);
+            match radial(lat, lon, s.lat_deg, s.lon_deg) {
+                Some((re, rn)) => m::sqrt((re / k) * (re / k) + (rn * k) * (rn * k)) * dist / rr,
+                None => dist / rr,
+            }
+        } else {
+            dist / rr
+        };
         let g = m::exp(-r * r);
         let spin = |sense: f64, wind: &mut [f64; 2]| {
             if r > 3.0 {
@@ -1253,8 +1344,8 @@ pub fn giant_cell(
             if let Some((re, rn)) = radial(lat, lon, s.lat_deg, s.lon_deg) {
                 let h = if s.lat_deg >= 0.0 { 1.0 } else { -1.0 };
                 let vt = s.strength * r * m::exp(0.5 * (1.0 - r * r));
-                wind[0] += sense * h * vt * -rn;
-                wind[1] += sense * h * vt * re;
+                wind[0] += sense * h * turn * vt * -rn;
+                wind[1] += sense * h * turn * vt * re;
             }
         };
         match s.kind.as_str() {

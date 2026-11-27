@@ -4,13 +4,15 @@
 // storms and the polar cyclones are all the weather block's, cell by cell; each layer's colour is its condensate's on
 // the master data sheet, read by the caller; a haze's colour is the one the weather op sends. This file only stacks
 // the layers by the adding method (Bohren 1987), as weather.ts does on the Body globe.
-import { stainFacts, stainHue, type StainHue } from "./stain-look.ts";
+import { readStains } from "./stain-look.ts";
+import CLOUD_ROWS from "./cloud-rows.json" with { type: "json" };
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
 import type { Json, SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
 import { readGroundOptics, withGround } from "./ground-optics.ts";
 import { airShapeOf, type AirShape } from "./air-luts.ts";
 import { airFactsOf, airFromOptics, airRequest, KERNEL_GASES } from "./atmosphere.ts";
+import { detailGiant, readGiantDetail } from "./giant-detail.ts";
 import { addLayers, CLOUD_G, HAZE_G, liveSystems, slabReflectance, stormAt, type WeatherCell, type WeatherMap, type WeatherSystem, type WeatherTile } from "./weather.ts";
 
 /** Linear RGB, 0..1. */
@@ -68,7 +70,7 @@ const toByte = (x: number) => {
 };
 
 /** Per cell: each layer's reflectance (cover times its slab's) and colour, then the haze's, flattened for speed. */
-interface Stack {
+export interface Stack {
   n: number;
   dirs: Float32Array;
   /** n × (layers + 1) × 4: reflectance, then r, g, b; the last slot is the haze. */
@@ -103,7 +105,7 @@ function addAbsorbing(r: number, a: number, below: number): number {
  * What a giant's deep air sends back from below its decks when its gases are not known: conservative Rayleigh
  * scatterers over thick deeper decks return all the light that reaches it. With its gases, `deepAirOf` (TA4).
  */
-const DEEP_AIR: Rgb = [1, 1, 1];
+export const DEEP_AIR: Rgb = [1, 1, 1];
 
 /**
  * Reflectance of a semi-infinite layer of scatterers whose single-scattering albedo is w, two-stream with isotropic
@@ -156,7 +158,7 @@ export function deepAirOf(rayleigh_m2: readonly number[], absorb_m2: readonly nu
  */
 const CHROMOPHORE_VISIBLE = (1000 / 550) ** 1.5;
 
-function stackOf(cells: readonly WeatherCell[], colourOf: ColourOf): Stack {
+export function stackOf(cells: readonly WeatherCell[], colourOf: ColourOf): Stack {
   const slots = Math.max(1, ...cells.map((c) => c.layers.length)) + 1;
   const vals = new Float32Array(cells.length * slots * 4);
   const dirs = new Float32Array(cells.length * 3);
@@ -271,19 +273,8 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
         flow.east[j * width + i] = we / ws;
         flow.north[j * width + i] = wn / ws;
       }
-      const lin: Rgb = ground ? ground(o) : [...deep];
+      const lin = composeAt(st, acc, ab, ws, ground ? ground(o) : [...deep], tint);
       const hazeAt = st.slots - 1;
-      // Bottom up: each layer goes on top of what is stacked so far; then the gas above the decks, then the haze.
-      for (let k = 0; k < st.slots; k++) {
-        if (k === st.slots - 1 && tint) for (let ch = 0; ch < 3; ch++) lin[ch]! *= tint[ch]!;
-        const r = acc[k * 4]! / ws;
-        if (k === hazeAt) {
-          for (let ch = 0; ch < 3; ch++) lin[ch] = addAbsorbing(r * (acc[k * 4 + 1 + ch]! / ws), ab[ch]! / ws, lin[ch]!);
-          continue;
-        }
-        if (!(r > 0)) continue;
-        for (let ch = 0; ch < 3; ch++) lin[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), lin[ch]!);
-      }
       if (clouds) {
         // The air alone, over black: its own reflected light (premultiplied) and how much it covers.
         const c: Rgb = [0, 0, 0];
@@ -320,6 +311,27 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
       flow.rowEast[j] = sum / width;
     }
   return { width, height, data, mean: [Math.round(mr / mw), Math.round(mg / mw), Math.round(mb / mw)] };
+}
+
+/**
+ * One pixel's light from its blended cell values (`acc` the weighted sums of each slot's reflectance and colour,
+ * `ab` of the haze's absorption, `ws` the weights' sum) over what lies below (`below`, linear RGB, overwritten):
+ * bottom up, each layer on top of what is stacked so far; then the gas above the decks, then the haze.
+ */
+export function composeAt(st: Stack, acc: ArrayLike<number>, ab: ArrayLike<number>, ws: number, below: Rgb, tint: Rgb | null): Rgb {
+  const lin = below;
+  const hazeAt = st.slots - 1;
+  for (let k = 0; k < st.slots; k++) {
+    if (k === hazeAt && tint) for (let ch = 0; ch < 3; ch++) lin[ch]! *= tint[ch]!;
+    const r = acc[k * 4]! / ws;
+    if (k === hazeAt) {
+      for (let ch = 0; ch < 3; ch++) lin[ch] = addAbsorbing(r * (acc[k * 4 + 1 + ch]! / ws), ab[ch]! / ws, lin[ch]!);
+      continue;
+    }
+    if (!(r > 0)) continue;
+    for (let ch = 0; ch < 3; ch++) lin[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), lin[ch]!);
+  }
+  return lin;
 }
 
 const newFlow = (st: Stack, width: number, height: number): AirFlow | null =>
@@ -514,16 +526,63 @@ export const nameKey = (s: string) =>
 
 /**
  * Match the weather op's condensate names to the sheet's substances by their names (any of physics, plain, story),
- * so a new substance on the sheet is coloured without a list here. Its `condensed_colour_rgb` is linear RGB.
+ * so a new substance on the sheet is coloured without a list here. Its `condensed_colour_rgb` is linear RGB. `droplets`
+ * (from `readCloudRows`) colours condensates the sheet measures as droplets instead, by the weather op's own name.
  */
-export function sheetColours(rows: readonly SheetSubstance[]): ColourOf {
+export function sheetColours(rows: readonly SheetSubstance[], droplets: Readonly<Record<string, Rgb>> = {}): ColourOf {
   const byName = new Map<string, Rgb>();
   for (const r of rows) {
     const v = r.optical?.condensed_colour_rgb?.v;
     if (!v || v.length < 3) continue;
     for (const n of [r.id, r.names?.physics, r.names?.plain, r.names?.story]) if (n) byName.set(nameKey(n), [v[0]!, v[1]!, v[2]!]);
   }
+  for (const [n, c] of Object.entries(droplets)) byName.set(nameKey(n), c);
   return (condensate) => byName.get(nameKey(condensate)) ?? null;
+}
+
+/** A condensate whose droplets the sheet measures (cloud-rows.json): its row and droplet size. */
+export interface CloudRow {
+  row: string;
+  radius_um: number;
+  src?: string;
+}
+
+/** The condensate-to-row naming (cloud-rows.json). */
+export const CLOUD_ROW_NAMES: Record<string, CloudRow> = CLOUD_ROWS.rows;
+
+/**
+ * A deck thick enough to stand for a semi-infinite cloud of it (a condensed colour is a thick layer's reflectance, as
+ * the sheet's `condensed_colour_rgb` are; the deck's own optical depth is applied separately by `slabReflectance`).
+ */
+const THICK_DECK_TAU = 1e4;
+
+let cloudRows: Promise<Record<string, Rgb>> | null = null;
+
+/**
+ * The colour of a thick deck of each cloud-rows.json condensate's droplets, linear RGB 0..1, from the row's measured
+ * n + ik through the kernel (`light_through_gas` particles: anomalous diffraction per droplet and the adding method,
+ * sse-light haze.rs) in sunlight, the eye adapted to it. Read once for the page; a reader without the op, or a row the
+ * kernel refuses, leaves that condensate to the sheet's substances (or white, and the note says so).
+ */
+export function readCloudRows(k: Pick<FaceReader, "lightThroughGas">): Promise<Record<string, Rgb>> {
+  cloudRows ??= (async () => {
+    const out: Record<string, Rgb> = {};
+    if (!k.lightThroughGas) return out;
+    for (const [name, c] of Object.entries(CLOUD_ROW_NAMES)) {
+      const r = await k.lightThroughGas([
+        { address: `cloud:${name}`, t_k: constant("T_sun"), layers: [], particles: [{ material: c.row, radius_m: c.radius_um * 1e-6, optical_depth: THICK_DECK_TAU, at_nm: 550, asymmetry: CLOUD_G }], floor: 0 },
+      ]);
+      const v = r.ok ? (r.passages[0] as { reflected?: { reflectance_rgb?: number[] } } | undefined)?.reflected?.reflectance_rgb : undefined;
+      if (v && v.length >= 3 && v.every((x) => Number.isFinite(x))) out[name] = [v[0]!, v[1]!, v[2]!];
+    }
+    return out;
+  })();
+  return cloudRows;
+}
+
+/** For tests: forget the page's copy. */
+export function forgetCloudRows(): void {
+  cloudRows = null;
 }
 
 /** The kernel door this needs (a ViewSession has both). */
@@ -642,17 +701,12 @@ export async function readGiantGas(k: FaceReader, system: string, body: string):
  * The system view and the size comparison both read faces through here, so a world looks the same in each; `storms`
  * also reads a giant's storms for a view that carries its bands (the size comparison).
  */
-export async function readTrueFace(k: FaceReader, system: string, body: string, opts: { storms?: boolean } = {}): Promise<AirLook | string> {
+export async function readTrueFace(k: FaceReader, system: string, body: string, opts: { storms?: boolean; detail?: boolean; detail_px?: number } = {}): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
   // A giant's tiles are its cloud deck's relief, not a ground: its face is its decks alone (trueGiant).
   const giantDeck = s.ok && s.kind === "cloud-deck";
   // What stains its ground (TRUE4): the kernel's stains, each hued by its sheet row's optics.
-  const stains: StainHue[] = [];
-  for (const f of s.ok && !giantDeck ? stainFacts(s.record) : []) {
-    const r = await k.readMatter({ id: f.material_id });
-    const h = r.ok ? stainHue(f, (r.value as { row?: unknown }).row) : null;
-    if (h) stains.push(h);
-  }
+  const stains = s.ok && !giantDeck ? await readStains(k, s.record) : [];
   // Bare ground in its measured colour from the data sheet (ground-optics.ts, VP3 part 5), then stained.
   const ground =
     s.ok && !giantDeck ? trueSurface(withGround(s.tiles, await readGroundOptics(k)), 128, 64, stains) : null;
@@ -663,19 +717,28 @@ export async function readTrueFace(k: FaceReader, system: string, body: string, 
   const gas = ground ? await readTrueAir(k, system, body) : null;
   const withGas = <T extends AirLook>(l: T): T => (gas && typeof gas !== "string" ? { ...l, air: gas } : l);
   if (!air.ok) return ground ? withGas({ tex: ground, ground, said: [`Its clouds are not shown: ${air.message}`] }) : groundWhy;
-  const colours = sheetColours(await readSheetSubstances(k));
+  const colours = sheetColours(await readSheetSubstances(k), await readCloudRows(k));
   if (ground) return withGas(withAir(ground, air.tiles, colours));
   const gg = await readGiantGas(k, system, body);
   const giant = trueGiant(air.tiles, colours, 128, 64, gg?.tint ?? null, gg?.deep ?? null);
   if (!giant) return groundWhy;
+  const day = at_s !== undefined ? at_s / constant("day") : 0;
+  // Its storms and poles read closer, turned by their winds, with curls at the band edges (giant-detail.ts).
+  const detail = opts.detail === false ? null : await readGiantDetail(k, system, body, { ...(at_s !== undefined ? { at_s } : {}), day }, opts.detail_px);
+  const look: AirLook = detail ? (() => {
+    const d = detailGiant(giant.tex, giant.flow, detail, colours, { deep: gg?.deep ?? null, tint: gg?.tint ?? null, ...(opts.detail_px ? { width: opts.detail_px } : {}) });
+    return { ...giant, tex: d.tex, said: [...giant.said, ...d.said], ...(d.flow ? { flow: d.flow } : {}) };
+  })() : giant;
   // Only a view that carries the bands asks for the storms (the size comparison); the rest skip the kernel call.
-  if (giant.flow && opts.storms) {
+  if (look.flow && opts.storms) {
     // The storms, so each is carried as one piece as the bands slide (VP-A1).
-    const day = at_s !== undefined ? at_s / constant("day") : 0;
-    const sy = await k.weather({ want: "systems", system, body, ...(at_s !== undefined ? { at_s } : {}), day });
-    if (sy.ok) giant.flow.storms = liveSystems({ day, systems: sy.data as WeatherSystem[] } as WeatherMap).map((x) => ({ ...stormAt(x, day), size_km: x.size_km }));
+    const live = detail?.systems ?? (await (async () => {
+      const sy = await k.weather({ want: "systems", system, body, ...(at_s !== undefined ? { at_s } : {}), day });
+      return sy.ok ? (sy.data as WeatherSystem[]) : [];
+    })());
+    look.flow.storms = liveSystems({ day, systems: [...live] } as WeatherMap).map((x) => ({ ...stormAt(x, day), size_km: x.size_km }));
   }
-  return giant;
+  return look;
 }
 
 // ------------------------------------------------------------------ the gas above the decks

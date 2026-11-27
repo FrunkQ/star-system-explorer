@@ -174,3 +174,30 @@ fn every_world_of_a_grown_system_answers() {
     );
     assert_eq!(r["code"], "no_habitats", "{r}");
 }
+
+/// LE1 and LE2 on the chart's own worlds: catalogued Earth captures about
+/// 130 TW with a surplus; Europa's ocean is alive, barely, with its numbers.
+#[test]
+fn life_view_carries_the_energy_ledger() {
+    let mut k = open_sol(&[]);
+    let e = life(&mut k, "Earth");
+    let w = &e["view"]["energy"]["world"];
+    let c = w["captured_w"].as_f64().unwrap();
+    assert!((130e12 / 3.0..130e12 * 3.0).contains(&c), "{w}");
+    assert!(c <= w["offered_w"].as_f64().unwrap());
+    assert!(w["offered_w"].as_f64().unwrap() <= w["arriving_w"].as_f64().unwrap());
+    assert!(w["surplus_w"].as_f64().unwrap() > 0.0, "{w}");
+    assert_eq!(w["brought_in_w"], 0.0);
+    assert!(e["view"]["energy"]["absorbed_sunlight_w"].is_null());
+    let eu = life(&mut k, "Europa");
+    let hs = eu["view"]["energy"]["habitats"].as_array().unwrap();
+    let living: Vec<_> = hs
+        .iter()
+        .filter(|h| h["captured_w"].as_f64().unwrap_or(0.0) > 0.0)
+        .collect();
+    assert!(!living.is_empty(), "{}", eu["view"]["energy"]);
+    for h in living {
+        assert_eq!(h["barely"], true, "{h}");
+        assert!(h["surplus_w"].as_f64().unwrap() < 0.0, "{h}");
+    }
+}

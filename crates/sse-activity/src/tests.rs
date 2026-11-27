@@ -321,3 +321,119 @@ fn surface_cells_from_temperature_and_gravity() {
     assert!(a.convection.is_some());
     assert!(a.why.iter().any(|w| w.contains("granules")));
 }
+
+mod prominences {
+    use super::*;
+    use crate::prominence::*;
+
+    fn ab_dor() -> Star {
+        Star {
+            address: "u:t/sys:2/star:0".into(),
+            mass_kg: 0.86 * M_SUN,
+            radius_m: 0.96 * R_SUN,
+            luminosity_w: 0.4 * L_SUN,
+            teff_k: 5000.0,
+            age_s: 5e7 * JULIAN_YEAR,
+            rotation_period_s: Some(0.514 * DAY),
+            companion_period_s: None,
+            cycle_period_s: None,
+        }
+    }
+
+    fn run(s: &Star, from_d: f64, to_d: f64) -> Prominences {
+        let set = Settings::default();
+        let a = activity(&seed(), s, &set).unwrap();
+        prominences(
+            &seed(),
+            s,
+            &a,
+            s.age_s + from_d * DAY,
+            s.age_s + to_d * DAY,
+            &ProminenceSettings::default(),
+            &set,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn the_sun_holds_a_dozen_cool_clouds_tens_of_thousands_of_km_up() {
+        let p = run(&sun(), 0.0, 365.0);
+        let c = p.corona.clone().unwrap();
+        assert!((0.005..0.02).contains(&c.surface_field_t), "{c:?}");
+        assert!((1.3e6..2.2e6).contains(&c.temperature_k), "{c:?}");
+        assert!(!c.slingshots, "{c:?}");
+        assert!((5.0..30.0).contains(&p.mean_at_once), "{}", p.mean_at_once);
+        assert!(!p.prominences.is_empty());
+        for q in &p.prominences {
+            assert!(q.kind != "slingshot");
+            // Absolute: solar prominences are 3 to 150 thousand km high, 10¹⁶ to 10¹⁸ per m³.
+            assert!((3e6..1.5e8).contains(&q.height_m), "{q:?}");
+            assert!((5e15..1e18).contains(&q.density_m3), "{q:?}");
+            assert!((1e9..1e14).contains(&q.mass_kg), "{q:?}");
+            assert!((1e-6..1e-3).contains(&q.share_visible), "{q:?}");
+            assert_eq!(q.light.lines.len(), 2);
+        }
+        // About the mean number alive at the window's middle (Poisson spread and the cycle allowed).
+        let mid = sun().age_s + 182.0 * DAY;
+        let alive = p
+            .prominences
+            .iter()
+            .filter(|q| q.born_s <= mid && q.born_s + q.life_s >= mid)
+            .count() as f64;
+        assert!(
+            alive > 0.1 * p.mean_at_once && alive < 4.0 * p.mean_at_once,
+            "{alive} against {}",
+            p.mean_at_once
+        );
+    }
+
+    #[test]
+    fn a_fast_spinner_slings_clouds_at_its_corotation_radius() {
+        let p = run(&ab_dor(), 0.0, 5.0);
+        let c = p.corona.clone().unwrap();
+        assert!(c.slingshots, "{c:?}");
+        assert!((2.0..4.0).contains(&c.corotation_radii), "{c:?}");
+        let sl: Vec<_> = p
+            .prominences
+            .iter()
+            .filter(|q| q.kind == "slingshot")
+            .collect();
+        assert!(!sl.is_empty());
+        // A saturated star's long window is cut, earliest kept, and says how far it is whole.
+        let long = run(&ab_dor(), 0.0, 90.0);
+        assert_eq!(
+            long.prominences.len(),
+            ProminenceSettings::default().max_listed
+        );
+        assert!(long.complete_to_s > ab_dor().age_s + 20.0 * DAY && long.complete_to_s < long.to_s);
+        for q in sl {
+            assert!(q.eruption.is_some());
+            assert!((q.height_m / ab_dor().radius_m - (c.corotation_radii - 1.0)).abs() < 1e-9);
+        }
+    }
+
+    #[test]
+    fn overlapping_windows_agree_and_hot_stars_have_none() {
+        let a = run(&sun(), 0.0, 100.0);
+        let b = run(&sun(), 50.0, 150.0);
+        let key = |q: &Prominence| (q.born_s.to_bits(), q.life_s.to_bits(), q.height_m.to_bits());
+        let mid = sun().age_s + 75.0 * DAY;
+        let alive = |p: &Prominences| {
+            let mut v: Vec<_> = p
+                .prominences
+                .iter()
+                .filter(|q| q.born_s <= mid && q.born_s + q.life_s >= mid)
+                .map(key)
+                .collect();
+            v.sort();
+            v
+        };
+        assert_eq!(alive(&a), alive(&b));
+        assert!(!alive(&a).is_empty());
+        let mut hot = sun();
+        hot.teff_k = 9500.0;
+        hot.mass_kg = 2.0 * M_SUN;
+        let p = run(&hot, 0.0, 30.0);
+        assert!(p.prominences.is_empty() && p.corona.is_none());
+    }
+}

@@ -1,0 +1,7 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "open_universe", "id": "stars", "seed": "stars"},
+ {"op": "read_activity", "seed": "stars", "stars": [{"address": "u:stars/sys:0/star:0", "mass_kg": 1.98840987e30, "radius_m": 6.957e8, "luminosity_w": 3.828e26, "teff_k": 5772, "age_s": 1.442e17, "rotation_period_s": 2254176}], "prominences": {"from_s": 1.442e17, "to_s": 144200000000864000}},
+ {"op": "read_activity", "seed": "stars", "stars": [{"address": "u:stars/sys:1/star:0", "mass_kg": 1.71e30, "radius_m": 6.68e8, "luminosity_w": 1.53e26, "teff_k": 5000, "age_s": 1.578e15, "rotation_period_s": 44410}], "prominences": {"from_s": 1.578e15, "to_s": 1578000000043200}},
+ {"op": "read_activity", "seed": "stars", "stars": [{"address": "u:stars/sys:2/star:0", "mass_kg": 4e30, "radius_m": 1.2e9, "luminosity_w": 1e28, "teff_k": 9500, "age_s": 1e16}], "prominences": {"from_s": 1e16, "to_s": 1.0001e16}}
+]

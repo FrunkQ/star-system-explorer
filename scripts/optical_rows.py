@@ -369,3 +369,56 @@ def apply(mixtures):
             }},
         })
     return out
+
+
+# ---- MP37 (26 Nov 2026): water ice ground, read in Claude's built-in browser on the owner's PC.
+# The USGS splib05a frost (H2O-Ice GDS136, grown on a 77 K cold finger, ASCII/L/h2o_ice_gds136.9212.asc) was
+# opened first: its file prints every row below 859 nm as deleted (asterisks), so it gives no visible colour.
+
+SOURCES["stephan2021-ice"] = ("Stephan, K., Ciarniello, M., Poch, O., Schmitt, B., Haack, D. and Raponi, A. 2021, Minerals 11, 1328: VIS-NIR/SWIR spectral properties of H2O ice depending on particle size and surface temperature (CC BY). Pure ice grains (spherical ~70 um sprayed into liquid nitrogen; irregular ~300, ~680, ~1060, ~1360 um crushed and sieved from a slowly frozen slab) at 70 to 220 K under vacuum, behind sapphire windows, measured with the SHINE spectro-gonio radiometer (IPAG) at incidence 0, emergence 30, phase 30 degrees, calibrated against Spectralon (0.40 to 1.10 micron). Data: SSHADE/CSS experiment EXPERIMENT_OP_20201223_001 (Stephan, Ciarniello, Poch, Haack and Raponi 2019, doi 10.26302/SSHADE/EXPERIMENT_OP_20201223_001), spectra SPECTRUM_OP_20201223_301 (~70 um spherical, 100 K) and SPECTRUM_OP_20201223_304 (~680 um irregular, 100 K), read from SSHADE's plot files /plot/<spectrum>/1.micron.json.gz on 26 Nov 2026", "10.3390/min11121328", "https://www.sshade.eu/data/experiment/EXPERIMENT_OP_20201223_001", "unverified")
+
+# Stephan 2021 at 100 K: micron, reflectance factor (i 0, e 30), rounded to 6 places from the SSHADE file. The file's
+# visible part starts at 450 nm and is sampled every 50 nm; its 450 nm point is the noisiest (it swings by about 0.1
+# from one temperature to the next in the same sample), so the colour rests mainly on 500 nm and longer.
+WATER_ICE_FINE = [
+    (0.45, 1.020175), (0.50, 0.982685), (0.55, 0.982494), (0.60, 0.975033), (0.65, 0.960795), (0.70, 0.955426),
+    (0.75, 0.952003), (0.80, 0.940339), (0.85, 0.937319), (0.90, 0.915876), (0.95, 0.911070), (1.00, 0.860197),
+]
+WATER_ICE_COARSE = [
+    (0.45, 0.795823), (0.50, 0.790779), (0.55, 0.813512), (0.60, 0.814476), (0.65, 0.825094), (0.70, 0.804172),
+    (0.75, 0.799499), (0.80, 0.789402), (0.85, 0.790782), (0.90, 0.773320), (0.95, 0.769907), (1.00, 0.700926),
+]
+
+
+def ice_rows(mixtures):
+    """MP37: measured reflectance of pure water ice grains, fine and coarse, at 100 K."""
+    out = []
+    cases = (
+        ("water-ice-fine", WATER_ICE_FINE, 70.0, "spherical", "SPECTRUM_OP_20201223_301",
+         {"physics": "water ice, fine grains (~70 micron)", "plain": "fresh frost", "story": "hoarfrost"},
+         "fresh water ice of fine grains, as frost, new snow or freshly broken ice: the brightest ground there is, white with a faint blue"),
+        ("water-ice-coarse", WATER_ICE_COARSE, 680.0, "irregular", "SPECTRUM_OP_20201223_304",
+         {"physics": "water ice, coarse grains (~680 micron)", "plain": "coarse old ice", "story": "old ice"},
+         "water ice of coarse grains, as sintered or recrystallised old ice: light travels further inside each grain, so it absorbs more and is a little greyer and bluer than frost"),
+    )
+    for mid, rows, um, shape, spec, names, note in cases:
+        lam = [round(x * 1000.0, 1) for x, _ in rows]
+        r = [v for _, v in rows]
+        assert lam == sorted(lam) and len(set(lam)) == len(lam) and all(0.5 < x < 1.1 for x in r)
+        assert all(m["id"] != mid for m in mixtures)
+        out.append({
+            "id": mid, "names": names, "recipe": {}, "by": "mass", "note": note,
+            "optical": {"reflectance": {
+                "kind": "table", "lambda_nm": lam, "r": r,
+                "quantity": "reflectance factor", "i_deg": 0.0, "e_deg": 30.0, "at_k": 100.0,
+                "grain_um": um, "grain_shape": shape,
+                "src": "stephan2021-ice", "check": "unverified",
+                "note": "laboratory spectrum of pure water ice grains at 100 K in vacuum (SSHADE %s), relative to a Lambertian surface; the file starts at 450 nm, and its 450 nm point is noisy; values above 1 are real for bright grains seen at this geometry; interpolate linearly, hold the ends" % spec,
+            }},
+        })
+    fine = dict(zip(out[0]["optical"]["reflectance"]["lambda_nm"], out[0]["optical"]["reflectance"]["r"]))
+    coarse = dict(zip(out[1]["optical"]["reflectance"]["lambda_nm"], out[1]["optical"]["reflectance"]["r"]))
+    # Bigger grains are darker at every band (longer paths inside ice), and both fall towards the 1.03 micron band.
+    assert all(coarse[k] < fine[k] for k in fine)
+    assert fine[1000.0] < fine[550.0] and coarse[1000.0] < coarse[550.0]
+    return out

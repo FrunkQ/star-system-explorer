@@ -43,6 +43,7 @@ import conductivity_rows  # noqa: E402
 import liquid_rows  # noqa: E402
 import optical_rows  # noqa: E402
 import band_rows  # noqa: E402
+import photo_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -900,6 +901,14 @@ for _m in optical_rows.apply(MIXTURES):
 for _m in optical_rows.sulphur_rows(MIXTURES):
     MIXTURES.append(_m)
 optical_rows.apply_ices(SUBSTANCES, val)
+# Lifetimes of gases in sunlight, for the ice ground and the comets (scripts/photo_rows.py).
+for _k, _v in photo_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+photo_rows.apply(SUBSTANCES, val)
+# MP37: water ice ground, fine and coarse grains (scripts/optical_rows.py, ice_rows).
+for _m in optical_rows.ice_rows(MIXTURES):
+    MIXTURES.append(_m)
 
 
 def elements():

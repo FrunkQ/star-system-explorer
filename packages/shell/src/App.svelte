@@ -5,13 +5,13 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
-  import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
+  import { clearStored, download, fullSave, pruneKeptPacks, readStored, setAside, slimSave, writeStored } from "./campaign-store.ts";
   import YourData from "./YourData.svelte";
   import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { orbitBodies, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, YEAR_SECONDS, followTime, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, stoppedAt, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -61,7 +61,7 @@
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
-  import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
+  import { CampaignClock, Segmented, ToolButton, ViewControls, defaultCalendar, formatYears, fromPackCalendar } from "../../chart-grammar/src/index.ts";
   import PlaceLine from "./nav/PlaceLine.svelte";
   import Rail from "./nav/Rail.svelte";
   import RailMenu from "./nav/RailMenu.svelte";
@@ -124,7 +124,8 @@
   ws.view = readViewChoice(loadPref("view"));
   function setView(c: ViewChoice) {
     ws.view = c;
-    savePref("view", JSON.stringify(c));
+    // Kept for this desk at this level (TM6), and as the latest choice anywhere, which a desk's first visit starts from.
+    for (const k of keepForDesk(desk, "view", deskLevelOf(railScale))) savePref(k, JSON.stringify(c));
   }
   ws.turned = () => {
     if (ws.view?.seen !== "free") setView({ ...ws.view!, seen: "free" });
@@ -379,7 +380,7 @@
       // U10: the campaign kept in this browser reopens first; players then join from it.
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
-      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: campaignYr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
       // Grounds on held screens (PC5): the campaign's postcards, and the postcard sets (PC6: the base set, then the stack's).
       void loadSets(s.stack().base);
       share.setGrounds({ bookmarks: () => ws.bookmarks ?? [], sets: () => postcardSets.list });
@@ -422,7 +423,9 @@
       keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign given.`;
       return null;
     }
-    const { save, problem } = readStored(ROOT);
+    const stored = readStored(ROOT);
+    // Big packs are kept beside the save (CM0): put them back before anything reads it.
+    const { save, problem } = stored.save ? await fullSave(stored.save) : stored;
     if (problem) {
       setAside();
       recovery = true;
@@ -501,9 +504,9 @@
     saveTimer = setTimeout(async () => {
       const save = await currentSave();
       if (!save) return;
-      const bad = writeStored(save);
+      const bad = writeStored(await slimSave(save));
       saveProblem = bad ? `Not kept in this browser: ${bad}. Use Save campaign to download it.` : null;
-      if (!bad) savedAt = save.saved_at;
+      if (!bad) (savedAt = save.saved_at), void pruneKeptPacks();
     }, 600);
   });
   async function saveFile() {
@@ -607,9 +610,9 @@
     await offerFile(name, r.bytes, r.listing);
     openCampaign();
   }
-  function reopenOffered() {
+  async function reopenOffered() {
     if (!offered?.save) return;
-    const bad = writeStored(offered.save);
+    const bad = writeStored(await slimSave(offered.save));
     if (bad) return void (offered = { ...offered, problems: [`it could not be kept to reopen: ${bad}`], save: null });
     location.reload();
   }
@@ -657,8 +660,48 @@
   let depth = $state<Depth>(isDepth(storedDepth) ? storedDepth : "curious");
   function chooseDepth(d: Depth) {
     depth = d;
-    savePref("depth", d);
+    for (const k of keepForDesk(desk, "depth")) savePref(k, d);
   }
+  // Remembered per desk on this device (TM6, three desks design question 9): coming back to a desk brings back its
+  // depth, and at each level its view choice (View style, Seen from, Scale, HUD, Band). A desk or level visited for the
+  // first time starts from the latest choice made anywhere.
+  $effect(() => {
+    const d = recallForDesk(loadPref, desk, "depth").value;
+    untrack(() => {
+      if (isDepth(d) && d !== depth) depth = d;
+    });
+  });
+  // The ruler's span (TM6, top-level 12.1): each desk opens it on its own default at each level (Explore on human time at
+  // a system or world, Build on the whole life), and keeps the span the GM last chose there. No fallback to another
+  // desk's span: the desks differ on purpose.
+  $effect(() => {
+    const level = deskLevelOf(railScale);
+    const d = desk;
+    untrack(() => {
+      const kept = level ? loadPref(deskMemoryKey(d, "ruler-span", level)) : null;
+      ws.ruler_opens = { key: `${d}|${level}`, span: rulerOpens(d, level, kept) };
+    });
+  });
+  ws.setRulerSpan = (span) => {
+    const level = deskLevelOf(railScale);
+    if (level) savePref(deskMemoryKey(desk, "ruler-span", level), keepRulerSpan(span));
+  };
+  let viewAt = "";
+  $effect(() => {
+    const level = deskLevelOf(railScale);
+    const at = `${desk}|${level}`;
+    untrack(() => {
+      if (at === viewAt) return;
+      viewAt = at;
+      const v = readViewChoice(recallForDesk(loadPref, desk, "view", level).value);
+      // A view that opens on its own scale keeps it; the recalled scale is what comes back when it is left.
+      const opens = viewSpec?.opens?.scale;
+      if (opens && keptScale !== null) {
+        keptScale = v.scale ?? "readable";
+        ws.view = { ...v, scale: opens };
+      } else ws.view = v;
+    });
+  });
   $effect(() => {
     ws.depth = depth;
   });
@@ -783,20 +826,24 @@
   // to each host). Views draw from the scene, so the phases go onto it and the chart, 3D view and sound move together.
   // A fixture scene sends its own elements, with its drawn phases as their places at the campaign's start.
   let phases = $state<Map<string, number> | null>(null);
+  // The clock time those phases are for and each body's period, so the pictures run the bodies on between answers (CLK1).
+  let motion = $state<{ at_s: number; periods: Map<string, number> } | null>(null);
   // And where each is in three dimensions, for shadows and eclipses in True (renderer eclipse.ts).
   let places = $state<Map<string, [number, number, number]> | null>(null);
+  // And how fast each moves (the same reply, a minute apart): a shadow's caster is read where the light passed it.
+  let motions = $state<Map<string, [number, number, number]> | null>(null);
   // Play asks ten times a second: one call at a time, and only the latest time waits.
   let orbitsFor = "";
   let orbitsBusy = false;
-  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; epoch: bigint; key: string } | null = null;
+  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; at_s: number; epoch: bigint; key: string } | null = null;
   function pumpOrbits() {
     if (orbitsBusy || !orbitsWant) return;
     const w = orbitsWant;
     orbitsWant = null;
     orbitsBusy = true;
-    w.s.orbitsAt(w.sc.system, [w.at], orbitBodies(w.sc, w.epoch)).then((r) => {
+    w.s.orbitsAt(w.sc.system, [w.at, w.at - BigInt(MOTION_STEP_S)], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)));
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)), (motion = { at_s: w.at_s, periods: periodsFrom(r.bodies) }));
       pumpOrbits();
     });
   }
@@ -807,8 +854,8 @@
     const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null));
-    orbitsWant = { s, sc, at, epoch, key };
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null));
+    orbitsWant = { s, sc, at, at_s: (ws.now_yr - (ws.campaign_epoch_yr ?? base.now_yr)) * YEAR_SECONDS, epoch, key };
     pumpOrbits();
   });
   // A pack's calendar (kernel calendar), read again whenever the pack stack changes.
@@ -818,7 +865,7 @@
     if (!s) return;
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
-  const timed = $derived(withPhases(scene, phases, places));
+  const timed = $derived(withPhases(scene, phases, places, motions, motion));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
   let layerLabels = $state.raw<Map<string, string>>(new Map());
   $effect(() => {
@@ -869,17 +916,33 @@
   });
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
+  // The campaign's now, read in one place: the clock, the share and the players' screens all take it from here, so the
+  // move to whole seconds (time scales design, TP3) is one edit in this file.
+  const campaignYr = $derived(ws.campaign_now_yr ?? ws.now_yr);
   // The campaign's clock travels to players (U11): its now, not whatever time the GM is viewing.
   $effect(() => {
-    const yr = ws.campaign_now_yr ?? ws.now_yr;
-    if (share?.state.link) share.setClock(yr);
+    if (share?.state.link) share.setClock(campaignYr);
+  });
+  // The picture's clock (CLK1) follows the time in view however it was moved (a step, a bookmark, a save opened, a
+  // campaign shifted to another system's present); play and the Run desk's clock set its rate.
+  $effect(() => {
+    const yr = ws.now_yr;
+    const epoch = ws.campaign_epoch_yr ?? base.now_yr;
+    untrack(() => (ws.clock = followTime(ws.clock ?? stoppedAt(yr, epoch), yr, epoch, performance.now())));
   });
   // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
   // so stepping and playing through days does not call the kernel's derivations at every frame.
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
+  // The Run desk's clock (TM3a): the pack's calendar, as the ruler reads it; a step moves the campaign's now and the time
+  // in view together, as stepping on the ruler does while it sits at now.
+  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? campaignYr));
+  function stepCampaign(yr: number) {
+    ws.setTime(yr);
+    ws.setCampaignNow?.(yr);
+  }
   /** Move the campaign's clock to another system's present, keeping the time elapsed in the campaign. */
   function shiftCampaign(present: number) {
-    const elapsed = (ws.campaign_now_yr ?? ws.now_yr) - (ws.campaign_epoch_yr ?? ws.now_yr);
+    const elapsed = campaignYr - (ws.campaign_epoch_yr ?? ws.now_yr);
     ws.campaign_epoch_yr = present;
     ws.campaign_now_yr = present + elapsed;
     ws.now_yr = ws.campaign_now_yr;
@@ -1095,6 +1158,36 @@
     if (i > 0 && railScale !== "system") toScale(PLACE_SCALES[i - 1]!);
   }
   const recentElsewhere = $derived(place ? recent.filter((r) => !samePlace(r, place)) : recent);
+  // Fill the screen (TM9a, three desks design question 11): on the Run desk F leaves the picture alone, full screen when
+  // the browser allows. The bar comes back while the pointer is at the top edge; F or Esc brings everything back.
+  let filled = $state(false);
+  let peek = $state(false);
+  let fillNote = $state(false);
+  let fillTimer: ReturnType<typeof setTimeout> | undefined;
+  const canFill = $derived(partShows("fill-screen", desk));
+  function setFilled(on: boolean) {
+    if (on === filled) return;
+    filled = on;
+    peek = false;
+    clearTimeout(fillTimer);
+    fillNote = on;
+    if (on) fillTimer = setTimeout(() => (fillNote = false), 3000);
+    try {
+      if (on) void document.documentElement.requestFullscreen?.()?.catch(() => {});
+      else if (document.fullscreenElement) void document.exitFullscreen?.()?.catch(() => {});
+    } catch {
+      /* a browser without full screen: the picture alone in the window is still the picture alone */
+    }
+  }
+  $effect(() => {
+    if (!canFill) untrack(() => setFilled(false));
+  });
+  // Leaving full screen the browser's own way (its Esc) brings the bar back too.
+  $effect(() => {
+    const sync = () => !document.fullscreenElement && filled && setFilled(false);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  });
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
@@ -1704,9 +1797,10 @@
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
       b: () => document.querySelector<HTMLElement>("[data-bookmarks] > button")?.click(),
+      f: () => canFill && setFilled(!filled),
       "?": () => openHelp("keys"),
       // Esc clears the selection, then goes up a step.
-      Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
+      Escape: () => (filled ? setFilled(false) : ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
     };
     const f = keys[e.key];
     if (f) {
@@ -1719,8 +1813,14 @@
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
-  <header class="bar">
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+  {#if filled}
+    <!-- The top edge: the pointer there brings the bar back over the picture. -->
+    <div class="fill-edge" aria-hidden="true" onpointerenter={() => (peek = true)}></div>
+    {#if fillNote}<p class="fill-note" role="status" data-fill-note>The picture alone. F or Esc brings everything back; the bar is at the top edge.</p>{/if}
+  {/if}
+  <!-- svelte-ignore a11y_no_static_element_interactions (the pointer leaving the bar only hides it again in Fill the screen) -->
+  <header class="bar" onpointerleave={() => (peek = false)}>
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <PlaceLine
       {railScale}
@@ -1741,6 +1841,7 @@
       {goTo}
       {toScale}
       switchSystem={(sys) => (showSystem(sys), toSystem())}
+      stepper={partShows("stepper", desk)}
     />
     <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
     {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker" class:gone={kickerW < 140} bind:clientWidth={kickerW} title="{scene.subtitle} · {formatYears(ws.now_yr)}">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
@@ -1857,10 +1958,15 @@
       {/key}
     </div>
     <footer class="area-ruler" aria-label="Time" bind:offsetHeight={rulerH}>
-      {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
-      <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. -->
+      {#if partShows("ruler", desk)}
+        {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
+      {:else}
+        <!-- The Run desk's clock in the ruler's place (three desks design 7.3): the campaign's now in human time. Above the system nothing moves in human time, so it shows the date only. -->
+        <div class="ruler-view"><CampaignClock campaignNow={campaignYr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} onrate={(r) => ws.setRate?.(r)} /></div>
+      {/if}
+      <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. On Run only Sound stays, beside the clock; a what-if left open elsewhere still shows, so it can be kept or thrown away. -->
       <div class="ruler-side" aria-label="Time tools" role="group">
-        <span class="whatif" data-branch={ws.branch?.id}>
+        {#if partShows("ruler", desk) || ws.branch}<span class="whatif" data-branch={ws.branch?.id}>
           {#if ws.branch}
             <b>{ws.branch.label}</b>
             <span data-whatif-edits={ws.branch.edits.length}>{ws.branch.edits.length} {ws.branch.edits.length === 1 ? "change" : "changes"}</span>
@@ -1870,12 +1976,12 @@
             <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
           {:else}
             {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
-            <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
+            <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} canKeep={deskDoc(desk).writes !== "try"} onbuild={() => chooseDesk("build")} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
           {/if}
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
-        </span>
+        </span>{/if}
         <span class="strip">
-          <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />
+          {#if partShows("light", desk)}<LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />{/if}
           <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
         </span>
       </div>
@@ -1901,7 +2007,7 @@
           onswitchboard={() => go("switchboard")}
           chip={desk !== "run"}
           party={ws.party ?? null}
-          now_yr={ws.campaign_now_yr ?? ws.now_yr}
+          now_yr={campaignYr}
           onchange={() => (ws.revision++, ws.notePhysics())}
         />
       {/if}
@@ -2078,6 +2184,62 @@
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+  }
+  /* Fill the screen (TM9a): the picture alone. The bar waits above the top edge and slides in while the pointer is there. */
+  .app[data-filled] {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  /* The bar is out of the flow and the ruler and status are gone, so the stage takes the one row. */
+  .app[data-filled] > .middle,
+  .app[data-filled] > .problem {
+    grid-row: 1;
+  }
+  .app[data-filled] > .bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    z-index: 40;
+    transform: translateY(-100%);
+    transition: transform var(--sse-motion-short, 160ms) ease-out;
+  }
+  .app[data-filled][data-peek] > .bar {
+    transform: none;
+  }
+  .app[data-filled] > .area-ruler,
+  .app[data-filled] > .status,
+  .app[data-filled] :global([data-chart-overlay]),
+  .app[data-filled] :global(.area-card) {
+    display: none;
+  }
+  .fill-edge {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    z-index: 39;
+  }
+  .fill-note {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 38;
+    margin: 0;
+    padding: 6px 12px;
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    font-size: 13px;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app[data-filled] > .bar {
+      transition: none;
+    }
   }
   .bar {
     display: flex;
