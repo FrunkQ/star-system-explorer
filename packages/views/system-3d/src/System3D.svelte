@@ -204,7 +204,7 @@
   });
   // Real scale lets the camera come much closer: the worlds are small. True lets it come down to a grazing orbit over
   // the world at the centre (close-up, Alex 25 Nov): a few km over its ground (renderer close-up.ts). A star at the
-  // centre lets it come to half a radius over its surface, its limb and what stands over it filling the view.
+  // centre lets it come in until its whole disc fills the view, limb and prominences in sight.
   const centreBody = $derived(lay?.centre);
   const centreStar = $derived(!!centreBody && centreBody.parent === null);
   const centreR = $derived(!centreBody ? 0 : realScale ? (lay ? lay.dist(centreBody.radius_m ?? 0) : 0) : 0.55);

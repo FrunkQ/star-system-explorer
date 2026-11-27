@@ -55,12 +55,15 @@ test("the orbit camera goes to a postcard's camera and back", () => {
   assert.equal(orbitEye(o, 0), null);
 });
 
-test("over a star the camera stops half a radius up, where a flat face still matches the sphere's outline", () => {
+test("over a star the camera stops where the whole disc fills the view, its face drawn to the sphere's outline", () => {
   assert.equal(closeMin(2, 6.96e8, true), 2 * (1 + STAR_CLOSE_SHARE));
-  // Far off the outline is the radius; at the floor the sphere fills asin(1/1.5) = 41.8 degrees, so a picture at its
-  // centre must be 1.34 radii across its half-width to cover it.
+  // At the floor the disc's angular radius is about half a 45-degree view: the limb is in sight top and bottom.
+  const d = 1 + STAR_CLOSE_SHARE;
+  const deg = (Math.asin(1 / d) * 180) / Math.PI;
+  assert.ok(deg > 21 && deg < 24, `${deg}`);
+  // Far off the outline is the radius; up close a picture at the centre must be wider to cover asin(r/d).
   assert.ok(Math.abs(outlineRadius(1, 1e6) - 1) < 1e-9);
-  const r = outlineRadius(1, 1 + STAR_CLOSE_SHARE);
+  const r = outlineRadius(1, 1.5);
   assert.ok(Math.abs(Math.atan(r / 1.5) - Math.asin(1 / 1.5)) < 1e-12, `${r}`);
   assert.ok(r > 1.3 && r < 1.4, `${r}`);
 });

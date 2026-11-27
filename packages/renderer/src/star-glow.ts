@@ -147,5 +147,5 @@ export function glowReach(profile: Float64Array, share = 0.5, reach_deg = GLOW_R
 /** The glow in words. */
 export function narrateGlow(profile: Float64Array, exposure = 1, reach_deg = GLOW_REACH_DEG): string {
   const half = glowReach(profile, 1, reach_deg, exposure);
-  return `The glow round the star is light scattered in the eye (the CIE glare equation), not anything in space: it outshines a sunlit surface out to about ${half.toFixed(1)}° from the star and fades over ${GLOW_REACH_DEG}°.`;
+  return `The glow round the star is light scattered in the eye (the CIE glare equation), not anything in space: it outshines a sunlit surface out to about ${half.toFixed(1)}° from the star and fades over ${Math.round(reach_deg)}°.`;
 }
