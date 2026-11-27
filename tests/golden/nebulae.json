@@ -209,21 +209,23 @@
           "url": "https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
         },
         {
-          "text": "Storey, P. J., Sochi, T. and Badnell, N. R. 2014, Collision strengths for nebular [O III] optical and infrared lines, table 6 at 10,000 K: 0.24917, 0.75062 and 1.26198 from 3P0, 3P1 and 3P2 to 1D2, summed over the 3P term (weight 9); 1D2 lies 20273.27 cm-1 above 3P0 (table 5), 20065.5 above the term's weighted centre. https://arxiv.org/abs/1311.6517. The 5007 and 4959 lines share the 1D2 level's decays about three to one (Storey, N-level atoms notes, https://pages.astro.umd.edu/~jpha/N-level.pdf); the exact ratio from Storey and Zeippen 2000 (MNRAS 312, 813) is a stand-in until checked (fudge register F64). De-excitation not worked: 1D2's critical density is far above nebular densities. ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team),",
-          "url": "https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+          "text": "Storey, P. J., Sochi, T. and Badnell, N. R. 2014: collision strengths for nebular [O III] optical and infrared lines (table 6, effective collision strengths at 10,000 K; table 5, level energies). Collision strengths 0.24917, 0.75062 and 1.26198 from 3P0, 3P1 and 3P2 to 1D2, summed over the 3P term (weight 9); 1D2 lies 20273.27 cm-1 above 3P0 (table 5), 20065.5 above the term's weighted centre. The 500.7 and 495.9 nm lines share the 1D2 level's decays about three to one; the exact ratio from Storey and Zeippen 2000 (MNRAS 312, 813) is a stand-in until checked (fudge register F64). De-excitation not worked: 1D2's critical density is far above nebular densities.",
+          "url": "https://arxiv.org/abs/1311.6517"
         },
         {
-          "text": "Once- and twice-ionised sulphur balance where they are: S+ stripped by starlight with the cross-section fit of Verner, D. A. et al. 1996, ApJ 465, 487, table 1 row S II (doi:10.1086/177435), S2+ rejoined at 4.48e-12 cm3 s-1 at 10,000 K, the sum of the dielectronic 2.94e-12 and radiative 1.54e-12 of Badnell, N. R. et al. 2015, table 6 (https://arxiv.org/abs/1503.05905)."
+          "doi": "10.1086/177435",
+          "text": "Verner, D. A., Ferland, G. J., Korista, K. T. and Yakovlev, D. G. 1996, ApJ 465, 487: analytic fits for partial photoionisation cross-sections (table 1). Once- and twice-ionised sulphur balance where they are: S+ stripped by starlight with Verner et al.'s cross-section fit (table 1, row S II), S2+ rejoined at 4.48e-12 cm3 s-1 at 10,000 K, the sum of the dielectronic 2.94e-12 and radiative 1.54e-12 of Badnell et al. 2015, table 6.",
+          "url": "https://doi.org/10.1086/177435"
         },
         {
-          "doi": "10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
-          "text": "[S II] 671.6 nm, 2D5/2 to 4S3/2. Effective collision strengths at 10,000 K and Einstein A from table B.5 of A&A 694, A133 (2025),",
-          "url": "https://doi.org/10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+          "doi": "10.1051/0004-6361/202451865",
+          "text": "Astronomy and Astrophysics 694, A133 (2025), table B.5: [S II] effective collision strengths at 10,000 K and Einstein A, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). [S II] 671.6 nm, 2D5/2 to 4S3/2.",
+          "url": "https://doi.org/10.1051/0004-6361/202451865"
         },
         {
-          "doi": "10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
-          "text": "[S II] 673.1 nm, 2D3/2 to 4S3/2. Effective collision strengths at 10,000 K and Einstein A from table B.5 of A&A 694, A133 (2025),",
-          "url": "https://doi.org/10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+          "doi": "10.1051/0004-6361/202451865",
+          "text": "Astronomy and Astrophysics 694, A133 (2025), table B.5: [S II] effective collision strengths at 10,000 K and Einstein A, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). [S II] 673.1 nm, 2D3/2 to 4S3/2.",
+          "url": "https://doi.org/10.1051/0004-6361/202451865"
         },
         {
           "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books, chapter 3: forbidden lines excited by electron collisions, q12 = (h²/((2π m_e)^3/2 (kT)^1/2)) (Υ/g1) e^(-hν/kT) and q21 = q12 (g1/g2) e^(hν/kT).",

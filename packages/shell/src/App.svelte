@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskFor, screenOnDesk, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -1323,9 +1323,19 @@
     if (sel && sel.kind !== "star") return sel.address;
     return systemOrder(scene).find((x) => x.kind === "planet")?.address;
   }
+  /** What a start-sheet action opens must be on the desk it lands on (TM9c): a screen's rail entries, a control's part. */
+  function startShows(a: StartAction, d: Desk): boolean {
+    if ("screen" in a) return screenOnDesk(SCREENS[a.screen] ?? {}, d);
+    if ("world" in a) return screenOnDesk(SCREENS[a.world] ?? {}, d);
+    if ("control" in a) return partShows(a.control, d);
+    return true;
+  }
   function fromStart(a: StartAction) {
     startOpen = false;
-    queueMicrotask(() => {
+    // "Carry on" keeps the desk last used; a verb lands on a desk that has what it opens (Explore first).
+    chooseDesk(deskFor(desk, (d) => startShows(a, d)));
+    // After the desk's parts are drawn, so a control such as Light is there to press.
+    void tick().then(() => {
       if ("door" in a) {
         if (a.door === "sol") void openSol();
         else if (a.door === "grow") openMake("generate");
