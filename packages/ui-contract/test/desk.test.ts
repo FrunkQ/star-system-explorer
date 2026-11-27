@@ -161,3 +161,14 @@ test("a start-sheet verb lands on a desk that has what it opens (TM9c): the desk
   assert.equal(deskFor("build", () => false), "build", "nowhere: stay");
   assert.equal(deskFor("run", (d) => partShows("light", d)), "explore", "Light is off Run");
 });
+
+test("See as on Run: three kinds only (design 3.1): Game master, The table, each role", async () => {
+  const { SHIPPED_LENSES, playerLenses, tableLenses } = await import("../src/lens.ts");
+  const plan = { audiences: [{ id: "everyone", label: "Everyone" }, { id: "crew", label: "The crew" }] } as never;
+  const setup = { views: [{ id: "scan", label: "Scanner" }] } as never;
+  const all = [...SHIPPED_LENSES, ...playerLenses(setup, plan)];
+  assert.deepEqual(tableLenses(all).map((l) => [l.id, l.label]), [["running", "Game master"], ["players", "As the table sees it"], ["players.crew", "As The crew sees it"]]);
+  assert.ok(all.some((l) => l.id === "view.scan") && !tableLenses(all).some((l) => l.id === "view.scan"), "a data view is not a role");
+  assert.equal(all.find((l) => l.id === "running")!.label, "Running", "the shipped lens keeps its own name");
+  assert.deepEqual(DESKS.map((d) => [partShows("see-as", d, "every-lens"), partShows("see-as", d, "make")]), [[true, true], [true, true], [false, false]]);
+});

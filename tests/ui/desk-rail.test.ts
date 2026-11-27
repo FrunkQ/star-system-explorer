@@ -30,8 +30,8 @@ test("Explore and Build list every entry, as before", () => {
   }
 });
 
-test("Run leaves off Sizes, Life, Stories, Roll call, The physics, Look up, Postcards, How it formed and Small bodies, and keeps the table's instruments", () => {
-  const OFF_RUN = ["Sizes", "Life", "Stories", "Roll call", "The physics", "Look up", "Postcards", "How it formed", "Small bodies"];
+test("Run leaves off Sizes, Life, Stories, Roll call, The physics, Look up, Postcards, How it formed, Small bodies and Ship builder, and keeps the table's instruments", () => {
+  const OFF_RUN = ["Sizes", "Life", "Stories", "Roll call", "The physics", "Look up", "Postcards", "How it formed", "Small bodies", "Ship builder"];
   for (const s of RAIL_SCALES) {
     const run = labels(s, "run");
     assert.deepEqual(run, labels(s).filter((l) => !OFF_RUN.includes(l)), s);

@@ -1097,6 +1097,10 @@ pub(crate) fn read_activity(
             )
             .map_err(|e| err("bad_activity", e))?;
             one["prominences"] = serde_json::to_value(p).expect("plain data");
+            // SG7: the active regions over the same span (the spots, and where flares and prominences sit).
+            let g = regions::regions(&seed, &a, w.from_s, w.to_s, &set)
+                .map_err(|e| err("bad_activity", e))?;
+            one["regions"] = serde_json::to_value(g).expect("plain data");
         }
         out.push(one);
     }
@@ -1173,5 +1177,45 @@ pub(crate) fn read_nebulae(
         at_s,
         nebulae,
         absent,
+    })
+}
+
+/// BX1: a pair of stars aged together.
+pub(crate) fn age_pair(
+    node: serde_json::Value,
+    to_myr: f64,
+    z: Option<f64>,
+    planets: Option<Vec<serde_json::Value>>,
+    time: Option<&sse_time::epoch::TimeSettings>,
+) -> Out {
+    use sse_time::pair::*;
+    let node: Node =
+        serde_json::from_value(node).map_err(|e| err("bad_pair", format!("node: {e}")))?;
+    let planets: Vec<PlanetIn> = planets
+        .unwrap_or_default()
+        .into_iter()
+        .map(|p| serde_json::from_value(p).map_err(|e| err("bad_pair", format!("planet: {e}"))))
+        .collect::<Result<_, _>>()?;
+    // The stack's time settings (its ageing star); the rule table and the
+    // pair settings are their defaults until they join the stack.
+    let time = time.ok_or_else(|| {
+        err(
+            "no_time_settings",
+            "no pack in the stack provides time settings",
+        )
+    })?;
+    let star = time.star.clone();
+    let line = age_node(
+        &node,
+        z.unwrap_or(0.02),
+        to_myr,
+        &planets,
+        &star,
+        &sse_time::binary::BinaryRules::default(),
+        &PairSettings::default(),
+    )
+    .map_err(|e| err("bad_pair", e))?;
+    Ok(Response::PairAged {
+        line: serde_json::to_value(line).expect("plain data"),
     })
 }

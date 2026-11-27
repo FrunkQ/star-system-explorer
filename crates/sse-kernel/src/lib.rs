@@ -4122,6 +4122,12 @@ impl Kernel {
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::ReadBows { items } => systems::read_bows(items)?,
+            Request::AgePair {
+                node,
+                to_myr,
+                z,
+                planets,
+            } => systems::age_pair(node, to_myr, z, planets, self.time.as_ref())?,
             Request::ReadScattering { items } => systems::read_scattering(items)?,
             Request::ReadShadowLight { items } => {
                 systems::read_shadow_light(items, &self.observe.reference)?

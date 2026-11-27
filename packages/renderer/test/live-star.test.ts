@@ -27,8 +27,10 @@ test("a flare rises in a straight line to its peak, then falls away exponentiall
 
 test("the star turns once in its own rotation period and flares sit over its spots at their strength now", () => {
   const s = sun();
-  assert.equal(turnAt(s, s.age_s), 0);
-  assert.ok(Math.abs(turnAt(s, s.age_s + 25.4 * DAY * 0.25) - 90) < 1e-6);
+  // The star's frame turns once a spin from age zero (SG7: the frame the kernel places regions in).
+  assert.equal(turnAt(s, 0), 0);
+  assert.ok(Math.abs(turnAt(s, 25.4 * DAY * 0.25) - 90) < 1e-6);
+  assert.ok(Math.abs(((turnAt(s, s.age_s + 25.4 * DAY * 0.25) - turnAt(s, s.age_s) + 360) % 360) - 90) < 1e-3);
   assert.equal(turnAt(sun({ activity: {} }), s.age_s + DAY), 0, "no spin known: no turn");
   const spots = spotsOf(s);
   assert.equal(flaresAt(s, spots, s.age_s).length, 0, "quiet before the flare");
