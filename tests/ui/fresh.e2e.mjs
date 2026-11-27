@@ -81,6 +81,8 @@ try {
     // running (a same-origin page with no app on it): the app autosaves after it settles, and a later autosave (the
     // Sol today pack arriving, say) wrote the real fingerprint back over an edit made under it before the reload.
     const solPlace = await gm.evaluate(() => location.hash);
+    // An empty page served by the test itself (the static server's bare 404 never finishes loading in Firefox).
+    await context.route("**/no-app-here", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>No app here</title>" }));
     await gm.goto(base + "no-app-here");
     await gm.evaluate(() => {
       const s = JSON.parse(localStorage.getItem("sse4.campaign"));
