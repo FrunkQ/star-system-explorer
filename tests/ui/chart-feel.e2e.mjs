@@ -62,7 +62,9 @@ try {
 
     // Framed on the worlds: Neptune is well out from the Sun, not huddled in the middle of the Oort cloud.
     const chart = (await boxes(page, ".area-chart svg"))[0];
-    const sun = (await boxes(page, ".area-chart .body:first-of-type .hit"))[0] ?? null;
+    // The Sun is the first body drawn (":first-of-type" never matched it: the name-hit group is the first <g>).
+    const sun = (await boxes(page, ".area-chart .body .hit"))[0] ?? null;
+    assert.match((await page.locator(".area-chart .body").first().getAttribute("aria-label")) ?? "", /^Sun/, `${vp}: the first body drawn is the Sun`);
     const nep = (await boxes(page, '.area-chart .body[aria-label^="Neptune"] .hit'))[0];
     const centre = sun ? [sun.x + sun.w / 2, sun.y + sun.h / 2] : [chart.x + chart.w / 2, chart.y + chart.h / 2];
     const out = Math.hypot(nep.x + nep.w / 2 - centre[0], nep.y + nep.h / 2 - centre[1]);

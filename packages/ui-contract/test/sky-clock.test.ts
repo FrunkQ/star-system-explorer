@@ -84,3 +84,12 @@ test("the ruler's dates count leap days: J2000's calendar reads 8 April 2024 at 
   assert.equal(dateWords(at(J2000 + TT(2100, 3, 1, 0, 0, 30)), cal), "1 March 2100");
   assert.equal(dateWords(at(J2000 + TT(1999, 12, 31, 12, 0, 0)), cal), "31 December 1999");
 });
+
+test("the campaign's now travels to players as a record write, exact past 2^53", async () => {
+  const { checkIntent, intentToRequest } = await import("../src/intent.ts");
+  const at = "435494880000000123";
+  const i = { kind: "record" as const, op: "set_campaign_now" as const, ask: { at_s: at } };
+  assert.equal(checkIntent(i), null);
+  assert.deepEqual(intentToRequest(i), { op: "set_campaign_now", at_s: 435_494_880_000_000_123n });
+  assert.ok(checkIntent({ ...i, ask: { at_s: 4.35e17 } }));
+});

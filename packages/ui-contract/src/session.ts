@@ -1187,8 +1187,9 @@ export class Session implements ViewSession {
 
   async setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master moves the campaign's now" };
-    const r = await this.#call({ op: "set_campaign_now", at_s });
-    return r.type === "campaign_now_is" ? { ok: true, state_hash: String((r as unknown as { state_hash?: string }).state_hash ?? "") } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    // A record intent, so players replaying the game master's log move their now too.
+    const w = await this.#record("set_campaign_now", { at_s: at_s.toString() });
+    return w.ok ? { ok: true, state_hash: String(w.reply.state_hash ?? (await this.stateHash())) } : w;
   }
 
   async calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }> {

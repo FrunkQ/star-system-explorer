@@ -926,17 +926,12 @@
         const ids = v.system === SOL ? solIds : null;
         const read = marks?.size || ids?.size ? { ...read0, subjects: read0.subjects.map((x) => ({ ...x, ...(marks?.has(x.address) ? { stamps: [...x.stamps, "unverified"] } : {}), ...(ids?.has(x.address) ? { world_fixture: ids.get(x.address) } : {}) })) } : read0;
         // One epoch (RW17 part 2): the screen counts this system's time from its birth second, and a real-sky system's
-        // days from its anchor. The Solar System's door, opened fresh on a clock nobody has set, opens on the device's
-        // present, and the kernel's campaign now is set to the same second.
+        // days from its anchor. The Solar System's door, opened fresh on a clock nobody has set, opens on the second it
+        // set the kernel's campaign now to: the device's present.
         ws.birth_s = r.result.birth_s !== undefined ? BigInt(r.result.birth_s) : null;
         viewAnchor = anchorOf(r.result.facts);
         let present = read.now_yr;
-        if (v.fresh && skyDateDue && viewAnchor !== null && ws.birth_s !== null) {
-          skyDateDue = false;
-          const at_s = universeSecondOf(Date.now(), viewAnchor);
-          present = screenYears(ws.birth_s, at_s);
-          void s.setCampaignNow(at_s);
-        }
+        if (v.fresh && skyPresent !== null) ((present = skyPresent), (skyPresent = null));
         const shown = v.fresh ? present : now;
         if (v.fresh) ((v.fresh = false), shiftCampaign(present));
         viewingSpec = r.result.spec ?? null;
@@ -977,9 +972,9 @@
   // V13 part 2: systems adopted into the campaign this session, and the one on the chart (null: the campaign's own).
   let adoptedSystems = $state<{ system: string; title: string }[]>([]);
   let viewing = $state<{ system: string; title: string; fresh: boolean } | null>(null);
-  // The viewed system's real-sky anchor (time.j2000_s), and whether the Solar System's door is to set the date.
+  // The viewed system's real-sky anchor (time.j2000_s), and the screen's years the Solar System's door opens on.
   let viewAnchor = $state<bigint | null>(null);
-  let skyDateDue = false;
+  let skyPresent: number | null = null;
   let viewingSpec = $state<SystemSpec | null>(null);
   function showSystem(system: string) {
     const a = adoptedSystems.find((x) => x.system === system);
@@ -1222,13 +1217,22 @@
       // Its own real-sky scene, opened fresh: it opens on today unless the campaign's clock has been set (a saved
       // campaign, or a date the GM chose), which is left as it is.
       const set = await s.campaignNow();
-      skyDateDue = set.ok && set.at_s === undefined && ws.campaign_now_yr === ws.campaign_epoch_yr;
+      const clockFree = set.ok && set.at_s === undefined && ws.campaign_now_yr === ws.campaign_epoch_yr;
       whatNote = "Entering the Solar System from its catalogue…";
       try {
         const sheet = await solSheet();
         for (const b of solBatches(sheet, SOL).batches) {
           const r = await s.send({ kind: "set_values", edits: b.edits, at_yr: 0, evidence: "catalogued", source: solSourceText(sheet, b.source) });
           if (r.status !== "applied") throw new Error(r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master");
+        }
+        // The date is part of entering it: the device's present on the universe clock, through the kernel's campaign
+        // now, written before the chart opens; the screen then opens at that second (read in the scene's effect).
+        const rs = clockFree ? await s.resolvedSystem(SOL) : null;
+        const anchor = rs?.ok ? anchorOf(rs.result.facts) : null;
+        if (rs?.ok && anchor !== null && rs.result.birth_s !== undefined) {
+          const at_s = universeSecondOf(Date.now(), anchor);
+          const r = await s.setCampaignNow(at_s);
+          if (r.ok) skyPresent = screenYears(BigInt(rs.result.birth_s), at_s);
         }
       } catch (e) {
         return void (whatNote = `Could not open the Solar System: ${e instanceof Error ? e.message : String(e)}`);

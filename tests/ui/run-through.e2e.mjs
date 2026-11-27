@@ -118,7 +118,9 @@ try {
 
   // 4. Land on Mars with the party's ship; the GM picks a landmark, still private.
   await gm.waitForSelector("[data-surface] [data-landmark-row]", { timeout: 40000 });
-  await gm.locator("[data-landmark-row]").nth(5).click();
+  // Row 6, Torrasa Planitia: level ground. (RW17 part 2 draws Mars at the second its age gives, not its age in years
+  // sent as universe seconds, so its ground, and which row is level, changed.)
+  await gm.locator("[data-landmark-row]").nth(6).click();
   await gm.waitForSelector("[data-surface]:not([data-verdict=''])", { timeout: 40000 });
   assert.equal(await gm.locator("[data-lander]").inputValue(), "party", "the party's ship is offered first as the lander");
   const verdict = await gm.locator("[data-surface]").getAttribute("data-verdict");
