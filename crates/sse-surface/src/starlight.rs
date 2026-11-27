@@ -15,7 +15,6 @@
 
 use crate::{Body, Climate};
 use sse_core::sheet::{AU, DAY};
-use sse_flow::Atom;
 use sse_formation::hurley::Fits;
 
 /// The world's orbit round its star (a moon's is its planet's).
@@ -31,12 +30,10 @@ pub struct StarPlace {
     pub with_msun: f64,
 }
 
-/// Run one formula block of the physics in force. The blocks read here
-/// have no settings; ER2's `physics::run` will be the door for any that do.
+/// Run one block of the physics in force through the block door (ER2),
+/// with its settings in force.
 fn block(id: &str, inputs: &[f64]) -> Option<f64> {
-    let physics = sse_physics::now()?;
-    let a = physics.blocks().iter().find(|a| a.decl().id == id)?;
-    a.eval(inputs, &[])
+    sse_physics::run(id, inputs)
         .ok()?
         .first()
         .copied()

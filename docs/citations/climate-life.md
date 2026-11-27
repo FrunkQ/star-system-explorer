@@ -48,6 +48,10 @@ Status key: verified / corrected-metadata / corrected-physics / unverified / tex
 | budget.rs:384-387 | Bar-On et al. 2018 | Earth 550 Gt C; class thresholds | exists (search) | As above. The class thresholds are a pack-style choice (fudge register). |
 | pack:451 transfer_efficiency 0.1 | Lindeman 1942; Pauly and Christensen 1995 | 10% | unverified (classic) | Lindeman 1942 (Ecology 23, 399) and Pauly and Christensen 1995 (Nature 374, 255) give about 10% (memory). |
 | pack:452 low_power_levels 2 | Catling et al. 2005 | anaerobic about 1/10 of the energy | unverified | Catling, Glein, Zahnle and McKay 2005, Astrobiology 5, 415 (memory). |
+| pack `life_budget.maintenance.laboratory_w_per_cmol`, `ea_j_mol` (LE1) | Tijhuis, van Loosdrecht and Heijnen 1993, Biotechnology and Bioengineering 42, 509 | 4.5 kJ per C-mol per hour (1.25 W) at 298 K, activation energy 69.4 kJ per mol | unverified | moved from `life_gradients` unchanged; recalled, paper search out until 1 Dec 2026 |
+| pack `life_budget.maintenance.starved_w_per_cmol` (LE1) | LaRowe and Amend 2015, Frontiers in Microbiology 6:718; Hoehler and Jørgensen 2013, Nature Reviews Microbiology 11, 83 | basal power about 1e-20 W per cell, at about 1e-14 g C per cell: 1.2e-5 W per C-mol | unverified | LaRowe and Amend was read on 19 Nov for the evolution design; this per-cell figure and the cell carbon were not re-read |
+| pack `life_budget.maintenance.thinnest_life_gc_m3` (LE1) | D'Hondt et al. 2009, PNAS 106, 11651; Kallmeyer et al. 2012, PNAS 109, 16213 | about 1e3 cells per cm³ in South Pacific Gyre sediment, at about 1e-14 g C per cell | unverified | recalled |
+| `ledger.rs` `petela` (LE2) | Petela 1964, Journal of Heat Transfer 86, 187 | exergy share of black-body radiation 1 − 4/3 x + 1/3 x⁴, x = T₀/T_source; about 0.93 for sunlight at 288 K | unverified | the formula is textbook (Petela's); the test checks 0.93 and 0.87 |
 
 ## C. Boxes C to E: history (`life_history`)
 

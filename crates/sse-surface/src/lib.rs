@@ -331,7 +331,9 @@ pub struct Body {
     /// set `water_fraction`, even to 0.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub water_from_density: bool,
-    /// Distance from its star, AU, for a moon (whose `orbit` is round its planet). None when `orbit` is round the star.
+    /// Distance from its star, AU, for a world that goes round a planet (a
+    /// moon), whose own `orbit` is round the planet: the climate's sunlight
+    /// is read at this distance (HV2c). None when `orbit` is round the star.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub star_au: Option<f64>,
     /// CS1: the eccentricity of the planet's orbit round the star, for a

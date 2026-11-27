@@ -104,7 +104,7 @@ export type { CampaignSave } from "./campaign.ts";
 export { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, confidenceWords, epochBands, foodWeb, productionPath, scanTiers, timeAxis, words as lifeWords } from "./life.ts";
 export { STAGES as LIFE_STAGES, askWhatIf, lifeFlow, placeStages, stageOfEvent, whatMoved } from "./life-flow.ts";
 export type { FlowStage, PlacedStage, StageId, StageMove, LifeWhatIf } from "./life-flow.ts";
-export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
+export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeEnergy, LifeEnergyLines, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
 export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLong, parseDate, startOf, yearLength } from "./calendar.ts";
 export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
 export { termsOf, word } from "./words.ts";
@@ -139,8 +139,8 @@ export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.
 export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";
 export * from "./orbits.ts";
 export { climateBelts, isExtrapolation, regimeWords } from "./climate.ts";
-export { HEAT_BOOK_FIELDS, HEAT_COLUMNS, HEAT_NODES, booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatStepAt, heatWatts, heatWhen, heatWhy, surfaceArea } from "./heat-flow.ts";
-export type { HeatBooks, HeatCaveat, HeatEnvelope, HeatEvent, HeatHistory, HeatStep } from "./heat-flow.ts";
+export { HEAT_BOOK_FIELDS, HEAT_COLUMNS, HEAT_NODES, SUN_COLUMNS, ladderLengths, lifeLadder, lifePace, lifeWhy, SUN_NODES, booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatStepAt, heatWatts, heatWhen, heatWhy, sharePercent, sunBooks, sunColumn, sunRank, sunWhy, surfaceArea } from "./heat-flow.ts";
+export type { HeatBooks, HeatCaveat, HeatEnvelope, HeatEvent, HeatHistory, HeatStep, LifeRung, SunBooks, Sunlight } from "./heat-flow.ts";
 export type { ClimateBelt, ClimateSummary } from "./climate.ts";
 export { bandWords, replayAt, replayClock, replayModel } from "./replay.ts";
 export type { ReplayBody, ReplayCloud, ReplayEvent, ReplayFrame, ReplayModel, ReplayStage } from "./replay.ts";
@@ -238,3 +238,4 @@ export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markW
 export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Sculptor, ZoneCause } from "./profile.ts";
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
+export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";

@@ -245,3 +245,120 @@ fn budget_golden() {
         "tests/golden/life-budget.json moved: bless only on purpose"
     );
 }
+
+// LE1: the keep-alive test (life-from-energy design section 4).
+
+/// A habitat with a chemical supply and nothing else, at `t` K.
+fn starved(supply_mol_yr: f64, t: f64) -> crate::LifeRequirementProfile {
+    let mut p = graph("europa").habitats[0].profile.clone();
+    p.temperature_k = Some(crate::Range { lo: t, hi: t });
+    p.materials.clear();
+    for k in [
+        "reductant_mol_yr",
+        "h2_mol_yr",
+        "o2_mol_yr",
+        "fe2_mol_yr",
+        "ch4_mol_yr",
+        "h2s_mol_yr",
+    ] {
+        p.materials.insert(k.into(), supply_mol_yr);
+    }
+    p.materials.insert("p_new_mol_yr".into(), 1.0e12);
+    p
+}
+
+#[test]
+fn a_starved_habitat_is_closed_with_its_numbers_in_both_models() {
+    let bp = budget_params();
+    let mets: Vec<&Metabolism> = bp.metabolisms.iter().collect();
+    // 1e-15 mol a year of supply: about 1e-18 W, below a million starved cells.
+    let p = starved(1.0e-15, 275.0);
+    let h = habitat_budget(&p, &bp, &mets);
+    let why = h.closed.as_deref().unwrap_or_else(|| panic!("{h:?}"));
+    assert!(
+        why.starts_with("too little energy to keep anything alive"),
+        "{why}"
+    );
+    assert!(why.contains("275 K"), "{why}");
+    assert_eq!(h.production_gc_yr, Some(0.0));
+    assert_eq!(h.biomass_gc, Some(0.0));
+    assert_eq!(h.limited_by, "closed");
+    // The same habitat with a real supply is open.
+    let fed = habitat_budget(&starved(1.0e9, 275.0), &bp, &mets);
+    assert!(fed.closed.is_none(), "{fed:?}");
+    // The gradient model runs the same shared step.
+    let gp = crate::gradients::GradientParams::from_packs(&[base_life_pack()]).unwrap();
+    let table = crate::chemistry::ThermoTable::from_packs(&[base_life_pack()]).unwrap();
+    let mut g = graph("europa");
+    g.habitats.truncate(1);
+    g.habitats[0].profile = p;
+    let (cats, wb) = crate::gradients::world_catalogue(&g, &bp, &gp, &table);
+    let powered: Vec<_> = cats[0]
+        .gradients
+        .iter()
+        .filter(|x| x.power_w.is_some_and(|w| w > 0.0))
+        .collect();
+    assert!(!powered.is_empty(), "{cats:?}");
+    for x in powered {
+        assert!(!x.open, "{x:?}");
+        assert!(
+            x.why.iter().any(|w| w.contains("too little power")),
+            "{x:?}"
+        );
+    }
+    assert_ne!(wb.habitats[0].production_gc_yr.map(|p| p > 0.0), Some(true));
+}
+
+#[test]
+fn europa_is_alive_barely_with_its_numbers() {
+    let all = budgets();
+    let b = &all.iter().find(|(n, _)| n == "europa").unwrap().1;
+    for h in &b.habitats {
+        assert!(h.closed.is_none(), "{h:?}");
+        assert!(h.barely, "{}: {h:?}", h.kind);
+        let keep = h.keep_alive_w.expect("keep-alive number");
+        assert!(h.power_w.unwrap() < keep, "{h:?}");
+        assert_eq!(h.feeding_levels, Some(0));
+    }
+}
+
+#[test]
+fn earth_grows_and_keeps_its_totals() {
+    let all = budgets();
+    let b = &all.iter().find(|(n, _)| n == "earth").unwrap().1;
+    for h in b.habitats.iter().filter(|h| h.power_w.unwrap_or(0.0) > 0.0) {
+        assert!(!h.barely, "{}: {h:?}", h.kind);
+        assert!(h.keep_alive_w.unwrap() < h.power_w.unwrap(), "{h:?}");
+        // Wood and plankton are cheap to keep: residence binds, not maintenance.
+        assert_eq!(h.biomass_limited_by.as_deref(), Some("residence"), "{h:?}");
+    }
+}
+
+#[test]
+fn maintenance_caps_biomass_in_a_warm_starved_crust() {
+    let bp = budget_params();
+    let mets: Vec<&Metabolism> = bp.metabolisms.iter().collect();
+    let mut p = starved(1.0e6, 360.0);
+    p.kind = "deep-crust".into();
+    p.medium = "subsurface".into();
+    let h = habitat_budget(&p, &bp, &mets);
+    let prod = h.production_gc_yr.unwrap();
+    assert!(prod > 0.0, "{h:?}");
+    let res = bp.residence_yr["deep-crust"];
+    let mt = bp.maintenance.as_ref().unwrap();
+    let ceiling = h.power_w.unwrap() / mt.starved_w_per_gc(360.0);
+    // Absolute, not a ratio: the biomass is the ceiling, below residence.
+    assert!(ceiling < prod * res, "{ceiling} vs {}", prod * res);
+    assert_eq!(h.biomass_gc, Some(ceiling));
+    assert_eq!(h.biomass_limited_by.as_deref(), Some("maintenance"));
+}
+
+#[test]
+fn a_stack_without_the_maintenance_block_says_so() {
+    let mut bp = budget_params();
+    bp.maintenance = None;
+    let mets: Vec<&Metabolism> = bp.metabolisms.iter().collect();
+    let h = habitat_budget(&starved(1.0e-15, 275.0), &bp, &mets);
+    assert!(h.closed.is_none());
+    assert!(h.missing.contains(&"life_budget.maintenance".to_string()));
+}

@@ -45,9 +45,7 @@ const STACK: &[&str] = &[
     "packs/base-surface/pack.json",
     "packs/base-weather/pack.json",
     "packs/base-nav/pack.json",
-    // Not base-light: its own flow test (Earth's effective temperature,
-    // 255.1 K against 254 ± 1) refuses it on any stack today, so no stack
-    // that loads carries its settings. Reported 26 Nov; add it back when fixed.
+    "packs/base-light/pack.json",
     "packs/base-small-bodies/pack.json",
     "packs/base-cosmology/pack.json",
     "packs/base-cosmos/pack.json",

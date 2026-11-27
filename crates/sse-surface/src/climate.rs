@@ -76,6 +76,9 @@ pub fn conditions(
             d.obliquity_deg
         }
     });
+    // A moon's own orbit is round its planet: its sunlight is read at the
+    // planet's distance from the star (HV2c; before, a moon at 0.0026 AU from
+    // Earth got 150,000 times Earth's sunlight).
     // CS1: the star's own light at the world's place round it, now.
     let flux =
         x.flux_w_m2
@@ -86,8 +89,9 @@ pub fn conditions(
                     "sunlight from a sun-like star at the orbit (the star's light is not known, or no data sheet is in force)"
                         .into(),
                 );
-                    let d = place
-                        .map(|p| p.d_au)
+                    let d = b
+                        .star_au
+                        .or(place.map(|p| p.d_au))
                         .or(b.orbit.as_ref().map(|o| o.a_au))
                         .unwrap_or(1.0);
                     sse_core::sheet::S_SUN / (d * d)
