@@ -11,6 +11,7 @@ sse-core.workspace = true
 sse-pack.workspace = true
 sse-formation.workspace = true
 sse-atoms.workspace = true
+sse-physics.workspace = true
 sse-sector-io = { path = "../sse-sector-io" }
 sse-sift = { path = "../sse-sift" }
 serde.workspace = true

@@ -15,12 +15,9 @@ use sse_light::colour::{colour_of_lines, Colour};
 use sse_light::table::LightTable;
 use std::sync::OnceLock;
 
-fn block(id: &str) -> &'static dyn Atom {
-    sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .map(|a| a as &dyn Atom)
-        .unwrap_or_else(|| panic!("base formula block {id} is missing"))
+fn block(id: &str) -> std::sync::Arc<dyn Atom> {
+    // ER2: the block in force, with the settings this universe gives it.
+    sse_physics::block(id).unwrap_or_else(|| panic!("base formula block {id} is missing"))
 }
 
 pub(crate) fn run(id: &str, inputs: &[f64]) -> Result<Vec<f64>, String> {

@@ -26,7 +26,6 @@
 use crate::protocol::Response;
 use crate::{err, json_to_value, Kernel};
 use sse_core::cbor::Value;
-use sse_flow::Atom;
 use std::collections::BTreeMap;
 
 type Ports = BTreeMap<String, f64>;
@@ -110,15 +109,12 @@ fn get(row: &BTreeMap<String, Value>, k: &str) -> Option<f64> {
     row.get(k).and_then(num)
 }
 
-/// Run one formula block by id: its inputs and outputs by port.
+/// Run one block in force by id (ER2: with its settings in force): its inputs and outputs by port.
 fn run(id: &str, inputs: &[f64]) -> Result<(Ports, Ports), String> {
-    let a = sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .ok_or_else(|| format!("{id} is not loaded"))?;
+    let a = sse_physics::block(id).ok_or_else(|| format!("{id} is not loaded"))?;
     let d = a.decl();
-    let p: Vec<f64> = d.params.iter().map(|p| p.default).collect();
-    let out = a.eval(inputs, &p).map_err(|e| e.0)?;
+    // ER2: the block in force; passing no settings runs those in force.
+    let out = a.eval(inputs, &[]).map_err(|e| e.0)?;
     let ins = d
         .inputs
         .iter()
