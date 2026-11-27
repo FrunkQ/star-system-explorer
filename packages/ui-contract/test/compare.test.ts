@@ -116,6 +116,18 @@ test("a subject brings its tilt, its day and its rings; a lineup that draws ring
   assert.ok(gap(ringed) / ringed.placed[0]!.r > gap(flat) / flat.placed[0]!.r, "the ringed body takes its rings' room");
 });
 
+test("a lump takes the room of its long end where globes are drawn, and only there (RW16a)", () => {
+  const rock = (key: string, lump_reach?: number) => ({ key, label: key, kind: "moon", tags: [], radius_km: 10, where: "Here", basis: "set", ...(lump_reach ? { lump_reach } : {}) });
+  const gap = (l: ReturnType<typeof layoutLineup>) => l.placed[1]!.x - l.placed[0]!.x;
+  const round = layoutLineup([rock("a"), rock("b")], 200, 2000, "true", 5, 0, true);
+  const long = layoutLineup([rock("a", 1.6), rock("b", 1.6)], 200, 2000, "true", 5, 0, true);
+  const chart = layoutLineup([rock("a", 1.6), rock("b", 1.6)], 200, 2000, "true", 5, 0);
+  // Two lumps reaching 1.6 of their mean radius, centre to centre: at least their two long ends apart.
+  assert.ok(gap(long) >= 2 * 1.6 * long.placed[0]!.r, `${gap(long)} against ${long.placed[0]!.r}`);
+  assert.ok(gap(round) < 2 * 1.6 * round.placed[0]!.r, "round bodies keep their own room");
+  assert.equal(gap(chart) / chart.placed[0]!.r, gap(round) / round.placed[0]!.r, "the flat chart draws discs: no extra room");
+});
+
 test("a Solar System reference body takes its day, tilt and rings from base-sol; the Sun its day from the sheet", () => {
   const sol = JSON.parse(readFileSync(new URL("../../../packs/base-sol/pack.json", import.meta.url), "utf8")).provides.other.sol;
   const doc = JSON.parse(readFileSync(new URL("../../shell/src/documents/reference-objects.json", import.meta.url), "utf8")) as ReferenceDoc;

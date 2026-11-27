@@ -111,3 +111,26 @@ test("the flown descent plays at a steady apparent motion of the ground", async 
   assert.ok(k[4]! - k[2]! > 0.1, `the last kilometre gets a fair share: ${k}`);
   assert.ok(k[1]! < 0.1, `50 km high up passes quickly: ${k}`);
 });
+
+test("RW16a: on a lump the ground lies on the lump, the same one the globe draws; without one it is the tiles alone", async () => {
+  const { patchKeys, readPatch, smallBodyShape } = await import("../src/index.ts");
+  const { heightAt } = await import("../src/surface-patch.ts");
+  const R = 11_100;
+  const S = 16;
+  const flat = (key: { face: number; level: number; x: number; y: number }) => ({ address: "phobos", key, samples: S, spacing_m: (R * Math.PI) / 2 / S, epoch_myr: 0, elevation_dm: new Array(S * S).fill(0), material: new Array(S * S).fill(1), cover: new Array(S * S).fill(0), albedo: new Array(S * S).fill(70), slope_ddeg: new Array(S * S).fill(0), surface_age_myr: new Array(S * S).fill(0), pending: [], hash: `${key.face}` });
+  const half = 3000;
+  const tiles = patchKeys(10, 20, half, 0, R, S).map(flat);
+  const round = readPatch(tiles, 10, 20, R, half, 33);
+  assert.ok(round.height_m.every((h) => h === 0), "flat tiles, no lump: flat ground");
+  // A 27 × 22 × 18 km figure, Phobos-like.
+  const figure = { kind: "irregular", axes_m: [13_500, 11_000, 9_000] as [number, number, number], lobes: [], relief: 0.08 };
+  const shape = smallBodyShape(figure, "u:sol/sys:0/body:3/moon:0");
+  const lumpy = readPatch(tiles, 10, 20, R, half, 33, 0, shape.mean);
+  const f = siteFrame(10, 20);
+  for (const [x, y] of [[0, 0], [2500, -1500], [-3000, 3000]] as const) {
+    const want = (shape.mean(localToDir(f, x, y, R)) - 1) * R;
+    near(heightAt(lumpy, x, y), want, 1, `ground at ${x}, ${y} is the lump's radius less the mean`);
+  }
+  const span = Math.max(...lumpy.height_m) - Math.min(...lumpy.height_m);
+  assert.ok(span > 50, `the lump shapes the ground across 6 km: ${span.toFixed(0)} m`);
+});
