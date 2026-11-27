@@ -324,6 +324,31 @@ def generic_parts():
     return out
 
 
+# Eras of spaceflight (Alex, 27 Nov 2026 11:52: "lets not do them by age but by eras... it means we can have a few
+# 'future eras'", and "they can vary in length"). Named by what changed, of any length; a flown part falls in the era
+# its first-flight year does, the picker still reads the exact year. Future eras are where the tech drives that have
+# not flown sit; `level` is the base-tech ladder level an era reaches. Pack data: a setting or store pack renames,
+# moves or adds eras. Boundaries authored (the events named are well known; the years are from memory, unverified).
+ERAS = [
+    {"id": "pioneers", "name": "Rocket pioneers", "to": 1956, "level": 2, "about": "the V-2 and the first sounding rockets"},
+    {"id": "space-race", "name": "Space race", "from": 1957, "to": 1972, "level": 3, "about": "Sputnik to the last Moon landing"},
+    {"id": "stations", "name": "Stations and shuttles", "from": 1973, "to": 1999, "level": 3, "about": "Skylab, Mir, the Shuttle and Voyager"},
+    {"id": "reusable", "name": "Reusable and commercial", "from": 2000, "to": 2029, "level": 4, "about": "the ISS, landing boosters and ion-driven probes"},
+    {"id": "inner-system", "name": "Inner system", "from": 2030, "to": 2079, "level": 4, "future": True, "about": "nuclear-thermal ships, space reactors, big electric drives and depots"},
+    {"id": "fusion", "name": "Fusion", "from": 2080, "to": 2199, "level": 5, "future": True, "about": "fusion torches and large sails"},
+    {"id": "interstellar", "name": "Interstellar", "from": 2200, "level": 6, "future": True, "about": "relativistic drives"},
+]
+ERA_SRC = "authored: the era a tech drive first flew in, from memory and unverified; a drive that has not flown sits in the first future era its ladder level reaches"
+# Tech drives that have flown, by the era they first flew in; the rest go to the first future era at their level.
+TECH_FLOWN = {"chemical-rocket": "pioneers", "fission-reactor": "space-race", "rtg": "space-race", "hall-thruster": "space-race", "arcjet": "stations", "ion-thruster": "stations", "light-sail": "reusable"}
+
+
+def tech_era(a):
+    if a["id"] in TECH_FLOWN:
+        return TECH_FLOWN[a["id"]]
+    return next(e["id"] for e in ERAS if e.get("future") and e["level"] >= a["level"])
+
+
 def tech_parts():
     """Drives and power plants from the future tech pack's advances (ruling 14A.5: each era ships its own drives).
     The figures are not copied: a part names its advance, and the kernel reads that advance's figures at the
@@ -336,7 +361,7 @@ def tech_parts():
             continue
         drive = "drive" in part
         out.append({"id": f"tech-{a['id']}", "name": a["name"].lower() if drive else a["name"], "kind": "engine" if drive else "power", "alone": False, "figures": {},
-                    "advance": a["id"], "level": a["level"],
+                    "advance": a["id"], "level": a["level"], "era": tech_era(a), "era_src": ERA_SRC,
                     "points": [{"id": "mount", "place": "front" if drive else "hull", "size_m": 2.0, "lines": ["propellant", "power"] if drive else ["power"], "at": [2.0, 0, 0] if drive else [1.0, 0, -1.0], "facing": [1, 0, 0] if drive else [0, 0, -1]}],
                     "shape": {"hint": "lathe", "length_m": 2.0, "radius_m": 1.0, "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"},
                     "scale": {"law": "fixed", "stretch": False, "widen": False, "src": "its size follows its output through the advance's figures, worked out by the kernel"},
@@ -365,7 +390,7 @@ def build():
         "provides": {
             "other": {
                 "about": "The parts palette (compound ships, CM13): every part in the one part format (packages/ui-contract/src/parts.ts). Real stages, engines, power sources, arrays, dishes and a bay with the figures they flew with and the year they first flew; generic primitives with geometry only. Physics names only (ruling 14A.5). Built by scripts/build-base-parts.py; do not edit by hand.",
-                "palette": {"port_sizes": PORTS, "parts": parts, "credits": [SOURCES[GCAT], SOURCES[NSSDCA]]},
+                "palette": {"eras": ERAS, "port_sizes": PORTS, "parts": parts, "credits": [SOURCES[GCAT], SOURCES[NSSDCA]]},
                 "sources": SOURCES,
             }
         },

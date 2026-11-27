@@ -88,6 +88,8 @@ export type { Callout, DesignBay, DesignOverrides, DesignRecipe, DesignRules, De
 export { compoundMesh, panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
 export { baysFromFacts, designCompound, mountFromFacts, placeCompound, portsFromFacts, reachOf, ringPoints, sizeBays } from "./compound-layout.ts";
 export type { BayFacts, CompoundLayout, CompoundMember, CompoundRules, MountFacts, MountPlace, PlacedMember, PortFacts, PortMark } from "./compound-layout.ts";
+export { budgets, buildLayout, buildPieces, buildRecord, buildTotals, freePoints, fromLayout, fuelDensity, partAsBuilt, placeBuild } from "./ship-build.ts";
+export type { Budget, BuildPlace, BuildRecipe, BuildTotals, BuiltPart, FreePoint, PlacedPart } from "./ship-build.ts";
 export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
 // GH9: every collision leaves its mark: warps, ripples, rings, lopsided discs, drawn from the kernel's dated marks.
 export { brightnessAt, edgeOnPaths, faceOnPaths, heightAt, markStrengthAt, SCAR_SHAPES, scarsAt, scarWords } from "./galaxy-marks.ts";
