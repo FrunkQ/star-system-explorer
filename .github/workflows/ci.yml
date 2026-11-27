@@ -166,12 +166,16 @@ jobs:
       - run: node tests/ui/aurora.e2e.mjs --screens ui-screens
       - run: node tests/ui/composite.e2e.mjs --screens ui-screens
       - run: node tests/ui/hazard.e2e.mjs --screens ui-screens
+      # The landing run-through (track LR): GM and a joined player, Earth to Mars, orbit, Land, the ground, take-off.
+      - run: node tests/ui/run-through.e2e.mjs
       # The Formation screen (F10a): how a grown system was made, read from its record; the slice moves the ruler.
       - run: node tests/ui/formation.e2e.mjs --screens ui-screens
       # Energy flow on the Body screen (track HF screen): the core history as a flow over the world's life.
       - run: node tests/ui/heat.e2e.mjs --screens ui-screens
       # Ship manifest and crew (track MC): aboard, life support, Known to, pictures, fuel and the ship's log.
       - run: SSE_SHOTS=ui-screens/manifest node tests/ui/manifest.e2e.mjs
+      # The star chooser (PR 615): pick a star for a new system.
+      - run: node tests/ui/star-chooser.e2e.mjs --screens ui-screens/star-chooser
       # The star class gallery and star picker (SC1): every kind live in True, both sizes, a giant's cells, Make a system's picker.
       - run: SCREENS=ui-screens/star-gallery node tests/ui/star-gallery.e2e.mjs
       - uses: actions/upload-artifact@v4
