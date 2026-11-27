@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { MOTION_STEP_S, YEAR_SECONDS, followTime, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, stoppedAt, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -855,7 +855,7 @@
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
     if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null));
-    orbitsWant = { s, sc, at, at_s: (ws.now_yr - (ws.campaign_epoch_yr ?? base.now_yr)) * YEAR_SECONDS, epoch, key };
+    orbitsWant = { s, sc, at, at_s: Number(at - epoch), epoch, key };
     pumpOrbits();
   });
   // A pack's calendar (kernel calendar), read again whenever the pack stack changes.
@@ -925,11 +925,7 @@
   });
   // The picture's clock (CLK1) follows the time in view however it was moved (a step, a bookmark, a save opened, a
   // campaign shifted to another system's present); play and the Run desk's clock set its rate.
-  $effect(() => {
-    const yr = ws.now_yr;
-    const epoch = ws.campaign_epoch_yr ?? base.now_yr;
-    untrack(() => (ws.clock = followTime(ws.clock ?? stoppedAt(yr, epoch), yr, epoch, performance.now())));
-  });
+  $effect(() => ws.followClock?.());
   // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
   // so stepping and playing through days does not call the kernel's derivations at every frame.
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
