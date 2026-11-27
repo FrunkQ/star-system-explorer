@@ -583,6 +583,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         lon: Option<f64>,
+        /// `want: "patch"`: half the patch's width, km, round `lat`, `lon`.
+        #[serde(default)]
+        #[ts(optional)]
+        half_km: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
