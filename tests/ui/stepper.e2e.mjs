@@ -5,6 +5,7 @@
 // its name. On Explore the place line is as it was, without Out and In.
 // Fill the screen (F) on Run: the picture alone, the bar back at the top edge, Esc brings everything back.
 // The phone's Run frame: the stepper as its own row, the rail folded, the clock one row, the card a sheet on a press.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

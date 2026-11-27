@@ -6,6 +6,7 @@
 // fingerprint equals the one Node computes for the same derived scene (two
 // engines, one score). No sound setting changes the state hash. Players on
 // long-range sensors have no periods, so their bed is silence.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";

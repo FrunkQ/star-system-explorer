@@ -2,7 +2,7 @@
 // into 3D, the kept choice read back safely.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { flatChart, pickScale, pickSeen, pickStyle, readViewChoice, viewOptions, WHY_TRUE_HELD, type ViewControlsSpec } from "../src/view-controls.ts";
+import { firstView, flatChart, pickScale, pickSeen, pickStyle, readViewChoice, viewOptions, WHY_TRUE_HELD, type ViewControlsSpec } from "../src/view-controls.ts";
 
 const system: ViewControlsSpec = { styles: { chart: true, "3d": true, true: WHY_TRUE_HELD }, flat: true };
 
@@ -47,6 +47,14 @@ test("a kept choice is read back safely", () => {
   assert.deepEqual(readViewChoice('{"style":"3d","seen":"edge","scale":"real"}'), { style: "3d", seen: "edge", scale: "real" });
   assert.deepEqual(readViewChoice('{"style":"sepia","seen":7,"scale":"huge"}'), { style: "chart", seen: "tilted", scale: "readable" });
   assert.deepEqual(readViewChoice("oops"), { style: "chart", seen: "tilted", scale: "readable" });
+});
+
+test("a first visit opens in True on every device (alpha), and nothing kept reads as the first view", () => {
+  assert.equal(firstView().style, "true");
+  assert.equal(firstView("low").style, "true", "phones are not gated during the alpha");
+  assert.deepEqual(readViewChoice(null, firstView()), { style: "true", seen: "tilted", scale: "readable" });
+  assert.deepEqual(readViewChoice('{"style":"chart","seen":"above"}', firstView()), { style: "chart", seen: "above", scale: "readable" }, "a kept choice wins");
+  assert.deepEqual(readViewChoice(null), { style: "chart", seen: "tilted", scale: "readable" }, "views without a first view keep the default");
 });
 
 test("Scale: Readable by default, Real where a view draws it; Real turns a flat chart into 3D, which is always Readable", () => {

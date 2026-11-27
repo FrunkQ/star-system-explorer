@@ -6,6 +6,7 @@
 // shown. The fix is shown, labelled narrative. The facts she was given hold
 // nothing the table has not been shown, and SSE never sends the GM's secret
 // note in any call.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

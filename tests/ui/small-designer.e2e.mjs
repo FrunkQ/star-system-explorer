@@ -3,6 +3,7 @@
 // Open the Solar System; the Workshop lists "Small bodies". The designer turns a body in True; a contact binary spun
 // past its barrier is kept and says what it would take; a comet close to its star is awake. Nothing is written.
 // (Phobos on the Body globe is not checked here: in the RW16a run its surface did not finish building in headless Chromium.)
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

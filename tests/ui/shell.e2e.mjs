@@ -7,6 +7,7 @@
 // seat equals the same intent from an auto-approved player seat (event id and
 // state hash); ruler keyboard steps; mode and theme keys; phone layout has no
 // sideways scroll; screenshots at desktop and phone widths in both modes.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

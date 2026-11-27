@@ -7,6 +7,7 @@
 // it form" plays the replay over the page. The star's end (F10c) is worked out after the chart is up and is a press
 // away, past now, without moving the campaign's date. "How this was worked out" says what each part rests on. Kestrel Reach (written fact by fact) says it has no formation history and how to get one. Reading the history
 // never changes the state hash.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -5,6 +5,7 @@
 // mass function. A smaller halo is picked; a neighbouring cell and a higher
 // floor redraw; "Chart this galaxy" opens that very halo in the galaxy chart.
 // Night chart and phone (no sideways scroll) too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

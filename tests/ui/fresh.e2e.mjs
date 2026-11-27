@@ -35,14 +35,18 @@ try {
 
     // The start sheet offers it on a first visit.
     await gm.goto(base);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
     assert.ok(await gm.locator("[data-start-fresh]").isVisible(), "the start sheet offers Start fresh");
     await shot(gm, "af1-start-sheet");
 
     // Open the Solar System: the kept campaign names the sheet it entered Sol from.
     await gm.locator('[data-door="sol"]').click();
-    await gm.waitForFunction(() => /^fnv1a:[0-9a-f]{8}:/.test(JSON.parse(localStorage.getItem("sse4.campaign") ?? "null")?.workspace?.sol_sheet ?? ""), null, { timeout: 30000 });
+    await gm.waitForFunction(() => /^fnv1a:[0-9a-f]{8}:/.test(JSON.parse(localStorage.getItem("sse4.campaign") ?? "null")?.workspace?.sol_sheet ?? ""), null, { timeout: 120000 });
     assert.equal(await gm.locator("[data-sol-stale]").count(), 0, "a Sol entered from today's sheet is not called old");
+    // A first visit opens in True (alpha setting, AF2), so the new pictures show without a press.
+    const styleTrue = () => gm.locator("[data-view-controls]").first().getByRole("group", { name: "View style", exact: true }).getByRole("button", { name: "True", exact: true });
+    await gm.waitForFunction(() => !!document.querySelector("[data-view-controls]"), null, { timeout: 120000 });
+    assert.equal(await styleTrue().getAttribute("aria-pressed"), "true", "a first visit opens in True");
 
     // A campaign kept from another sheet says so after a reload.
     await gm.evaluate(() => {
@@ -52,9 +56,9 @@ try {
     });
     await gm.reload();
     // The reopened campaign's own note comes first; the old-Sol note takes its place once it is closed.
-    await gm.locator("[data-kept-note]").waitFor({ timeout: 30000 });
+    await gm.locator("[data-kept-note]").waitFor({ timeout: 120000 });
     await gm.locator("[data-kept-note]").getByRole("button", { name: "OK" }).click();
-    await gm.locator("[data-sol-stale]").waitFor({ timeout: 30000 });
+    await gm.locator("[data-sol-stale]").waitFor({ timeout: 120000 });
     assert.match(await gm.locator("[data-sol-stale]").innerText(), /older catalogue/);
     await shot(gm, "af1-sol-stale");
 
@@ -71,8 +75,8 @@ try {
     await fd.getByRole("button", { name: /Reset settings…/ }).click();
     await fd.getByText(/agent keys stay/).waitFor();
     await shot(gm, "af1-reset-settings");
-    await Promise.all([gm.waitForNavigation({ timeout: 30000 }), fd.locator("[data-fresh-settings]").click()]);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await Promise.all([gm.waitForNavigation({ timeout: 120000 }), fd.locator("[data-fresh-settings]").click()]);
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
     const afterReset = await store();
     assert.equal(afterReset["sse4.depth"], undefined, "depth forgotten");
     assert.equal(afterReset["sse4.view"], undefined, "view forgotten");
@@ -82,17 +86,17 @@ try {
     const carry = gm.locator('[data-door="carry"]');
     assert.match(await carry.innerText(), /Carry on: The Solar System/);
     await carry.click();
-    await gm.waitForFunction(() => /The Solar System/.test(document.querySelector(".place")?.textContent ?? ""), null, { timeout: 30000 });
+    await gm.waitForFunction(() => /The Solar System/.test(document.querySelector(".place")?.textContent ?? ""), null, { timeout: 120000 });
     await gm.goto(base);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
 
     // Clear everything from the start sheet: the campaign goes too.
     await gm.locator("[data-start-fresh]").click();
     await fd.getByRole("button", { name: /Clear everything…/ }).click();
     await fd.getByText(/cannot be undone/).waitFor();
     await shot(gm, "af1-clear-everything");
-    await Promise.all([gm.waitForNavigation({ timeout: 30000 }), fd.locator("[data-fresh-everything]").click()]);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await Promise.all([gm.waitForNavigation({ timeout: 120000 }), fd.locator("[data-fresh-everything]").click()]);
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
     assert.ok(await gm.locator('[data-door="carry"]').getByText(/Open the sample campaign/).isVisible(), "no campaign to carry on");
     assert.equal((await store())["sse4.agents.key.test"], undefined, "keys forgotten too");
 

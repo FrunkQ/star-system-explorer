@@ -3,6 +3,7 @@
 // (one of a kind of being with no life support figures), load water, food and oxygen, and read the days of life
 // support; put one person in cold sleep and see the days grow; move cargo to another ship. Phone width fits.
 // Usage: node tests/ui/manifest.e2e.mjs   (SSE_SHOTS=<dir> for screenshots)
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
