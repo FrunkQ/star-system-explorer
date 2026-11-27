@@ -399,6 +399,21 @@ impl serde::Serialize for Value {
 /// way and always writes back as JSON.
 const JSON_INT_LIMIT: f64 = 9223372036854775808.0;
 
+/// The one rule for a JSON number, whatever client wrote it. JSON's clients
+/// hold numbers as doubles (JavaScript), so a JSON number is first the
+/// nearest double, then: integral and below 2^63 in size, the integer that
+/// double is exactly; anything else that double. `281`, `281.0` and `2.81e2`
+/// are one value, and so are `4.560563969097498e17` and the
+/// `456056396909749800` a browser writes for it. Packs read their numbers by
+/// it too (`sse_pack::json_numbers`).
+pub fn json_number(x: f64) -> Value {
+    if x.is_finite() && x.fract() == 0.0 && x.abs() < JSON_INT_LIMIT {
+        Value::Int(x as i128)
+    } else {
+        Value::Float(x)
+    }
+}
+
 impl<'de> serde::Deserialize<'de> for Value {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         // JSON (any human-readable format) has one number type, and the
@@ -428,14 +443,14 @@ impl<'de> serde::Deserialize<'de> for Value {
                 Ok(Value::Bool(b))
             }
             fn visit_i64<E>(self, i: i64) -> Result<Value, E> {
-                if self.json && i == i64::MIN {
-                    return Ok(Value::Float(i as f64));
+                if self.json {
+                    return Ok(json_number(i as f64));
                 }
                 Ok(Value::Int(i as i128))
             }
             fn visit_u64<E>(self, i: u64) -> Result<Value, E> {
-                if self.json && i > i64::MAX as u64 {
-                    return Ok(Value::Float(i as f64));
+                if self.json {
+                    return Ok(json_number(i as f64));
                 }
                 Ok(Value::Int(i as i128))
             }
@@ -449,8 +464,8 @@ impl<'de> serde::Deserialize<'de> for Value {
                 if f.is_nan() {
                     return Err(E::custom("NaN is not a value"));
                 }
-                if self.json && f.is_finite() && f.fract() == 0.0 && f.abs() < JSON_INT_LIMIT {
-                    return Ok(Value::Int(f as i128));
+                if self.json {
+                    return Ok(json_number(f));
                 }
                 Ok(Value::Float(f))
             }
@@ -503,8 +518,14 @@ mod tests {
         // Integers up to the i64 range, in any spelling; beyond it, floats.
         assert_eq!(j("31557600000000000"), Value::Int(31557600000000000));
         assert_eq!(j("3.15576e16"), Value::Int(31557600000000000));
-        assert_eq!(j("9223372036854775807"), Value::Int(9223372036854775807));
+        // Every number is first the nearest double, as in a browser: the
+        // digits JavaScript writes for a double past 2^53 are its shortest
+        // spelling, not its exact value, and read back as the same integer.
+        assert_eq!(j("456056396909749800"), Value::Int(456056396909749824));
+        assert_eq!(j("4.560563969097498e17"), Value::Int(456056396909749824));
+        assert_eq!(j("9007199254740993"), Value::Int(9007199254740992));
         for t in [
+            "9223372036854775807",
             "9223372036854775808",
             "9.223372036854775808e18",
             "-9223372036854775808",
