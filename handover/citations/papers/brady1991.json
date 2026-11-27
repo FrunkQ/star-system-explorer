@@ -1,0 +1,1 @@
+{"key": "brady1991", "citation": "Brady 1991", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/soil.rs"], "claims": ["/// temperature its rates are quoted at, K (Brady 1991)."], "tier": 3}

@@ -1,0 +1,1 @@
+{"key": "abbot2016", "citation": "Abbot 2016", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-climate/src/strengths.rs"], "claims": ["//!   Abbot 2016): strength σ τ_rad / (1 + σ τ_rad)."], "tier": 3}

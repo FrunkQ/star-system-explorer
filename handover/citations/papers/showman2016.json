@@ -1,0 +1,1 @@
+{"key": "showman2016", "citation": "Showman 2016, eq. 31", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-climate/src/strengths.rs"], "claims": ["//!   and Showman 2016, eq. 31), τ_wave = a / (N H), τ_eff the shorter of the"], "tier": 3}

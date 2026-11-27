@@ -1,0 +1,1 @@
+{"key": "mcconnachie2008", "citation": "McConnachie 2008", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/infall.rs"], "claims": ["// McConnachie 2008). With no stellar scale (a body with no galaxy), F46's"], "tier": 3}

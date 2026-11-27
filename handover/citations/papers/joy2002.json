@@ -1,0 +1,1 @@
+{"key": "joy2002", "citation": "Joy et al. 2002", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-field/src/tests.rs"], "claims": ["/// bubble to 60 to 90 (Joy et al. 2002), which waits on the plasma sources (MF7)."], "tier": 3}
