@@ -57,7 +57,7 @@ A pack with more than one kind has the union and the card says both lines. The s
 |---|---|
 | Campaigns and worlds | campaign files, systems, clips |
 | Settings | `universe` packs with places, factions, templates, dressing; catalogues and detail expansion packs (RW8) sit here too |
-| **Ships and parts** (new) | every kind of construct and what it is made of: ships, stations, land structures, and their parts and engines (section 3.1). Alex, 27 Nov 11:57 UTC: "ships and parts makes sense... and constructs and constituent parts" |
+| **Constructs and parts** (new) | every kind of construct and what it is made of: ships, stations, land structures, and their parts and engines (section 3.1). Named by Alex, 27 Nov 11:57 to 11:58 UTC: "ships and parts makes sense... and constructs and constituent parts", then "'ships' is too narrow" |
 | Game systems | `game-system` |
 | Physics | `physics` |
 | Looks, names and tours | `presentation`, `suite` |
@@ -70,7 +70,7 @@ The small things (calendars, unit schemes, ship styles, overlays) keep the "cont
 
 ### 3.1 What the ship builder needs (from the ship builder thread, 27 Nov)
 
-- **Parts packs and ship packs are both `universe` packs on Ships and parts.** A ship pack `requires` the parts packs its ships are built from, so adding a ship pack brings its parts (section 5). A ship never carries a copy of another pack's parts.
+- **Parts packs and ship packs are both `universe` packs on Constructs and parts.** A ship pack `requires` the parts packs its ships are built from, so adding a ship pack brings its parts (section 5). A ship never carries a copy of another pack's parts.
 - **The port standard is a versioned requirement like any other.** The connection-point sizes ship in `sse.base-parts`; a parts pack writes `requires: sse.base-parts ^1`. No special manifest field: a new port standard is a new major version of that pack.
 - **Per part: a licence, a first-flight year, and an era band.** `licence` on a part overrides the pack's; a part resting on downloaded data carries the non-commercial flag (section 11). `first_flight_year` is a number (or "paper" for designed and never flown); the 25-year band is worked out from it, never typed, so bands cannot drift.
 - **The default catalogue** is the shipped `sse.base-ships` plus whatever ship packs are in the campaign; each ship says which pack it came from. Sol today's real craft arrive this way.
@@ -86,7 +86,7 @@ Nothing is removed. One block is added at the top level, left out when empty so 
   "title": "Sol today",
   "summary": "Real spaceflight from 1957 to now.",
   "maker": { "name": "FrunkQ", "handle": "frunkq" },
-  "shelf": "ships-and-parts",
+  "shelf": "constructs-and-parts",
   "credits": [ { "text": "GCAT, Jonathan C. McDowell", "url": "https://planet4589.org/space/gcat/", "licence": "CC-BY-4.0" } ],
   "notice": { "text": "...", "source": "..." },
   "fan_setting": null,
@@ -248,7 +248,7 @@ Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued value
 ## 13. Open questions
 
 1. **Kind as a permission, enforced by the kernel, with shipped packs refiled (one planned move of the core golden)?** Recommended: yes.
-2. **One new shelf, Ships and parts, worked out from contents?** *Answered by Alex, 27 Nov 11:57 UTC: yes, and it holds all constructs and their constituent parts. Real data as a shelf was dropped the same minute; it is a filter and a mark.*
+2. **One new shelf, Constructs and parts, worked out from contents?** *Answered by Alex, 27 Nov 11:57 UTC: yes, and it holds all constructs and their constituent parts. Real data as a shelf was dropped the same minute; it is a filter and a mark.*
 3. **One layering rule: own-id names, explicit `replaces` for data as for flows, the GM's choice saved when two packs clash?** Recommended: yes, warnings for one release before refusing.
 4. **Campaigns pin exact versions; updates are offered and previewed, never applied unasked?** Recommended: yes. It is what keeps two devices on the same universe.
 5. **Default licence offered in Make a pack.** Recommended: CC BY 4.0 (others may build on it with credit), with CC BY-NC and "all rights reserved, for sale" one press away.
