@@ -1,0 +1,1 @@
+{"key": "loeb1994", "citation": "Loeb and Rasio 1994", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/nucleus.rs"], "claims": ["//!   seed of about 1e5 Msun (Loeb and Rasio 1994; Bromm and Loeb 2003);"], "tier": 3}

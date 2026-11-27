@@ -1,0 +1,1 @@
+{"key": "endl2006", "citation": "Endl et al. 2006 for M dwarfs", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/growth_tests.rs"], "claims": ["// (Johnson et al. 2010: proportional to M; Endl et al. 2006 for M dwarfs)."], "tier": 3}

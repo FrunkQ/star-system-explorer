@@ -1,0 +1,1 @@
+{"key": "sleep2007", "citation": "Sleep and Bird 2007", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/scenario.rs"], "claims": ["/// al. 2005, Sleep and Bird 2007) throughout; oxygen at 1e-6 of the air"], "tier": 3}

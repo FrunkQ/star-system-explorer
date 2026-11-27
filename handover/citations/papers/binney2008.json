@@ -1,0 +1,1 @@
+{"key": "binney2008", "citation": "Binney and Tremaine 2008, eq. 4.103", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/infall.rs"], "claims": ["// (Binney and Tremaine 2008, eq. 4.103): σ = v_c / √2."], "tier": 3}

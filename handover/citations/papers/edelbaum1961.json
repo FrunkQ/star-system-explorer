@@ -1,0 +1,1 @@
+{"key": "edelbaum1961", "citation": "Edelbaum 1961, coplanar", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-nav/src/courses.rs"], "claims": ["/// costs about the difference of the circular speeds (Edelbaum 1961, coplanar"], "tier": 3}

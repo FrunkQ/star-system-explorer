@@ -1,0 +1,1 @@
+{"key": "bertucci2008", "citation": "Bertucci et al. 2008", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-field/src/tests.rs"], "claims": ["/// crosses Saturn's edge as the wind gusts (Bertucci et al. 2008,"], "tier": 3}
