@@ -30,6 +30,8 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+#[cfg(test)]
+mod eclipse_tests;
 mod fields;
 mod flights;
 #[cfg(test)]
@@ -57,6 +59,7 @@ mod life;
 mod life_tests;
 #[cfg(test)]
 mod matter_tests;
+pub mod motion;
 #[cfg(test)]
 mod mount_log_tests;
 #[cfg(test)]
@@ -74,6 +77,7 @@ pub mod protocol;
 #[cfg(test)]
 mod reach_gate_tests;
 mod reference;
+mod scenario;
 mod sea;
 mod sky;
 mod small;

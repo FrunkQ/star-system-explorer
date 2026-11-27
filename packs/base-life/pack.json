@@ -472,6 +472,38 @@
       "surface_layer_m": "A surface habitat has an area and no volume; its living layer is taken as 1 m (soil and canopy). Baseline, refined in 4.1 (fudge register)"
      }
     },
+    "sizes": {
+     "about": "Where the energy goes, in numbers (life-from-energy design section 5, LE3): each eating guild's spent power is spread evenly over log body mass from its smallest member to its largest (energy equivalence), and each broad size class is counted at Kleiber's rate b0 M^(3/4), moved with temperature by the history's activation energy. Producers are not counted yet (they need a rate of their own, 4.1). Baseline, broad brush.",
+     "classes": [
+      {"id": "cells", "below_kg": 1e-09},
+      {"id": "insect-sized", "below_kg": 0.01},
+      {"id": "animal-sized", "below_kg": 1000.0},
+      {"id": "tree-sized"}
+     ],
+     "smallest_kg": {
+      "microbial": 1e-15,
+      "protist": 1e-13,
+      "multicellular": 1e-09,
+      "animal": 1e-09,
+      "plant": 1e-09
+     },
+     "b0_w": {
+      "unicell": 0.018,
+      "ectotherm": 0.14,
+      "endotherm": 4.1
+     },
+     "ref_k": 293.15,
+     "endotherm_body_k": 312.15,
+     "cell_below_kg": 1e-09,
+     "endotherm_from_kg": 0.01,
+     "sources": {
+      "rule": "Energy equivalence: each size class of a feeding level takes about the same power, so numbers fall as M^-3/4 (Damuth, J. 1981, Nature 290, 699); individual rate B = b0 M^3/4 (Kleiber, M. 1932, Hilgardia 6, 315) with temperature from the metabolic theory (Gillooly, J. F. et al. 2001, Science 293, 2248). Unverified (paper search out until 1 Dec 2026)",
+      "b0_w": "Hemmingsen, A. M. 1960, Reports of the Steno Memorial Hospital 9, 1: about 4.1 W kg^-3/4 for warm-blooded animals at 39 C, 0.14 for cold-blooded ones and 0.018 for single cells at 20 C (as quoted by Peters 1983, The Ecological Implications of Body Size). Unverified",
+      "classes": "Broad classes for a GM: cells (below a microgram), insect-sized (to 10 g), animal-sized (to a tonne), tree-sized (above). A judgement, not a measurement",
+      "smallest_kg": "A bacterium about 1e-15 kg (1 pg wet); small protists about 1e-13 kg; the smallest animals (mites, rotifers) about 1e-9 kg. Order of magnitude",
+      "endotherm_from_kg": "4.0 has no warm-blooded capability: land animals of 10 g and more are counted warm-blooded, which costs most and so gives the fewest of them (fudge register)"
+     }
+    },
     "metabolisms": [
      {
       "id": "oxygenic",
@@ -1999,6 +2031,22 @@
     "diversity_floor_gc_yr": 1000000.0,
     "oxidant_fact": "o2_fraction",
     "history_every_myr": 50.0,
+    "spread": {
+     "about": "How fast life spreads (life-from-energy design section 6.1, LE4): a front through one habitat moves at v = 2 sqrt(r D) (Fisher 1937; Skellam 1951), r the smaller of a pioneer cell's best growth rate and what the habitat's surplus pays for, D the medium's mixing. Baseline, broad brush; every mixing value is an order of magnitude (fudge register).",
+     "r_max_per_day": 1.0,
+     "mixing_m2_s": {
+      "liquid": 1000.0,
+      "cloud": 10000.0,
+      "surface": 10.0,
+      "subsurface": 1e-09
+     },
+     "thickness_media": ["subsurface"],
+     "sources": {
+      "r_max_per_day": "A marine bacterium doubles in about a day near 15 C; the metabolic theory scales the most a population can grow as M^-1/4 exp(-E/kT) (Savage, V. M. et al. 2004, American Naturalist 163, 429). Order of magnitude, unverified",
+      "mixing_m2_s": "Ocean: horizontal eddy diffusivity about 1e3 m^2/s (Okubo, A. 1971, Deep-Sea Research 18, 789); clouds: tropospheric eddy mixing about 1e4 m^2/s at large scales; land surface: spores and dust carried by wind, taken as 10 m^2/s (a judgement); rock pores: molecular diffusion in pore water about 1e-9 m^2/s. Orders of magnitude, unverified",
+      "checks": "Microbes cross an ocean in years; postglacial trees moved 100 to 1000 m a year (Clark, J. S. et al. 1998, BioScience 48, 13, Reid's paradox); microbes in rock move centimetres to metres a year"
+     }
+    },
     "metabolic": {
      "base_rate": 0.3,
      "reach_factor": 0.1,
