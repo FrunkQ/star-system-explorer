@@ -1899,6 +1899,20 @@
         "range": null
       },
       {
+        "description": "one component of a newborn remnant's kick speed",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.kick_velocity",
+        "range": null
+      },
+      {
         "description": "a star's radius over its Roche lobe's",
         "dim": [
           0,
@@ -1952,6 +1966,20 @@
           0
         ],
         "id": "binary.separation_rate",
+        "range": null
+      },
+      {
+        "description": "both bodies' mass together",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.total_mass",
         "range": null
       },
       {
@@ -6550,6 +6578,20 @@
         "range": null
       },
       {
+        "description": "distance between two orbiting bodies at one moment",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.distance",
+        "range": null
+      },
+      {
         "description": "eccentric anomaly in radians",
         "dim": [
           0,
@@ -6984,6 +7026,20 @@
           0
         ],
         "id": "orbit.true_anomaly",
+        "range": null
+      },
+      {
+        "description": "one component of an orbiting body's velocity relative to the other",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.velocity",
         "range": null
       },
       {

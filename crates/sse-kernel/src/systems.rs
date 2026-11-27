@@ -1186,6 +1186,7 @@ pub(crate) fn age_pair(
     to_myr: f64,
     z: Option<f64>,
     planets: Option<Vec<serde_json::Value>>,
+    seed: Option<String>,
     time: Option<&sse_time::epoch::TimeSettings>,
 ) -> Out {
     use sse_time::pair::*;
@@ -1213,6 +1214,7 @@ pub(crate) fn age_pair(
         &star,
         &sse_time::binary::BinaryRules::default(),
         &PairSettings::default(),
+        &sse_core::Seed::from_text(seed.as_deref().unwrap_or("sse4")),
     )
     .map_err(|e| err("bad_pair", e))?;
     Ok(Response::PairAged {

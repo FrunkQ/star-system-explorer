@@ -694,8 +694,8 @@ pub enum Request {
     /// address, mass_msun}` or a pair `{node: "pair", a, b, separation_au,
     /// eccentricity}` of nodes; the answer is its dated line from birth to
     /// `to_myr` (each star's phase, mass, radius and lobe fill; the orbit; the
-    /// transfer; common envelopes, mergers, strippings; what each planet in
-    /// `planets` `{address, host, semi_major_axis_au}` ends up doing).
+    /// transfer; common envelopes, mergers, strippings, supernovae; what each
+    /// planet in `planets` `{address, host, semi_major_axis_au}` ends up doing).
     AgePair {
         #[ts(type = "unknown")]
         node: serde_json::Value,
@@ -706,6 +706,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         planets: Option<Vec<serde_json::Value>>,
+        /// BX2: keys where on the orbit a death falls and its kick ("sse4" if left out).
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
     },
     /// Phase tables per kind of particle (K-e): each of `items` is
     /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k

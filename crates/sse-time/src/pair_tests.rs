@@ -27,6 +27,7 @@ fn two(m1: f64, m2: f64, a_au: f64, e: f64, to: f64, planets: &[PlanetIn]) -> Pa
         &star_set(),
         &BinaryRules::default(),
         &PairSettings::default(),
+        &sse_core::draw::Seed::from_text("sse4"),
     )
     .unwrap()
 }
@@ -184,6 +185,7 @@ fn a_pair_of_pairs_acts_as_mass_centres() {
         &star_set(),
         &BinaryRules::default(),
         &PairSettings::default(),
+        &sse_core::draw::Seed::from_text("sse4"),
     )
     .unwrap();
     assert_eq!(l.inner.len(), 1);
@@ -318,4 +320,216 @@ fn white_dwarf_pairs_spiral_in() {
         first.separation_au,
         last.separation_au
     );
+}
+
+#[allow(clippy::too_many_arguments)]
+fn two_with(
+    m1: f64,
+    m2: f64,
+    a_au: f64,
+    e: f64,
+    to: f64,
+    planets: &[PlanetIn],
+    set: &PairSettings,
+    seed: &str,
+) -> PairLine {
+    let n = Node::Pair {
+        a: Box::new(Node::Star {
+            address: "u:t/sys:0/star:0".into(),
+            mass_msun: m1,
+        }),
+        b: Box::new(Node::Star {
+            address: "u:t/sys:0/star:1".into(),
+            mass_msun: m2,
+        }),
+        separation_au: a_au,
+        eccentricity: e,
+    };
+    age_node(
+        &n,
+        0.02,
+        to,
+        planets,
+        &star_set(),
+        &BinaryRules::default(),
+        set,
+        &sse_core::draw::Seed::from_text(seed),
+    )
+    .unwrap()
+}
+
+#[test]
+#[ignore]
+fn show_deaths() {
+    let still = PairSettings {
+        kick_sigma_kms: 0.0,
+        ..PairSettings::default()
+    };
+    let pl = |a: f64, host: &str, n: u32| PlanetIn {
+        address: format!("u:t/sys:0/planet:{n}"),
+        host: host.into(),
+        semi_major_axis_au: a,
+    };
+    let planets = [
+        pl(20.0, "u:t/sys:0/star:0", 0),
+        pl(20.0, "u:t/sys:0/star:1", 1),
+    ];
+    for (m1, m2, a, set, seed) in [
+        (10.0, 9.0, 500.0, &still, "sse4"),
+        (10.0, 9.0, 500.0, &PairSettings::default(), "sse4"),
+        (12.0, 8.0, 0.3, &PairSettings::default(), "sse4"),
+        (12.0, 8.0, 1.0, &PairSettings::default(), "sse4"),
+        (12.0, 8.0, 3.0, &PairSettings::default(), "sse4"),
+        (40.0, 30.0, 2.0, &PairSettings::default(), "sse4"),
+    ] {
+        let l = two_with(m1, m2, a, 0.0, 60.0, &planets, set, seed);
+        println!("== {m1}+{m2} at {a}");
+        for e in &l.events {
+            println!("  {:.3} {} {}", e.age_myr, e.kind, e.why);
+        }
+        let last = l.rows.last().unwrap();
+        println!(
+            "  last {:?} {:?} sep {} e {} apart {} lost {}",
+            last.a.phase,
+            last.b.as_ref().map(|b| b.phase.clone()),
+            last.separation_au,
+            last.eccentricity,
+            last.apart,
+            last.lost_msun
+        );
+        for p in &l.planets {
+            println!(
+                "  planet {} {} a {} e {}",
+                p.address, p.fate, p.semi_major_axis_au, p.eccentricity
+            );
+        }
+    }
+}
+
+fn planet(a: f64, star: u32, n: u32) -> PlanetIn {
+    PlanetIn {
+        address: format!("u:t/sys:0/planet:{n}"),
+        host: format!("u:t/sys:0/star:{star}"),
+        semi_major_axis_au: a,
+    }
+}
+
+/// BX2: with no kick, a wide circular pair whose 10 solar mass star collapses
+/// to a 1.4 solar mass neutron star jumps just as Blaauw (1961) worked out:
+/// a' = a Ma / (2 Ma - Mb), e = (Mb - Ma) / Ma. Its own planet loses more than
+/// half its star's pull at once and flies off; the partner's planet is untouched.
+#[test]
+fn a_death_without_a_kick_jumps_as_blaauw_said() {
+    let still = PairSettings {
+        kick_sigma_kms: 0.0,
+        ..PairSettings::default()
+    };
+    let l = two_with(
+        10.0,
+        9.0,
+        500.0,
+        0.0,
+        30.0,
+        &[planet(20.0, 0, 0), planet(20.0, 1, 1)],
+        &still,
+        "sse4",
+    );
+    let sn: Vec<_> = l.events.iter().filter(|e| e.kind == "supernova").collect();
+    assert_eq!(sn.len(), 1, "{:?}", l.events);
+    let n = &sn[0].numbers;
+    let (mb, ma) = (19.0, 10.4);
+    assert!((n["remnant_mass"] - 1.4).abs() < 1e-12);
+    let want_a = 500.0 * ma / (2.0 * ma - mb);
+    assert!(
+        (n["separation_after_au"] / want_a - 1.0).abs() < 1e-9,
+        "{n:?}"
+    );
+    assert!(
+        (n["eccentricity_after"] - (mb - ma) / ma).abs() < 1e-9,
+        "{n:?}"
+    );
+    let last = l.rows.last().unwrap();
+    assert!(!last.apart);
+    assert!((last.separation_au / want_a - 1.0).abs() < 1e-9);
+    assert!((last.lost_msun - 8.6).abs() < 1e-9, "{}", last.lost_msun);
+    assert_eq!(l.planets[0].fate, "unbound");
+    assert!((l.planets[0].at_myr.unwrap() - sn[0].age_myr).abs() < 1e-12);
+    assert_eq!(l.planets[1].fate, "kept");
+    assert_eq!(l.planets[1].semi_major_axis_au, 20.0);
+    assert_eq!(l.planets[1].eccentricity, 0.0);
+}
+
+/// BX2: a massive donor stripped of its envelope burns on as a small, hot
+/// helium star, then collapses; the kick (drawn from the seed) decides
+/// whether the pair survives. The same seed always gives the same story;
+/// across seeds some pairs hold and some come apart.
+#[test]
+fn a_stripped_star_explodes_and_the_kick_decides() {
+    let l = two_with(
+        12.0,
+        8.0,
+        1.0,
+        0.0,
+        22.0,
+        &[],
+        &PairSettings::default(),
+        "sse4",
+    );
+    let kinds: Vec<_> = l.events.iter().map(|e| e.kind.as_str()).collect();
+    let (st, sn) = (
+        kinds
+            .iter()
+            .position(|k| *k == "stripped")
+            .expect("stripped"),
+        kinds
+            .iter()
+            .position(|k| *k == "supernova")
+            .expect("supernova"),
+    );
+    assert!(st < sn, "{kinds:?}");
+    let (t_st, t_sn) = (l.events[st].age_myr, l.events[sn].age_myr);
+    let he: Vec<_> = l
+        .rows
+        .iter()
+        .filter(|r| r.age_myr >= t_st && r.age_myr < t_sn)
+        .collect();
+    assert!(!he.is_empty());
+    for r in he {
+        assert_eq!(r.a.phase, "Wolf-Rayet star");
+        assert!(r.a.radius_rsun < 2.0 && r.a.teff_k > 3e4, "{:?}", r.a);
+    }
+    assert!(l.events[st].why.contains("helium star"));
+    let again = two_with(
+        12.0,
+        8.0,
+        1.0,
+        0.0,
+        22.0,
+        &[],
+        &PairSettings::default(),
+        "sse4",
+    );
+    assert_eq!(l, again);
+    let (mut held, mut parted) = (0, 0);
+    for k in 0..24 {
+        let l = two_with(
+            12.0,
+            8.0,
+            1.0,
+            0.0,
+            22.0,
+            &[],
+            &PairSettings::default(),
+            &format!("s{k}"),
+        );
+        let last = l.rows.last().unwrap();
+        if last.apart {
+            parted += 1;
+            assert!(l.events.iter().any(|e| e.kind == "unbound"));
+        } else {
+            held += 1;
+            assert!(last.eccentricity > 0.0 && last.eccentricity < 1.0);
+        }
+    }
+    assert!(held > 0 && parted > 0, "{held} held, {parted} parted");
 }
