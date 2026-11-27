@@ -57,7 +57,7 @@ A pack with more than one kind has the union and the card says both lines. The s
 |---|---|
 | Campaigns and worlds | campaign files, systems, clips |
 | Settings | `universe` packs with places, factions, templates, dressing; catalogues and detail expansion packs (RW8) sit here too |
-| **Ships and parts** (new) | packs whose main content is parts, ships, stations or engines (section 4.1) |
+| **Ships and parts** (new) | every kind of construct and what it is made of: ships, stations, land structures, and their parts and engines (section 3.1). Alex, 27 Nov 11:57 UTC: "ships and parts makes sense... and constructs and constituent parts" |
 | Game systems | `game-system` |
 | Physics | `physics` |
 | Looks, names and tours | `presentation`, `suite` |
@@ -248,7 +248,7 @@ Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued value
 ## 13. Open questions
 
 1. **Kind as a permission, enforced by the kernel, with shipped packs refiled (one planned move of the core golden)?** Recommended: yes.
-2. **One new shelf, Ships and parts, worked out from contents?** Recommended: yes. *Real data as a shelf was dropped by Alex, 27 Nov 11:57 UTC; it is a filter and a mark.*
+2. **One new shelf, Ships and parts, worked out from contents?** *Answered by Alex, 27 Nov 11:57 UTC: yes, and it holds all constructs and their constituent parts. Real data as a shelf was dropped the same minute; it is a filter and a mark.*
 3. **One layering rule: own-id names, explicit `replaces` for data as for flows, the GM's choice saved when two packs clash?** Recommended: yes, warnings for one release before refusing.
 4. **Campaigns pin exact versions; updates are offered and previewed, never applied unasked?** Recommended: yes. It is what keeps two devices on the same universe.
 5. **Default licence offered in Make a pack.** Recommended: CC BY 4.0 (others may build on it with credit), with CC BY-NC and "all rights reserved, for sale" one press away.
