@@ -4268,7 +4268,14 @@ impl Kernel {
                 mass_kg,
                 a_au,
                 e,
+                pair,
+                makeup,
+                structure,
+                spin_hours,
+                battered,
+                size_ratio,
             } => {
+                let makeup = small::makeup_pin(makeup.as_deref())?;
                 let u = self.universe()?;
                 let a = in_universe(&u.root, &system)?;
                 in_universe(&u.root, &address)?;
@@ -4280,6 +4287,7 @@ impl Kernel {
                 }
                 small::make(
                     u.runs.get(&system),
+                    &u.seed,
                     small::Make {
                         address: &address,
                         kind: &kind,
@@ -4287,6 +4295,40 @@ impl Kernel {
                         mass_kg,
                         a_au,
                         e,
+                        pins: sse_small::Pins {
+                            pair,
+                            makeup,
+                            structure,
+                            spin_hours,
+                            battered,
+                            size_ratio,
+                            ..sse_small::Pins::default()
+                        },
+                    },
+                )?
+            }
+            Request::SmallShape {
+                system,
+                address,
+                diameter_km,
+                mass_kg,
+                ice,
+                spin_hours,
+                a_au,
+            } => {
+                let u = self.universe()?;
+                in_universe(&u.root, &system)?;
+                in_universe(&u.root, &address)?;
+                small::shape(
+                    u.runs.get(&system),
+                    &u.seed,
+                    small::Shape {
+                        address: &address,
+                        diameter_km,
+                        mass_kg,
+                        ice,
+                        spin_hours,
+                        a_au,
                     },
                 )?
             }

@@ -210,15 +210,34 @@ pub fn resolve(
     )
 }
 
-/// What a GM fixed by hand on a body they added (the Add list): the pair
-/// kind ("contact" or "separated") and the eccentricity. Everything else
-/// still comes from the field.
+/// What a GM fixed by hand on a body they added (the Add list, the
+/// small-body designer, RW16a): the pair kind ("single", "contact" or
+/// "separated"), the eccentricity, and the handful of things that drive the
+/// look. Each is optional; whatever is left out still comes from the field,
+/// so with nothing pinned the answer is the field's own. A pin is never
+/// refused for being implausible: [`crate::takes`] says what it would take.
 #[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct Pins {
     #[serde(default)]
     pub pair: Option<String>,
     #[serde(default)]
     pub e: Option<f64>,
+    /// Mass shares of metal, rock, carbon and ice (normalised).
+    #[serde(default)]
+    pub makeup: Option<Makeup>,
+    /// "rubble-pile", "monolith" or "relaxed" (pulled round by its own gravity).
+    #[serde(default)]
+    pub structure: Option<String>,
+    /// One turn, hours.
+    #[serde(default)]
+    pub spin_hours: Option<f64>,
+    /// How battered, 0 (the smoothest of its kind) to 1 (the roughest): where
+    /// its relief sits in the pack's range for its structure.
+    #[serde(default)]
+    pub battered: Option<f64>,
+    /// A pair's secondary radius over the primary's.
+    #[serde(default)]
+    pub size_ratio: Option<f64>,
 }
 
 /// [`resolve`] with pins.
@@ -293,6 +312,10 @@ pub fn resolve_pinned(
             Makeup::from_array(a)
         }
     };
+    let makeup = pins
+        .makeup
+        .map(|mk| Makeup::from_array(mk.as_array()))
+        .unwrap_or(makeup);
     let grain = {
         let rho = s.makeup.grain_density_kg_m3;
         let inv: f64 = makeup
@@ -329,18 +352,29 @@ pub fn resolve_pinned(
     };
     let dt = s.collisions.gravity_transition_km;
     let gravity = d_guess_km * d_guess_km / (d_guess_km * d_guess_km + dt * dt);
-    let round_km = s.figure.round_km_rock
-        + (s.figure.round_km_icy - s.figure.round_km_rock) * (makeup.ice + makeup.carbon * 0.5);
-    let relaxed_strength = 1.0 / (1.0 + m::pow(round_km / d_guess_km.max(1e-6), 4.0));
+    let relaxed_strength = relaxed_strength_of(d_guess_km, &makeup, s);
     let rubble_strength = if core {
         0.0
     } else {
         p_disrupt * gravity * (1.0 - relaxed_strength)
     };
-    let rubble = d.unit(at::RUBBLE) < rubble_strength;
+    let pinned = pins
+        .structure
+        .as_deref()
+        .filter(|k| matches!(*k, "rubble-pile" | "monolith" | "relaxed"));
+    let rubble = match pinned {
+        Some(k) => k == "rubble-pile",
+        None => d.unit(at::RUBBLE) < rubble_strength,
+    };
     let disrupted_myr_ago = (rubble && !ring)
         .then(|| truncated_exp(d.unit(at::DISRUPTED), t_disrupt, host.age_myr.max(1e-3)));
-    let (kind_s, porosity) = if ring {
+    let (kind_s, porosity) = if let Some(k) = pinned {
+        match k {
+            "rubble-pile" => ("rubble-pile", s.collisions.porosity_rubble),
+            "relaxed" => ("relaxed", 0.0),
+            _ => ("monolith", s.collisions.porosity_monolith),
+        }
+    } else if ring {
         ("ring-aggregate", s.collisions.porosity_rubble)
     } else if core {
         ("stripped-core", s.collisions.porosity_monolith)
@@ -389,6 +423,9 @@ pub fn resolve_pinned(
     if f > f_cap {
         f = f_cap * (0.3 + 0.69 * d.unit(at::SPIN_RESPREAD));
     }
+    if let Some(h) = pins.spin_hours.filter(|h| *h > 0.0 && h.is_finite()) {
+        f = 24.0 / h;
+    }
     let spin_hours = 24.0 / f;
 
     // 5. Pairs: YORP fission of rubble, gentle mergers in a cold disc, impact moons.
@@ -436,7 +473,9 @@ pub fn resolve_pinned(
     let u = d.unit(at::PAIR);
     let mut acc = 0.0;
     let mut chosen: Option<(&str, &str)> = None;
-    if let Some(want) = pins
+    if pins.pair.as_deref() == Some("single") {
+        // Pinned single: no pair.
+    } else if let Some(want) = pins
         .pair
         .as_deref()
         .filter(|w| *w == "contact" || *w == "separated")
@@ -495,7 +534,11 @@ pub fn resolve_pinned(
                 ("separated", "gentle-merger") => ps.cold_secondary,
                 _ => [0.05, 0.2],
             };
-            let ratio = lerp(range, ur);
+            let ratio = pins
+                .size_ratio
+                .filter(|r| r.is_finite())
+                .map(|r| r.clamp(0.01, 1.0))
+                .unwrap_or_else(|| lerp(range, ur));
             let r3 = ratio * ratio * ratio;
             let r1 = radius_m / m::cbrt(1.0 + r3);
             let sep = if k == "contact" {
@@ -532,18 +575,30 @@ pub fn resolve_pinned(
         let cb = lerp(fs.flattening_c_over_b, d.unit(at::FLATTENING));
         (b, b * cb, "irregular")
     };
+    // A pinned structure is taken whole: pinned lumpy keeps no part of the
+    // fluid figure, pinned relaxed keeps all of it.
+    let shape_relaxed = match pinned {
+        Some("relaxed") => 1.0,
+        Some(_) => 0.0,
+        None => relaxed_strength,
+    };
     let w = if kind_s == "relaxed" {
         1.0
     } else {
-        relaxed_strength
+        shape_relaxed
     };
     let ba = w * eq_b + (1.0 - w) * ir_b;
     let ca = w * eq_c + (1.0 - w) * ir_c;
+    let u_relief = pins
+        .battered
+        .filter(|b| b.is_finite())
+        .map(|b| b.clamp(0.0, 1.0))
+        .unwrap_or_else(|| d.unit(at::RELIEF));
     let relief = match kind_s {
-        "rubble-pile" | "ring-aggregate" => lerp(fs.relief_rubble, d.unit(at::RELIEF)),
+        "rubble-pile" | "ring-aggregate" => lerp(fs.relief_rubble, u_relief),
         "relaxed" => 0.0,
-        _ => lerp(fs.relief_monolith, d.unit(at::RELIEF)),
-    } * (1.0 - relaxed_strength);
+        _ => lerp(fs.relief_monolith, u_relief),
+    } * (1.0 - shape_relaxed);
     let ellipsoid = |r: f64, ba: f64, ca: f64| {
         let a = r / m::cbrt(ba * ca);
         [a, a * ba, a * ca]
@@ -892,4 +947,97 @@ pub fn nearest_cloud<'a>(clouds: &'a [Cloud], a_au: f64, kinds: &[&str]) -> Opti
         .iter()
         .filter(|c| c.around.is_none() && (kinds.is_empty() || kinds.contains(&c.kind.as_str())))
         .min_by(|a, b| dist(a).total_cmp(&dist(b)))
+}
+
+/// The diameter at which a body of this makeup pulls itself round, km (the
+/// pack's rock and ice figures, carbon counted half icy).
+pub fn round_km(makeup: &Makeup, s: &Settings) -> f64 {
+    s.figure.round_km_rock
+        + (s.figure.round_km_icy - s.figure.round_km_rock) * (makeup.ice + makeup.carbon * 0.5)
+}
+
+/// How strongly (0 to 1) a body of diameter `d_km` has relaxed to a fluid figure.
+pub fn relaxed_strength_of(d_km: f64, makeup: &Makeup, s: &Settings) -> f64 {
+    1.0 / (1.0 + m::pow(round_km(makeup, s) / d_km.max(1e-6), 4.0))
+}
+
+/// A one-member field for a body designed where the system has no cloud to
+/// make it from (no formation record, as for the Solar System as measured):
+/// the given makeup, at `a_au`, eccentricity `e`, a thin disc's tilt, with
+/// exactly `mass_kg`. Rank 1 of the returned cloud is the body (fudge
+/// SB-designed-field: its collision history is a main belt's).
+pub fn designed_field(
+    address: Address,
+    kind: &str,
+    makeup: &Makeup,
+    a_au: f64,
+    e: f64,
+    mass_kg: f64,
+) -> Cloud {
+    let mk = Makeup::from_array(makeup.as_array());
+    // Integer budget units in the shares' proportions (the field's mass is
+    // set by `norm`, so only the ratios matter).
+    let unit = |x: f64| m::round(x * 1.0e9) as u64;
+    let solid = [
+        unit(mk.metal),
+        unit(mk.rock),
+        unit(mk.carbon),
+        unit(mk.ice),
+        0,
+        0,
+    ];
+    let solid = if solid.iter().sum::<u64>() == 0 {
+        [0, 1_000_000_000, 0, 0, 0, 0]
+    } else {
+        solid
+    };
+    let mut c = Cloud {
+        address,
+        kind: kind.to_string(),
+        around: None,
+        source: "designed".into(),
+        a_min_au: a_au,
+        a_max_au: a_au,
+        a_log: false,
+        e: Spread::Uniform {
+            lo: e.clamp(0.0, 0.99),
+            hi: e.clamp(0.0, 0.99),
+        },
+        i: Tilt::Rayleigh { sigma_deg: 5.0 },
+        solid,
+        water_from: vec![],
+        largest_km: 0.0,
+        over_1km: 1.0e6,
+        n_top: 1.0,
+        norm: 1.0,
+    };
+    c.norm = cloud_mass_kg(&c) / mass_kg.max(1.0);
+    c
+}
+
+/// Mass of a body of diameter `d_km` and the given makeup at a monolith's porosity.
+pub fn mass_for_makeup(makeup: &Makeup, d_km: f64, s: &Settings) -> f64 {
+    let mk = Makeup::from_array(makeup.as_array()).as_array();
+    let rho = s.makeup.grain_density_kg_m3;
+    let inv: f64 = mk.iter().zip(rho.iter()).map(|(x, r)| x / r).sum();
+    let bulk = (1.0 - s.collisions.porosity_monolith) / inv;
+    m::PI / 6.0 * bulk * m::pow(d_km * 1000.0, 3.0)
+}
+
+/// The makeup a measured bulk density implies, at a monolith's porosity: rock
+/// and ice mixed to give the grain density, or rock and metal when it is
+/// denser than rock (fudge SB-density-makeup: two-part mixes only).
+pub fn makeup_for_density(bulk_kg_m3: f64, s: &Settings) -> Makeup {
+    let [metal, rock, _, ice] = s.makeup.grain_density_kg_m3;
+    let grain = bulk_kg_m3 / (1.0 - s.collisions.porosity_monolith).max(1e-6);
+    // 1 / grain = x / rho_a + (1 - x) / rho_b, solved for x.
+    let share =
+        |ra: f64, rb: f64| ((1.0 / grain - 1.0 / rb) / (1.0 / ra - 1.0 / rb)).clamp(0.0, 1.0);
+    if grain >= rock {
+        let x = share(metal, rock);
+        Makeup::from_array([x, 1.0 - x, 0.0, 0.0])
+    } else {
+        let x = share(ice, rock);
+        Makeup::from_array([0.0, 1.0 - x, 0.0, x])
+    }
 }

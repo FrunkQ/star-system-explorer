@@ -1,0 +1,33 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.small-designer",
+  "label": "Small bodies",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.small-designer",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "workshop",
+      "group": "workshop",
+      "label": "Small bodies",
+      "order": 8,
+      "hint": "Design an asteroid, comet, contact binary or pair of any size, and watch it turn",
+      "desks": [
+        "explore",
+        "build"
+      ]
+    }
+  ]
+}

@@ -88,6 +88,18 @@ pub struct FigureSettings {
     pub relief_rubble: [f64; 2],
 }
 
+/// What real material holds, for the designer's "what it would take"
+/// (takes.rs), filled at load from the data sheet's mixtures
+/// `formation-rock` and `formation-water` (fudge SB-strength-sheet).
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct StrengthSettings {
+    pub regolith_cohesion_pa: f64,
+    pub rock_tensile_pa: f64,
+    pub ice_tensile_pa: f64,
+    pub rock_compressive_pa: f64,
+    pub ice_compressive_pa: f64,
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct WeatheringSettings {
     pub t_myr_at_1au: f64,
@@ -248,6 +260,8 @@ pub struct Settings {
     pub spin: SpinSettings,
     pub pairs: PairSettings,
     pub figure: FigureSettings,
+    #[serde(skip)]
+    pub strength: StrengthSettings,
     pub weathering: WeatheringSettings,
     pub comet: CometSettings,
     pub rings: RingSettings,
@@ -268,6 +282,14 @@ impl Settings {
         let s = v
             .pointer("/provides/other/small_bodies")
             .ok_or("no provides.other.small_bodies")?;
+        Self::from_block_with(s, sheet)
+    }
+    /// From a `small_bodies` settings block itself (the stack's, as the
+    /// physics in force holds it), reading the sheet's values from `sheet`.
+    pub fn from_block_with(
+        s: &serde_json::Value,
+        sheet: &sse_reference::Reference,
+    ) -> Result<Self, String> {
         let mut out: Settings = serde_json::from_value(s.clone()).map_err(|e| e.to_string())?;
         for (g, id) in [
             "formation-metal",
@@ -285,6 +307,21 @@ impl Settings {
                 .and_then(|v| v.as_f64())
                 .ok_or_else(|| format!("the sheet has no density for {id}"))?;
         }
+        let held = |id: &str, key: &str| {
+            sheet
+                .row("mixtures", id)
+                .and_then(|r| r.get(key))
+                .and_then(|d| d.get("v"))
+                .and_then(|v| v.as_f64())
+                .ok_or_else(|| format!("the sheet has no {key} for {id}"))
+        };
+        out.strength = StrengthSettings {
+            regolith_cohesion_pa: held("formation-rock", "rubble_cohesion")?,
+            rock_tensile_pa: held("formation-rock", "tensile_strength")?,
+            ice_tensile_pa: held("formation-water", "tensile_strength")?,
+            rock_compressive_pa: held("formation-rock", "compressive_strength")?,
+            ice_compressive_pa: held("formation-water", "compressive_strength")?,
+        };
         let c = &mut out.comet;
         let k = |id: &str| {
             sheet

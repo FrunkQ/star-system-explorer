@@ -136,6 +136,22 @@ export interface AtomInfo {
   explain: { curious?: string; science?: string; formula?: string };
 }
 
+/** RW16a: what the small-body designer pins (kernel `make_small_body`); everything left out the field decides. */
+export interface SmallDesign {
+  kind: "asteroid" | "comet-nucleus" | "contact-binary" | "binary-pair";
+  diameter_km?: number;
+  mass_kg?: number;
+  a_au: number;
+  e?: number;
+  pair?: "single" | "contact" | "separated";
+  /** Mass shares of metal, rock, carbon and ice. */
+  makeup?: [number, number, number, number];
+  structure?: "rubble-pile" | "monolith" | "relaxed";
+  spin_hours?: number;
+  battered?: number;
+  size_ratio?: number;
+}
+
 export interface ViewSession {
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
@@ -318,6 +334,11 @@ export interface ViewSession {
    * or `cloud` and `rank` (1 the largest); with neither, the notable bodies formation made. `r_au` sets where an icy
    * body's activity is worked out (perihelion when left out). Nothing is stored; the same body comes back every time. */
   smallBody(ask: { system: string; member?: string; cloud?: string; rank?: number; r_au?: number }): Promise<{ ok: true; body: Json | null; notables: Json[] } | { ok: false; code: string; message: string }>;
+  /** RW16a: a small body made by hand (kernel `make_small_body`), with the designer's pins; its answer's `takes` says
+   * what an implausible design would need. Works in a system with no formation record (a designed field). */
+  makeSmallBody(ask: SmallDesign & { system: string; address: string }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }>;
+  /** RW16a: the lump of any body below the round size, from its address (kernel `small_shape`), with `round`. */
+  smallShape(ask: { system: string; address: string; diameter_km?: number; mass_kg?: number; ice?: number; spin_hours?: number; a_au?: number }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }>;
   /** VP-R3: one ring, whole (kernel `ring_structure`): its zones, the marks its moons leave, optical depth across it
    * and its grains' colour. Give `ask` (sse-small RingAsk), or `system` and `cloud` for a ring formation made. Read only. */
   ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }>;
@@ -974,6 +995,18 @@ export class Session implements ViewSession {
     const r = await this.#call({ op: "small_body", ...ask } as Json);
     const o = r as unknown as { body?: Json; notables?: Json[] };
     return r.type === "small_body_is" ? { ok: true, body: o.body ?? null, notables: o.notables ?? [] } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async makeSmallBody(ask: SmallDesign & { system: string; address: string }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "make_small_body", ...ask } as Json);
+    const o = r as unknown as { body?: Json };
+    return r.type === "small_body_is" && o.body ? { ok: true, body: o.body } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async smallShape(ask: { system: string; address: string; diameter_km?: number; mass_kg?: number; ice?: number; spin_hours?: number; a_au?: number }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "small_shape", ...ask } as Json);
+    const o = r as unknown as { body?: Json };
+    return r.type === "small_body_is" && o.body ? { ok: true, body: o.body } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }> {
