@@ -9,10 +9,14 @@ cargo test --workspace -q
 python3 scripts/build-base-reference.py --check
 # The catalogued Solar System must match its sources and agree with the sheet.
 python3 scripts/build-base-sol.py --check
+# Its measured-motion tables are well formed (RW17; rebuilt from source files by the same script).
+python3 scripts/build-sol-motion.py --check
 # The Solar System catalogue build (RW7) on its invented fixture.
 cargo build -q -p sse-cli
 python3 scripts/test-build-sol-catalogues.py --sse target/debug/sse
 python3 scripts/build-base-starters.py --check
+# The Trojan blocks are written by their builder (CO1).
+python3 scripts/build-coorbital-blocks.py --check
 python3 scripts/build-base-names.py --check
 # The class atlas reads the sheet and base-sol (its builder is what the MP22 audit reads).
 python3 scripts/build-base-atlas.py --check

@@ -104,7 +104,7 @@ export interface TrueTurn {
  * `trueStill`; `spin` is +1 for a world turning prograde, -1 for retrograde. Each frame takes `passes` jittered draws.
  * Null where this device has no GPU for True.
  */
-export async function trueTurn(b: Omit<TrueBody, "pole">, o: { size: number; frames: number; tilt_rad?: number; spin?: 1 | -1; passes?: number; warm_ms?: number }): Promise<TrueTurn | null> {
+export async function trueTurn(b: Omit<TrueBody, "pole">, o: { size: number; frames: number; tilt_rad?: number; spin?: 1 | -1; passes?: number; warm_ms?: number; fill?: number }): Promise<TrueTurn | null> {
   const t0 = performance.now();
   const gl = document.createElement("canvas");
   const { createGpu } = await import("./gpu.ts");
@@ -118,8 +118,9 @@ export async function trueTurn(b: Omit<TrueBody, "pole">, o: { size: number; fra
   sheet.height = size;
   const g = sheet.getContext("2d")!;
   try {
-    const radius = size * 0.45;
-    const back = 2 * radius + 10;
+    // `fill`: the body's radius as a share of the square (0.45 when left out); a long lump is given less so it fits.
+    const radius = size * (o.fill ?? 0.45);
+    const back = 4 * size + 10;
     const itemAt = (turn: number) => {
       const f = globeFrame(o.tilt_rad, { elevation: 0.3, yaw: 0 }, turn);
       return { id: b.key, rel: [0, 0, -back] as [number, number, number], radius, frame: f, ...trueLook({ ...b, pole: f[2] }) };

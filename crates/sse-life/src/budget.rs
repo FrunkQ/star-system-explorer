@@ -116,6 +116,37 @@ pub struct BudgetParams {
     /// runs no keep-alive test, and says so in each habitat's `missing`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub maintenance: Option<Maintenance>,
+    /// Rough numbers by size class (LE3). Without it, guilds carry no counts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sizes: Option<SizeParams>,
+}
+
+/// One broad size class (`life_budget.sizes.classes`), up to `below_kg`.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SizeClass {
+    pub id: String,
+    #[serde(default)]
+    pub below_kg: Option<f64>,
+}
+
+/// Where the energy goes, in numbers (`life_budget.sizes`, LE3): a guild's
+/// spent power is spread evenly over log body mass from its smallest member
+/// to its largest (energy equivalence, Damuth 1981), and each class is
+/// counted at Kleiber's rate B = b0 M^(3/4) exp(-E/k (1/T - 1/T_ref)).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SizeParams {
+    pub classes: Vec<SizeClass>,
+    /// Smallest member by grade, kg.
+    pub smallest_kg: BTreeMap<String, f64>,
+    /// b0 by rate (`unicell`, `ectotherm`, `endotherm`), W per kg^(3/4) at
+    /// `ref_k` (endotherms at their own body temperature).
+    pub b0_w: BTreeMap<String, f64>,
+    pub ref_k: f64,
+    pub endotherm_body_k: f64,
+    /// Below this mass a member is counted as a cell (unicell rate).
+    pub cell_below_kg: f64,
+    /// At or above this mass, an animal on land is counted warm-blooded.
+    pub endotherm_from_kg: f64,
 }
 
 /// Maintenance power of living matter (`life_budget.maintenance`, LE1):

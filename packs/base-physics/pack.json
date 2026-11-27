@@ -3019,6 +3019,34 @@
         "range": null
       },
       {
+        "description": "share of a stirred belt a world catches as Trojans",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "formation.captured_share",
+        "range": null
+      },
+      {
+        "description": "share of a world's caught Trojans still there after billions of years",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "formation.long_lived_share",
+        "range": null
+      },
+      {
         "description": "absorbing cross-section of one particle at this wavelength",
         "dim": [
           2,
@@ -5528,6 +5556,20 @@
         "range": null
       },
       {
+        "description": "1 if a neighbour shakes a world's Trojans loose, 0 if not",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.coorbital_disturbed",
+        "range": null
+      },
+      {
         "description": "eccentric anomaly in radians",
         "dim": [
           0,
@@ -5557,6 +5599,20 @@
           0.0,
           1.0
         ]
+      },
+      {
+        "description": "how many giant worlds sit between a world and a belt",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.giants_between",
+        "range": null
       },
       {
         "description": "inner apoapsis to outer periapsis, in mutual Hill radii",
@@ -5626,6 +5682,34 @@
           0
         ],
         "id": "orbit.kozai_time",
+        "range": null
+      },
+      {
+        "description": "1 if the points 60 degrees ahead of and behind a world (L4, L5) hold small bodies, 0 if not",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.lagrange_stable",
+        "range": null
+      },
+      {
+        "description": "a world's share of its own and its host's mass together, mu",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.mass_ratio",
         "range": null
       },
       {
@@ -5727,6 +5811,20 @@
         "range": null
       },
       {
+        "description": "the outer of two orbits' period over the inner's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.period_ratio",
+        "range": null
+      },
+      {
         "description": "current distance from the host as a fraction of the semi-major axis",
         "dim": [
           0,
@@ -5766,6 +5864,34 @@
           0
         ],
         "id": "orbit.resonance_offset",
+        "range": null
+      },
+      {
+        "description": "a mean motion resonance's outer number (p in p:q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_p",
+        "range": null
+      },
+      {
+        "description": "a mean motion resonance's inner number (q in p:q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_q",
         "range": null
       },
       {
@@ -5836,6 +5962,20 @@
           0
         ],
         "id": "orbit.star_distance",
+        "range": null
+      },
+      {
+        "description": "how far a Trojan's orbit size swings round the world's, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.tadpole_width",
         "range": null
       },
       {

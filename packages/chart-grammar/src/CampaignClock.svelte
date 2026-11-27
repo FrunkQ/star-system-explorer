@@ -55,6 +55,8 @@
   ];
   let rateId = $state("minute");
   let running = $state(false);
+  /** On a phone the clock is one row (three desks design section 8): the date, one step, and the rest under "…". */
+  let rest = $state(false);
   const rate = $derived(RATES.find((r) => r.id === rateId) ?? RATES[1]!);
 
   // Human time flows a few times a second: smooth enough for a turning world, gentle on the kernel. Reduced motion
@@ -104,23 +106,24 @@
   };
 </script>
 
-<div class="clock" bind:this={clockEl} data-campaign-clock={campaignNow} data-running={running ? "yes" : "no"}>
+<div class="clock" bind:this={clockEl} data-campaign-clock={campaignNow} data-running={running ? "yes" : "no"} data-rest={rest ? "" : undefined}>
   <div class="readout">
     <div class="date" data-clock-date>{words}</div>
     <div class="sub"><span class="stamp">Now</span> in the campaign{cal.id !== "sse.calendar.standard" ? ` · ${cal.label}` : ""}</div>
   </div>
   {#if moving}
     <div class="bar" role="toolbar" aria-label="Campaign clock">
-      {#each chips as s (s.id)}
-        <button type="button" class="chip" data-clock-step={s.id} onclick={() => onstep?.(campaignNow + s.yr)} title="Move the campaign on {spanWords(s.yr, cal)}; players' screens follow">+ 1 {s.label}</button>
+      {#each chips as s, i (s.id)}
+        <button type="button" class="chip" class:rest={i > 0} data-clock-step={s.id} onclick={() => onstep?.(campaignNow + s.yr)} title="Move the campaign on {spanWords(s.yr, cal)}; players' screens follow">+ 1 {s.label}</button>
       {/each}
-      <span class="run">
+      <button type="button" class="chip more" aria-expanded={rest} data-clock-more onclick={() => (rest = !rest)} title={rest ? "Fewer clock controls" : "More clock controls: the other steps, Run, what is due and Jump to a date"}>{rest ? "×" : "…"}</button>
+      <span class="run rest">
         <button type="button" class="chip" class:on={running} aria-pressed={running} data-clock-run onclick={() => (running = !running)} title={running ? "Stop the clock" : "Let time pass in the campaign"}>{running ? "Stop ❚❚" : "Run ▸"}</button>
         <select aria-label="Rate" bind:value={rateId} data-clock-rate>
           {#each RATES as r (r.id)}<option value={r.id}>{r.label}</option>{/each}
         </select>
       </span>
-      <div class="due" data-clock-due aria-label="What is due">
+      <div class="due rest" data-clock-due aria-label="What is due">
         <span class="due-label">Due</span>
         <span class="due-line" title="The next {spanWords(toYr(dueWindowS), cal)}">
           {#each due as d (d.mark.source + d.mark.at_s)}
@@ -135,7 +138,7 @@
         </span>
         {#if !due.length}<span class="none" data-due-none>Nothing due</span>{/if}
       </div>
-      <button type="button" class="chip" data-clock-jump onclick={() => jumpDialog?.showModal()} title="Move the campaign on by weeks or years: says what it will do first">Jump to a date…</button>
+      <button type="button" class="chip rest" data-clock-jump onclick={() => jumpDialog?.showModal()} title="Move the campaign on by weeks or years: says what it will do first">Jump to a date…</button>
     </div>
   {/if}
 </div>
@@ -305,6 +308,9 @@
     font: inherit;
     font-size: 12px;
   }
+  .more {
+    display: none;
+  }
   @media (max-width: 760px) {
     .clock {
       gap: 12px;
@@ -313,6 +319,25 @@
     }
     .date {
       font-size: 18px;
+    }
+    /* One row: the date, one step and "…"; the rest wraps in under it when "…" is pressed. */
+    .sub {
+      display: none;
+    }
+    .bar {
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      min-height: 44px;
+    }
+    .clock:not([data-rest]) .rest {
+      display: none;
+    }
+    .more {
+      display: inline-block;
+      min-width: 44px;
     }
   }
 </style>

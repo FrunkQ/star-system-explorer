@@ -16254,6 +16254,27 @@
       "unit": "kg m-3",
       "src": "fudge-register",
       "check": "authored"
+     },
+     "tensile_strength": {
+      "v": 1000000.0,
+      "unit": "Pa",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "rock at the scale of a small asteroid, about 1 MPa (Holsapple 2007, Icarus 187, 500); laboratory samples are ten times stronger, large bodies weaker; recalled, not read"
+     },
+     "compressive_strength": {
+      "v": 100000000.0,
+      "unit": "Pa",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "chondritic and basaltic rock about 100 MPa; recalled, not read"
+     },
+     "rubble_cohesion": {
+      "v": 25.0,
+      "unit": "Pa",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "van der Waals cohesion among the fine grains of a rubble pile, tens of pascals (Sanchez and Scheeres 2014, Meteorit. Planet. Sci. 49, 788); recalled, not read"
      }
     },
     {
@@ -16316,6 +16337,20 @@
       "unit": "kg m-3",
       "src": "fudge-register",
       "check": "authored"
+     },
+     "tensile_strength": {
+      "v": 100000.0,
+      "unit": "Pa",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "water ice at the scale of a small body, about a tenth of rock's (Holsapple 2007); recalled, not read"
+     },
+     "compressive_strength": {
+      "v": 10000000.0,
+      "unit": "Pa",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "cold water ice about 10 MPa; recalled, not read"
      }
     },
     {

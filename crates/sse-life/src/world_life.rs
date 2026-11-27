@@ -662,11 +662,10 @@ pub fn life(
         &inp,
         &sift,
     );
-    view.energy = Some(crate::ledger::ledger(
-        &graph,
-        &bp,
-        biosphere.as_ref().map(|b| &b.budget),
-    ));
+    let held_budget = biosphere.as_ref().map(|b| &b.budget);
+    let energy = crate::ledger::ledger(&graph, &bp, held_budget);
+    view.speed = crate::speed::speed(&graph, &bp, &hp, &energy, held_budget);
+    view.energy = Some(energy);
     Ok(WorldLife {
         stack: ws,
         graph,

@@ -123,6 +123,16 @@ try {
       assert.equal(await ruler.count(), 0, "no ruler on Run");
       const clockDate = () => clock.locator("[data-clock-date]").innerText();
       assert.equal(await clockDate(), before);
+      // On a phone the clock is one row (three desks design section 8): the date, one step and "…" for the rest.
+      const more = clock.locator("[data-clock-more]");
+      assert.equal(await more.isVisible(), vpName === "phone", "… only on a phone");
+      if (vpName === "phone") {
+        assert.deepEqual(await clock.locator("[data-clock-step]").evaluateAll((bs) => bs.filter((b) => b.checkVisibility()).length), 1, "one step chip");
+        assert.ok(!(await clock.locator("[data-clock-jump]").isVisible()), "Jump waits under …");
+        const note = page.locator("[data-kept-note]");
+        if (await note.isVisible()) await note.getByRole("button", { name: "OK" }).click();
+        await more.click();
+      }
       assert.equal(await clock.locator("[data-due-none]").innerText(), "Nothing due");
       await shot("5-run-clock");
 

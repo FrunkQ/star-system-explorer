@@ -16,9 +16,13 @@ export interface OrbitPlaced {
   placed: boolean;
   parent?: string;
   period_s?: number;
-  phase_source?: "derived" | "resolved";
+  /** "measured" when it follows a motion model (RW17: a published series, inside its span). */
+  phase_source?: "derived" | "resolved" | "measured";
   missing?: string[];
-  at?: { at_s: number; r_m: [number, number, number]; phase_deg: number }[];
+  /** The motion model it follows and its span (universe seconds), or why the one it names is not used. */
+  motion?: { model: string; from_s?: number; to_s?: number; unused?: string };
+  /** `motion`: "measured" inside the model's span, "plausible" outside it (a plain orbit fitted at its edge). */
+  at?: { at_s: number; r_m: [number, number, number]; phase_deg: number; motion?: "measured" | "plausible" }[];
 }
 
 const factValue = (s: SceneSubject, field: string): number | undefined => {

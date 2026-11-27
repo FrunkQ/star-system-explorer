@@ -184,6 +184,7 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "sound", words: "Sound" },
   // F on the Run desk (design question 11, TM9a): the picture alone; the bar comes back at the top edge.
   { id: "fill-screen", words: "Fill the screen (F): the picture alone, the bar back at the top edge", desks: ["run"] },
+  { id: "card-sheet", words: "On a phone, the card as a sheet that comes up only on a press, with Close", desks: ["run"] },
   {
     id: "status-line",
     words: "The status line",
