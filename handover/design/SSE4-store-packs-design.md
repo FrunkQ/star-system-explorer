@@ -56,9 +56,8 @@ A pack with more than one kind has the union and the card says both lines. The s
 | Shelf | Holds |
 |---|---|
 | Campaigns and worlds | campaign files, systems, clips |
-| Settings | `universe` packs with places, factions, templates, dressing |
+| Settings | `universe` packs with places, factions, templates, dressing; catalogues and detail expansion packs (RW8) sit here too |
 | **Ships and parts** (new) | packs whose main content is parts, ships, stations or engines (section 4.1) |
-| **Real data** (new) | catalogues and detail expansion packs (RW8); always free |
 | Game systems | `game-system` |
 | Physics | `physics` |
 | Looks, names and tours | `presentation`, `suite` |
@@ -66,6 +65,8 @@ A pack with more than one kind has the union and the card says both lines. The s
 | V3 library | section 10 |
 
 The small things (calendars, unit schemes, ship styles, overlays) keep the "contains" filter and get no shelf, as ruled on 23 Nov.
+
+**No shelf for real data (Alex, 27 Nov 11:57 UTC):** "probably not necessary as it is just another campaign world and with the star catalogue importer many will have real data." A world or pack holding real data sits on the shelf its contents put it on. Real data is found with the contains filter ("real data", read from `downloaded_data`) and is told apart by the Free only mark (section 11).
 
 ### 3.1 What the ship builder needs (from the ship builder thread, 27 Nov)
 
@@ -242,12 +243,12 @@ Small, in order. Owners are proposed. Explorers packages add only; any migration
 | **SP10** | V3 marks and "Open in SSE4" on V3 items; import label and report in the app | Explorers, SSE4 UI | none | a V3 map opens from its page; the original's bytes unchanged |
 | **SP11** | Shared campaigns carry pins, not packs (F2) | SSE4, Explorers | SP5, PK1 | a published campaign holds no copy of a store pack |
 
-Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued values by reference), CM16 to CM18 (part editor and parts packs), RW8 (detail expansion packs; its "pack kind" becomes a `universe` pack on Real data, and its byte-range reads stay its own).
+Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued values by reference), CM16 to CM18 (part editor and parts packs), RW8 (detail expansion packs; its "pack kind" becomes an ordinary `universe` pack found by the real data filter, and its byte-range reads stay its own).
 
 ## 13. Open questions
 
 1. **Kind as a permission, enforced by the kernel, with shipped packs refiled (one planned move of the core golden)?** Recommended: yes.
-2. **Two new shelves, Ships and parts and Real data, worked out from contents?** Recommended: yes.
+2. **One new shelf, Ships and parts, worked out from contents?** Recommended: yes. *Real data as a shelf was dropped by Alex, 27 Nov 11:57 UTC; it is a filter and a mark.*
 3. **One layering rule: own-id names, explicit `replaces` for data as for flows, the GM's choice saved when two packs clash?** Recommended: yes, warnings for one release before refusing.
 4. **Campaigns pin exact versions; updates are offered and previewed, never applied unasked?** Recommended: yes. It is what keeps two devices on the same universe.
 5. **Default licence offered in Make a pack.** Recommended: CC BY 4.0 (others may build on it with credit), with CC BY-NC and "all rights reserved, for sale" one press away.
