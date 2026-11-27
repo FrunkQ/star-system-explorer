@@ -244,7 +244,7 @@
   });
 </script>
 
-<canvas bind:this={canvas} class="globes" style:width="{width}px" style:height="{height}px" data-lineup-3d={look} data-turning={still ? "still" : "turning"} data-surfaces={surfaces.size} data-live-stars={stars.size} aria-hidden="true"></canvas>
+<canvas bind:this={canvas} class="globes" style:width="{width}px" style:height="{height}px" data-lineup-3d={look} data-gpu={ready ? "ready" : "starting"} data-turning={still ? "still" : "turning"} data-surfaces={surfaces.size} data-live-stars={stars.size} aria-hidden="true"></canvas>
 
 <style>
   .globes {
