@@ -137,6 +137,11 @@ export interface Workspace {
   aim?: import("./pose.ts").Pose | null;
   /** The Playbook (PB3): the GM's presets in chapters, pages and sections, kept with the campaign. */
   playbook?: import("./playbook.ts").Playbook;
+  /**
+   * True while nothing on the stage can be seen or should compete with a door (the start sheet covers it, or a door is
+   * entering a system): views hold their heavy kernel reads (True faces, the sky) until it clears. Set by the shell.
+   */
+  held?: boolean;
   /** Layouts the GM made (PB13): players' screen documents with `mine.` ids, kept with the campaign. */
   layouts?: import("./screen.ts").ScreenDoc[];
   /** The table, for the Switchboard (PB2): the board, roles and screens, and the ways to change what they show. */

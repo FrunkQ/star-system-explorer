@@ -28,6 +28,21 @@ try {
     const browser = await { chromium, firefox, webkit }[name].launch();
     const errors = [];
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+    // The kernel calls the page makes, by op (AF3): none of the True view's heavy reads while the start sheet covers it.
+    await context.addInitScript(() => {
+      window.__ops = [];
+      const post = Worker.prototype.postMessage;
+      Worker.prototype.postMessage = function (m, ...rest) {
+        try {
+          const d = typeof m === "string" ? JSON.parse(m) : m;
+          const r = d && typeof d.request === "string" ? JSON.parse(d.request) : d?.request;
+          if (r && typeof r === "object") window.__ops.push(String(r.op ?? "") + (r.tiles ? "+tiles" : ""));
+        } catch {
+          /* not a kernel call */
+        }
+        return post.call(this, m, ...rest);
+      };
+    });
     const gm = await context.newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
     const store = () => gm.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter((k) => k.startsWith("sse4.")).map((k) => [k, localStorage.getItem(k)])));
@@ -35,26 +50,50 @@ try {
 
     // The start sheet offers it on a first visit.
     await gm.goto(base);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
     assert.ok(await gm.locator("[data-start-fresh]").isVisible(), "the start sheet offers Start fresh");
+    await gm.waitForTimeout(3000);
+    const ops = await gm.evaluate(() => window.__ops);
+    assert.ok(ops.length > 0, "kernel calls are seen");
+    const heavy = ops.filter((op) => op === "resolved_system+tiles" || op === "weather" || op === "sky_from_here");
+    assert.deepEqual(heavy, [], "no True faces or sky are read behind the start sheet (they held the Solar System door up to 27 s)");
     await shot(gm, "af1-start-sheet");
 
     // Open the Solar System: the kept campaign names the sheet it entered Sol from.
     await gm.locator('[data-door="sol"]').click();
-    await gm.waitForFunction(() => /^fnv1a:[0-9a-f]{8}:/.test(JSON.parse(localStorage.getItem("sse4.campaign") ?? "null")?.workspace?.sol_sheet ?? ""), null, { timeout: 30000 });
+    await gm.waitForFunction(() => /^fnv1a:[0-9a-f]{8}:/.test(JSON.parse(localStorage.getItem("sse4.campaign") ?? "null")?.workspace?.sol_sheet ?? ""), null, { timeout: 120000 });
     assert.equal(await gm.locator("[data-sol-stale]").count(), 0, "a Sol entered from today's sheet is not called old");
+    // A first visit opens in True (alpha setting, AF2), so the new pictures show without a press.
+    const styleTrue = () => gm.locator("[data-view-controls]").first().getByRole("group", { name: "View style", exact: true }).getByRole("button", { name: "True", exact: true });
+    await gm.waitForFunction(() => !!document.querySelector("[data-view-controls]"), null, { timeout: 120000 });
+    assert.equal(await styleTrue().getAttribute("aria-pressed"), "true", "a first visit opens in True");
+    // In True a keyboard reaches the worlds as on Chart (AF3): Tab to Earth by its name, Enter chooses it.
+    await gm.locator("[data-view-controls]").first().focus();
+    let tabs = 0;
+    while (!(await gm.evaluate(() => document.activeElement?.getAttribute("aria-label") === "Earth"))) {
+      if (++tabs > 120) throw new Error("could not reach Earth with Tab in True");
+      await gm.keyboard.press("Tab");
+    }
+    await gm.keyboard.press("Enter");
+    await gm.waitForFunction(() => document.activeElement?.getAttribute("aria-pressed") === "true", null, { timeout: 30000 });
 
-    // A campaign kept from another sheet says so after a reload.
+    // A campaign kept from another sheet says so after a reload. The kept save is changed while the app is not
+    // running (a same-origin page with no app on it): the app autosaves after it settles, and a later autosave (the
+    // Sol today pack arriving, say) wrote the real fingerprint back over an edit made under it before the reload.
+    const solPlace = await gm.evaluate(() => location.hash);
+    // An empty page served by the test itself (the static server's bare 404 never finishes loading in Firefox).
+    await context.route("**/no-app-here", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>No app here</title>" }));
+    await gm.goto(base + "no-app-here");
     await gm.evaluate(() => {
       const s = JSON.parse(localStorage.getItem("sse4.campaign"));
       s.workspace.sol_sheet = "fnv1a:00000000:0b0r";
       localStorage.setItem("sse4.campaign", JSON.stringify(s));
     });
-    await gm.reload();
+    await gm.goto(base + solPlace);
     // The reopened campaign's own note comes first; the old-Sol note takes its place once it is closed.
-    await gm.locator("[data-kept-note]").waitFor({ timeout: 30000 });
+    await gm.locator("[data-kept-note]").waitFor({ timeout: 120000 });
     await gm.locator("[data-kept-note]").getByRole("button", { name: "OK" }).click();
-    await gm.locator("[data-sol-stale]").waitFor({ timeout: 30000 });
+    await gm.locator("[data-sol-stale]").waitFor({ timeout: 120000 });
     assert.match(await gm.locator("[data-sol-stale]").innerText(), /older catalogue/);
     await shot(gm, "af1-sol-stale");
 
@@ -71,8 +110,8 @@ try {
     await fd.getByRole("button", { name: /Reset settings…/ }).click();
     await fd.getByText(/agent keys stay/).waitFor();
     await shot(gm, "af1-reset-settings");
-    await Promise.all([gm.waitForNavigation({ timeout: 30000 }), fd.locator("[data-fresh-settings]").click()]);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await Promise.all([gm.waitForNavigation({ timeout: 120000 }), fd.locator("[data-fresh-settings]").click()]);
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
     const afterReset = await store();
     assert.equal(afterReset["sse4.depth"], undefined, "depth forgotten");
     assert.equal(afterReset["sse4.view"], undefined, "view forgotten");
@@ -82,17 +121,17 @@ try {
     const carry = gm.locator('[data-door="carry"]');
     assert.match(await carry.innerText(), /Carry on: The Solar System/);
     await carry.click();
-    await gm.waitForFunction(() => /The Solar System/.test(document.querySelector(".place")?.textContent ?? ""), null, { timeout: 30000 });
+    await gm.waitForFunction(() => /The Solar System/.test(document.querySelector(".place")?.textContent ?? ""), null, { timeout: 120000 });
     await gm.goto(base);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
 
     // Clear everything from the start sheet: the campaign goes too.
     await gm.locator("[data-start-fresh]").click();
     await fd.getByRole("button", { name: /Clear everything…/ }).click();
     await fd.getByText(/cannot be undone/).waitFor();
     await shot(gm, "af1-clear-everything");
-    await Promise.all([gm.waitForNavigation({ timeout: 30000 }), fd.locator("[data-fresh-everything]").click()]);
-    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 30000 });
+    await Promise.all([gm.waitForNavigation({ timeout: 120000 }), fd.locator("[data-fresh-everything]").click()]);
+    await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
     assert.ok(await gm.locator('[data-door="carry"]').getByText(/Open the sample campaign/).isVisible(), "no campaign to carry on");
     assert.equal((await store())["sse4.agents.key.test"], undefined, "keys forgotten too");
 

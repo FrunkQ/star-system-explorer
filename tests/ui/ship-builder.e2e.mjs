@@ -3,6 +3,7 @@
 // Open the Solar System on the Build desk; the Workshop lists "Ship builder". A catalogue ship opens as palette parts;
 // a tank made longer grows the tanks and the delta-v; a part clipped from the palette adds to the build; Build to a
 // plan shows budgets that count down; "What can it do?" asks the kernel. Phone width fits. Nothing is written.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

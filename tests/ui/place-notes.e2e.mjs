@@ -4,6 +4,7 @@
 // and GM notes (for the GM alone); above the system, the whole campaign's. A change is kept when the box loses focus,
 // and is there when the card opens again. Notes never change the universe's state hash. On a phone Notes is a row of
 // the picker (the line keeps its room for the name), the card sits along the bottom and nothing runs off the side.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

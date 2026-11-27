@@ -4,6 +4,7 @@
 // travels down: the place line is the progress bar, the width line counts down, the seam draws both levels (the
 // web kept behind past the catalogue's reach), and it ends on the galaxies nearby. Back up returns to the start;
 // Escape leaves. More > "Zoom in from the cosmic web" opens it too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

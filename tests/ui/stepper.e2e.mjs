@@ -6,6 +6,7 @@
 // Fill the screen (F) on Run: the picture alone, the bar back at the top edge, Esc brings everything back.
 // The phone's Run frame: the stepper as its own row, the rail folded, the clock one row, the card a sheet on a press.
 // See as on Run: Game master, the table and each role only.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

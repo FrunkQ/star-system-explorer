@@ -3,6 +3,7 @@
 // A players' screen in the Phosphor look (the Hauler starter's) warms up, then builds up, as it powers on. A key press
 // finishes a delivery at once. With reduced motion it is a plain fade. Held by the GM from the Switchboard, the picture
 // collapses to a dot before the holding card; released, it warms up again. A look without deliveries (Chart) just shows.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
