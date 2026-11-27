@@ -111,6 +111,10 @@ export interface Workspace {
   desk?: "explore" | "build" | "run";
   /** Players' screens connected now (the share's count): while any are, a reveal is held two seconds (SV2). */
   players_online?: number;
+  /** What the time ruler opens on for this desk at this level (TM6, top-level 12.1); `key` changes on a desk or level switch. */
+  ruler_opens?: { key: string; span: number | string | null };
+  /** The GM chose a ruler span: a length of time, or null for the whole history; the shell keeps it for this desk and level. */
+  setRulerSpan?(span: number | null): void;
   /** True once the campaign has been shared with players: secrecy has become relevant (SV2). */
   shared?: boolean;
   /**

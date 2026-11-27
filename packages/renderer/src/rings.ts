@@ -165,3 +165,119 @@ export function beltAt(ps: readonly BeltParticle[], t_s: number, gm: number, dis
   });
 }
 
+// ── One ring per world, from the kernel (VP-R3 structure, VP-R2 light) ──
+
+/** What the kernel's `ring_structure` answer holds that the drawing reads (sse-small ring.rs `RingSystem`). */
+export interface KernelRing {
+  inner_m: number;
+  outer_m: number;
+  zones: { name?: string; inner_m: number; outer_m: number; tau: number; albedo: number; rgb: [number, number, number]; dust_share: number; assumed: boolean }[];
+  marks: { kind: string; sculptor: string; sculptor_name?: string; m: number; r_m: number; half_width_m: number }[];
+  phase: RingPhase;
+  profile: { lo_m: number; hi_m: number; tau: number[]; zone: number[] };
+  why: string[];
+}
+
+/** How a ring's light turns with the angle between sun and eye (the kernel's pack numbers, ring.rs `Phase`). */
+export interface RingPhase {
+  back_g: number;
+  forward_g: number;
+  surge_b0: number;
+  surge_width_deg: number;
+}
+
+/** Per pixel, what the light needs: normal optical depth, the grains' linear colour and the share that is dust. */
+export interface RingLookData {
+  tau: Float32Array;
+  rgb: Float32Array;
+  dust: Float32Array;
+  phase: RingPhase;
+}
+
+const srgbByte = (v: number) => Math.round(255 * Math.min(1, Math.max(0, v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)));
+
+/**
+ * The kernel's ring as a profile: one row of RGBA pixels from its sampled span, colour the grains' own (sRGB bytes of
+ * the zone's linear colour) and alpha the light it stops face on, 1 − e^(−τ) (the cover the planet's ring shadow
+ * reads). `look` carries the same pixels for the light (ringLook).
+ */
+export function kernelProfile(k: KernelRing): RingProfile & { look: RingLookData } {
+  const n = k.profile.tau.length;
+  const data = new Uint8ClampedArray(n * 4);
+  const tau = new Float32Array(n);
+  const rgb = new Float32Array(n * 3);
+  const dust = new Float32Array(n);
+  let assumed = false;
+  for (let i = 0; i < n; i++) {
+    const t = Math.max(0, k.profile.tau[i] ?? 0);
+    const z = k.zones[k.profile.zone[i] ?? -1];
+    const c = z?.rgb ?? [0, 0, 0];
+    if (z?.assumed) assumed = true;
+    tau[i] = t;
+    rgb[i * 3] = c[0];
+    rgb[i * 3 + 1] = c[1];
+    rgb[i * 3 + 2] = c[2];
+    dust[i] = z?.dust_share ?? 0;
+    data[i * 4] = srgbByte(c[0]);
+    data[i * 4 + 1] = srgbByte(c[1]);
+    data[i * 4 + 2] = srgbByte(c[2]);
+    data[i * 4 + 3] = Math.round(255 * (1 - Math.exp(-t)));
+  }
+  return { inner_m: k.profile.lo_m, outer_m: k.profile.hi_m, width: n, data, assumed, look: { tau, rgb, dust, phase: k.phase } };
+}
+
+/** The look's colours are stored over this, so a surge or a glow above 1 is not clipped; the light multiplies it back. */
+export const RING_LOOK_SCALE = 2;
+
+/** 4π times the Henyey-Greenstein phase function at phase angle `alpha` (radians): 1 for isotropic scattering. */
+function hg(g: number, alpha: number): number {
+  const c = -Math.cos(alpha); // the scattering angle is π − α
+  return (1 - g * g) / Math.pow(1 + g * g - 2 * g * c, 1.5);
+}
+
+/**
+ * How bright a ring is per pixel for light from `toLight` seen from `toEye` (`n` its normal): a thin layer of particles
+ * scattering once (Chandrasekhar 1960; Cuzzi et al. 1984).
+ * - Lit face: I/F = ϖP/4 · μ₀/(μ₀ + μ) · (1 − e^(−τ(1/μ₀ + 1/μ))).
+ * - Unlit face, by the light let through: I/F = ϖP/4 · μ₀/(μ₀ − μ) · (e^(−τ/μ₀) − e^(−τ/μ)), which peaks at a middling
+ *   depth: the densest bands go dark from below and the thinner ones glow (visual polish design touch 6).
+ * - P: metre-sized particles scatter back (Henyey-Greenstein, g < 0) with the opposition surge B₀/(1 + tan(α/2)/h)
+ *   (touch 2); the dust share of each zone scatters forward (touch 8).
+ * ϖP/4 is normalised so a thick ring at zero phase, without the surge, has I/F equal to its grains' colour (fudge
+ * SB-ring-phase-scale). The pixels are premultiplied: the colour is I/F itself over RING_LOOK_SCALE (so a dusty ring too
+ * faint to hide anything still shines) and alpha the background it hides along the slant, 1 − e^(−τ/μ). Writes into
+ * `out` when given.
+ */
+export function ringLook(d: RingLookData, n: readonly number[], toLight: readonly number[], toEye: readonly number[], out?: Uint8Array | Uint8ClampedArray): Uint8Array | Uint8ClampedArray {
+  const len = (v: readonly number[]) => Math.hypot(v[0]!, v[1]!, v[2]!) || 1;
+  const dot = (a: readonly number[], b: readonly number[]) => (a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!) / (len(a) * len(b));
+  const l = dot(n, toLight);
+  const e = dot(n, toEye);
+  const mu0 = Math.max(1e-3, Math.abs(l));
+  const mu = Math.max(1e-3, Math.abs(e));
+  const lit = Math.sign(l) === Math.sign(e);
+  const alpha = Math.acos(Math.max(-1, Math.min(1, dot(toLight, toEye))));
+  const p = d.phase;
+  const h = Math.tan((p.surge_width_deg * Math.PI) / 360);
+  const surge = 1 + p.surge_b0 / (1 + Math.tan(alpha / 2) / Math.max(1e-6, h));
+  const back = (hg(p.back_g, alpha) * surge) / hg(p.back_g, 0);
+  const fwd = hg(p.forward_g, alpha) / hg(p.back_g, 0);
+  const N = d.tau.length;
+  const o = out ?? new Uint8ClampedArray(N * 4);
+  for (let i = 0; i < N; i++) {
+    const t = d.tau[i]!;
+    const ds = d.dust[i]!;
+    const P = (1 - ds) * back + ds * fwd;
+    let f: number;
+    if (lit) f = ((2 * mu0) / (mu0 + mu)) * (1 - Math.exp(-t * (1 / mu0 + 1 / mu)));
+    else if (Math.abs(mu0 - mu) < 1e-4) f = 2 * (t / mu0) * Math.exp(-t / mu0);
+    else f = ((2 * mu0) / (mu0 - mu)) * (Math.exp(-t / mu0) - Math.exp(-t / mu));
+    const a = 1 - Math.exp(-t / mu);
+    const k = (P * f) / RING_LOOK_SCALE;
+    o[i * 4] = srgbByte(d.rgb[i * 3]! * k);
+    o[i * 4 + 1] = srgbByte(d.rgb[i * 3 + 1]! * k);
+    o[i * 4 + 2] = srgbByte(d.rgb[i * 3 + 2]! * k);
+    o[i * 4 + 3] = Math.round(255 * Math.min(1, a));
+  }
+  return o;
+}

@@ -22,7 +22,7 @@
   import { clockAt, constant, motionWords, phaseAt, pictureSpan, SEEN_ELEVATION, thermalColour, tooFast, type PictureClock, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { rangeRingLines } from "./range-rings.ts";
-  import { bandLines, hasChildren, layout, layoutReal, moonsOf, placedBodies, shellDots, type Band3D, type Body3D } from "./bodies.ts";
+  import { bandLines, hasChildren, layout, layoutReal, placedBodies, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -631,10 +631,16 @@
   // Said while the clock runs, and in True while it is stopped (where a still star could look broken).
   const motionNote = $derived(clock && (clock.rate > 0 || (isTrue && using === "gpu")) ? motionWords(clock, fastNames) : "");
   const ringed = $derived(shown.filter((b) => b.rings?.length).map((b) => b.name));
-  const ringsAssumed = $derived(shown.some((b) => b.rings?.some((r) => r.tau === null || r.albedo === null)));
+  const ringsAssumed = $derived(shown.some((b) => !b.ring_kernel && b.rings?.some((r) => r.tau === null || r.albedo === null)));
+  // The kernel's rings (VP-R3): what it says about the one in the middle of the frame, else a line for all of them.
+  const kernelRinged = $derived(shown.filter((b) => b.ring_kernel));
+  const ringWhy = $derived(kernelRinged.find((b) => b.id === centreId)?.ring_kernel?.why.slice(0, 3).join("; ") ?? "");
   const ringNote = $derived(
     [
-      ringed.length ? `Rings of ${ringed.join(", ")} from their edges, optical depth and albedo${ringsAssumed ? " (a ring with none on record is drawn as a middling one)" : ""}, in the world's equator.` : "",
+      kernelRinged.length
+        ? `Rings of ${kernelRinged.map((b) => b.name).join(", ")} as the kernel works them out: bands, gaps and waves placed by the moons, depth varying across each band, grains coloured by what they are made of, lit from each side with the opposition surge and backlit dust.${ringWhy ? ` ${ringWhy[0]!.toUpperCase()}${ringWhy.slice(1)}.` : ""}`
+        : "",
+      ringed.length > kernelRinged.length ? `Rings of ${shown.filter((b) => b.rings?.length && !b.ring_kernel).map((b) => b.name).join(", ")} from their edges, optical depth and albedo${ringsAssumed ? " (a ring with none on record is drawn as a middling one)" : ""}, in the world's equator.` : "",
       beltHazes.length ? "Belts are a haze of points between their edges, each going round at the Kepler rate on the campaign's clock (the inner edge laps the outer): their number is a drawing's, not the belt's." : "",
     ]
       .filter(Boolean)
@@ -738,7 +744,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(a?.sea ? { sea: a.sea } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });

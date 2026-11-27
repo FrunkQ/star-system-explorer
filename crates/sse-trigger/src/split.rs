@@ -288,6 +288,12 @@ pub fn join(
             if let Some(d) = docked {
                 return Err(format!("{with} is already docked to {d}"));
             }
+            // A dock is a mount on the hull: no loops (CM4 found two craft docked to each other).
+            if crate::mount::carriers_of(&st, a).contains(with) {
+                return Err(format!(
+                    "{with} already carries {a}; a construct cannot dock to what is docked to it"
+                ));
+            }
             if let Some(Value::Text(on)) = other.get(crate::mount::ON) {
                 return Err(format!(
                     "{with} is already mounted on {on}; release it first"

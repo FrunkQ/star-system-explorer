@@ -23,6 +23,7 @@
 pub mod comet;
 pub mod figure;
 mod member;
+pub mod ring;
 pub mod settings;
 
 pub use comet::{activity, ice_shares, keeps_surface_ice, onset_au, Activity, Volatile};
@@ -38,6 +39,8 @@ use std::collections::BTreeMap;
 
 #[cfg(test)]
 mod comet_tests;
+#[cfg(test)]
+mod ring_tests;
 #[cfg(test)]
 mod tests;
 

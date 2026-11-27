@@ -20,9 +20,9 @@ export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround
 // TA6: a world flattened by its spin (Darwin-Radau flow), true-shape.ts.
 export { flattenScale, readTrueShape, SHAPE_FLOW, type ShapeReader, type TrueShape } from "./true-shape.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
-export { BELT_DUST, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
+export { BELT_DUST, beltAt, beltHaze, beltParticles, kernelProfile, poleOf, RING_FALLBACK, RING_LOOK_SCALE, ringLook, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
-export type { RingBand, RingProfile } from "./rings.ts";
+export type { KernelRing, RingBand, RingLookData, RingPhase, RingProfile } from "./rings.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
 export { checkRecipe, plan, estimateMs, pickRecipe, bestTier, maxLevel, stepsFrom, TIER_ORDER, DEFAULT_BUDGET_MS } from "./recipe.ts";
 export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan, RecipeCheck } from "./recipe.ts";
@@ -83,9 +83,11 @@ export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip,
 export type { DriveFacts, Hull, HullPart, HullPartKind, PlumeShape, PropellantPart, Propellants, ShipRecord, TankNeed } from "./ship.ts";
 // V3 gap item 14, stage 2: ships designed from their parts, in styles from the base-ships pack.
 export { designShip, narrateDesign, needsOf, remixes, shipViews } from "./ship-design.ts";
-export type { Callout, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
+export type { Callout, DesignBay, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
 // V3 gap item 14, stage 3: the 3D model from the same layout, with panel textures from the style's skin.
-export { panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export { compoundMesh, panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export { baysFromFacts, designCompound, mountFromFacts, placeCompound, portsFromFacts, reachOf, ringPoints, sizeBays } from "./compound-layout.ts";
+export type { BayFacts, CompoundLayout, CompoundMember, CompoundRules, MountFacts, MountPlace, PlacedMember, PortFacts, PortMark } from "./compound-layout.ts";
 export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
 // GH9: every collision leaves its mark: warps, ripples, rings, lopsided discs, drawn from the kernel's dated marks.
 export { brightnessAt, edgeOnPaths, faceOnPaths, heightAt, markStrengthAt, SCAR_SHAPES, scarsAt, scarWords } from "./galaxy-marks.ts";
@@ -167,8 +169,6 @@ export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
 export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";
 export { longGain, starsBehind, starTint, type SkyStar as BehindStar } from "./stars-behind.ts";
 export type { GpuStars } from "./gpu.ts";
-export { cutRings, ringMarks, RESONANCE_F, RING_VISCOSITY_M2_S, GAP_PER_ROOT_MU, EDGE_SLACK } from "./ring-structure.ts";
-export type { RingMark, RingMoon } from "./ring-structure.ts";
 // VP6: the detail ladder (rung table, bindings, seed and clock, HUD detail line). The GPU node is ladder-node.ts,
 // imported by GPU code directly so pages without 3D never load three.js.
 export { checkLayer, detailLine, profileShare, discScale, EDDY_EXPONENT, FLOW_REACH, LADDER_LAYERS, ladderAt, ladderLayer, ladderSeed, MAX_RUNGS, MAX_STRETCH, resolveLayer, RUNG_FADE, RUNG_MIN_PX, rungOrigin, rungs, sizeWords, TIER_RUNGS } from "./ladder.ts";

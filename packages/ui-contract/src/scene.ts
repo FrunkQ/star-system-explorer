@@ -64,7 +64,16 @@ export interface SceneSubject {
    * A ring round a world (a belt whose host is a planet, not the star): its edges from the planet's centre in metres,
    * its normal optical depth and its particles' albedo when the universe holds them (null when it does not).
    */
-  ring?: { inner_m: number; outer_m: number; tau: number | null; albedo: number | null };
+  ring?: {
+    inner_m: number;
+    outer_m: number;
+    tau: number | null;
+    albedo: number | null;
+    /** The measured range of its optical depth, when printed (VP-R3: structure inside the band stays within it). */
+    tau_range?: [number, number];
+    /** A ring formation made: its cloud's address, so the kernel's `ring_structure` reads it from the run. */
+    cloud?: string;
+  };
   /** A world's axial tilt to its orbit, radians, when the universe holds it (its rings lie in its equator). */
   tilt_rad?: number;
   facts: SceneFact[];
