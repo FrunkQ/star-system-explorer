@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 183,
+        n, 197,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -417,6 +417,77 @@ fn maxwell_response_limits() {
         "Io elastic k2 {}",
         stiff[1]
     );
+}
+
+#[test]
+fn andrade_response_is_maxwell_with_creep_off() {
+    // HF4b.0: with its slow creep switched off the Andrade block is the
+    // Maxwell block exactly, at every viscosity; with it on, a stiff Io
+    // (1e19 Pa s, where Maxwell gives almost nothing) still lags: Andrade's
+    // Im k2 there is above 1e-4 (absolute), Maxwell's below 1e-5.
+    let (mu, rho, g, r, w) = (6.5e10, 3530.0, 1.796, 1.8216e6, 4.11e-5);
+    for eta in [1e10, 1e13, 1.6e14, 1e16, 1e19, 1e22] {
+        let mx = run("sse.tides.maxwell_response", &[mu, eta, rho, g, r, w]);
+        let an = run_p(
+            "sse.tides.andrade_response",
+            &[mu, eta, rho, g, r, w, 0.3],
+            &[("transient_creep", 0.0)],
+        );
+        close(an[0], mx[0], 1e-12, "Im k2, creep off");
+        close(an[1], mx[1], 1e-12, "Re k2, creep off");
+    }
+    let mx = run("sse.tides.maxwell_response", &[mu, 1e19, rho, g, r, w]);
+    let an = run("sse.tides.andrade_response", &[mu, 1e19, rho, g, r, w, 0.3]);
+    assert!(mx[0] < 1e-5, "Maxwell Im k2 at 1e19 Pa s: {}", mx[0]);
+    assert!(an[0] > 1e-4, "Andrade Im k2 at 1e19 Pa s: {}", an[0]);
+}
+
+#[test]
+fn lid_conduction_without_burial_is_plain_conduction() {
+    // HF4b.0: with no lava burying it the lid conducts k dT / D, its own
+    // heat split half up and half down; burial chokes the top and feeds the
+    // base, and the two still differ by exactly the heat made in the lid
+    // plus what the moving lid carries (steady state: base - top = rho c v dT - h).
+    let (k, tl, ts, d, h, kap) = (3.0, 1500.0, 220.0, 1.0e5, 0.005, 1.0e-6);
+    let q = run(
+        "sse.heat.lid_conduction_with_burial",
+        &[k, tl, ts, d, h, 0.0, kap],
+    );
+    close(q[0], k * (tl - ts) / d + h / 2.0, 1e-12, "top, no burial");
+    close(q[1], k * (tl - ts) / d - h / 2.0, 1e-12, "base, no burial");
+    let v = 3.0e-11;
+    let b = run(
+        "sse.heat.lid_conduction_with_burial",
+        &[k, tl, ts, d, h, v, kap],
+    );
+    assert!(
+        b[0] < q[0] && b[1] > q[1],
+        "burial chokes the top and feeds the base"
+    );
+    close(
+        b[1] - b[0],
+        k / kap * v * (tl - ts) - h,
+        1e-9,
+        "advected heat",
+    );
+}
+
+#[test]
+fn melt_heat_split_adds_up() {
+    // HF4b.0: the mantle's loss to melt is what the lid receives from
+    // intrusions plus what erupted lava gives the surface less the lava's
+    // cooling below the lid's base (rho Pe c (Tl - Ts)), to round-off.
+    let (rho, pe, pi, l, c, tm, tl, ts) =
+        (2800.0, 10.0, 42.0, 4.0e5, 1200.0, 1700.0, 1520.0, 220.0);
+    let o = run("sse.melt.heat_carried", &[rho, pe, pi, l, c, tm, tl, ts]);
+    close(
+        o[0],
+        o[1] + o[2] - rho * pe * c * (tl - ts),
+        1e-12,
+        "melt heat",
+    );
+    let e = run("sse.melt.erupted_share", &[52.0, 4.17e13]);
+    close(e[0] + e[1], 52.0, 1e-12, "erupted plus intruded");
 }
 
 #[test]

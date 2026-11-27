@@ -2151,6 +2151,20 @@
         "range": null
       },
       {
+        "description": "area of the world's surface",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.surface_area",
+        "range": null
+      },
+      {
         "description": "gravitational acceleration at the surface, ignoring rotation",
         "dim": [
           1,
@@ -3719,6 +3733,174 @@
         "range": null
       },
       {
+        "description": "temperature drop across the mantle's top boundary layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "heat.boundary_layer_temperature_drop",
+        "range": null
+      },
+      {
+        "description": "how fast erupted lava buries the surface",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.burial_speed",
+        "range": null
+      },
+      {
+        "description": "heat of melt freezing inside the lid",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.intruded_flux",
+        "range": null
+      },
+      {
+        "description": "heat conducted away from the lid's base",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_base_flux",
+        "range": null
+      },
+      {
+        "description": "how fast the lid's base moves down (negative: the lid thins)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_growth_rate",
+        "range": null
+      },
+      {
+        "description": "heat made inside the lid, per square metre of surface (its crust's radioactivity)",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_heating",
+        "range": null
+      },
+      {
+        "description": "heat conducted out of the surface",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_surface_flux",
+        "range": null
+      },
+      {
+        "description": "heat the convecting mantle delivers to the lid's base",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.mantle_flux",
+        "range": null
+      },
+      {
+        "description": "heat erupted lava gives the surface",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.melt_erupted",
+        "range": null
+      },
+      {
+        "description": "heat frozen melt gives the lid",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.melt_intruded",
+        "range": null
+      },
+      {
+        "description": "heat the mantle loses to the melt",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.melt_mantle_loss",
+        "range": null
+      },
+      {
+        "description": "heat the mantle gains beyond what it loses (only a gain melts rock)",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.surplus_power",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,
@@ -3817,6 +3999,20 @@
         "range": null
       },
       {
+        "description": "how the rock's slow creep spreads over time scales (Andrade exponent)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.andrade_exponent",
+        "range": null
+      },
+      {
         "description": "heat flux at the core's top beyond what conduction along the adiabat carries",
         "dim": [
           0,
@@ -3828,6 +4024,20 @@
           0
         ],
         "id": "interior.convected_flux",
+        "range": null
+      },
+      {
+        "description": "typical speed of the mantle's flow",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.convection_speed",
         "range": null
       },
       {
@@ -3901,6 +4111,20 @@
           0
         ],
         "id": "interior.core_top_temperature",
+        "range": null
+      },
+      {
+        "description": "how strongly the rock's stiffness depends on temperature (activation energy)",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "interior.creep_activation_energy",
         "range": null
       },
       {
@@ -4100,6 +4324,20 @@
         "range": null
       },
       {
+        "description": "depth of the convecting mantle",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.mantle_depth",
+        "range": null
+      },
+      {
         "description": "mass of the silicate mantle and crust",
         "dim": [
           0,
@@ -4114,6 +4352,20 @@
         "range": null
       },
       {
+        "description": "temperature of the convecting mantle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "interior.mantle_temperature",
+        "range": null
+      },
+      {
         "description": "metal's mass share of a separated body's metal and silicate",
         "dim": [
           0,
@@ -4125,6 +4377,20 @@
           0
         ],
         "id": "interior.metal_fraction",
+        "range": null
+      },
+      {
+        "description": "temperature of the rock",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "interior.parcel_temperature",
         "range": null
       },
       {
@@ -4251,6 +4517,34 @@
           0
         ],
         "id": "interior.silicate_mass",
+        "range": null
+      },
+      {
+        "description": "how well the lid's rock conducts heat",
+        "dim": [
+          1,
+          1,
+          -3,
+          0,
+          -1,
+          0,
+          0
+        ],
+        "id": "interior.thermal_conductivity",
+        "range": null
+      },
+      {
+        "description": "how fast heat spreads through the lid's rock",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.thermal_diffusivity",
         "range": null
       },
       {
@@ -5105,6 +5399,314 @@
           0
         ],
         "id": "matter.molar_mass_feo",
+        "range": null
+      },
+      {
+        "description": "density of the melt",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.density",
+        "range": null
+      },
+      {
+        "description": "how much denser the rock is than its melt",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.density_contrast",
+        "range": null
+      },
+      {
+        "description": "melt erupted at the surface, volume per second",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.erupted_rate",
+        "range": null
+      },
+      {
+        "description": "share of the rock that can still melt (falls as basalt is taken)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.fertile_share",
+        "range": null
+      },
+      {
+        "description": "share of the rock that is molten",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.fraction",
+        "range": null
+      },
+      {
+        "description": "size of the rock's grains",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.grain_size",
+        "range": null
+      },
+      {
+        "description": "share of that heat landing in the melting zone (its volume share; all of a tide's heat)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.heat_share",
+        "range": null
+      },
+      {
+        "description": "melt frozen inside the lid, volume per second",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.intruded_rate",
+        "range": null
+      },
+      {
+        "description": "share of the mantle's fertile rock, water and heat-making elements left behind",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.kept_factor",
+        "range": null
+      },
+      {
+        "description": "where the rock is wholly molten at this depth (liquidus)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "melt.liquidus_temperature",
+        "range": null
+      },
+      {
+        "description": "melt share at which the grains stop touching",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.lockup_share",
+        "range": null
+      },
+      {
+        "description": "the permeability law's constant: permeability is b² φⁿ / C",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.permeability_constant",
+        "range": null
+      },
+      {
+        "description": "how fast the rock's permeability grows with its melt share",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.permeability_exponent",
+        "range": null
+      },
+      {
+        "description": "share of the mantle that passed through the melting zone this step",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.processed_share",
+        "range": null
+      },
+      {
+        "description": "melt made, volume per second",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.production_rate",
+        "range": null
+      },
+      {
+        "description": "share of the rock that is melt waiting to leave",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.retained_share",
+        "range": null
+      },
+      {
+        "description": "where the rock starts to melt at this depth (solidus)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "melt.solidus_temperature",
+        "range": null
+      },
+      {
+        "description": "how runny the melt is (its viscosity)",
+        "dim": [
+          -1,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.viscosity",
+        "range": null
+      },
+      {
+        "description": "how strongly melt weakens the rock's flow",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.weakening_exponent",
+        "range": null
+      },
+      {
+        "description": "mean molten share across the melting zone",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.zone_mean_fraction",
+        "range": null
+      },
+      {
+        "description": "area of the melting zone's top",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.zone_top_area",
+        "range": null
+      },
+      {
+        "description": "volume of the melting zone under the lid",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.zone_volume",
         "range": null
       },
       {
@@ -7733,6 +8335,48 @@
         "range": null
       },
       {
+        "description": "how strongly the host flexes and loses energy under the moon's tide (its k2/Q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.host_k2_over_q",
+        "range": null
+      },
+      {
+        "description": "the most heat the host's tide can keep feeding the moon",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.host_power_ceiling",
+        "range": null
+      },
+      {
+        "description": "radius of the host",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.host_radius",
+        "range": null
+      },
+      {
         "description": "imaginary part of a world's tidal Love number k2: the share of a tide's work turned to heat, the k2/Q of the heating law",
         "dim": [
           0,
@@ -7828,6 +8472,20 @@
           0
         ],
         "id": "tides.re_k2",
+        "range": null
+      },
+      {
+        "description": "length of the step",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "time.step",
         "range": null
       },
       {
