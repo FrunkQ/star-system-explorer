@@ -38,7 +38,8 @@
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
-  import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readSmallSample, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
+  import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readRings, readSmallSample, type RingReader, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
+  import type { KernelRing } from "../../../renderer/src/index.ts";
   import { readSeaGlint, readUmbras, type GlintReader, type SeaGlint, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
@@ -686,9 +687,32 @@
       })(),
     );
   });
+  // One ring per world (VP-R3): each ringed world's ring asked of the kernel whole, once per system and its rings, in
+  // True only (system-3d ring-read.ts). Until it answers, a ring is drawn from its bands as before.
+  let kernelRings = $state<{ key: string; list: Map<string, KernelRing> } | null>(null);
+  const ringsKept = new Map<string, Map<string, KernelRing>>();
+  let ringsAsking = "";
+  const ringKey = $derived(`${scene.system}|${JSON.stringify(scene.subjects.filter((s) => s.ring).map((s) => [s.address, s.parent, s.ring]))}`);
+  $effect(() => {
+    const key = ringKey;
+    if (!looksTrue || dims !== "3d" || kernelRings?.key === key || ringsAsking === key) return;
+    const plain = untrack(() => fromSystemScene(scene, ctx.mark));
+    if (!plain.some((b) => b.rings?.length)) return;
+    ringsAsking = key;
+    untrack(() =>
+      void (async () => {
+        const list = ringsKept.get(key) ?? (await readRings(ctx.session as unknown as RingReader, plain, () => ringKey === key && looksTrue));
+        ringsAsking = "";
+        if (ringKey !== key || !looksTrue) return;
+        ringsKept.set(key, list);
+        kernelRings = { key, list };
+      })(),
+    );
+  });
   const bodies3d = $derived.by(() => {
     if (dims !== "3d") return [];
-    const out = fromSystemScene(scene, ctx.mark);
+    const kr = looksTrue && kernelRings?.key === ringKey ? kernelRings.list : null;
+    const out = fromSystemScene(scene, ctx.mark).map((b) => (kr?.has(b.id) ? { ...b, ring_kernel: kr.get(b.id)! } : b));
     const star = out.find((b) => b.parent === null)?.id;
     return looksTrue && star && smalls?.key === scene.system ? [...out, ...smalls.list.map((s) => fromSmallSample(s, star))] : out;
   });

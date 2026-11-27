@@ -24,8 +24,12 @@ export interface Body3D {
   rings?: Ring3D[];
   /** Its axial tilt, radians, when known: the rings lie in its equator. */
   tilt_rad?: number;
-  /** Its mass, kg, when known: a ringed world's moons cut gaps and edges in its rings by it (renderer ring-structure.ts). */
+  /** Its mass, kg, when known: the kernel places its ring's gaps, edges and waves from it and its moons (ring-read.ts). */
   mass_kg?: number;
+  /** The world's J2, when on record (moves its rings' resonances). */
+  j2?: number;
+  /** Its ring, whole, as the kernel worked it out (ring-read.ts, `ring_structure`), once read; True draws it instead of `rings`. */
+  ring_kernel?: import("../../../renderer/src/index.ts").KernelRing;
   /** A belt member the kernel resolved for True (small-sample.ts): drawn in its own shape, with its coma and tails when active. */
   small?: SmallSample;
   /** Where the kernel places it from its parent's centre (metres, the system's frame), when placed by date: shadows in True. */
@@ -45,6 +49,10 @@ export interface Ring3D {
   outer_m: number;
   tau: number | null;
   albedo: number | null;
+  /** Its measured range of optical depth, when printed. */
+  tau_range?: [number, number];
+  /** A ring formation made: its cloud's address (the kernel reads the rest from the run). */
+  cloud?: string;
 }
 
 export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => Mark): Body3D[] {
@@ -53,7 +61,7 @@ export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => M
     .filter((s) => s === star || s.orbit)
     .map((s) => {
       const rings = scene.subjects.filter((r) => r.ring && r.parent === s.address).map((r) => ({ name: r.label, ...r.ring! }));
-      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), ...(s.orbit?.v_m_s ? { v_m_s: s.orbit.v_m_s } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s) };
+      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), ...(s.orbit?.v_m_s ? { v_m_s: s.orbit.v_m_s } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s), ...j2Of(s) };
     });
 }
 
@@ -69,9 +77,10 @@ function massOf(s: SceneSubject): { mass_kg?: number } {
   return ms !== null ? { mass_kg: ms * constant("M_sun") } : {};
 }
 
-/** A world's moons as the rings need them: name, distance and mass, for those known. */
-export function moonsOf(bodies: readonly Body3D[], id: string): { name: string; a_m: number; mass_kg: number }[] {
-  return bodies.filter((b) => b.parent === id && b.a_m !== null && b.mass_kg !== undefined).map((b) => ({ name: b.name, a_m: b.a_m!, mass_kg: b.mass_kg! }));
+/** A world's J2 (its oblateness in its gravity), when on record. */
+function j2Of(s: SceneSubject): { j2?: number } {
+  const f = s.facts.find((x) => x.field === "j2");
+  return typeof f?.value === "number" && f.value > 0 ? { j2: f.value } : {};
 }
 
 /** A subject's surface temperature in kelvin: a star's effective, a world's surface, else its equilibrium. */

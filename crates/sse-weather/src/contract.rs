@@ -116,6 +116,20 @@ pub struct FieldTile {
     pub cells: Vec<Cell>,
 }
 
+/// The field over a square patch of `n` × `n` cells round a place, for a
+/// closer look than the tiles give (a storm, a pole). Cells are laid on the
+/// azimuthal equidistant plane round the centre (`rules::patch_dir`): `x`
+/// east and `y` north, each from -`half_km` to +`half_km`, rows south to
+/// north. At a pole, north is the direction of longitude `lon_deg` + 180°.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct FieldPatch {
+    pub lat_deg: f64,
+    pub lon_deg: f64,
+    pub half_km: f64,
+    pub n: u32,
+    pub cells: Vec<Cell>,
+}
+
 /// A nameable thing: a cyclone, an oval, a plume, a polar feature.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct WeatherSystem {
@@ -136,6 +150,11 @@ pub struct WeatherSystem {
     /// Days (since the campaign epoch); `f64::MAX` stands for "permanent".
     pub born: f64,
     pub ends: f64,
+    /// East-west extent over north-south extent of a vortex sheared by the
+    /// zonal wind (Moore and Saffman 1971); 0 (left out) for a round or
+    /// unshaped system.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub aspect: f64,
     /// Polygon sides, cyclones in a ring, or 0.
     #[serde(default)]
     pub count: u32,

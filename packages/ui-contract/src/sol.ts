@@ -36,6 +36,8 @@ export interface SolRegion {
   optical_depth?: number;
   /** A ring's particle albedo as printed (the middle of a printed range). */
   albedo?: number;
+  /** A ring's printed range of optical depth, low and high. */
+  optical_depth_range?: [number, number];
 }
 export interface SolSource {
   id: string;
@@ -149,6 +151,10 @@ export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch
     put(r.src, a, "body.radius_outer", r.outer_m);
     put(r.src, a, "belt.shape", /oort/.test(r.id) ? "sphere" : "disc");
     if (typeof r.optical_depth === "number") put(r.src, a, "ring.optical_depth", r.optical_depth);
+    if (r.optical_depth_range) {
+      put(r.src, a, "ring.optical_depth_low", r.optical_depth_range[0]);
+      put(r.src, a, "ring.optical_depth_high", r.optical_depth_range[1]);
+    }
     if (typeof r.albedo === "number") put(r.src, a, "body.albedo", r.albedo);
     if (r.check === "unverified") unverified.push(`${a}#body.radius_inner`);
   }
