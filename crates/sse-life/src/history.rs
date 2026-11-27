@@ -105,6 +105,9 @@ pub struct HistoryParams {
     /// under the `gradients/1` life model.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metabolic: Option<MetabolicParams>,
+    /// Spread (LE4 and LE5): growth of pioneers and mixing by medium.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub spread: Option<crate::speed::SpreadParams>,
 }
 
 /// E2 (evolution design 5.1 and 5.3): a metabolism is a capability whose
@@ -307,7 +310,7 @@ fn push(events: &mut Vec<LifeEvent>, mut e: LifeEvent) -> String {
     id
 }
 
-fn mean_temperature(g: &HabitatGraph, open: &[usize]) -> Option<f64> {
+pub(crate) fn mean_temperature(g: &HabitatGraph, open: &[usize]) -> Option<f64> {
     let ts: Vec<f64> = open
         .iter()
         .filter_map(|&i| {
@@ -318,6 +321,30 @@ fn mean_temperature(g: &HabitatGraph, open: &[usize]) -> Option<f64> {
         })
         .collect();
     (!ts.is_empty()).then(|| ts.iter().sum::<f64>() / ts.len() as f64)
+}
+
+/// Opportunity per Myr, in Earth-Myr (box D): (production / Earth's)^exponent
+/// x the metabolic rate factor exp(-E/kT) against the reference temperature
+/// x habitat variety (open habitat kinds / reference). Present-day Earth
+/// gives about one. The one copy of the rule: the history steps it and the
+/// speed read-out (LE4) quotes it.
+pub fn opportunity_rate(
+    hp: &HistoryParams,
+    production_gc_yr: f64,
+    temp_k: f64,
+    kinds: usize,
+) -> f64 {
+    let k_ev = 8.617_333e-5;
+    let gen = m::exp(-hp.activation_ev / k_ev * (1.0 / temp_k - 1.0 / hp.reference_k));
+    let pop = if production_gc_yr > 0.0 {
+        m::pow(
+            production_gc_yr / hp.production_ref_gc_yr,
+            hp.population_exponent,
+        )
+    } else {
+        0.0
+    };
+    pop * gen * kinds as f64 / hp.variety_ref
 }
 
 struct Life {
@@ -420,7 +447,6 @@ pub fn history_model(
     let mut gcache: BTreeMap<String, (WorldBudget, BTreeMap<String, f64>)> = BTreeMap::new();
     let mut last = StepFluxes::default();
     let mut world: BTreeMap<String, f64> = BTreeMap::new();
-    let k_ev = 8.617_333e-5;
     let origin_draws = Stream::new("life.origin.v1").map_err(|e| e.to_string())?;
     let cap_stream = Stream::new("life.capability.v1").map_err(|e| e.to_string())?;
     let loss_stream = Stream::new("life.loss.v1").map_err(|e| e.to_string())?;
@@ -822,14 +848,7 @@ pub fn history_model(
             distinct.sort();
             distinct.dedup();
             let temp = mean_temperature(g, &open).unwrap_or(hp.reference_k);
-            let gen = m::exp(-hp.activation_ev / k_ev * (1.0 / temp - 1.0 / hp.reference_k));
-            let pop = if production > 0.0 {
-                m::pow(production / hp.production_ref_gc_yr, hp.population_exponent)
-            } else {
-                0.0
-            };
-            let variety = distinct.len() as f64 / hp.variety_ref;
-            let d_opp = pop * gen * variety * dt;
+            let d_opp = opportunity_rate(hp, production, temp, distinct.len()) * dt;
             l.opportunity += d_opp;
             // Diversity relaxes towards a capacity set by production.
             let cap_div = m::log10(1.0 + production / hp.diversity_floor_gc_yr);
