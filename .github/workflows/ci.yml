@@ -180,6 +180,8 @@ jobs:
       - run: node tests/ui/small-designer.e2e.mjs --screens ui-screens
       # Energy flow on the Body screen (track HF screen): the core history as a flow over the world's life.
       - run: node tests/ui/heat.e2e.mjs --screens ui-screens
+      # The grand zoom, first part (GZ8): the cosmic web down to the galaxies nearby, one picture, the place line as progress.
+      - run: node tests/ui/journey.e2e.mjs --screens ui-screens/journey
       # The ship builder (CM14a): a catalogue ship opened as parts, stretched and clipped, a plan's budgets, 3D, the kernel's verdicts.
       - run: node tests/ui/ship-builder.e2e.mjs --screens ui-screens/ship-builder
       # Ship manifest and crew (track MC): aboard, life support, Known to, pictures, fuel and the ship's log.
