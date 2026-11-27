@@ -133,7 +133,7 @@ export type { ShipAtWorldAsk, ShipAtWorldReport, ShipAtWorld, WorldCheck, Danger
 export { VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS, systemShort, voyageSpan, speedWords, agesWords, voyageFrame, orbitAxis, labelLanes } from "./voyage.ts";
 export type { Minimise, VoyageAsk, VoyageLeg, Voyage, VoyageSystem, VoyagePlan, StarCell, StarCellSystem, MapFrame, SystemPlace, SystemVoyagePlan } from "./voyage.ts";
 export { leadingArmWords, LEADING_ARM_SEEN, NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, cubeShares, editWords, toggleRemoval, cellHalo, projectHalo, haloRadius, overdensityWords, HOME_CELL, placeholderGalaxyName, cellName } from "./galaxy.ts";
-export type { LeadingArmWords, GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, WebCube, WebGalaxies, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, GalaxyMark, GalaxyAssembly, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
+export type { LeadingArmWords, GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, WebCube, WebGalaxies, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, GalaxyMark, GalaxyAssembly, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection, HomeGalaxy } from "./galaxy.ts";
 export { LIKE_THE_MILKY_WAY, homeFits, findHomes, cellsAround } from "./home-finder.ts";
 export type { HomeWish, HomeFit } from "./home-finder.ts";
 export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords, unprojectCamera } from "./window.ts";
