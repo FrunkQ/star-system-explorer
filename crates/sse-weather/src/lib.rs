@@ -10,6 +10,7 @@ pub mod aerosols;
 pub mod circulation;
 pub mod conditions;
 pub mod contract;
+pub mod eddies;
 pub mod formations;
 pub mod giants;
 pub mod hooks;

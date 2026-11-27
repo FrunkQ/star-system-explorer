@@ -1300,6 +1300,31 @@ fn icy_moons_take_their_regime_from_their_ice() {
     );
 }
 
+/// WS2: the weather op's flow table for a giant of the catalogued Sol: its jets, storms and eddies, the eddies fed
+/// by the heat it sends out; a rocky world has none.
+#[test]
+fn a_giants_flow_table_carries_its_eddies() {
+    let mut k = open_sol(&[]);
+    let j = world(&mut k, "Jupiter");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"flow","system":SOL,"body":j["address"],"day":10.0,"span_days":2.0}),
+    );
+    let t = &w["data"];
+    assert_eq!(t["day0"], 10.0, "{w:.400}");
+    assert_eq!(t["day1"], 12.0);
+    assert_eq!(t["jet_lat_deg"].as_array().unwrap().len(), 721);
+    let eddies = t["eddies"].as_array().unwrap();
+    assert!(eddies.len() > 500, "{} eddies", eddies.len());
+    assert!(t["facts"]["eddy_power_w_kg"].as_f64().unwrap() > 0.0);
+    let earth = world(&mut k, "Earth");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"flow","system":SOL,"body":earth["address"]}),
+    );
+    assert_eq!(e["code"], "not_a_giant", "{e:.300}");
+}
+
 /// CS1: catalogued worlds take the Sun's measured light at their distance
 /// from it (a moon's is its planet's) and their own measured Bond albedo
 /// (NSSDCA: Earth 0.294, Moon 0.11), never a sun-like guess or the pack's

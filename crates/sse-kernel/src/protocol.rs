@@ -587,6 +587,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         half_km: Option<f64>,
+        /// `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+        #[serde(default)]
+        #[ts(optional)]
+        span_days: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,

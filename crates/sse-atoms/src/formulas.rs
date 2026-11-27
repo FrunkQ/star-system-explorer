@@ -152,6 +152,10 @@ pub const FILES: &[(&str, &str)] = &[
         include_str!("../../../packs/base-physics/formulas/ship.json"),
     ),
     (
+        "weather",
+        include_str!("../../../packs/base-physics/formulas/weather.json"),
+    ),
+    (
         "feed",
         include_str!("../../../packs/base-physics/formulas/feed.json"),
     ),
