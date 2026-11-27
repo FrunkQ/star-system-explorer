@@ -114,11 +114,7 @@ pub fn bounds(size: Size) -> [f64; 2] {
 }
 
 /// Bake the disc table from the blocks in force.
-pub fn bake(
-    subject: &serde_json::Value,
-    size: Size,
-    blocks: BlockLookup,
-) -> Result<Baked, String> {
+pub fn bake(subject: &serde_json::Value, size: Size, blocks: BlockLookup) -> Result<Baked, String> {
     let s: DiscSubject = serde_json::from_value(subject.clone())
         .map_err(|e| format!("a disc subject is {{mass_kg or gravitational_radius_m, and rate_kg_s, inner_m, outer_m or a feed}}: {e}"))?;
     let (rate_kg_s, inner_m, outer_m) = s.disc()?;

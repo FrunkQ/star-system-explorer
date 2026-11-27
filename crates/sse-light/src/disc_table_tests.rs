@@ -6,8 +6,8 @@ use crate::paths::{self, LightPaths};
 use crate::*;
 use sse_flow::Atom;
 use sse_formula::FormulaAtom;
-use std::sync::Arc;
 use sse_physics::table::{Size, Table};
+use std::sync::Arc;
 
 fn blocks() -> Vec<Arc<dyn Atom>> {
     // The blocks in force for a bare physics: the shipped library, as shipped.
