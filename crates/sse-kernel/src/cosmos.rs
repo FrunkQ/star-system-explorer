@@ -143,6 +143,8 @@ pub(crate) struct GalaxyAsk<'a> {
     pub cell: Option<[i64; 3]>,
     /// The GM's history edits, inked in this view (G6); empty for the galaxy as grown.
     pub edits: &'a [sse_cosmos::galaxy::Edit],
+    /// The GM's stored home halo ("Make this home"), if any (GZ12).
+    pub home: Option<&'a str>,
 }
 
 /// One galaxy: its history curves, its rings now (abundances, deaths, rates),
@@ -174,11 +176,201 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         (Some(_), None) => return Err(err("bad_request", "with a cell, name one of its haloes")),
         _ => None,
     };
-    let h = match catalogued {
-        Some(h) => h,
-        None => named_halo(&hs, a.halo, a.mass_msun)?,
+    // GZ12: with no galaxy named, or "home", the universe's own home galaxy.
+    let home = home_of(&hs, &cp, a.home)?;
+    let h = match (catalogued, a.halo, a.mass_msun) {
+        (Some(h), _, _) => h,
+        (None, None | Some("home"), None) => home.halo.clone(),
+        (None, _, _) => named_halo(&hs, a.halo, a.mass_msun)?,
     };
-    galaxy_chart_of(&c, &cp, &hs, a, h)
+    let is_home = h.address == home.halo.address;
+    let mut chart = galaxy_chart_of(&c, &cp, &hs, a, h)?;
+    chart["home"] = if is_home {
+        home_json(&home, &cp.home)
+    } else {
+        serde_json::Value::Null
+    };
+    Ok(chart)
+}
+
+/// GZ12: the record fact on the universe's root that names the GM's own
+/// choice of home halo ("Make this home"); absent or null, the web's.
+pub const HOME_HALO: &str = "universe.home_halo";
+/// Event kind of a home choice.
+pub const HOME_KIND: &str = "universe.home";
+
+/// The campaign's home galaxy: its halo, the cell it was drawn in, and how
+/// it was chosen.
+#[derive(Clone)]
+pub(crate) struct Home {
+    pub halo: sse_cosmos::haloes::Halo,
+    pub cell: [i64; 3],
+    /// "web" (the kernel's best fit to the pack's home wish) or "gm".
+    pub by: &'static str,
+    pub fits_wish: bool,
+    pub why: Vec<String>,
+    pub cells_read: usize,
+}
+
+thread_local! {
+    /// The web's choice of home per universe and settings: one search of a
+    /// few dozen cells, a pure function of what it is keyed by, so keeping
+    /// it changes no answer (it is worked out once, never stored).
+    static HOMES: std::cell::RefCell<Vec<(String, std::rc::Rc<sse_cosmos::home::HomeChoice>)>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
+#[cfg(test)]
+thread_local! {
+    static REFERENCE_HOME: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Tests only (never built into the product): this test thread's campaign
+/// galaxy is the median Milky-Way-like reference halo, not the web's home.
+/// The sky's Milky Way calibration checks run on it, because the real
+/// default homes scatter about a factor of 2 in bright-star count at the
+/// Sun's place (fudge register, GZ12 sky calibration).
+#[cfg(test)]
+pub(crate) fn use_reference_home() {
+    REFERENCE_HOME.with(|r| r.set(true));
+}
+
+/// The GM's stored home halo, if any.
+pub(crate) fn stored_home(state: &sse_chronicle::State, root: &Address) -> Option<String> {
+    match state.get(root, HOME_HALO) {
+        Some(sse_core::cbor::Value::Text(t)) => Some(t.clone()),
+        _ => None,
+    }
+}
+
+/// The universe's home galaxy (GZ12): the GM's stored choice, else the
+/// catalogued halo that best fits the pack's home wish, searched outward
+/// from the origin cell. Never the median stand-in.
+pub(crate) fn home_of(
+    hs: &Haloes,
+    cp: &CosmologyPack,
+    chosen: Option<&str>,
+) -> Result<Home, Response> {
+    #[cfg(test)]
+    if REFERENCE_HOME.with(|r| r.get()) {
+        // The median Milky-Way-like reference galaxy at the centre of cell
+        // 0.0.0, where the sky's calibration checks were set (tests only).
+        let mut halo = named_halo(hs, Some("milky-way-like"), None)?;
+        let side = hs.params.cell_mpc;
+        halo.position = [0.5 * side; 3];
+        return Ok(Home {
+            why: vec!["the median reference galaxy (calibration tests only)".into()],
+            halo,
+            cell: [0, 0, 0],
+            by: "reference",
+            fits_wish: false,
+            cells_read: 0,
+        });
+    }
+    if let Some(addr) = chosen {
+        let (halo, cell) =
+            sse_cosmos::home::halo_at(hs, addr).map_err(|e| err("unknown_halo", e))?;
+        return Ok(Home {
+            why: vec![format!(
+                "chosen by the GM: a halo of {:.2e} suns",
+                halo.mass
+            )],
+            halo,
+            cell,
+            by: "gm",
+            fits_wish: false,
+            cells_read: 1,
+        });
+    }
+    let key = serde_json::to_string(&(
+        format!("{:?}", hs.seed),
+        hs.universe.to_string(),
+        &cp.params,
+        &cp.web,
+        &hs.params,
+        &cp.galaxy,
+        &cp.home,
+    ))
+    .map_err(|e| err("internal", e.to_string()))?;
+    let found = HOMES.with(|h| {
+        h.borrow()
+            .iter()
+            .find(|(k, _)| *k == key)
+            .map(|e| e.1.clone())
+    });
+    let choice = match found {
+        Some(c) => c,
+        None => {
+            let c = std::rc::Rc::new(
+                sse_cosmos::home::choose(hs, &cp.galaxy, &cp.home, hs.cosmo.age_gyr())
+                    .map_err(|e| err("bad_pack", e))?,
+            );
+            HOMES.with(|h| {
+                let mut h = h.borrow_mut();
+                h.insert(0, (key, c.clone()));
+                h.truncate(4);
+            });
+            c
+        }
+    };
+    Ok(Home {
+        halo: choice.halo.clone(),
+        cell: choice.cell,
+        by: "web",
+        fits_wish: choice.fits_wish,
+        why: choice.why.clone(),
+        cells_read: choice.cells_read,
+    })
+}
+
+/// A home as the ops report it.
+pub(crate) fn home_json(h: &Home, wish: &sse_cosmos::home::HomeWish) -> serde_json::Value {
+    serde_json::json!({
+        "halo": h.halo.address,
+        "key": h.halo.address.rsplit_once("/halo:").map_or(h.halo.address.as_str(), |x| x.1),
+        "cell": h.cell,
+        "mass_msun": h.halo.mass,
+        "position_mpc": h.halo.position,
+        "neighbour": h.halo.neighbour,
+        "by": h.by,
+        "fits_wish": h.fits_wish,
+        "why": h.why,
+        "cells_read": h.cells_read,
+        "wish": wish,
+    })
+}
+
+/// `home_galaxy`: the universe's home with the wish it was chosen by.
+pub(crate) fn home_galaxy(
+    seed: &Seed,
+    root: &Address,
+    chosen: Option<&str>,
+) -> Result<serde_json::Value, Response> {
+    let cp = settings()?;
+    let c = cosmology(&cp.params);
+    let w = web(&c, &cp, seed, root)?;
+    let hs = Haloes {
+        cosmo: &c,
+        web: &w,
+        params: cp.haloes.clone(),
+        seed: *seed,
+        universe: root.clone(),
+    };
+    let h = home_of(&hs, &cp, chosen)?;
+    let mut v = home_json(&h, &cp.home);
+    // What the home is, from the physics in force: its size and circular
+    // speed today (R_200, V_200) and when it had half its mass. The choice
+    // of halo is a draw that a small edit rarely changes; these follow it.
+    let (r200, v200) = cp.galaxy.virial(&c, h.halo.mass, 1.0);
+    let z_half = h.halo.z_half;
+    v["r200_kpc"] = serde_json::json!(r200);
+    v["v200_kms"] = serde_json::json!(v200);
+    v["half_mass_z"] = serde_json::json!(z_half);
+    v["model"] = serde_json::json!([
+        "home: the catalogued halo (G2) nearest the middle of the wished mass range among those that meet every wish, in the first shell of halo cells round the origin cell that holds one; with none in the searched shells, the one nearest the wished mass, marked fits_wish false (GZ12)",
+        "the GM may choose another catalogued halo (set_home); it is a fact in the record, and clearing it returns to the web's choice",
+    ]);
+    Ok(v)
 }
 
 fn named_halo(
@@ -202,7 +394,7 @@ fn named_halo(
             })?,
         (None, Some(m)) if m > 1.0e8 && m < 1.0e16 => (format!("m{m:e}"), m),
         (None, Some(_)) => return Err(err("bad_request", "mass_msun must be 1e8 to 1e16")),
-        (None, None) => ("milky-way-like".to_string(), 1.0e12),
+        (None, None) => return Err(err("bad_request", "name a halo or give a mass")),
         _ => return Err(err("bad_request", "give a halo name or a mass, not both")),
     };
     Ok(hs.median(mass, &key))
@@ -688,13 +880,13 @@ pub(crate) struct OriginAt {
 }
 
 /// One plausible past for a star made older or younger, in the campaign's
-/// galaxy. Until G7 gives a campaign its own galaxy, that is the median
-/// Milky-Way-like galaxy grown from the universe's seed (as the galaxy
-/// chart's default), and a star with no galactic place is put at the Sun's
-/// radius (fudge register).
+/// home galaxy (GZ12: one of the web's own, as the galaxy chart's default).
+/// A star with no galactic place is still put at the Sun's radius until it
+/// has a star slot (GZ13; fudge register).
 pub(crate) fn reconstruct_origin(
     seed: &Seed,
     root: &Address,
+    home: Option<&str>,
     a: OriginAt,
 ) -> Result<sse_cosmos::origin::Origin, Response> {
     let cp = settings()?;
@@ -707,7 +899,7 @@ pub(crate) fn reconstruct_origin(
         seed: *seed,
         universe: root.clone(),
     };
-    let h = named_halo(&hs, None, None)?;
+    let h = home_of(&hs, &cp, home)?.halo;
     let g = fed_galaxy(&c, &cp, &hs, &h, &[])?;
     let g = &*g;
     let addr: Address = h
@@ -756,15 +948,17 @@ pub(crate) fn star_pins(
     Ok(out)
 }
 
-/// The campaign's galaxy (as `reconstruct_origin`: the median Milky-Way-like
-/// galaxy until G7) with G5's stars over it, and the galaxy's now in Myr.
+/// The campaign's home galaxy (GZ12, as `reconstruct_origin`) with G5's
+/// stars over it, and the galaxy's now in Myr. `home` is the GM's stored
+/// choice, if any (`stored_home`).
 pub(crate) fn with_stars<R>(
     seed: &Seed,
     root: &Address,
+    home: Option<&str>,
     params: Option<sse_cosmos::stars::StarParams>,
     f: impl FnOnce(&sse_cosmos::stars::Stars, f64) -> Result<R, Response>,
 ) -> Result<R, Response> {
-    with_world(seed, root, params, |st, _, now| f(st, now))
+    with_world(seed, root, home, params, |st, _, now| f(st, now))
 }
 
 /// The cosmos around the campaign's galaxy: the cosmology, the web's
@@ -781,6 +975,7 @@ pub(crate) struct World<'a> {
 pub(crate) fn with_world<R>(
     seed: &Seed,
     root: &Address,
+    home: Option<&str>,
     params: Option<sse_cosmos::stars::StarParams>,
     f: impl FnOnce(&sse_cosmos::stars::Stars, &World, f64) -> Result<R, Response>,
 ) -> Result<R, Response> {
@@ -794,7 +989,7 @@ pub(crate) fn with_world<R>(
         seed: *seed,
         universe: root.clone(),
     };
-    let h = named_halo(&hs, None, None)?;
+    let h = home_of(&hs, &cp, home)?.halo;
     let g = fed_galaxy(&c, &cp, &hs, &h, &[])?;
     let g = &*g;
     let addr: Address = h
@@ -1159,6 +1354,9 @@ mod tests {
 
     #[test]
     fn the_sky_from_the_suns_place_counts_like_the_real_one() {
+        // A Milky Way calibration check: on the median reference galaxy
+        // (GZ12; the web's real homes scatter, fudge register).
+        super::use_reference_home();
         let mut k = open();
         let r = ask(
             &mut k,
@@ -1216,9 +1414,11 @@ mod tests {
 
         // The star the sky finds is the one its cell draws.
         let addr = one["address"].as_str().unwrap();
+        // The star cell is the last cell in the address (GZ12: the galaxy's
+        // own halo cell comes before it).
         let cell: Vec<i64> = addr
-            .split("cell:")
-            .nth(1)
+            .rsplit("cell:")
+            .next()
             .unwrap()
             .split('/')
             .next()
@@ -1279,6 +1479,9 @@ mod tests {
 
     #[test]
     fn other_galaxies_shine_as_their_mass_and_distance_say() {
+        // A Milky Way calibration check: on the median reference galaxy
+        // (GZ12; the web's real homes scatter, fudge register).
+        super::use_reference_home();
         let mut k = open();
         let q = r#"{"op":"sky_from_here","limit_mag":9,"bands":["B","V"],"stars":false}"#;
         let r = ask(&mut k, q);
@@ -1446,7 +1649,7 @@ mod tests {
             key_version: base.key_version + 1,
             ..base
         };
-        let redrawn = with_stars(&u.seed, &u.root, Some(v2), |st, _| {
+        let redrawn = with_stars(&u.seed, &u.root, None, Some(v2), |st, _| {
             star_cell(st, Some(cell_ix), t, &pins)
         })
         .unwrap();
@@ -1592,6 +1795,9 @@ mod tests {
 
     #[test]
     fn our_galaxy_s_satellites_are_its_surviving_subhaloes() {
+        // A Milky Way calibration check: on the median reference galaxy
+        // (GZ12; the web's real homes scatter, fudge register).
+        super::use_reference_home();
         let mut k = open();
         let r = ask(
             &mut k,

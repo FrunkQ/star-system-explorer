@@ -3,6 +3,7 @@
 // station in the system, open each one's Picture and check the shape its words picked, its plans and its berths;
 // on the Build desk a remix is kept on the construct as construct.design; the 3D model draws.
 // Usage: node tests/ui/stations.e2e.mjs   (SSE_SHOTS=<dir> for screenshots)
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -95,3 +95,29 @@ pub fn corotation_radius(mass_kg: f64, period_s: f64) -> f64 {
 pub fn closed_corona_radius(field_t: f64, r_ref: f64, b_ref_g: f64, index: f64) -> f64 {
     (r_ref * m::pow(field_t / (b_ref_g * 1e-4), index)).max(1.0)
 }
+
+/// Surface spin rate at latitude `lat` (radians) over the equator's:
+/// (A + B sin²φ + C sin⁴φ) / A (Snodgrass and Ulrich 1990).
+pub fn differential_rotation(lat: f64, a: f64, b: f64, c: f64) -> f64 {
+    let s = m::sin(lat);
+    let s2 = s * s;
+    (a + b * s2 + c * s2 * s2) / a
+}
+
+/// Mean latitude of new spot groups, radians, a share `progress` of the way
+/// through the cycle from its minimum (Spörer's law, a straight line from
+/// `start_deg` to `end_deg`).
+pub fn butterfly_latitude(progress: f64, start_deg: f64, end_deg: f64) -> f64 {
+    (start_deg - (start_deg - end_deg) * progress.clamp(0.0, 1.0)) * m::PI / 180.0
+}
+
+/// Joy's law: a spot group's tilt, radians, at latitude `lat`.
+pub fn joy_tilt(lat: f64, scale_deg: f64) -> f64 {
+    scale_deg * m::PI / 180.0 * m::sin(lat.abs())
+}
+
+/// Gnevyshev-Waldmeier: a spot group's life, s, from its peak area in
+/// millionths of a hemisphere and the decay rate in the same a day.
+pub fn spot_group_life(area_msh: f64, decay_msh_day: f64) -> f64 {
+    area_msh / decay_msh_day * sse_core::sheet::DAY
+}

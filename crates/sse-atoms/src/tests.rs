@@ -499,6 +499,77 @@ fn maxwell_response_limits() {
 }
 
 #[test]
+fn andrade_response_is_maxwell_with_creep_off() {
+    // HF4b.0: with its slow creep switched off the Andrade block is the
+    // Maxwell block exactly, at every viscosity; with it on, a stiff Io
+    // (1e19 Pa s, where Maxwell gives almost nothing) still lags: Andrade's
+    // Im k2 there is above 1e-4 (absolute), Maxwell's below 1e-5.
+    let (mu, rho, g, r, w) = (6.5e10, 3530.0, 1.796, 1.8216e6, 4.11e-5);
+    for eta in [1e10, 1e13, 1.6e14, 1e16, 1e19, 1e22] {
+        let mx = run("sse.tides.maxwell_response", &[mu, eta, rho, g, r, w]);
+        let an = run_p(
+            "sse.tides.andrade_response",
+            &[mu, eta, rho, g, r, w, 0.3],
+            &[("transient_creep", 0.0)],
+        );
+        close(an[0], mx[0], 1e-12, "Im k2, creep off");
+        close(an[1], mx[1], 1e-12, "Re k2, creep off");
+    }
+    let mx = run("sse.tides.maxwell_response", &[mu, 1e19, rho, g, r, w]);
+    let an = run("sse.tides.andrade_response", &[mu, 1e19, rho, g, r, w, 0.3]);
+    assert!(mx[0] < 1e-5, "Maxwell Im k2 at 1e19 Pa s: {}", mx[0]);
+    assert!(an[0] > 1e-4, "Andrade Im k2 at 1e19 Pa s: {}", an[0]);
+}
+
+#[test]
+fn lid_conduction_without_burial_is_plain_conduction() {
+    // HF4b.0: with no lava burying it the lid conducts k dT / D, its own
+    // heat split half up and half down; burial chokes the top and feeds the
+    // base, and the two still differ by exactly the heat made in the lid
+    // plus what the moving lid carries (steady state: base - top = rho c v dT - h).
+    let (k, tl, ts, d, h, kap) = (3.0, 1500.0, 220.0, 1.0e5, 0.005, 1.0e-6);
+    let q = run(
+        "sse.heat.lid_conduction_with_burial",
+        &[k, tl, ts, d, h, 0.0, kap],
+    );
+    close(q[0], k * (tl - ts) / d + h / 2.0, 1e-12, "top, no burial");
+    close(q[1], k * (tl - ts) / d - h / 2.0, 1e-12, "base, no burial");
+    let v = 3.0e-11;
+    let b = run(
+        "sse.heat.lid_conduction_with_burial",
+        &[k, tl, ts, d, h, v, kap],
+    );
+    assert!(
+        b[0] < q[0] && b[1] > q[1],
+        "burial chokes the top and feeds the base"
+    );
+    close(
+        b[1] - b[0],
+        k / kap * v * (tl - ts) - h,
+        1e-9,
+        "advected heat",
+    );
+}
+
+#[test]
+fn melt_heat_split_adds_up() {
+    // HF4b.0: the mantle's loss to melt is what the lid receives from
+    // intrusions plus what erupted lava gives the surface less the lava's
+    // cooling below the lid's base (rho Pe c (Tl - Ts)), to round-off.
+    let (rho, pe, pi, l, c, tm, tl, ts) =
+        (2800.0, 10.0, 42.0, 4.0e5, 1200.0, 1700.0, 1520.0, 220.0);
+    let o = run("sse.melt.heat_carried", &[rho, pe, pi, l, c, tm, tl, ts]);
+    close(
+        o[0],
+        o[1] + o[2] - rho * pe * c * (tl - ts),
+        1e-12,
+        "melt heat",
+    );
+    let e = run("sse.melt.erupted_share", &[52.0, 4.17e13]);
+    close(e[0] + e[1], 52.0, 1e-12, "erupted plus intruded");
+}
+
+#[test]
 fn locking_time_formula() {
     let (w, a, mb, r, mh) = (
         2.0 * m::PI / (12.0 * 3600.0),
@@ -1154,6 +1225,23 @@ fn formula_blocks_follow_a_changed_constant() {
     assert_eq!(after, 2.0 * before);
 }
 
+/// CM13 part 2: the link rate reads k_B through the handle, so a doubled
+/// Boltzmann constant (twice the noise per kelvin) halves the rate.
+#[test]
+fn the_link_rate_follows_a_changed_boltzmann_constant() {
+    let a = formula_atom("sse.ship.link_rate");
+    let ins = [20.0, 5.8e4, 3.0e6, 0.0357, 1.0e12, 25.0, 2.5];
+    let before = a.eval(&ins, &[]).unwrap()[0];
+    let mut c = sse_core::constants::Constants::REAL;
+    c.k_b *= 2.0;
+    let after = sse_core::constants::with(c, || a.eval(&ins, &[]).unwrap()[0]);
+    assert!(
+        before > 1.0e4,
+        "a 20 W probe at 1e12 m sends {before} bit/s"
+    );
+    assert_eq!(after, before / 2.0);
+}
+
 #[test]
 fn the_rust_blocks_list_matches_the_registry() {
     let moved: Vec<String> = crate::formulas::loaded()
@@ -1775,4 +1863,75 @@ fn prominence_blocks_match_their_sums() {
     }
     let rk_abdor = a::corotation_radius(0.86 * M_SUN, 0.514 * day) / (0.96 * R_SUN);
     assert!(rk_abdor < a::closed_corona_radius(0.285, 2.5, 95.0, 1.0 / 3.0));
+}
+
+#[test]
+fn active_region_blocks_match_their_sums() {
+    use crate::activity as a;
+    for lat in [0.0, 0.3, -0.7, 1.2] {
+        let got = run("sse.activity.differential_rotation", &[lat])[0];
+        let want = a::differential_rotation(lat, 14.713, -2.396, -1.787);
+        assert!((got - want).abs() < 1e-12, "{lat}: {got} against {want}");
+        let got = run("sse.activity.joy_tilt", &[lat])[0];
+        let want = a::joy_tilt(lat, 32.1);
+        assert!((got - want).abs() < 1e-12, "{lat}: {got} against {want}");
+    }
+    for p in [-0.2, 0.0, 0.4, 1.0, 1.3] {
+        let got = run("sse.activity.butterfly_latitude", &[p])[0];
+        let want = a::butterfly_latitude(p, 28.0, 8.0);
+        assert!((got - want).abs() < 1e-12, "{p}: {got} against {want}");
+    }
+    for area in [30.0, 300.0, 3000.0] {
+        let got = run("sse.activity.spot_group_life", &[area])[0];
+        let want = a::spot_group_life(area, 10.0);
+        assert!(
+            (got - want).abs() <= 1e-9 * want,
+            "{area}: {got} against {want}"
+        );
+    }
+    // Absolute: the Sun's poles turn about a third slower than its equator; a cycle's
+    // spots start near 28 degrees and end near 8; a 1000 MSH group lives about 100 days
+    // and is tilted about 8 degrees at 15 degrees latitude.
+    let pole = a::differential_rotation(m::PI / 2.0, 14.713, -2.396, -1.787);
+    assert!((0.6..0.72).contains(&pole), "{pole}");
+    let deg = 180.0 / m::PI;
+    assert!((a::butterfly_latitude(0.0, 28.0, 8.0) * deg - 28.0).abs() < 1e-9);
+    assert!((a::butterfly_latitude(1.0, 28.0, 8.0) * deg - 8.0).abs() < 1e-9);
+    let d = a::spot_group_life(1000.0, 10.0) / sse_core::sheet::DAY;
+    assert!((99.0..101.0).contains(&d), "{d}");
+    let t = a::joy_tilt(15.0 / deg, 32.1) * deg;
+    assert!((7.0..10.0).contains(&t), "{t}");
+}
+
+#[test]
+fn pair_blocks_match_their_sums() {
+    use crate::binary as b;
+    for (q, a) in [(1.0, 1e11), (0.3, 2e10), (5.0, 3e9)] {
+        let got = run("sse.orbit.roche_lobe", &[q, a])[0];
+        let want = b::roche_lobe(q, a);
+        assert!(
+            (got - want).abs() <= 1e-12 * want,
+            "{q}: {got} against {want}"
+        );
+    }
+    // Absolute: equal stars each own 38 % of the separation; a light star much less.
+    assert!((0.37..0.39).contains(&b::roche_lobe(1.0, 1.0)));
+    assert!((0.2..0.26).contains(&b::roche_lobe(0.2, 1.0)));
+    for (mk, x) in [(2e30, 1.0), (2e30, 1.1), (3e31, 1.02)] {
+        let got = run("sse.orbit.overflow_rate", &[mk, x])[0];
+        let want = b::overflow_rate(mk, x, 5.0);
+        assert!(
+            (got - want).abs() <= 1e-12 * want.max(1e-30),
+            "{mk} {x}: {got} against {want}"
+        );
+    }
+    let m = sse_core::sheet::M_SUN;
+    for (ms, mc, r, l) in [(2e30, 0.0, 7e8, 3.8e26), (2e30, 8e29, 7e10, 3.8e28)] {
+        let got = run("sse.star.thermal_timescale", &[ms, mc, r, l])[0];
+        let want = b::thermal_timescale(ms, mc, r, l, 0.5);
+        assert!((got - want).abs() <= 1e-12 * want, "{got} against {want}");
+    }
+    // The Sun settles in about 15 million years (HTP02's 1.5e7 yr).
+    let sun = b::thermal_timescale(m, 0.0, R_SUN, L_SUN, 0.5) / JULIAN_YEAR;
+    assert!((1.2e7..1.9e7).contains(&sun), "{sun}");
 }

@@ -5,6 +5,7 @@
 // branch, the main state hash does not move, the branch has its own hash.
 // Compare lists the mass (set) and the gravity (follows). Throw it away: the
 // main line is as it was. Again, and keep it: the main line takes the edit.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

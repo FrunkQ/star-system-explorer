@@ -105,6 +105,9 @@ pub struct HistoryParams {
     /// under the `gradients/1` life model.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metabolic: Option<MetabolicParams>,
+    /// Spread (LE4 and LE5): growth of pioneers and mixing by medium.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub spread: Option<crate::speed::SpreadParams>,
 }
 
 /// E2 (evolution design 5.1 and 5.3): a metabolism is a capability whose
@@ -228,6 +231,24 @@ pub struct Epoch {
     pub graph: Option<HabitatGraph>,
     #[serde(default)]
     pub facts: BTreeMap<String, f64>,
+    /// Habitat graphs this epoch uses instead of `graph` while a world fact
+    /// is below a threshold, first match wins: a world's ocean keeps its
+    /// dissolved iron while the history's own air is still without oxygen.
+    /// The fact is read at each step's start, from the physics boundary (the
+    /// air box) or else the epoch's own facts, so no step reads a later
+    /// state.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub graph_while: Vec<GraphWhile>,
+}
+
+/// A habitat graph used while `fact` < `below`.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct GraphWhile {
+    pub fact: String,
+    pub below: f64,
+    pub graph: HabitatGraph,
+    /// What differs, in words.
+    pub why: String,
 }
 
 /// A physical catastrophe from the world's chronicle.
@@ -307,7 +328,7 @@ fn push(events: &mut Vec<LifeEvent>, mut e: LifeEvent) -> String {
     id
 }
 
-fn mean_temperature(g: &HabitatGraph, open: &[usize]) -> Option<f64> {
+pub(crate) fn mean_temperature(g: &HabitatGraph, open: &[usize]) -> Option<f64> {
     let ts: Vec<f64> = open
         .iter()
         .filter_map(|&i| {
@@ -318,6 +339,30 @@ fn mean_temperature(g: &HabitatGraph, open: &[usize]) -> Option<f64> {
         })
         .collect();
     (!ts.is_empty()).then(|| ts.iter().sum::<f64>() / ts.len() as f64)
+}
+
+/// Opportunity per Myr, in Earth-Myr (box D): (production / Earth's)^exponent
+/// x the metabolic rate factor exp(-E/kT) against the reference temperature
+/// x habitat variety (open habitat kinds / reference). Present-day Earth
+/// gives about one. The one copy of the rule: the history steps it and the
+/// speed read-out (LE4) quotes it.
+pub fn opportunity_rate(
+    hp: &HistoryParams,
+    production_gc_yr: f64,
+    temp_k: f64,
+    kinds: usize,
+) -> f64 {
+    let k_ev = 8.617_333e-5;
+    let gen = m::exp(-hp.activation_ev / k_ev * (1.0 / temp_k - 1.0 / hp.reference_k));
+    let pop = if production_gc_yr > 0.0 {
+        m::pow(
+            production_gc_yr / hp.production_ref_gc_yr,
+            hp.population_exponent,
+        )
+    } else {
+        0.0
+    };
+    pop * gen * kinds as f64 / hp.variety_ref
 }
 
 struct Life {
@@ -420,7 +465,6 @@ pub fn history_model(
     let mut gcache: BTreeMap<String, (WorldBudget, BTreeMap<String, f64>)> = BTreeMap::new();
     let mut last = StepFluxes::default();
     let mut world: BTreeMap<String, f64> = BTreeMap::new();
-    let k_ev = 8.617_333e-5;
     let origin_draws = Stream::new("life.origin.v1").map_err(|e| e.to_string())?;
     let cap_stream = Stream::new("life.capability.v1").map_err(|e| e.to_string())?;
     let loss_stream = Stream::new("life.loss.v1").map_err(|e| e.to_string())?;
@@ -466,8 +510,24 @@ pub fn history_model(
         else {
             continue;
         };
+        // The graph this step: a `graph_while` variant whose fact, as the
+        // world stands at the step's start, is below its threshold.
+        let variant = ep.graph_while.iter().position(|v| {
+            world
+                .get(&v.fact)
+                .or_else(|| ep.facts.get(&v.fact))
+                .is_some_and(|x| *x < v.below)
+        });
+        let graph_now: Option<&HabitatGraph> = ep
+            .graph
+            .as_ref()
+            .map(|g| variant.map_or(g, |i| &ep.graph_while[i].graph));
+        let ei_key = match variant {
+            Some(i) => format!("{ei}.{i}"),
+            None => ei.to_string(),
+        };
         // Open habitats in this epoch.
-        let open: Vec<usize> = match &ep.graph {
+        let open: Vec<usize> = match graph_now {
             None => vec![],
             Some(g) => g
                 .habitats
@@ -477,7 +537,7 @@ pub fn history_model(
                 .map(|(i, _)| i)
                 .collect(),
         };
-        if let Some(g) = &ep.graph {
+        if let Some(g) = graph_now {
             for h in &g.habitats {
                 if h.profile.temperature_k.is_none() {
                     let a = h.address.to_string();
@@ -493,7 +553,7 @@ pub fn history_model(
             let ci = next_cat;
             next_cat += 1;
             if let Some(l) = life.as_mut() {
-                let g = ep.graph.as_ref();
+                let g = graph_now;
                 let total = open.len().max(1) as f64;
                 let exposed = open
                     .iter()
@@ -575,7 +635,7 @@ pub fn history_model(
                 }
             }
         }
-        let Some(g) = &ep.graph else {
+        let Some(g) = graph_now else {
             continue;
         };
         // Box C: origin.
@@ -667,7 +727,7 @@ pub fn history_model(
             {
                 media.extend(c.unlocks_media.clone());
             }
-            let key = format!("{ei}|{}|{}", mets.join(","), media.join(","));
+            let key = format!("{ei_key}|{}|{}", mets.join(","), media.join(","));
             // E2: the catalogue with the evolved gradients tapped, and what
             // each untapped one would add.
             let mut prizes: BTreeMap<String, f64> = BTreeMap::new();
@@ -681,7 +741,7 @@ pub fn history_model(
                     .map(|d| d.id.clone())
                     .collect();
                 let gkey = format!(
-                    "{ei}|{oxic}|{}|{}",
+                    "{ei_key}|{oxic}|{}|{}",
                     usable.iter().cloned().collect::<Vec<_>>().join(","),
                     media.join(",")
                 );
@@ -822,14 +882,7 @@ pub fn history_model(
             distinct.sort();
             distinct.dedup();
             let temp = mean_temperature(g, &open).unwrap_or(hp.reference_k);
-            let gen = m::exp(-hp.activation_ev / k_ev * (1.0 / temp - 1.0 / hp.reference_k));
-            let pop = if production > 0.0 {
-                m::pow(production / hp.production_ref_gc_yr, hp.population_exponent)
-            } else {
-                0.0
-            };
-            let variety = distinct.len() as f64 / hp.variety_ref;
-            let d_opp = pop * gen * variety * dt;
+            let d_opp = opportunity_rate(hp, production, temp, distinct.len()) * dt;
             l.opportunity += d_opp;
             // Diversity relaxes towards a capacity set by production.
             let cap_div = m::log10(1.0 + production / hp.diversity_floor_gc_yr);

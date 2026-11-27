@@ -744,7 +744,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : b.figure ? { figure: b.figure } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });
@@ -1022,6 +1022,7 @@
         class:locate={realScale && overlay}
         style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, radiusPx(b, p.depth))}px"
         aria-pressed={b.id === selection}
+        aria-label="{b.name}{pencil?.(b.id) ? ', not known to the table' : ''}"
         data-body={b.id}
         data-address={b.id}
         data-x={p.x.toFixed(2)}

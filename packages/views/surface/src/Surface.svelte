@@ -24,8 +24,8 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { clockAt, constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, readGroundOptics, readStains, stainTiles, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { clockAt, constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, readShape, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, readGroundOptics, readStains, stainTiles, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle, smallBodyShape } from "../../../renderer/src/index.ts";
   import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
@@ -134,7 +134,11 @@
         if (g !== gen) return;
         air = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
       }
+      // A body below the round size stands on its lump, the one the chart and the Body globe draw (RW16a).
+      const figure = await readShape(ctx!.session, sys, sub as SystemScene["subjects"][number]);
+      if (g !== gen) return;
       world = {
+        ...(figure ? { figure } : {}),
         radius_m: radius,
         pressure_bar: surfacePressureOf(f) / 1e5,
         t_k: surf?.t_surface_now_k ?? 0,
@@ -309,9 +313,9 @@
         continue;
       }
       if (!r.tiles.length) return r.refused[0]?.why ?? "no tiles";
-      // The finer ground stained as the globe it sits in (TRUE4).
+      // The finer ground stained as the globe it sits in (TRUE4), and stood on the lump (RW16a).
       const laid = stainTiles(r.tiles, stainsOf.get(`${system}|${sub.address}`) ?? []);
-      return readPatch(laid, site!.lat, site!.lon, w.radius_m, half, nFor(laid[0]!.spacing_m));
+      return readPatch(laid, site!.lat, site!.lon, w.radius_m, half, nFor(laid[0]!.spacing_m), 0, w.figure ? smallBodyShape(w.figure, sub.address).mean : undefined);
     }
     return "the kernel would not give tiles at any level asked";
   }

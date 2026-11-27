@@ -1,0 +1,1 @@
+{"key": "aoki1982", "citation": "Aoki et al. 1982", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-time/src/series_tests.rs"], "claims": ["/// Conventions; Aoki et al. 1982), and Delta T in 2000 is 63.86 s."], "tier": 3}

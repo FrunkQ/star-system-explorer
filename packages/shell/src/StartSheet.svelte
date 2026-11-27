@@ -30,6 +30,7 @@
     sample,
     ready,
     onopen,
+    onfresh,
   }: {
     doc: StartLinesDoc & { atlas: AtlasEntry[] };
     built: ReadonlySet<string>;
@@ -37,6 +38,8 @@
     sample: string;
     ready: boolean;
     onopen: (a: StartAction) => void;
+    /** Start fresh (alpha aid, Alex 27 Nov: "just during alpha - at beta we can calm down"). */
+    onfresh?: () => void;
   } = $props();
 
   const readList = (k: string): string[] => {
@@ -110,6 +113,7 @@
     <aside class="alpha" aria-label="Alpha" data-alpha>
       <p><b>This is an alpha preview.</b> Most of the core is built, but it is not yet pulled together into one interface, so expect rough edges and gaps. It shows what is coming.</p>
       <p>To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener" data-v3-link>version 3 ›</a></p>
+      {#if onfresh}<p>Not seeing what is new? This browser remembers your choices and your campaign between visits. <button type="button" class="fresh" data-start-fresh onclick={onfresh}>Start fresh…</button></p>{/if}
     </aside>
 
     <div class="cols">
@@ -241,6 +245,14 @@
   }
   .alpha p + p {
     margin-top: 6px;
+  }
+  .alpha .fresh {
+    font: inherit;
+    padding: 2px 10px;
+    border: var(--sse-line, 1px) solid currentColor;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
   }
   .alpha a {
     color: var(--sse-accent);

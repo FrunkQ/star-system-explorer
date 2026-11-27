@@ -20,6 +20,7 @@
 //! optional Detailed block (F8's integrator) replaces the cascade later and
 //! writes the same events.
 
+use crate::coorbital;
 use crate::disc::{Disc, MASS_UNIT};
 use crate::growth::{Growth, GrowthEntry, GrowthLedger, MSUN_IN_EARTH};
 use serde::{Deserialize, Serialize};
@@ -40,7 +41,6 @@ pub const REF_CANUP04: &str = "Canup, R. M. 2004, Icarus 168, 433; Elser, S. et 
 pub const REF_NICE: &str = "Tsiganis, K. et al. 2005, Nature 435, 459; Gomes, R. et al. 2005, Nature 435, 466; Nesvorny, D. 2018, ARA&A 56, 137: giants crossing a resonance stir the outer belt, removing about 99 percent of it, between a few and about 500 Myr after the gas";
 pub const REF_MALHOTRA: &str = "Malhotra, R. 1995, AJ 110, 420: an outer giant migrates outward by scattering belt planetesimals (about 17 Earth masses moved 20 to 30 AU through a 35 Earth-mass belt)";
 pub const REF_OORT_EFF: &str = "Vokrouhlicky, D., Nesvorny, D. and Dones, L. 2019, AJ 157, 181: a few percent of scattered planetesimals end in the Oort cloud";
-pub const REF_TROJANS: &str = "Nesvorny, D., Vokrouhlicky, D. and Morbidelli, A. 2013, ApJ 768, 45: Jupiter Trojans captured with probability about 6e-7 to 8e-7 of the stirred belt";
 pub const REF_IRREG: &str = "Nesvorny, D., Vokrouhlicky, D. and Morbidelli, A. 2007, AJ 133, 1962: irregular moons captured in encounters during the instability";
 pub const REF_GOMES05_LHB: &str = "Gomes et al. 2005: the Moon received about 6e18 kg from the stirred belt; Earth about 20 times more (about 1e-6 of the belt)";
 pub const REF_FR06: &str = "Ford, E. B. and Rasio, F. A. 2006, ApJ 638, L45: planets scattered onto orbits with pericentre below about 0.05 AU circularise by tides at about twice the pericentre";
@@ -87,7 +87,6 @@ pub const STIR_DEPLETION: f64 = 0.99;
 pub const OORT_SHARE: f64 = 0.04;
 pub const SCATTERED_SHARE: f64 = 0.01;
 pub const TO_STAR_SHARE: f64 = 0.1;
-pub const TROJAN_CAPTURE: f64 = 7.0e-7;
 pub const IRREGULAR_CAPTURE: f64 = 1.0e-7;
 /// Share of the removed belt that hits an Earth at 1 AU (Gomes et al. 2005 scale).
 pub const HIT_EARTH: f64 = 1.0e-6;
@@ -495,6 +494,18 @@ pub enum UpheavalEvent {
         by: String,
         kind: String,
         earth: f64,
+    },
+    /// A world's caught Trojans thin to the share that lasts billions of
+    /// years (crate::coorbital); a disturbing neighbour near a resonance
+    /// takes them all.
+    TrojansThinned {
+        t_myr: f64,
+        world: String,
+        kept_earth: f64,
+        lost_earth: f64,
+        disturbed_by: Option<String>,
+        /// The neighbour's resonance, "p:q".
+        resonance: Option<String>,
     },
     /// A bombardment spike on one world: hand-off to surfaces (craters) and life (catastrophe).
     Bombardment {
@@ -1210,14 +1221,27 @@ impl Ctx<'_> {
             .map(|w| w.id.clone())
             .collect();
         let mut caps = vec![];
-        for gid in &giants {
-            if gid == by {
-                caps.push((
-                    gid.clone(),
-                    "trojans",
-                    take(TROJAN_CAPTURE, &mut left, &mut water),
-                ));
+        // Trojans: every world whose L4 and L5 hold catches a share of the
+        // stirred belt, the most for worlds nearest it (crate::coorbital).
+        let host_earth = MSUN_IN_EARTH * self.host;
+        for wi in 0..self.worlds.len() {
+            let z = coorbital::zone(self.worlds[wi].mass_earth(), host_earth);
+            if !z.stable {
+                continue;
             }
+            let orbits: Vec<coorbital::Orbit> = self.worlds.iter().map(Into::into).collect();
+            let steps = coorbital::giants_between(&orbits, wi, belt_a);
+            caps.push((
+                self.worlds[wi].id.clone(),
+                "trojans",
+                take(
+                    coorbital::capture_share(z.width, steps),
+                    &mut left,
+                    &mut water,
+                ),
+            ));
+        }
+        for gid in &giants {
             caps.push((
                 gid.clone(),
                 "irregular-moons",
@@ -1627,6 +1651,64 @@ pub fn upheave(seed: &Seed, system: &Address, disc: &Disc, g: &Growth) -> Upheav
         w.spin_hours = p_crit_h / frac;
         w.obliquity_deg = obl;
     }
+    // Trojans: only the long-lived share of each catch stays; the rest leaks
+    // out over the system's life and is thrown out (crate::coorbital).
+    let host_earth = MSUN_IN_EARTH * c.host;
+    // One swarm per world: every catch it made joins the first.
+    let mut kept: Vec<Reservoir> = vec![];
+    let mut swarms: Vec<Reservoir> = vec![];
+    for r in std::mem::take(&mut c.reservoirs) {
+        if r.kind != "trojans" {
+            kept.push(r);
+        } else if let Some(s) = swarms.iter_mut().find(|s| s.of == r.of) {
+            add(&mut s.solid, &r.solid);
+            for (band, n) in r.water_from {
+                match s.water_from.iter_mut().find(|x| x.0 == band) {
+                    Some(x) => x.1 += n,
+                    None => s.water_from.push((band, n)),
+                }
+            }
+        } else {
+            swarms.push(r);
+        }
+    }
+    for mut r in swarms {
+        let wi = c.worlds.iter().position(|w| Some(&w.id) == r.of.as_ref());
+        let (f, why) = match wi {
+            Some(wi) => {
+                let z = coorbital::zone(c.worlds[wi].mass_earth(), host_earth);
+                let orbits: Vec<coorbital::Orbit> = c.worlds.iter().map(Into::into).collect();
+                let why = coorbital::disturbed(&orbits, wi);
+                let f = if z.stable {
+                    coorbital::long_lived_share(z.mu, why.is_some())
+                } else {
+                    0.0
+                };
+                (f, why)
+            }
+            None => (0.0, None),
+        };
+        let stay = share(&r.solid, f);
+        let mut lost = r.solid;
+        for g in 0..6 {
+            lost[g] -= stay[g];
+        }
+        take_water(&mut r.water_from, lost[W]);
+        add(&mut c.budget.solid_ejected, &lost);
+        r.solid = stay;
+        c.push(UpheavalEvent::TrojansThinned {
+            t_myr: settle_t,
+            world: r.of.clone().unwrap_or_default(),
+            kept_earth: earth(sum6(&stay)),
+            lost_earth: earth(sum6(&lost)),
+            disturbed_by: why.as_ref().map(|d| d.by.clone()),
+            resonance: why.as_ref().map(|d| format!("{}:{}", d.p, d.q)),
+        });
+        if sum6(&stay) > 0 {
+            kept.push(r);
+        }
+    }
+    c.reservoirs = kept;
     c.push(UpheavalEvent::Settled { t_myr: settle_t });
 
     // Close the books.

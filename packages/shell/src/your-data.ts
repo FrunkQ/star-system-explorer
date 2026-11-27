@@ -121,6 +121,31 @@ export function unfinishedOpen(): string | null {
   return read(OPENING_KEY);
 }
 
+/**
+ * What Reset settings keeps: the campaign and its set-aside copy (the GM's own work), the places it was last looked at
+ * (so Carry on still goes back there) and agent keys (theirs).
+ */
+const KEEP_ON_RESET = (k: string) => k === CAMPAIGN_KEY || k === SET_ASIDE_KEY || k === OPENING_KEY || k === "sse4.places" || k === "sse4.agents" || k.startsWith("sse4.agents.");
+
+/**
+ * Forget this device's remembered choices (view style, desk, depth, lenses, light, sound, theme, the start sheet's skip,
+ * help seen) so the app opens as a new visitor sees it, keeping the campaign, its set-aside copy and
+ * agent keys. Returns how many entries it forgot.
+ */
+export function resetSettings(): number {
+  let n = 0;
+  for (const k of keys()) {
+    if (KEEP_ON_RESET(k)) continue;
+    try {
+      localStorage.removeItem(k);
+      n++;
+    } catch {
+      /* already gone */
+    }
+  }
+  return n;
+}
+
 /** Forget everything SSE4 keeps on this device: the campaign, its set-aside copy, settings, agent keys, media and kept packs. */
 export async function clearAll(): Promise<void> {
   for (const k of keys()) {

@@ -89,8 +89,12 @@ export interface Patch {
   tiles: string[];
 }
 
-/** Read the tiles into a grid of n × n points over ±half_m about the site. Liquid covers sit flat at sea level. */
-export function readPatch(tiles: readonly SurfaceTile[], lat_deg: number, lon_deg: number, radius_m: number, half_m: number, n: number, sea_m = 0): Patch {
+/**
+ * Read the tiles into a grid of n × n points over ±half_m about the site. Liquid covers sit flat at sea level. A body
+ * below the round size gives `lump`, its radius along a direction in its mean radius (small-body.ts `smallBodyShape`
+ * `mean`): the ground is raised or lowered by the lump under it, so Land stands on the same lump the globe draws.
+ */
+export function readPatch(tiles: readonly SurfaceTile[], lat_deg: number, lon_deg: number, radius_m: number, half_m: number, n: number, sea_m = 0, lump?: (d: [number, number, number]) => number): Patch {
   const byKey = new Map<string, SurfaceTile>();
   for (const t of tiles) byKey.set(keyText(t.key), t);
   const level = tiles[0]?.key.level ?? 0;
@@ -103,13 +107,15 @@ export function readPatch(tiles: readonly SurfaceTile[], lat_deg: number, lon_de
   for (let j = 0; j < n; j++)
     for (let i = 0; i < n; i++) {
       const k = j * n + i;
-      const s = tileSpot(localToDir(f, -half_m + i * step, -half_m + j * step, radius_m), level, samples);
+      const dir = localToDir(f, -half_m + i * step, -half_m + j * step, radius_m);
+      const s = tileSpot(dir, level, samples);
       const t = byKey.get(keyText(s.key));
       if (!t) {
         p.missing++;
         p.height_m[k] = p.floor_m[k] = last;
         continue;
       }
+      const raise = lump ? (lump(dir) - 1) * radius_m : 0;
       const S = t.samples;
       const i0 = Math.min(S - 1, Math.max(0, Math.floor(s.si)));
       const j0 = Math.min(S - 1, Math.max(0, Math.floor(s.sj)));
@@ -119,7 +125,7 @@ export function readPatch(tiles: readonly SurfaceTile[], lat_deg: number, lon_de
       const fy = Math.min(1, Math.max(0, s.sj - j0));
       const at = (a: number, b: number) => b * S + a;
       const e = (q: number) => t.elevation_dm[q]! / 10;
-      const ground = (e(at(i0, j0)) * (1 - fx) + e(at(i1, j0)) * fx) * (1 - fy) + (e(at(i0, j1)) * (1 - fx) + e(at(i1, j1)) * fx) * fy;
+      const ground = (e(at(i0, j0)) * (1 - fx) + e(at(i1, j0)) * fx) * (1 - fy) + (e(at(i0, j1)) * (1 - fx) + e(at(i1, j1)) * fx) * fy + raise;
       const near = at(fx < 0.5 ? i0 : i1, fy < 0.5 ? j0 : j1);
       const cover = t.cover[near]!;
       const al = (q: number) => t.albedo[q]! / 1000;

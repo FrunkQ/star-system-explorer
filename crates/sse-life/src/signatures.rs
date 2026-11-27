@@ -49,10 +49,12 @@ pub struct Observables {
     pub erosion_gyr: Option<f64>,
     /// The world's age now, Myr.
     pub age_myr: f64,
-    /// Hydrogen dominates the air: methane there is what the gas makes by
-    /// itself (a giant's air), not a sign of anything.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub reducing_air: bool,
+    /// How far hydrogen dominates the air, 0 to 1: methane there is what the
+    /// gas makes by itself (a giant's air), not a sign of anything, and
+    /// methane alone weighs as evidence by its likelihood ratio to the power
+    /// (1 - this).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub reducing_air: f64,
 }
 
 /// Settings (`provides.other.life_signatures`).
@@ -249,11 +251,19 @@ pub fn signatures(
                 "oxygen without methane: photosynthesis is the likely source, though photolysis can make some".into()
             },
         });
-    } else if see_ch4 && !obs.reducing_air {
+    } else if see_ch4 && obs.reducing_air < 1.0 {
         signals.push(Signal {
             id: "ch4".into(),
             value: ch4,
-            lr: p.lr_ch4_alone,
+            // In reducing air methane is what the gas makes by itself: its
+            // weight slides from methane's to nothing seen as the air turns
+            // reducing.
+            lr: if obs.reducing_air > 0.0 {
+                let s = obs.reducing_air.min(1.0);
+                m::pow(p.lr_ch4_alone, 1.0 - s) * m::pow(p.lr_nothing, s)
+            } else {
+                p.lr_ch4_alone
+            },
             why:
                 "methane alone: microbes make it, but so do hot rocks and water (serpentinisation)"
                     .into(),
@@ -441,4 +451,8 @@ pub fn disclosure() -> BTreeMap<String, String> {
     .iter()
     .map(|(k, v)| (k.to_string(), v.to_string()))
     .collect()
+}
+
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }

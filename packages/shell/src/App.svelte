@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, firstView, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskFor, screenOnDesk, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -13,7 +13,7 @@
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, fullSave, pruneKeptPacks, readStored, setAside, slimSave, writeStored } from "./campaign-store.ts";
   import YourData from "./YourData.svelte";
-  import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
+  import { clearAll, downloadText, opening as markOpening, resetSettings, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
   import { CONVERTER_URL, checkPackDoc, creditWords, fetchExplorers, previewStack, reportWords, sniffFile, stackPacks as addPacks, v3SaveText, type ExplorersListing, type PackDoc, type Sniffed, type StackPreview } from "../../ui-contract/src/index.ts";
   import TableStatus from "./run/TableStatus.svelte";
@@ -26,7 +26,9 @@
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
-  import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
+  import Journey from "./journey/Journey.svelte";
+  import { splitApproach } from "../../ui-contract/src/index.ts";
+  import { readSol, solBatches, solFingerprint, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
   import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, baseBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
@@ -51,11 +53,11 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { MOTION_STEP_S, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, anchorOf, drawnSecond, motionWord, motionsFrom, orbitBodies, periodsFrom, phasesFrom, placesFrom, screenYears, skyCalendar, universeSecondOf, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
-  import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, allLenses, tableLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { OBJECT_ACTIONS, actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
@@ -100,6 +102,8 @@
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { EXOTIC_SCREENS } from "./screens.exotic.ts";
   import { FORMATION_SCREENS } from "./screens.formation.ts";
+  import { SMALL_SCREENS } from "./screens.small.ts";
+  import { BUILDER_SCREENS } from "./screens.builder.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
   import { ATLAS_SCREENS } from "./atlas/screens.atlas.ts";
   import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
@@ -121,7 +125,8 @@
   const ws = createWorkspace(base.now_yr);
   // The standard view controls (rule 12): the viewer's view style and "seen from", kept on this device for every
   // diagram; a view turned by hand becomes Free.
-  ws.view = readViewChoice(loadPref("view"));
+  // Nothing chosen yet: the first view (True during the alpha, firstView in view-controls.ts).
+  ws.view = readViewChoice(loadPref("view"), firstView());
   function setView(c: ViewChoice) {
     ws.view = c;
     // Kept for this desk at this level (TM6), and as the latest choice anywhere, which a desk's first visit starts from.
@@ -137,7 +142,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(FORMATION_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(FORMATION_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(SMALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(BUILDER_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -337,6 +342,9 @@
   });
 
   let session = $state<ViewSession | null>(null);
+  // The grand zoom (GZ3/GZ8 first part): a journey from the cosmic web down, played over the chart room. Opened from
+  // More, or by a link whose way in starts at the web (`#chart/cluster?from=web`).
+  let journeyOpen = $state(typeof location !== "undefined" && splitApproach(location.hash).approach?.from === "web");
   // Style documents (H8.9): checked for this device's measured tier.
   const styleHost = createStyles(() => [...REGISTRY, ...PLAYER_STACK] as never, () => session?.device()?.tier ?? "standard");
   let failure = $state<string | null>(null);
@@ -404,6 +412,8 @@
         history.replaceState(history.state, "", u.pathname + u.search + u.hash);
         void openFromExplorers(fromExplorers);
       }
+      // A fresh campaign also takes the packs the stack document fetches from Explorers; a reopened one keeps its own stack.
+      if (!reopened) void loadFromExplorers(s);
     })
     .catch((e) => (failure = String(e)));
 
@@ -464,6 +474,7 @@
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
     ws.playbook = playbookFrom(save.workspace.playbook);
     ws.layouts = layoutsFrom(save.workspace.layouts);
+    solEntered = typeof save.workspace.sol_sheet === "string" ? save.workspace.sol_sheet : null;
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -482,7 +493,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, could_quiet: ws.could_quiet ?? [], party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [] })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, could_quiet: ws.could_quiet ?? [], party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [], ...(solEntered ? { sol_sheet: solEntered } : {}) })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -603,6 +614,42 @@
   // ?explorers=<an Explorers /api/v4/<slug> URL>: the item page's Open in SSE4 button. The bytes are checked against
   // the listing before anything is offered, and the link leaves the address bar once read.
   let explorersNote = $state<string | null>(null);
+  // Packs fetched from Explorers into every fresh campaign (stack.json `from_explorers`). Alex, 27 Nov 2026: Sol today
+  // lives on Explorers "BUT also - for now - autoload in SSE - to keep the local executable smaller and still have the
+  // decent data set for testing". Each is checked against its listing's sha256 and goes through the same pack check and
+  // stack as a file opened by hand. It runs after the chart is up, so the campaign never waits for it: one that is slow
+  // (a time limit on each request), down or not published is skipped, and a line under the chart says so. An automated
+  // browser (navigator.webdriver: the browser tests) fetches nothing, so tests stay offline.
+  let fetchNote = $state<string | null>(null);
+  const EXPLORERS_WAIT_MS = { listing: 15_000, file: 90_000 };
+  const timedFetch: typeof fetch = (u, init) => fetch(u, { ...init, signal: AbortSignal.timeout(String(u).endsWith("/file") ? EXPLORERS_WAIT_MS.file : EXPLORERS_WAIT_MS.listing) });
+  async function loadFromExplorers(s: ViewSession) {
+    const links = (stackDoc as { from_explorers?: string[] }).from_explorers ?? [];
+    if (!links.length || (typeof navigator !== "undefined" && navigator.webdriver)) return;
+    for (const raw of links) {
+      const r = await fetchExplorers(raw, timedFetch);
+      if (!r.ok) {
+        const name = raw.replace(/\/$/, "").split("/").pop();
+        fetchNote = `${name} was not fetched from Explorers, so this campaign opened without it (the built-in Solar System is all here): ${r.why.replace(/\.$/, "")}. A fresh campaign tries again.`;
+        console.warn(`Not loaded from Explorers (${raw}): ${r.why}`);
+        continue;
+      }
+      let doc: unknown;
+      try {
+        doc = JSON.parse(r.text);
+      } catch {
+        continue;
+      }
+      const info = s.stack();
+      const bad = checkPackDoc(doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
+      if (bad) {
+        console.warn(`Not loaded from Explorers (${raw}): ${bad}`);
+        continue;
+      }
+      const added = await addPacks(s, ws, $state.snapshot([...(info.added as PackDoc[]), doc as PackDoc]) as PackDoc[]);
+      if (added.status !== "applied") console.warn(`Not loaded from Explorers (${raw}): ${added.status === "refused" ? added.reason : added.status}`);
+    }
+  }
   async function openFromExplorers(raw: string) {
     const r = await fetchExplorers(raw);
     if (!r.ok) return void (explorersNote = r.why);
@@ -615,6 +662,31 @@
     const bad = writeStored(await slimSave(offered.save));
     if (bad) return void (offered = { ...offered, problems: [`it could not be kept to reopen: ${bad}`], save: null });
     location.reload();
+  }
+  // Start fresh (alpha aid; Alex 27 Nov 2026: "just during alpha - at beta we can calm down"). One door from the start
+  // sheet and the top of More: forget this device's remembered choices (the campaign stays), or forget everything.
+  // Each says what it clears; neither runs without the second press in its dialog. Revisit at beta.
+  let freshDialog: HTMLDialogElement | undefined = $state();
+  let freshWhich = $state<"settings" | "everything" | null>(null);
+  function openFresh() {
+    freshWhich = null;
+    freshDialog?.showModal();
+  }
+  function reloadClean() {
+    // The place in the address bar would reopen where the old visit was: a fresh start opens at the door.
+    history.replaceState(null, "", location.pathname);
+    location.reload();
+  }
+  function freshSettings() {
+    resetSettings();
+    reloadClean();
+  }
+  async function freshEverything() {
+    clearTimeout(saveTimer);
+    // No autosave between here and the reload.
+    session = null;
+    await clearAll();
+    reloadClean();
   }
   function startFresh() {
     clearStored();
@@ -693,7 +765,7 @@
     untrack(() => {
       if (at === viewAt) return;
       viewAt = at;
-      const v = readViewChoice(recallForDesk(loadPref, desk, "view", level).value);
+      const v = readViewChoice(recallForDesk(loadPref, desk, "view", level).value, firstView());
       // A view that opens on its own scale keeps it; the recalled scale is what comes back when it is left.
       const opens = viewSpec?.opens?.scale;
       if (opens && keptScale !== null) {
@@ -738,7 +810,9 @@
     const st = s?.stack();
     return allLenses(mine, st ? [...st.base, ...st.added] : [], st ? observeOf(st.base)?.setup : undefined, share?.state.plan);
   });
-  const lens = $derived(lenses.find((l) => l.id === lensId) ?? lenses.find((l) => l.id === deskLensDefault(desk)) ?? lenses.find((l) => l.id === defaultLens(session?.device()?.tier))!);
+  // On Run, See as offers three kinds only (design 3.1): an override kept from before that is not one of them gives way.
+  const lensChoices = $derived(partShows("see-as", desk, "every-lens") ? lenses : tableLenses(lenses));
+  const lens = $derived(lensChoices.find((l) => l.id === lensId) ?? lensChoices.find((l) => l.id === deskLensDefault(desk)) ?? lenses.find((l) => l.id === defaultLens(session?.device()?.tier))!);
   $effect(() => {
     ws.lens = lens;
   });
@@ -832,6 +906,8 @@
   let places = $state<Map<string, [number, number, number]> | null>(null);
   // And how fast each moves (the same reply, a minute apart): a shadow's caster is read where the light passed it.
   let motions = $state<Map<string, [number, number, number]> | null>(null);
+  // Where the bodies were placed from (RW17): "as measured" inside a published motion series, "plausible" outside it.
+  let motionSay = $state<ReturnType<typeof motionWord>>(null);
   // Play asks ten times a second: one call at a time, and only the latest time waits.
   let orbitsFor = "";
   let orbitsBusy = false;
@@ -843,18 +919,19 @@
     orbitsBusy = true;
     w.s.orbitsAt(w.sc.system, [w.at, w.at - BigInt(MOTION_STEP_S)], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)), (motion = { at_s: w.at_s, periods: periodsFrom(r.bodies) }));
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)), (motion = { at_s: w.at_s, periods: periodsFrom(r.bodies) }), (motionSay = motionWord(r.bodies)));
       pumpOrbits();
     });
   }
   $effect(() => {
     const s = session;
     const sc = scene;
-    const at = yearsToSeconds(ws.now_yr);
-    const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
+    // One epoch (RW17 part 2): the screen's years count from the viewed system's birth second.
+    const at = drawnSecond(ws.birth_s, ws.now_yr);
+    const epoch = drawnSecond(ws.birth_s, ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null));
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motion = null), (motionSay = null));
     orbitsWant = { s, sc, at, at_s: Number(at - epoch), epoch, key };
     pumpOrbits();
   });
@@ -863,7 +940,9 @@
     const s = session;
     void status.stack;
     if (!s) return;
-    s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
+    const sky = viewAnchor;
+    // A real-sky system counts its days from its own anchor (time.j2000_s), never a typed copy of it.
+    s.calendar().then((r) => (ws.pack_calendar = sky !== null ? skyCalendar(sky) : r.ok ? (r.calendar ?? null) : null));
   });
   const timed = $derived(withPhases(scene, phases, places, motions, motion));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
@@ -931,7 +1010,7 @@
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
   // The Run desk's clock (TM3a): the pack's calendar, as the ruler reads it; a step moves the campaign's now and the time
   // in view together, as stepping on the ruler does while it sits at now.
-  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? campaignYr));
+  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar, ws.birth_s ?? null) : defaultCalendar(ws.campaign_epoch_yr ?? campaignYr));
   function stepCampaign(yr: number) {
     ws.setTime(yr);
     ws.setCampaignNow?.(yr);
@@ -970,10 +1049,17 @@
         const marks = v.system === SOL ? solUnverified : null;
         const ids = v.system === SOL ? solIds : null;
         const read = marks?.size || ids?.size ? { ...read0, subjects: read0.subjects.map((x) => ({ ...x, ...(marks?.has(x.address) ? { stamps: [...x.stamps, "unverified"] } : {}), ...(ids?.has(x.address) ? { world_fixture: ids.get(x.address) } : {}) })) } : read0;
-        const now_yr = v.fresh ? read.now_yr : now;
-        if (v.fresh) ((v.fresh = false), shiftCampaign(read.now_yr));
+        // One epoch (RW17 part 2): the screen counts this system's time from its birth second, and a real-sky system's
+        // days from its anchor. The Solar System's door, opened fresh on a clock nobody has set, opens on the second it
+        // set the kernel's campaign now to: the device's present.
+        ws.birth_s = r.result.birth_s !== undefined ? BigInt(r.result.birth_s) : null;
+        viewAnchor = anchorOf(r.result.facts);
+        let present = read.now_yr;
+        if (v.fresh && skyPresent !== null) ((present = skyPresent), (skyPresent = null));
+        const shown = v.fresh ? present : now;
+        if (v.fresh) ((v.fresh = false), shiftCampaign(present));
         viewingSpec = r.result.spec ?? null;
-        mainScene = scene = { ...read, now_yr, span_yr: [read.span_yr[0], Math.max(read.span_yr[1], now_yr * 1.25)] };
+        mainScene = scene = { ...read, now_yr: shown, span_yr: [read.span_yr[0], Math.max(read.span_yr[1], shown * 1.25)] };
       });
       return;
     }
@@ -1010,12 +1096,15 @@
   // V13 part 2: systems adopted into the campaign this session, and the one on the chart (null: the campaign's own).
   let adoptedSystems = $state<{ system: string; title: string }[]>([]);
   let viewing = $state<{ system: string; title: string; fresh: boolean } | null>(null);
+  // The viewed system's real-sky anchor (time.j2000_s), and the screen's years the Solar System's door opens on.
+  let viewAnchor = $state<bigint | null>(null);
+  let skyPresent: number | null = null;
   let viewingSpec = $state<SystemSpec | null>(null);
   function showSystem(system: string) {
     const a = adoptedSystems.find((x) => x.system === system);
     ws.select(null);
     if (a) viewing = { ...a, fresh: true };
-    else ((viewing = null), (viewingSpec = null), shiftCampaign(base.now_yr));
+    else ((viewing = null), (viewingSpec = null), (ws.birth_s = null), (viewAnchor = null), shiftCampaign(base.now_yr));
     ws.revision++;
   }
   // The place line at every scale (U24, top-level design 2.1): a breadcrumb up, the list of what is nested below for
@@ -1263,9 +1352,18 @@
       .then((r) => (r.ok ? r.json() : null))
       .then((p) => (p ? readSol(p) : null))
       .catch(() => null));
+  // The sheet the campaign entered Sol from (kept with the save). Once entered, Sol's values live in the chronicle, so a
+  // newer sheet (more moons, ring structure, J2) does not reach a kept campaign by itself: the GM is told, and Start
+  // fresh brings today's. Fudge (alpha): a real top-up of changed catalogue values, keeping the GM's own edits, needs
+  // stable addresses for the sheet's rows (they are numbered in sheet order today); noted in the package log.
+  let solEntered = $state<string | null>(null);
+  let solNow = $state<string | null>(null);
+  const solStale = $derived(!!solNow && adoptedSystems.some((x) => x.system === SOL) && solEntered !== solNow);
+  let solStaleQuiet = $state(false);
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
+    solNow = solFingerprint(sheet);
     const laid = solBatches(sheet, SOL);
     solUnverified = new Set(laid.unverified.map((k) => k.split("#")[0]!));
     solIds = new Map(Object.entries(laid.addresses).map(([id, a]) => [a, id]));
@@ -1275,20 +1373,43 @@
   $effect(() => {
     if (viewing?.system === SOL && !solUnverified) solSheet().then(() => ws.revision++, () => {});
   });
+  // A kept campaign that holds Sol: read the sheet once to tell whether it was entered from this one.
+  $effect(() => {
+    if (solNow === null && adoptedSystems.some((x) => x.system === SOL)) solSheet().catch(() => {});
+  });
+  // A door entering a system holds the stage's heavy reads until it is in (ws.held).
+  let entering = $state(false);
   async function openSol() {
     const s = session;
     if (!s) return;
     if (!adoptedSystems.some((x) => x.system === SOL)) {
+      // Its own real-sky scene, opened fresh: it opens on today unless the campaign's clock has been set (a saved
+      // campaign, or a date the GM chose), which is left as it is.
+      const set = await s.campaignNow();
+      const clockFree = set.ok && set.at_s === undefined && ws.campaign_now_yr === ws.campaign_epoch_yr;
       whatNote = "Entering the Solar System from its catalogue…";
+      entering = true;
       try {
         const sheet = await solSheet();
         for (const b of solBatches(sheet, SOL).batches) {
           const r = await s.send({ kind: "set_values", edits: b.edits, at_yr: 0, evidence: "catalogued", source: solSourceText(sheet, b.source) });
           if (r.status !== "applied") throw new Error(r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master");
         }
+        // The date is part of entering it: the device's present on the universe clock, through the kernel's campaign
+        // now, written before the chart opens; the screen then opens at that second (read in the scene's effect).
+        const rs = clockFree ? await s.resolvedSystem(SOL) : null;
+        const anchor = rs?.ok ? anchorOf(rs.result.facts) : null;
+        if (rs?.ok && anchor !== null && rs.result.birth_s !== undefined) {
+          const at_s = universeSecondOf(Date.now(), anchor);
+          const r = await s.setCampaignNow(at_s);
+          if (r.ok) skyPresent = screenYears(BigInt(rs.result.birth_s), at_s);
+        }
       } catch (e) {
         return void (whatNote = `Could not open the Solar System: ${e instanceof Error ? e.message : String(e)}`);
+      } finally {
+        entering = false;
       }
+      solEntered = solNow;
       adoptedSystems = [...adoptedSystems, { system: SOL, title: SOL_TITLE }];
       whatNote = "The Solar System, as measured.";
     }
@@ -1301,6 +1422,9 @@
   // "Sol today" folder> opens the Solar System and lands in Roll call, with no start sheet. A linked place (#...) wins.
   const spaceflightDoor = packFolder() !== null && typeof location !== "undefined" && !parsePlaceHash(location.hash);
   let startOpen = $state(!spaceflightDoor && typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
+  $effect(() => {
+    ws.held = startOpen || entering;
+  });
   let spaceflightOpened = false;
   $effect(() => {
     if (!spaceflightDoor || spaceflightOpened || !session) return;
@@ -1310,20 +1434,45 @@
     });
   });
   const keptSave = readStored(`u:${base.universe.id}`).save;
-  const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
+  // Carry on goes back to where the last visit was (the newest remembered place), and says where: before, it opened the
+  // base system whatever the campaign was last looking at, so a GM working in the Solar System came back to Kestrel.
+  const carryTo = untrack(() => recent[0] ?? null);
+  const carryWhere = carryTo ? (carryTo.label ?? (carryTo.system === SOL ? SOL_TITLE : carryTo.system ? null : base.title)) : null;
+  const carryOn = keptSave ? { title: carryWhere ?? keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
+  // A place asked for before the campaign has opened (Carry on pressed early): gone to once it has.
+  let pendingPlace = $state<Place | null>(null);
+  $effect(() => {
+    const p = pendingPlace;
+    if (!p || !session) return;
+    untrack(() => {
+      pendingPlace = null;
+      goPlace(p);
+    });
+  });
   /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
   function someWorld(): string | undefined {
     const sel = scene.subjects.find((x) => x.address === ws.selection);
     if (sel && sel.kind !== "star") return sel.address;
     return systemOrder(scene).find((x) => x.kind === "planet")?.address;
   }
+  /** What a start-sheet action opens must be on the desk it lands on (TM9c): a screen's rail entries, a control's part. */
+  function startShows(a: StartAction, d: Desk): boolean {
+    if ("screen" in a) return screenOnDesk(SCREENS[a.screen] ?? {}, d);
+    if ("world" in a) return screenOnDesk(SCREENS[a.world] ?? {}, d);
+    if ("control" in a) return partShows(a.control, d);
+    return true;
+  }
   function fromStart(a: StartAction) {
     startOpen = false;
-    queueMicrotask(() => {
+    // "Carry on" keeps the desk last used; a verb lands on a desk that has what it opens (Explore first).
+    chooseDesk(deskFor(desk, (d) => startShows(a, d)));
+    // After the desk's parts are drawn, so a control such as Light is there to press.
+    void tick().then(() => {
       if ("door" in a) {
         if (a.door === "sol") void openSol();
         else if (a.door === "grow") openMake("generate");
         else if (a.door === "bring") openCampaign();
+        else if (a.door === "carry" && carryOn && carryTo) pendingPlace = carryTo;
       } else if ("desk" in a) chooseDesk(a.desk);
       else if ("screen" in a) (toSystem(), go(a.screen));
       else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
@@ -1789,8 +1938,8 @@
       "]": () => cycle(1),
       "[": () => cycle(-1),
       l: () => {
-        const i = lenses.findIndex((x) => x.id === lens.id);
-        chooseLens(lenses[(i + 1) % lenses.length]!.id);
+        const i = lensChoices.findIndex((x) => x.id === lens.id);
+        chooseLens(lensChoices[(i + 1) % lensChoices.length]!.id);
       },
       b: () => document.querySelector<HTMLElement>("[data-bookmarks] > button")?.click(),
       f: () => canFill && setFilled(!filled),
@@ -1808,8 +1957,9 @@
 
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
-{#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+{#if journeyOpen && session}<Journey {session} onclose={() => (journeyOpen = false)} />{/if}
+{#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} onfresh={openFresh} />{/if}
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-desk={desk} data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   {#if filled}
     <!-- The top edge: the pointer there brings the bar back over the picture. -->
     <div class="fill-edge" aria-hidden="true" onpointerenter={() => (peek = true)}></div>
@@ -1851,10 +2001,10 @@
         <span class="lens-k">See as</span>
         <select value={lens.id} onchange={(e) => { chooseLens(e.currentTarget.value); e.currentTarget.value = lens.id; }} aria-label="Lens" data-lens={lens.id}>
           {#each [["shipped", "For the job"], ["mine", "Your own"], ["pack", "From packs"], ["players", "As players see it"]] as [o, group] (o)}
-            {@const ls = lenses.filter((x) => x.origin === o)}
+            {@const ls = lensChoices.filter((x) => x.origin === o)}
             {#if ls.length}<optgroup label={group}>{#each ls as l (l.id)}<option value={l.id}>{l.label}{l.id === deskLensDefault(desk) ? " (this desk)" : ""}</option>{/each}</optgroup>{/if}
           {/each}
-          <option value="__make">{lens.origin === "mine" ? "Change this lens…" : "Make your own…"}</option>
+          {#if partShows("see-as", desk, "make")}<option value="__make">{lens.origin === "mine" ? "Change this lens…" : "Make your own…"}</option>{/if}
         </select>
       </label>
     {/if}
@@ -1866,6 +2016,7 @@
       <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new in Help"></span>{/if}</button>
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
+          <button type="button" data-more-fresh onclick={() => ((moreOpen = false), openFresh())} title="Alpha: forget this browser's remembered choices, or everything, and open as a new visitor">Start fresh… <small>alpha</small></button>
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
           <div class="depth-more" data-always={partShows("depth", desk) ? undefined : ""}><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
@@ -1882,6 +2033,7 @@
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
           <button type="button" data-more-help onclick={() => ((moreOpen = false), openHelp(newsDot ? "new" : "start"))}>Help and what's new{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new"></span>{/if} <kbd>?</kbd></button>
+          <button type="button" data-more-zoom onclick={() => ((moreOpen = false), (journeyOpen = true))} title="One continuous zoom from the cosmic web down to the galaxies around ours">Zoom in from the cosmic web</button>
           <button type="button" data-more-perf aria-pressed={perfOn} onclick={() => ((moreOpen = false), (perfOn = !perfOn))} title="Time every chunk of the app on this device, for the minimum spec">Performance readout <small>{perfOn ? "on" : "off"}</small></button>
         </div>
       {/if}
@@ -1976,13 +2128,17 @@
           {/if}
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
         </span>{/if}
+        {#if motionSay}<span class="motion-say" data-motion={motionSay.word} title={motionSay.text}>{motionSay.word === "measured" ? "As measured" : motionSay.word === "plausible" ? "Plausible" : "Partly measured"}</span>{/if}
         <span class="strip">
           {#if partShows("light", desk)}<LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />{/if}
           <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
         </span>
       </div>
     </footer>
+    {#if fetchNote}<p class="kept-note" role="status" data-explorers-fetch-note>{fetchNote} <button type="button" class="linkbtn" onclick={() => (fetchNote = null)}>OK</button></p>{/if}
     {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
+    <!-- One note at a time in the same place: the kept campaign's note first, then the old-Sol one. -->
+    {#if solStale && !solStaleQuiet && !keptNote}<p class="kept-note" role="status" data-sol-stale>The Solar System in this campaign {solEntered ? "was" : "may have been"} entered from an older catalogue, so newer data (such as Saturn's small moons and ring structure) is not in it. <button type="button" class="linkbtn" onclick={openFresh}>Start fresh…</button> · <button type="button" class="linkbtn" onclick={() => (solStaleQuiet = true)}>Keep it</button></p>{/if}
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
       {#if partShows("status-line", desk, "seat")}<span>Seat: {session.seat.label}</span>{/if}
@@ -2061,6 +2217,22 @@
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
   {#if makeOpen && session}<MakeSystem {session} start={makeStart} file={makeFile} view={ws.view} onview={setView} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={freshDialog} class="help seats-dialog" aria-labelledby="fresh-title" data-fresh>
+  <h2 id="fresh-title">Start fresh</h2>
+  <p class="hint">An alpha aid. This browser remembers your choices and your campaign between visits, so a new build can open looking as you left it.</p>
+  {#if freshWhich === "settings"}
+    <p role="alert">This forgets your remembered choices: view style, desk, depth, lenses, light, sound, theme and skipping the start sheet. Your campaign, where you were in it, and agent keys stay.</p>
+    <p class="row"><button type="button" data-fresh-settings onclick={freshSettings}>Reset settings</button> <button type="button" onclick={() => (freshWhich = null)}>Back</button></p>
+  {:else if freshWhich === "everything"}
+    <p role="alert">This forgets everything SSE4 keeps in this browser: the campaign and any worlds you made or changed in it, a set-aside copy, installed packs, your settings and your agent keys. It cannot be undone. Download a backup first to keep the campaign.</p>
+    <p class="row"><button type="button" onclick={saveFile}>Download a backup</button> <button type="button" data-fresh-everything onclick={freshEverything}>Clear everything</button> <button type="button" onclick={() => (freshWhich = null)}>Back</button></p>
+  {:else}
+    <p class="row"><button type="button" onclick={() => (freshWhich = "settings")}>Reset settings… <small>keeps your campaign</small></button></p>
+    <p class="row"><button type="button" onclick={() => (freshWhich = "everything")}>Clear everything… <small>campaign too</small></button></p>
+  {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -2499,6 +2671,14 @@
     white-space: nowrap;
     color: var(--sse-ink);
   }
+  .ruler-side .motion-say {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ruler-side .motion-say[data-motion="plausible"] {
+    font-style: italic;
+  }
   .strip {
     display: inline-flex;
     flex-wrap: wrap;
@@ -2687,6 +2867,22 @@
       flex-wrap: wrap;
       gap: 4px 12px;
       padding: 6px 12px;
+    }
+    /* The phone's Run frame (three desks design section 8, TM9b): the place line is its own row under the bar, the
+       stepper. */
+    .app[data-desk="run"] {
+      grid-template-rows: auto auto auto auto auto;
+    }
+    .app[data-desk="run"] > .bar {
+      flex-wrap: wrap;
+      row-gap: 0;
+      padding-top: 6px;
+      min-height: 56px;
+    }
+    .app[data-desk="run"] > .bar :global(.place.stepper) {
+      order: 10;
+      flex: 1 0 100%;
+      border-top: 1px solid var(--sse-rule);
     }
   }
 </style>

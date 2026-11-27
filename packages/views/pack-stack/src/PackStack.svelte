@@ -181,6 +181,7 @@
                     </li>
                   {/each}
                 </ul>
+                <a class="register" href="/fudges.html" target="_blank" rel="noopener" data-fudge-register>Every fudge in SSE4 (the register)</a>
               {/if}
               {#if rep.reproduction.length}
                 <div class="k">Reproduction checks</div>
@@ -262,6 +263,11 @@
   }
   .report a {
     color: var(--sse-accent-ink);
+  }
+  .register {
+    display: inline-block;
+    margin: 0 0 10px;
+    font-size: 12px;
   }
   h3 {
     margin: 0 0 6px;

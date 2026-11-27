@@ -185,10 +185,24 @@
       margin-top: 0;
     }
   }
-  /* Folded on the Run desk: the list lives in the view controls' button (RailMenu); a phone keeps the chips. */
-  @media (min-width: 761px) {
-    .rail.folded {
-      display: none;
+  /* Folded on the Run desk: the list lives in the view controls' button (RailMenu), on a phone too (design section 8). */
+  .rail.folded {
+    display: none;
+  }
+  /* In the folded list a phone keeps the words in a column, not the row of chips. */
+  @media (max-width: 760px) {
+    .rail.in-menu {
+      flex-direction: column;
+      align-items: stretch;
+      overflow: visible;
+      white-space: normal;
+      border-bottom: 0;
+    }
+    .rail.in-menu .group {
+      flex-direction: column;
+    }
+    .rail.in-menu h2 {
+      display: block;
     }
   }
   .rail.in-menu {

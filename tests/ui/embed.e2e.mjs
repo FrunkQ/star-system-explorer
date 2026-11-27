@@ -4,6 +4,7 @@
 // same link inside a tabletop the GM did not list is refused, with a reason.
 // The tabletop is played by a page on 127.0.0.1 framing the app on localhost.
 // Usage: node tests/ui/embed.e2e.mjs
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import assert from "node:assert/strict";
 import { desk as chooseDesk } from "./nav.mjs";

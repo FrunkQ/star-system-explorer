@@ -2,10 +2,11 @@
 // Usage: node tests/ui/party.e2e.mjs [--screens <dir>]. The Solar System with the Traveller pack: picking Earth makes
 // Earth the voyage's start; a far trader added at Earth becomes the party's ship; Voyages flies it from Earth to
 // Mars ("Fly … there" moves it) and offers "Land here", which opens Land on Mars. Voyages' names never overlap.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { desk as toDesk, go } from "./nav.mjs";
+import { desk as toDesk, go, pinClock } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -31,7 +32,7 @@ const noOverlap = async (page) => {
 };
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const errors = [];
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 });
   const gm = await context.newPage();

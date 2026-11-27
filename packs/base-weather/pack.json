@@ -23,6 +23,20 @@
      "source": "Drawing on top of the one climate (packs/base-climate): how wide the rising belt and the storm tracks are drawn and how far the belt follows the overhead sun. The Hadley edge and cell count come from the climate (Held and Hou 1980, Rhines 1975). Weights tuned to Earth (docs/fudges.md)."
     },
     "thin_cover": 0.1,
+    "clouds": {
+     "tau_floor": 2.0,
+     "tau_rise": 18.0,
+     "towers_from": 0.45,
+     "towers_span": 0.3,
+     "wind_rise_per_layer": 1.5,
+     "low_tau_share": [0.4, 0.3],
+     "low_cover_share": [0.8, 0.6],
+     "towers_cover_share": 0.5,
+     "high_cover_share": [0.3, 0.5],
+     "high_tau": [0.5, 1.0],
+     "thin_air_tau": 0.3,
+     "source": "How the zonal weather draws its cloud layers from the season's rain (W1, sse-weather rules.rs): optical depth tau_floor + tau_rise x the rain against the wettest band's (2 to 20, thin stratocumulus to deep convection), deep towers growing in from towers_from of the peak rain over towers_span, winds strengthening by wind_rise_per_layer per layer toward the jets. Pairs are [sinking air, rising air]: the low layer's share of the optical depth and of the cover, the high (cirrus) layer's cover and optical depth; the towers take towers_cover_share of the cover. Thin air draws only a cirrus-like frost haze of optical depth thin_air_tau. Drawing calibrations tuned by eye to Earth's cloud bands, not measured (fudge W-clouds)."
+    },
     "photochemical": [
      {
       "makes": "sulphuric acid",
@@ -514,6 +528,13 @@
       }
      ],
      "source": "Cloud classes by temperature after Sudarsky et al. 2000 (as the S6 cloud deck); zones carry thick high cloud, belts thin high cloud that shows the layers below; covers and optical depths are stand-ins (docs/fudges.md)."
+    },
+    "stirring": {
+      "weather_layer_bar": 1.0,
+      "eddy_area_share_per_octave": 0.25,
+      "eddy_life_turns": 2.0,
+      "fallback_particle_um": 5.0,
+      "source": "WS2 (design SSE4-stirred-clouds-design.md 3.3): the weather layer down to 1 bar is the mass the heat stirs (convention); eddies cover a quarter of each band's area per doubling of size, and one the shear does not tear lives two of its own turns; a deck whose particle radius the pack does not hold renews as if its particles were 5 um (all stand-ins, unverified). Their speed is the blocks sse.weather.eddy_power and sse.weather.cascade_speed, their fate in shear sse.weather.torn_by_shear."
     },
     "references": [
      {

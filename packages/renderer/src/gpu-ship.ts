@@ -18,11 +18,11 @@ export interface ShipView3D {
 }
 
 /** Build and draw a ship once; later draws only move the camera. `segments` comes from the device tier. */
-export async function mountShip(canvas: HTMLCanvasElement, l: ShipLayout, skin: SkinSpec, o: { segments: number; seed: number; /** An aerobraking pass at its hottest (ship-abilities passGlow): radiators folded away, the shield glowing at its face temperature, the bow shock ahead. */ pass?: { shield_k: number; standoff_rn: number; shock_curve_rn: number; glow: number } }): Promise<ShipView3D | null> {
+export async function mountShip(canvas: HTMLCanvasElement, l: ShipLayout, skin: SkinSpec, o: { segments: number; seed: number; /** See-through ground (the builder draws its fixed blueprint behind the model, ruling 14A.2): `draw` with ground "transparent". */ clear?: boolean; /** An aerobraking pass at its hottest (ship-abilities passGlow): radiators folded away, the shield glowing at its face temperature, the bow shock ahead. */ pass?: { shield_k: number; standoff_rn: number; shock_curve_rn: number; glow: number } }): Promise<ShipView3D | null> {
   let renderer: WebGPURenderer;
   try {
     // Kilometre radiators beside metre-scale modules need a logarithmic depth buffer to sort cleanly.
-    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false, logarithmicDepthBuffer: true });
+    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: o.clear === true, logarithmicDepthBuffer: true });
     await renderer.init();
   } catch {
     return null;
@@ -118,7 +118,7 @@ export async function mountShip(canvas: HTMLCanvasElement, l: ShipLayout, skin: 
       camera.lookAt(at);
       camera.updateProjectionMatrix();
       for (const m of materials) m.emissiveIntensity = v.glow === false ? 0 : ((m.userData.glow as number | undefined) ?? 0);
-      scene.background = new Color(v.ground);
+      scene.background = v.ground === "transparent" ? null : new Color(v.ground);
       renderer.render(scene, camera);
     },
     dispose() {

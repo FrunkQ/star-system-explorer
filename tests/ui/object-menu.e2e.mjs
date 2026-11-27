@@ -6,6 +6,7 @@
 // desk. Arrow keys move, Escape closes and gives the focus back. Open goes to the world. On a phone a held press opens
 // the menu as a sheet along the bottom. The picker's rows have the same menu, and "#" in its search finds a tag.
 // Opening and closing menus writes nothing.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -14,6 +14,7 @@ pub mod feed;
 pub mod galaxy;
 pub mod glow_mix;
 pub mod haloes;
+pub mod home;
 pub mod infall;
 pub mod ledger;
 pub mod model;
@@ -163,6 +164,8 @@ mod gh3_tests;
 mod gh4_tests;
 #[cfg(test)]
 mod gz0_tests;
+#[cfg(test)]
+mod gz12_tests;
 #[cfg(test)]
 mod web_light_tests;
 #[cfg(test)]

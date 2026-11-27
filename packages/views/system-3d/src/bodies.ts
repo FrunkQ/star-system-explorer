@@ -5,6 +5,7 @@
 import { KM_PER_AU, constant, fact, parentOf, primaryOf, subjectName, type Mark, type PlayerScene, type PlayerSubject, type SceneSubject, type SystemScene } from "../../../ui-contract/src/index.ts";
 import type { FrameNode } from "../../../renderer/src/index.ts";
 import type { SmallSample } from "./small-sample.ts";
+import type { SmallShape } from "../../../ui-contract/src/index.ts";
 
 export interface Body3D {
   id: string;
@@ -35,6 +36,8 @@ export interface Body3D {
   ring_kernel?: import("../../../renderer/src/index.ts").KernelRing;
   /** A belt member the kernel resolved for True (small-sample.ts): drawn in its own shape, with its coma and tails when active. */
   small?: SmallSample;
+  /** RW16a: a scene body below the round size, drawn as its own lump (kernel `small_shape`, ui-contract small-shape.ts). */
+  figure?: SmallShape;
   /** Where the kernel places it from its parent's centre (metres, the system's frame), when placed by date: shadows in True. */
   r_m?: [number, number, number];
   /** Its velocity from its parent (m/s, the same frame), when placed by date: a shadow's caster is read where the light passed it. */

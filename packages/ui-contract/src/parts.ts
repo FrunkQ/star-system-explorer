@@ -100,6 +100,10 @@ export interface Part {
   advance?: string;
   /** The advance's home level on the ladder. */
   level?: number;
+  /** The era a part with no first-flight year belongs to (a tech drive: when it first flew, or the first future era its
+   * ladder level reaches), and why. A part with a year falls in the era its year does. */
+  era?: string;
+  era_src?: string;
   /** Figures still wanted from a source. */
   to_read?: string[];
   credit?: string;
@@ -112,8 +116,25 @@ export interface PortSize {
   check?: "unverified";
 }
 
+/** An era of spaceflight (Alex, 27 Nov 2026: "not by age but by eras... a few future eras", "they can vary in
+ * length"): named by what changed, any length. Pack data, so a setting renames, moves or adds them. */
+export interface Era {
+  id: string;
+  name: string;
+  /** First and last year, inclusive; missing is open-ended. */
+  from?: number;
+  to?: number;
+  /** The base-tech ladder level the era reaches. */
+  level: number;
+  /** Not flown yet: its parts are predicted or a tech advance's. */
+  future?: boolean;
+  about: string;
+}
+
 /** base-parts `palette`. */
 export interface PartsPalette {
+  /** Eras of spaceflight, in order. */
+  eras?: Era[];
   port_sizes: PortSize[];
   parts: Part[];
   credits: string[];
@@ -208,6 +229,30 @@ export function partWarnings(p: Part, sizes: readonly PortSize[]): string[] {
   const room = shapeVolume(p.shape);
   if (vol !== undefined && room > 0 && vol > room * 1.001) out.push(`${p.name} is said to hold ${vol} m3 but its shape holds ${Math.round(room * 10) / 10} m3.`);
   for (const c of p.points) if ((c.place === "port" || c.place === "hull") && !sizes.some((s) => Math.abs(s.size_m - c.size_m) <= 1e-6 * s.size_m)) out.push(`${p.name}'s ${c.id} point (${c.size_m} m) is not on the port size standard, so only an adapter joins it.`);
+  return out;
+}
+
+/** The era a part belongs to: its own `era` if it names one, else the era its first-flight year falls in. A generic
+ * shape with neither belongs to none. */
+export function eraOf(p: Part, eras: readonly Era[]): Era | undefined {
+  if (p.era) return eras.find((e) => e.id === p.era);
+  if (p.year === undefined) return undefined;
+  return eras.find((e) => (e.from === undefined || p.year! >= e.from) && (e.to === undefined || p.year! <= e.to));
+}
+
+/** The palette offered in a year, grouped by era in order, generic shapes first. The picker reads exact years: a part
+ * with a year is offered once it has flown; a part with only an era once that era has begun. */
+export function paletteByEra(palette: PartsPalette, year: number): { era?: Era; label: string; parts: Part[] }[] {
+  const eras = palette.eras ?? [];
+  const from = (p: Part) => p.year ?? eraOf(p, eras)?.from ?? -Infinity;
+  const offered = palette.parts.filter((p) => from(p) <= year);
+  const out: { era?: Era; label: string; parts: Part[] }[] = [];
+  const generic = offered.filter((p) => !eraOf(p, eras));
+  if (generic.length) out.push({ label: "Shapes", parts: generic });
+  for (const e of eras) {
+    const ps = offered.filter((p) => eraOf(p, eras)?.id === e.id).sort((a, b) => from(a) - from(b) || a.name.localeCompare(b.name));
+    if (ps.length) out.push({ era: e, label: e.name, parts: ps });
+  }
   return out;
 }
 

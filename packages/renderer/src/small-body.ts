@@ -38,6 +38,9 @@ export interface SmallMesh {
   positions: Float32Array;
   normals: Float32Array;
   index: Uint32Array;
+  /** Longitude and latitude in the globe's own texture layout (three.js's sphere turned pole-up), so a world's own
+   * surface texture wraps the lump the way it wraps a globe. */
+  uvs: Float32Array;
 }
 
 /** FNV-1a of a string: the lumps' seed from the body's address. */
@@ -133,16 +136,20 @@ export function smallBodyMesh(f: SmallFigure, seed: string, segments = 64): Smal
   const R = meanRadius(f);
   const s = seedOf(seed);
   const pos = new Float32Array((nu + 1) * (nv + 1) * 3);
+  const uv = new Float32Array((nu + 1) * (nv + 1) * 2);
   for (let j = 0; j <= nv; j++) {
     const th = (Math.PI * j) / nv;
     for (let i = 0; i <= nu; i++) {
       const ph = (2 * Math.PI * i) / nu;
-      const d: Vec3 = [Math.sin(th) * Math.cos(ph), Math.sin(th) * Math.sin(ph), Math.cos(th)];
+      // The globe's own layout (three.js SphereGeometry turned pole-up): u runs with longitude from -x.
+      const d: Vec3 = [-Math.sin(th) * Math.cos(ph), -Math.sin(th) * Math.sin(ph), Math.cos(th)];
       const r = (figureRadius(f, d) / R) * (1 + f.relief * lumps(d, s));
       const k = 3 * (j * (nu + 1) + i);
       pos[k] = d[0] * r;
       pos[k + 1] = d[1] * r;
       pos[k + 2] = d[2] * r;
+      uv[2 * (j * (nu + 1) + i)] = i / nu;
+      uv[2 * (j * (nu + 1) + i) + 1] = 1 - j / nv;
     }
   }
   const idx: number[] = [];
@@ -178,7 +185,7 @@ export function smallBodyMesh(f: SmallFigure, seed: string, segments = 64): Smal
     normals[v + 1] = (out * normals[v + 1]!) / l;
     normals[v + 2] = (out * normals[v + 2]!) / l;
   }
-  const m = { key, positions: pos, normals, index };
+  const m = { key, positions: pos, normals, index, uvs: uv };
   meshes.set(key, m);
   return m;
 }
@@ -195,4 +202,21 @@ export function smallBodyColour(f: SmallFigure): string {
   const r = Math.min(255, Math.round(g * (1 + 0.12 * w)));
   const b = Math.round(g * (1 - 0.12 * w));
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+/**
+ * The lump as a radius along any unit direction (+z the spin axis), in units of its largest radius so it fits where a
+ * unit globe fits: the Body globe displaces its own mesh by it (RW16a). `mean` gives it in its mean radius instead. The same figure and seed as `smallBodyMesh`,
+ * so it is the same lump as in system True.
+ */
+export function smallBodyShape(f: SmallFigure, seed: string): { key: string; at: (d: Vec3) => number; mean: (d: Vec3) => number } {
+  const R = meanRadius(f);
+  const s = seedOf(seed);
+  const m = smallBodyMesh(f, seed);
+  let max = 0;
+  for (let k = 0; k < m.positions.length; k += 3) max = Math.max(max, Math.hypot(m.positions[k]!, m.positions[k + 1]!, m.positions[k + 2]!));
+  const top = max || 1;
+  const mean = (d: Vec3) => (figureRadius(f, d) / R) * (1 + f.relief * lumps(d, s));
+  // `at` fits the unit globe; `mean` is the same lump in its mean radius (Land lays the ground on it).
+  return { key: m.key, at: (d) => mean(d) / top, mean };
 }
