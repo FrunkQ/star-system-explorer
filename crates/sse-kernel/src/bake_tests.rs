@@ -162,3 +162,26 @@ fn a_whole_number_and_its_decimal_spelling_are_one_subject() {
         b["table"]["subject"].to_string()
     );
 }
+
+/// The contract golden keeps a baked line but not the physics hash, which
+/// every new block anywhere moves; it masks only a real hash.
+#[test]
+fn the_golden_masks_the_physics_hash_and_nothing_else() {
+    let mut k = kernel(&BASE);
+    let subject = disc(&mut k);
+    let line = k.handle_json(
+        &json!({"op": "bake", "table": "sse.light.disc", "subject": subject, "values": false})
+            .to_string(),
+    );
+    let v: Value = serde_json::from_str(&line).unwrap();
+    let hash = v["table"]["physics"].as_str().unwrap().to_string();
+    let masked = crate::contract::mask_ops(&line);
+    assert!(!masked.contains(&hash), "{masked}");
+    assert!(
+        masked.contains(r#""physics":"the physics in force""#),
+        "{masked}"
+    );
+    assert_eq!(masked.replace("the physics in force", &hash), line);
+    let short = line.replace(&hash, "abc");
+    assert_eq!(crate::contract::mask_ops(&short), short);
+}

@@ -36,7 +36,20 @@ const REACH = '{"type":"reach"';
 const REACH_FROM = '"follows":[';
 const REACH_MASK = '"lists":"one line per block in tests/golden/contract-reach.txt"';
 
+// A baked table names the physics in force by its hash, which every new or edited block moves: masked when it is
+// one (64 hex digits); that a new physics bakes afresh is checked natively (bake_tests).
+const BAKED = '{"type":"baked"';
+const PHYSICS_FROM = '"physics":"';
+const PHYSICS_MASK = "the physics in force";
+
 export function maskOps(line: string): string {
+  if (line.startsWith(BAKED)) {
+    const p = line.indexOf(PHYSICS_FROM);
+    if (p >= 0) {
+      const s = p + PHYSICS_FROM.length;
+      if (/^[0-9a-f]{64}"/i.test(line.slice(s, s + 65))) return line.slice(0, s) + PHYSICS_MASK + line.slice(s + 64);
+    }
+  }
   if (line.startsWith(REACH)) {
     const s = line.indexOf(REACH_FROM);
     if (s >= 0 && line.endsWith("]}")) return line.slice(0, s) + REACH_MASK + "}";
