@@ -7,6 +7,7 @@
 import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
+import { pinClock } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -25,7 +26,7 @@ const shot = async (page, n) => {
 const names = (loc) => loc.locator(".name").evaluateAll((e) => e.map((x) => x.textContent.trim()));
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const errors = [];
   const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
   gm.on("pageerror", (e) => errors.push(e.message));

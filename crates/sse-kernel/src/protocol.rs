@@ -4584,6 +4584,12 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         spec: Option<serde_json::Value>,
+        /// The universe second the system was born (time design section 4,
+        /// `system.birth_s`): a screen counting time from the star's birth
+        /// draws universe second `birth_s + age`. Absent with no spec.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        birth_s: Option<i64>,
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]

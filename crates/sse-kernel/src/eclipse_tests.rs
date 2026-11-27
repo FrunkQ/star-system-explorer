@@ -42,11 +42,24 @@ fn unit(a: V) -> V {
     mul(a, 1.0 / dot(a, a).sqrt())
 }
 
+std::thread_local! {
+    /// The anchor this test's Sky was entered with (each test is its own thread).
+    static ANCHOR: std::cell::Cell<i64> = const { std::cell::Cell::new(J2000_S) };
+}
 fn at_s(jd: f64) -> i64 {
-    crate::motion::at_s(jd, J2000_S)
+    crate::motion::at_s(jd, ANCHOR.with(|a| a.get()))
 }
 fn jd(at_s: i64) -> f64 {
-    crate::motion::jd(at_s, J2000_S)
+    crate::motion::jd(at_s, ANCHOR.with(|a| a.get()))
+}
+/// The universe's present to the second (base-cosmology `present_s`, time
+/// design ruling 12A.1): where J2000.0 sits for a universe whose home is Sol.
+fn present_s() -> i64 {
+    let j: serde_json::Value =
+        serde_json::from_str(include_str!("../../../packs/base-cosmology/pack.json")).unwrap();
+    j["provides"]["other"]["cosmology"]["params"]["present_s"]
+        .as_i64()
+        .unwrap()
 }
 
 struct Sky {
@@ -60,10 +73,21 @@ struct Sky {
 /// whether every one of them was measured.
 impl Sky {
     fn new() -> Sky {
-        Sky {
-            k: open_sol(&[]),
-            lunar: false,
-        }
+        Sky::anchored(J2000_S)
+    }
+    /// The Solar System with J2000.0 at universe second `anchor`.
+    fn anchored(anchor: i64) -> Sky {
+        ANCHOR.with(|a| a.set(anchor));
+        let k = if anchor == J2000_S {
+            open_sol(&[])
+        } else {
+            open_sol(&[(
+                "sun",
+                crate::motion::ANCHOR_FIELD,
+                serde_json::json!(anchor),
+            )])
+        };
+        Sky { k, lunar: false }
     }
     /// The Moon is read where it was when the light that reaches Earth's
     /// centre now passed it (about 1.3 s earlier): in the system's frame
@@ -251,7 +275,19 @@ fn hms(t: i64, day_jd: f64) -> String {
 }
 
 fn check_solar(day_jd: f64, td: (i64, i64, i64), gamma: f64, lat: f64, lon: f64, what: &str) {
-    let mut sky = Sky::new();
+    check_solar_on(J2000_S, day_jd, td, gamma, lat, lon, what)
+}
+
+fn check_solar_on(
+    anchor: i64,
+    day_jd: f64,
+    td: (i64, i64, i64),
+    gamma: f64,
+    lat: f64,
+    lon: f64,
+    what: &str,
+) {
+    let mut sky = Sky::anchored(anchor);
     let want = at_s(day_jd) + td.0 * 3600 + td.1 * 60 + td.2;
     let got = solar(&mut sky, jd(want));
     assert!(
@@ -387,4 +423,52 @@ fn outside_the_span_is_plausible() {
         moon < 3.0e5,
         "the Moon jumped {moon} m round Earth at the hand-over"
     );
+}
+
+/// On the universe's own axis (time design 12A.1, the condition for moving
+/// Sol there): with J2000.0 at the present, 13.8 Gyr of whole seconds from
+/// the origin, the 2024 eclipse still lands on its published second, and 64
+/// one-second steps give 64 distinct places for a measured body (Earth's
+/// group) and for a plain one (a moon with no series). A double at 4.35e17 s
+/// would give two.
+#[test]
+fn eclipse_on_time_at_the_universes_present() {
+    let present = present_s();
+    check_solar_on(
+        present,
+        2_460_408.5,
+        (18, 18, 29),
+        0.3431,
+        25.29,
+        -104.13,
+        "2024 Apr 8, J2000 at the present",
+    );
+    let mut sky = Sky::anchored(present);
+    let t0 = at_s(2_460_408.5);
+    let times: Vec<i64> = (0..64).map(|i| t0 + i).collect();
+    let r: serde_json::Value =
+        serde_json::from_str(&sky.k.handle_json(
+            &serde_json::json!({"op":"orbits_at","system":SOL,"at_s":times}).to_string(),
+        ))
+        .unwrap();
+    let bodies = r["bodies"].as_array().unwrap();
+    let distinct = |b: &serde_json::Value| {
+        let mut seen: Vec<String> = b["at"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| a["r_m"].to_string())
+            .collect();
+        seen.sort();
+        seen.dedup();
+        seen.len()
+    };
+    let earth = bodies.iter().find(|b| b["address"] == EARTH).unwrap();
+    assert_eq!(earth["at"][0]["motion"], "measured");
+    assert_eq!(distinct(earth), 64, "Earth's group");
+    let plain = bodies
+        .iter()
+        .find(|b| b["placed"] == true && b["motion"].is_null() && b["parent"] != SOL)
+        .expect("a moon with no series");
+    assert_eq!(distinct(plain), 64, "{}", plain["address"]);
 }

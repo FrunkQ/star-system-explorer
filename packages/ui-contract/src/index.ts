@@ -141,6 +141,7 @@ export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";
 export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.ts";
 export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";
 export * from "./orbits.ts";
+export * from "./sky-clock.ts";
 export { climateBelts, isExtrapolation, regimeWords } from "./climate.ts";
 export { HEAT_BOOK_FIELDS, HEAT_COLUMNS, HEAT_NODES, SUN_COLUMNS, ladderLengths, lifeLadder, lifePace, lifeWhy, SUN_NODES, booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatStepAt, heatWatts, heatWhen, heatWhy, sharePercent, sunBooks, sunColumn, sunRank, sunWhy, surfaceArea } from "./heat-flow.ts";
 export type { HeatBooks, HeatCaveat, HeatEnvelope, HeatEvent, HeatHistory, HeatStep, LifeRung, SunBooks, Sunlight } from "./heat-flow.ts";

@@ -31,7 +31,8 @@ Nothing is built. Golden notes are expectations. Released to build on Alex's yes
 |---|---|---|
 | TP0 the audit, the note in `handover/design/`, this file, the row in START-HERE | done, 26 Nov | this thread |
 | TP1 `Instant` in `sse-core` (`since`, `angle_since`, checked `from_years`); `orbits_at` on dates; the one-second test at 4.61 and 13.8 Gyr seen red first; shrink-only ledger `packages/TP1-float-dates.txt` (a cargo test). Log `packages/TP1.md`. TP1b: flares and the flight log on dates (one core golden line, `activity_read`); nav's own ops and the screens wait for TP3; prominences (PR 658) to follow | TP1 done 26 Nov (PR 661, no golden moved; PR 672 ledger catch-up); TP1b in review (PR 676) | kernel |
-| TP2 the anchors (`time.present_s`, `system.birth_s`); `dated`'s convention removed; Sol's reference date per question 2 | released; needs TP1, and PR 649 parts 2 and 3 merged; core golden slot | kernel |
+| TP2a first slice (RW17 part 2, thread "Make eclipses happen on time"): `present_s` stated in base-cosmology; `birth_s` reported by `resolved_system` for every system; the screens draw at `birth_s` + age; the Sol door opens on the device's present through `set_campaign_now` | built, see below | eclipses thread |
+| TP2 the rest: `time.present_s` on the root, `system.birth_s` as a written fact, `dated`'s convention removed, Sol moved onto `present_s` (list below) | released; needs TP2a, TP1b, TP3 and the Sol today anchor mapping; core golden slot | kernel |
 | TP3 the clock object `sse.clock/1`; the screens write `set_campaign_now`; `now_yr`, `campaign_now_yr`, `campaign_epoch_yr`, `clock_yr` become whole seconds; save migration | released; needs TP2; agree with CLK and three desks | chart room |
 | TP4 process declarations (shape, own time, anchor) and the pace ladder; op `pace_ladder`; shrink-only check | released; needs TP1; area `time` | kernel |
 | TP5 marches made path-free (grid from the star alone, full orbit state, checkpoints, exact-date write-back); two-legs test seen red first | released; needs TP1; core golden slot | kernel |
@@ -40,6 +41,24 @@ Nothing is built. Golden notes are expectations. Released to build on Alex's yes
 | TP8 follow, jump or window as one kernel rule; the supernova and fast nebula as jumps; the general window; the coordinator used | released; needs TP5; core golden slot | kernel |
 | TP10 every scale's future: galaxy rings and merger trees run forward, the web's horizon, late streams at cited rates, black hole ends (the note's 12B) | needs its own short design first (Fable, with the cosmos and galaxy owners), then TP9 | cosmos, galaxy |
 | TP9 time to the end: checked conversions; deep time past 292 billion years with one ordering; look-aheads and marks across the change-over; far eras as marks; until TP10, the galaxy past the present labelled and registered | released; needs TP1 (marks part needs TP6); core golden slot if the stored form changes | kernel |
+
+## TP2a, as built (RW17 part 2, 26 Nov 2026)
+
+Done:
+- `packs/base-cosmology` states `present_s` = 435,494,880,000,000,000 beside `now_gyr` (ruling 12A.1); `sse-cosmos` checks it is whole and equals `now_gyr` in Julian years. Nothing reads it yet.
+- `resolved_system` reports `birth_s` (whole seconds) for every system with a spec: its spec's birth year times the Julian year. A system read from facts whose star carries `time.j2000_s` now takes that date as its present (`spec_from_facts`), so Sol's birth year is J2000's year minus its age, not minus it from second 0.
+- The session reads `birth_s` from the reply's digits (a double would be 32 s coarse). `Workspace.birth_s`; `drawnSecond(birth_s, years)` and `screenYears` in `ui-contract/src/sky-clock.ts`. The chart's orbits, the orbit box and Roll call draw at `birth_s` + the screen's age; pack calendars are read on the same axis (`fromPackCalendar(pc, birth_s)`).
+- The Sol door, opened fresh on a clock nobody has set (kernel campaign now unset and no elapsed campaign time on the screen), opens on the device's present: UTC read onto TT with the cited leap-second list (`ui-contract/src/leap-seconds.json`, IERS Bulletin C), sent to the kernel's `set_campaign_now`. A saved campaign or a date the GM set is left alone. A real-sky system's calendar is Gregorian from its own anchor (`skyCalendar`), not a typed copy.
+- `session.setCampaignNow` is now a `record` intent (`set_campaign_now`, at_s as exact digits), so players replaying the GM's log move their campaign now too.
+- The chart says "As measured", "Plausible" or "Partly measured" from `orbits_at`'s `at[].motion`.
+- Proof for the move onto `present_s`: `eclipse_on_time_at_the_universes_present` puts Sol's anchor at `present_s` and gets the 2024 eclipse to its second and 64 distinct places in 64 one-second steps for a measured and a plain body. Seen red (39 s late) with the date turned into a double before the subtraction.
+- Browser tests that open the Solar System pin the device's date (`pinClock` in `tests/ui/nav.mjs`, 26 Nov 2026 12:00 UTC); press budgets unchanged.
+
+Left for TP2 and after (not done here):
+- Sol stays at 63,115,200,000 until TP1b (flight logs and flares on whole seconds), TP3 (the screens' clock in whole seconds: today a years double, about 30 s at 4.6 Gyr) and the Sol today pack's anchor mapping (its logs and calendar are typed at the 63e9 anchor). The move is then one edit in `scripts/build-base-sol.py` (`J2000_S` read from base-cosmology's `present_s`), plus reading the anchor fact exactly in the shell (`anchorOf` takes a safe integer only).
+- `time.present_s` on the universe root and `system.birth_s` as a written fact; `dated`'s convention and `system.now_year` (old saves only).
+- The kernel's clock still ages a system from its base age plus campaign time elapsed since the first `set_campaign_now`: Sol opened today counts as 4.5673 Gyr old today, not at J2000 (27 years apart).
+- Other screens that turn the screen's years into kernel seconds directly (`yearsToSeconds(now_yr)` for notes, reveals, the cutaway's sweep, the surface's sun): still on the star-age axis until TP3.
 
 ## Asks of running threads (sent to the coordinator 26 Nov 2026)
 
