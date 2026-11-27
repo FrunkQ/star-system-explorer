@@ -1207,7 +1207,7 @@ pub(crate) fn age_pair(
     let star = time.star.clone();
     let line = age_node(
         &node,
-        z.unwrap_or(0.02),
+        z.unwrap_or(crate::adopt::DEFAULT_Z),
         to_myr,
         &planets,
         &star,

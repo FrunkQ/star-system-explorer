@@ -21,7 +21,7 @@ fn two(m1: f64, m2: f64, a_au: f64, e: f64, to: f64, planets: &[PlanetIn]) -> Pa
     };
     age_node(
         &n,
-        0.02,
+        sse_formation::hurley::Z_SUN,
         to,
         planets,
         &star_set(),
@@ -178,7 +178,7 @@ fn a_pair_of_pairs_acts_as_mass_centres() {
     };
     let l = age_node(
         &n,
-        0.02,
+        sse_formation::hurley::Z_SUN,
         3000.0,
         &[],
         &star_set(),
