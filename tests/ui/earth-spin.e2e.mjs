@@ -26,7 +26,8 @@ try {
   await gm.goto(base);
   await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 20000 });
   await gm.locator('[data-door="sol"]').click();
-  await gm.locator('.area-chart .body[aria-label^="Jupiter,"]').first().waitFor({ timeout: 40000 });
+  // The door finishes when the chart says where the bodies came from (the system may open in any view style).
+  await gm.waitForSelector("[data-motion]", { timeout: 60000 });
   const hash0 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
   await view(gm, "View style", "True");
   await gm.waitForFunction(() => document.querySelector("[data-turned]")?.getAttribute("data-turned"), null, { timeout: 30000 });
