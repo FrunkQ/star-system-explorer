@@ -426,7 +426,14 @@ fn a_promoted_star_keeps_the_names_it_had() {
         &mut k,
         serde_json::json!({"op": "open_universe", "id": "aging", "seed": "aging"}),
     );
-    let a = "u:aging/halo:milky-way-like/cell:988_0_0/sys:f137879k0";
+    // A drawn star of the home galaxy's own cell at the Sun's place (GZ12:
+    // the galaxy, and so the address, is the universe's home halo's).
+    let cell = send(&mut k, serde_json::json!({"op": "star_cell"}));
+    let a = cell["cell"]["systems"][0]["address"]
+        .as_str()
+        .unwrap_or_else(|| panic!("no star in the home cell: {cell}"))
+        .to_string();
+    let a = a.as_str();
     let r = send(
         &mut k,
         serde_json::json!({"op": "promote_star", "address": a}),

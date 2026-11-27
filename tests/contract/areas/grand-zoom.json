@@ -1,0 +1,9 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "open_universe", "id": "gz", "seed": "gz"},
+ {"op": "home_galaxy"},
+ {"op": "set_home", "halo": "u:gz/cell:0.0.0/halo:0"},
+ {"op": "home_galaxy"},
+ {"op": "set_home"},
+ {"op": "set_home", "halo": "u:gz/halo:milky-way-like"}
+]

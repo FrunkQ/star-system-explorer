@@ -123,6 +123,8 @@ export interface GalaxyChart {
   green_bands: { t_gyr: number; habitable: [number, number] | null; complex: [number, number] | null }[];
   epochs: CosmicEpoch[];
   place: { local: PlaceLocal; green: PlaceGreen; ring: number } | null;
+  /** GZ12: set when the charted galaxy is the universe's home (kernel `home_galaxy`), else null. */
+  home?: HomeGalaxy | null;
   /** The halo's own mergers, with whether an edit took each out. */
   mergers: { index: number; t_gyr: number; ratio: number; removed: boolean }[];
   events: GalaxyEventMark[];
@@ -253,7 +255,27 @@ export function cubeShares(v: WebCube["volume"]): Record<"void" | "sheet" | "fil
   return out;
 }
 
-export const NAMED_HALOES: readonly { key: "dwarf" | "milky-way-like" | "group"; label: string }[] = [
+/** GZ12: the universe's home galaxy (kernel `home_galaxy`): one of the web's catalogued haloes. */
+export interface HomeGalaxy {
+  halo: string;
+  key: string;
+  cell: [number, number, number];
+  mass_msun: number;
+  position_mpc: [number, number, number];
+  /** "web": the kernel's best fit to the home wish; "gm": chosen with "Make this home". */
+  by: "web" | "gm";
+  fits_wish: boolean;
+  why: string[];
+  /** From `home_galaxy` (not the chart's copy): size (R_200) and circular speed (V_200) today, and the redshift it had half its mass by. */
+  r200_kpc?: number;
+  v200_kms?: number;
+  half_mass_z?: number;
+}
+
+// GZ12: "home" is the universe's own home galaxy, one of the web's catalogued haloes chosen by the kernel (or the GM);
+// the other three are reference galaxies, the median halo of their mass.
+export const NAMED_HALOES: readonly { key: "home" | "dwarf" | "milky-way-like" | "group"; label: string }[] = [
+  { key: "home", label: "Our galaxy" },
   { key: "dwarf", label: "A dwarf galaxy" },
   { key: "milky-way-like", label: "A Milky-Way-like galaxy" },
   { key: "group", label: "A galaxy group's central" },

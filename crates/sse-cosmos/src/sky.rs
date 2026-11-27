@@ -39,11 +39,9 @@ pub struct SkyParams {
     /// whose band correction is a little brighter than the bound still
     /// falls inside.
     pub radius_margin_mag: f64,
-    /// Y4: where our galaxy sits in the cosmic web (comoving Mpc; the
-    /// centre of region cell 0 by default), how far other galaxies are
-    /// looked for, and the radius inside which a web halo is taken to be
-    /// our own (fudge F37).
-    pub home_mpc: [f64; 3],
+    /// Y4: how far other galaxies are looked for from our own halo's place
+    /// (GZ12: the universe's home halo), and the radius inside which a web
+    /// halo is taken to be part of our own (fudge F37).
     pub galaxy_reach_mpc: f64,
     pub home_exclusion_mpc: f64,
     /// Y4 part 2: our galaxy's satellites.
@@ -72,7 +70,6 @@ impl Default for SkyParams {
             max_radius_pc: 4000.0,
             top_lsun: 1.0e6,
             radius_margin_mag: 0.5,
-            home_mpc: [4.0, 4.0, 4.0],
             galaxy_reach_mpc: 12.0,
             home_exclusion_mpc: 0.3,
             satellites: SatelliteParams::default(),
