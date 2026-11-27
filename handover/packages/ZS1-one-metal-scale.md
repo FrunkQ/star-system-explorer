@@ -27,7 +27,7 @@ Two solar metal scales met at the Hurley fits:
 
 ## After
 - The model Sun at 4,567 Myr: 0.952 L☉, 0.983 R☉, 5,749 K (was 1.134, 1.030, 5,869). The remaining 5 percent is
-  HPT00's own fit at its solar Z (their ZAMS Sun is 0.698 L☉), not tuned.
+  HPT00's own fit at its solar Z (their ZAMS Sun is 0.698 L☉), not tuned: fudge row F-S36.
 - Generated systems' stars are unchanged (the fits see the same Z): formation and time goldens move only in hashes and
   the stored Z. The Solar System's ageing (`time.json`) moves only its manifest and chronicle head; every event and
   the run digest are unchanged.
