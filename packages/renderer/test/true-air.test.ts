@@ -2,7 +2,8 @@
 // rocky world's clouds and haze lie over its ground.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { albedoOfColour, CHANNEL_NM, deepAirOf, deepReflectance, flowFace, nameKey, sheetColours, trueGiant, withAir, type SheetSubstance } from "../src/true-air.ts";
+import { albedoOfColour, CHANNEL_NM, CLOUD_ROW_NAMES, deepAirOf, deepReflectance, flowFace, forgetCloudRows, nameKey, readCloudRows, sheetColours, trueGiant, withAir, type SheetSubstance } from "../src/true-air.ts";
+import { readFileSync } from "node:fs";
 import type { TrueTexture } from "../src/true-look.ts";
 import type { WeatherCell, WeatherTile } from "../src/weather.ts";
 
@@ -260,4 +261,33 @@ test("a giant's surface tiles are its cloud deck's relief, so True draws its dec
   assert.ok(giant.said.some((s) => s.includes("deep air")), giant.said.join(" "));
   // Brown from its chromophore: red over blue.
   assert.ok(giant.tex.mean[0] > giant.tex.mean[2] + 20, `mean ${giant.tex.mean}`);
+});
+
+test("Venus's acid droplets are coloured from the sheet's measured n,k through the kernel, by the weather op's name", async () => {
+  const sheet = JSON.parse(readFileSync(new URL("../../../packs/base-reference/pack.json", import.meta.url), "utf8")).provides.reference;
+  // Every row cloud-rows.json names is on the sheet with a measured refractive index.
+  for (const [name, c] of Object.entries(CLOUD_ROW_NAMES)) {
+    const row = sheet.mixtures.find((m: { id: string }) => m.id === c.row) ?? sheet.substances.find((m: { id: string }) => m.id === c.row);
+    assert.ok(row?.optical?.refractive_index?.k?.length, `${name}: ${c.row} has n,k on the sheet`);
+    assert.ok(c.radius_um > 0, name);
+  }
+  forgetCloudRows();
+  const asked: unknown[] = [];
+  const k = {
+    lightThroughGas: async (p: unknown[]) => {
+      asked.push(...p);
+      return { ok: true as const, passages: [{ reflected: { reflectance_rgb: [0.997, 0.997, 0.996] } }] };
+    },
+  };
+  const drops = await readCloudRows(k);
+  const ask = asked[0] as { particles: { material: string; radius_m: number }[] };
+  assert.equal(ask.particles[0]!.material, "sulfuric-acid-75");
+  assert.ok(Math.abs(ask.particles[0]!.radius_m - 1.05e-6) < 1e-12);
+  // The weather op says "sulphuric acid"; the sheet's substances have no colour for it, the droplets do.
+  assert.equal(sheetColours(SHEET)("sulphuric acid"), null);
+  assert.deepEqual(sheetColours(SHEET, drops)("sulphuric acid"), [0.997, 0.997, 0.996]);
+  // A reader without the op leaves it uncoloured (drawn white and said), not invented.
+  forgetCloudRows();
+  assert.deepEqual(await readCloudRows({}), {});
+  forgetCloudRows();
 });

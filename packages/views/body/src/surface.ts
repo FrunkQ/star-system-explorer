@@ -1,7 +1,7 @@
 // A world's level-0 surface tiles and air, as the Body globe draws them, kept per system and body for the page's life
 // (they take about a second to build). Shared by the Body view and the body card's pictures, so a world is built once.
 import type { SurfaceTile, ViewContext } from "../../../ui-contract/src/index.ts";
-import { airFactsOf, airFromOptics, airRequest, readGroundOptics, readTrueFace, withGround, type AirFacts, type AirFlow, type FaceReader, type TrueTexture } from "../../../renderer/src/index.ts";
+import { airFactsOf, airFromOptics, airRequest, readGroundOptics, readStains, readTrueFace, stainTiles, withGround, type AirFacts, type AirFlow, type FaceReader, type TrueTexture } from "../../../renderer/src/index.ts";
 
 export type Surface = { tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null; /** The world's outermost layer as the kernel names it ("solid", "cloud-deck"...), when it says. */ kind?: string };
 
@@ -44,8 +44,10 @@ export function loadSurface(ctx: ViewContext, system: string, address: string): 
       facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
     }
     const kind = (r as { kind?: unknown }).kind;
-    // Bare ground in its measured colour where the kernel weathers it (renderer ground-optics.ts, VP3 part 5).
-    const tiles = withGround(r.tiles, await readGroundOptics(ctx.session));
+    // Bare ground in its measured colour where the kernel weathers it (renderer ground-optics.ts, VP3 part 5), then
+    // stained by what the kernel says coats it (TRUE4, stain-look.ts), as System True draws it.
+    const record = (r as { record?: unknown }).record;
+    const tiles = stainTiles(withGround(r.tiles, await readGroundOptics(ctx.session)), await readStains(ctx.session, record));
     const v: Surface = { tiles, regime: r.regime, refused: r.refused.length, air: facts, ...(typeof kind === "string" ? { kind } : {}) };
     cache.set(key, v);
     return v;
