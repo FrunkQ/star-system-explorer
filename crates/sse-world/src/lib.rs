@@ -572,11 +572,9 @@ impl WorldStack {
     /// Check the stack's physics with the atoms. Returns notes (what was
     /// computed) and problems (what physics says cannot be).
     pub fn physics_notes(&self) -> (Vec<String>, Vec<Issue>) {
-        let atoms = sse_atoms::registry();
+        // ER2: each block in force, with its settings in force.
         let eval = |id: &str, inputs: &[f64]| -> Option<f64> {
-            let a = atoms.get(id)?;
-            let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-            a.eval(inputs, &p).ok().map(|v| v[0])
+            sse_physics::run(id, inputs).ok().map(|v| v[0])
         };
         let mut notes = Vec::new();
         let mut problems = Vec::new();

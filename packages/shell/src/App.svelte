@@ -5,13 +5,13 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
-  import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
+  import { clearStored, download, fullSave, pruneKeptPacks, readStored, setAside, slimSave, writeStored } from "./campaign-store.ts";
   import YourData from "./YourData.svelte";
   import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
@@ -124,7 +124,8 @@
   ws.view = readViewChoice(loadPref("view"));
   function setView(c: ViewChoice) {
     ws.view = c;
-    savePref("view", JSON.stringify(c));
+    // Kept for this desk at this level (TM6), and as the latest choice anywhere, which a desk's first visit starts from.
+    for (const k of keepForDesk(desk, "view", deskLevelOf(railScale))) savePref(k, JSON.stringify(c));
   }
   ws.turned = () => {
     if (ws.view?.seen !== "free") setView({ ...ws.view!, seen: "free" });
@@ -422,7 +423,9 @@
       keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign given.`;
       return null;
     }
-    const { save, problem } = readStored(ROOT);
+    const stored = readStored(ROOT);
+    // Big packs are kept beside the save (CM0): put them back before anything reads it.
+    const { save, problem } = stored.save ? await fullSave(stored.save) : stored;
     if (problem) {
       setAside();
       recovery = true;
@@ -501,9 +504,9 @@
     saveTimer = setTimeout(async () => {
       const save = await currentSave();
       if (!save) return;
-      const bad = writeStored(save);
+      const bad = writeStored(await slimSave(save));
       saveProblem = bad ? `Not kept in this browser: ${bad}. Use Save campaign to download it.` : null;
-      if (!bad) savedAt = save.saved_at;
+      if (!bad) (savedAt = save.saved_at), void pruneKeptPacks();
     }, 600);
   });
   async function saveFile() {
@@ -607,9 +610,9 @@
     await offerFile(name, r.bytes, r.listing);
     openCampaign();
   }
-  function reopenOffered() {
+  async function reopenOffered() {
     if (!offered?.save) return;
-    const bad = writeStored(offered.save);
+    const bad = writeStored(await slimSave(offered.save));
     if (bad) return void (offered = { ...offered, problems: [`it could not be kept to reopen: ${bad}`], save: null });
     location.reload();
   }
@@ -657,8 +660,48 @@
   let depth = $state<Depth>(isDepth(storedDepth) ? storedDepth : "curious");
   function chooseDepth(d: Depth) {
     depth = d;
-    savePref("depth", d);
+    for (const k of keepForDesk(desk, "depth")) savePref(k, d);
   }
+  // Remembered per desk on this device (TM6, three desks design question 9): coming back to a desk brings back its
+  // depth, and at each level its view choice (View style, Seen from, Scale, HUD, Band). A desk or level visited for the
+  // first time starts from the latest choice made anywhere.
+  $effect(() => {
+    const d = recallForDesk(loadPref, desk, "depth").value;
+    untrack(() => {
+      if (isDepth(d) && d !== depth) depth = d;
+    });
+  });
+  // The ruler's span (TM6, top-level 12.1): each desk opens it on its own default at each level (Explore on human time at
+  // a system or world, Build on the whole life), and keeps the span the GM last chose there. No fallback to another
+  // desk's span: the desks differ on purpose.
+  $effect(() => {
+    const level = deskLevelOf(railScale);
+    const d = desk;
+    untrack(() => {
+      const kept = level ? loadPref(deskMemoryKey(d, "ruler-span", level)) : null;
+      ws.ruler_opens = { key: `${d}|${level}`, span: rulerOpens(d, level, kept) };
+    });
+  });
+  ws.setRulerSpan = (span) => {
+    const level = deskLevelOf(railScale);
+    if (level) savePref(deskMemoryKey(desk, "ruler-span", level), keepRulerSpan(span));
+  };
+  let viewAt = "";
+  $effect(() => {
+    const level = deskLevelOf(railScale);
+    const at = `${desk}|${level}`;
+    untrack(() => {
+      if (at === viewAt) return;
+      viewAt = at;
+      const v = readViewChoice(recallForDesk(loadPref, desk, "view", level).value);
+      // A view that opens on its own scale keeps it; the recalled scale is what comes back when it is left.
+      const opens = viewSpec?.opens?.scale;
+      if (opens && keptScale !== null) {
+        keptScale = v.scale ?? "readable";
+        ws.view = { ...v, scale: opens };
+      } else ws.view = v;
+    });
+  });
   $effect(() => {
     ws.depth = depth;
   });

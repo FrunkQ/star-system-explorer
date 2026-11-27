@@ -152,13 +152,14 @@ pub const EXOSPHERE_K: f64 = 1000.0; // not-sheet: a model setting (docs/fudges.
 pub const JEANS_KEEP: f64 = 30.0;
 
 /// Jeans parameter of a gas of `amu` at the exobase (taken at the surface
-/// radius), through the base-physics atom.
+/// radius), through the base-physics block in force (ER2).
 pub fn jeans(mass_kg: f64, radius_m: f64, amu: f64) -> Option<f64> {
-    let reg = sse_atoms::registry();
-    let a = reg.get("sse.atmosphere.jeans_parameter")?;
-    a.eval(&[mass_kg, radius_m, EXOSPHERE_K, amu], &[])
-        .ok()
-        .and_then(|v| v.first().copied())
+    sse_physics::run(
+        "sse.atmosphere.jeans_parameter",
+        &[mass_kg, radius_m, EXOSPHERE_K, amu],
+    )
+    .ok()
+    .and_then(|v| v.first().copied())
 }
 
 /// Mean molecular mass of an air by its main gas (atomic mass units).

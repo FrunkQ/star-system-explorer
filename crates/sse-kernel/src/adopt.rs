@@ -895,12 +895,7 @@ pub(crate) fn radius_from_makeup(mass: f64, r: &BTreeMap<String, Value>) -> Opti
         return None;
     }
     let (cmf, wf) = makeup_shares(r).unwrap_or((0.32, 0.0));
-    let atoms = sse_atoms::atoms();
-    let a = atoms
-        .iter()
-        .find(|a| a.decl().id == "sse.interior.rocky_radius")?;
-    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-    let out = a.eval(&[mass, cmf.min(1.0)], &p).ok()?;
+    let out = sse_physics::run("sse.interior.rocky_radius", &[mass, cmf.min(1.0)]).ok()?;
     Some(out[0] * (1.0 + 0.5 * wf)).filter(|x| x.is_finite() && *x > 0.0)
 }
 
@@ -1048,6 +1043,8 @@ fn bodies_from_facts(
                 .unwrap_or_else(|| makeup_shares(r).map_or(0.32, |m| m.0)),
             water_fraction: makeup_shares(r).map_or(0.0, |m| m.1),
             water_from_density: makeup_shares(r).is_none(),
+            // A moon's sunlight is its planet's distance from the star (HV2c).
+            star_au: (host != star).then_some(a_star / AU),
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,
@@ -1199,7 +1196,7 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
                 sse_formation::leftovers::Tilt::Isotropic => ("shell", None),
                 sse_formation::leftovers::Tilt::Rayleigh { sigma_deg } => ("disc", Some(sigma_deg)),
             };
-            serde_json::json!({
+            let mut j = serde_json::json!({
                 "shape": shape,
                 "i_sigma_deg": i_sigma_deg,
                 "address": c.address.to_string(),
@@ -1210,7 +1207,22 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
                 "a_max_au": c.a_max_au,
                 "largest_km": c.largest_km,
                 "over_1km": c.over_1km,
-            })
+            });
+            // A ring's world by its address (VP-R3: the scene hangs the ring on it; `ring_structure` reads it).
+            if c.kind == "ring" {
+                if let Some(i) = l
+                    .worlds
+                    .iter()
+                    .position(|w| Some(&w.id) == c.around.as_ref())
+                {
+                    if let Some(sys) = c.address.parent() {
+                        if let Ok(w) = sys.child("body", i as u64) {
+                            j["around_address"] = w.to_string().into();
+                        }
+                    }
+                }
+            }
+            j
         })
         .collect()
 }
