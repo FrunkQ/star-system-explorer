@@ -763,7 +763,7 @@ fn adopted_v3(ch: &Chronicle, system: &Address) -> bool {
 }
 
 /// A Julian year in whole seconds (the sheet's, exact).
-const YEAR_S: i64 = sse_core::sheet::YR_JULIAN as i64;
+use sse_core::time::YEAR_S;
 
 /// The real-sky anchor on a star's row (`time.j2000_s`, RW17), whole seconds.
 fn anchor_s(row: &BTreeMap<String, Value>) -> Option<i64> {
@@ -1261,7 +1261,7 @@ pub(crate) fn worlds_at(
     let now_s = all
         .get(system, "system.now_year")
         .and_then(as_f64)
-        .map(|y| y as i64 * (sse_core::sheet::YR_JULIAN as i64));
+        .map(|y| y as i64 * YEAR_S);
     // Once the one clock has moved this system (its own age shift, or campaign
     // time elapsed), "now" is its present on its own dates, not the latest
     // event: a kept look-ahead's future must not read as the present.
