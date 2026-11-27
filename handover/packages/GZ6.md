@@ -45,6 +45,12 @@ Owner: "Build galaxy charts and histories" (this package built by the thread "Bu
 - E2e: the web's threads appear in the neighbourhood under HUD; in True the neighbourhood reads 3 of 3 histories and
   draws their real faces. Screens: project files `sse4/handover-screens/GZ6-screens/` (`gz6-nearby-real-faces`).
 
+## Follow-up (26 Nov): physics out of the interface
+After an audit against "physics lives in the kernel's editable blocks":
+- The group's edge is now the formula block `sse.gravity.zero_velocity_radius` (Sandage 1986, `packs/base-physics/formulas/gravity.json`), which reads G through Look up; its reach is declared as following G. The kernel runs it in `galaxies.rs` `group_edge` when `sky_from_here` is asked with `satellite_paths`, and returns `galaxy_walk.group_edge`. It reads the block and the Sun's mass through the physics in force (ER1: `sse_physics::now().blocks()`, `sse_physics::constant("M_sun")`), so it adds no side door; with no stack loaded there is no sheet and the edge is left out. The interface's own copy (`zeroVelocityRadius`, `groupEdge`, G typed in) is gone; Nearby only reads it. In the browser the kernel gives the same 0.885 Mpc as the old sum.
+- Golden: `tests/golden/contract-reach.txt` gains one line on purpose (the new block follows G). Atom count 176 to 177 (P1 log).
+- Colour from B-V stays a display rule (fudge GZ-F14), now in one copy: `ui-contract/src/compare.ts` `tempFromBV`, read by the sky's stars, the chart's galaxy dots and True's type pictures.
+
 ## Honest limits
 - Play is this view's own playback of the stored orbits, not the universe clock: the rest of the screen stays at the
   campaign's date. The Run desk has no clock above the system (design 5.9); Play shows on every desk until the

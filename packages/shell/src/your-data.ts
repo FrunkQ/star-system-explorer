@@ -1,8 +1,8 @@
 // Your data (V3 gap 27): what this browser keeps for SSE4, asking it to keep it, clearing it all, and a diagnostic
 // file. Everything SSE4 keeps on a device is under the "sse4." prefix in local storage (the campaign, its set-aside
-// copy, settings, agent keys) plus the renderer's media store in IndexedDB. Every call says what happened instead of
+// copy, settings, agent keys) plus the renderer's media store and the big packs a campaign uses (campaign-store.ts) in IndexedDB. Every call says what happened instead of
 // throwing: private windows and blocked storage are normal.
-import { CAMPAIGN_KEY, SET_ASIDE_KEY } from "./campaign-store.ts";
+import { CAMPAIGN_KEY, PACK_DB, SET_ASIDE_KEY } from "./campaign-store.ts";
 import { roundTo } from "../../ui-contract/src/index.ts";
 
 const PREFIX = "sse4.";
@@ -121,7 +121,7 @@ export function unfinishedOpen(): string | null {
   return read(OPENING_KEY);
 }
 
-/** Forget everything SSE4 keeps on this device: the campaign, its set-aside copy, settings, agent keys and media. */
+/** Forget everything SSE4 keeps on this device: the campaign, its set-aside copy, settings, agent keys, media and kept packs. */
 export async function clearAll(): Promise<void> {
   for (const k of keys()) {
     try {
@@ -130,14 +130,15 @@ export async function clearAll(): Promise<void> {
       /* already gone */
     }
   }
-  await new Promise<void>((done) => {
-    try {
-      const r = indexedDB.deleteDatabase(MEDIA_DB);
-      r.onsuccess = r.onerror = r.onblocked = () => done();
-    } catch {
-      done();
-    }
-  });
+  for (const db of [MEDIA_DB, PACK_DB])
+    await new Promise<void>((done) => {
+      try {
+        const r = indexedDB.deleteDatabase(db);
+        r.onsuccess = r.onerror = r.onblocked = () => done();
+      } catch {
+        done();
+      }
+    });
 }
 
 /** Text a download can carry. */

@@ -307,7 +307,7 @@ fn read_light_with_a_tilt_matches_the_traced_picture() {
             }),
             ..Default::default()
         };
-        let (d, _) = emit::describe(&c, model).unwrap();
+        let (d, _) = emit::describe(&c, &model).unwrap();
         let chart = publish(&d, &model.table);
         // The picture's disc alone (its light also holds the hot flow's glow).
         let mut disc = LightDescription::new("disc");

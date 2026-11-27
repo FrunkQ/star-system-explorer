@@ -96,6 +96,8 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("gravity.distance", "distance from a mass's centre (m)"),
     ("gravity.clock_rate_hovering", "rate of a clock held still near a mass, against a far clock"),
     ("gravity.clock_rate_orbiting", "rate of a clock on a circular orbit near a mass, against a far clock"),
+    ("group.age", "age of the universe when a group's edge is found (s)"),
+    ("group.zero_velocity_radius", "radius round a group inside which galaxies have stopped moving apart and fall together (m)"),
     ("gravity.tide_per_metre", "difference in pull per metre along the line to a mass (s-2)"),
     ("feed.efficiency", "share of the rest energy of matter falling through a disc that comes out as light"),
     ("feed.eddington_luminosity", "light at which the push of radiation on infalling gas balances gravity (W)"),

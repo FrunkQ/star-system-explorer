@@ -30,7 +30,6 @@
 
 use sse_core::cbor::Value;
 use sse_core::Address;
-use sse_flow::Atom;
 use std::collections::BTreeMap;
 
 type Facts = BTreeMap<Address, BTreeMap<String, Value>>;
@@ -86,15 +85,12 @@ fn num(v: &Value) -> Option<f64> {
     }
 }
 
-/// Run one formula block by id: its outputs by port, or why it refused.
+/// Run one block in force by id (ER2: with its settings in force): its outputs by port, or why it refused.
 fn run(id: &str, inputs: &[f64]) -> Result<(Ports, Ports), String> {
-    let a = sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == id)
-        .ok_or_else(|| format!("{id} is not loaded"))?;
+    let a = sse_physics::block(id).ok_or_else(|| format!("{id} is not loaded"))?;
     let d = a.decl();
-    let p: Vec<f64> = d.params.iter().map(|p| p.default).collect();
-    let out = a.eval(inputs, &p).map_err(|e| e.0)?;
+    // ER2: the block in force; passing no settings runs those in force.
+    let out = a.eval(inputs, &[]).map_err(|e| e.0)?;
     let ins = d
         .inputs
         .iter()

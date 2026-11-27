@@ -188,6 +188,9 @@ pub fn trace(
             *slot = Some(s.clone());
         }
     };
+    // The shift block in force, looked up once for the whole picture.
+    let shift = sse_physics::block("sse.light.disc_shift")
+        .ok_or("formula block sse.light.disc_shift is missing")?;
     for (b, db) in b_steps(r_out * 1.02) {
         let area = 4.0 * b * db * dalpha * rg * rg;
         for j in 0..ANGLES {
@@ -199,7 +202,9 @@ pub fn trace(
             if t <= 0.0 {
                 continue;
             }
-            let g = run_block("sse.light.disc_shift", &[1.0, r, b, tilt, alpha])?[0];
+            let g = shift
+                .eval(&[1.0, r, b, tilt, alpha], &[])
+                .map_err(|e| format!("sse.light.disc_shift: {e}"))?[0];
             if g <= 0.0 {
                 continue;
             }
