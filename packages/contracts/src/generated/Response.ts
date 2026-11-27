@@ -76,7 +76,13 @@ from: unknown, to: unknown, change_ids: Array<string>, state_hash: string, recor
  * The date read, seconds; absent for "latest" (no date given and no
  * `system.now_year`).
  */
-at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], clouds?: unknown[], 
+at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, 
+/**
+ * The universe second the system was born (time design section 4,
+ * `system.birth_s`): a screen counting time from the star's birth
+ * draws universe second `birth_s + age`. Absent with no spec.
+ */
+birth_s?: bigint, surfaces: unknown[], tiles: unknown[], refused: unknown[], clouds?: unknown[], 
 /**
  * The system's frame in the galaxy: `{pole_l_deg, pole_b_deg,
  * zero_l_deg, zero_b_deg, node_l_deg, to_galactic (3x3 rows),

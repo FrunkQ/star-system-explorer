@@ -4,7 +4,7 @@
 // - otherwise the open campaign: its people (manifest entries) and its constructs' flight logs, read from the kernel.
 // The logs of the day's craft are fetched as they are needed; a pack's `logs/index.json` says where each one is (RS9
 // part 2); without it the feed looks in the pack's three log folders and cannot follow a docking by catalogue id.
-import { GREGORIAN, PERSON, inMemory, namesCarried, type CarriedName, type InMemory, entryFrom, indexRoll, logFrom, sourceFromCrews, sourceFromManifest, yearsToSeconds, type Calendar, type Json, type RecordRead, type RollIndex, type RollLog, type ViewContext } from "../../../ui-contract/src/index.ts";
+import { GREGORIAN, PERSON, inMemory, namesCarried, type CarriedName, type InMemory, entryFrom, indexRoll, logFrom, sourceFromCrews, sourceFromManifest, drawnSecond, type Calendar, type Json, type RecordRead, type RollIndex, type RollLog, type ViewContext } from "../../../ui-contract/src/index.ts";
 
 export interface RollFeed {
   ix: RollIndex;
@@ -146,7 +146,7 @@ export async function openCampaign(ctx: ViewContext, system: string): Promise<Ro
   const pc = ws.pack_calendar;
   const calendar: Calendar = pc
     ? { name: pc.name, epoch_s: pc.epoch_s, ...(pc.epoch_year !== undefined ? { epoch_year: pc.epoch_year } : {}), day_s: pc.day_s, year_days: pc.year_days, ...(pc.months?.length ? { months: pc.months } : {}), format: pc.format }
-    : { name: "Days", epoch_s: Number(yearsToSeconds(ws.campaign_epoch_yr ?? 0)), day_s: GREGORIAN.day_s, year_days: 365, format: "Year {year}, day {day}" };
+    : { name: "Days", epoch_s: Number(drawnSecond(ws.birth_s, ws.campaign_epoch_yr ?? 0)), day_s: GREGORIAN.day_s, year_days: 365, format: "Year {year}, day {day}" };
   const ix = indexRoll(sourceFromManifest(entries, logs, undefined));
   return { ix, calendar, from: "this campaign", allLogs: true, need: async () => null };
 }

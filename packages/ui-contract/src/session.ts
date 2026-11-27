@@ -1218,8 +1218,12 @@ export class Session implements ViewSession {
 
   async resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads resolved systems" };
-    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}), ...(branch ? { branch } : {}) } as never);
-    return r.type === "system_resolved" ? { ok: true, result: r as unknown as SystemResolved } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const text = await this.#serial(() => this.#client.callRaw(encodeRequest({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}), ...(branch ? { branch } : {}) })));
+    const r = JSON.parse(text) as Raw;
+    if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    // A birth second is past 2^53: read from the reply's own digits, not through a double (it would be 32 s coarse).
+    const birth = birthDigits(text);
+    return { ok: true, result: { ...(r as unknown as SystemResolved), ...(birth !== undefined ? { birth_s: birth } : {}) } };
   }
 
   async kernelVersion(): Promise<string> {
@@ -1234,6 +1238,12 @@ export class Session implements ViewSession {
   pending(): readonly Intent[] {
     return [...this.#pending];
   }
+}
+
+/** The top-level `birth_s` of a `system_resolved` reply, exact, from its digits (the kernel writes it after `spec`). */
+export function birthDigits(text: string): bigint | undefined {
+  const m = /"birth_s":(-?\d+)[,}]/.exec(text);
+  return m ? BigInt(m[1]!) : undefined;
 }
 
 async function call(client: KernelClient, request: unknown): Promise<Raw> {

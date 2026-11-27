@@ -5,6 +5,7 @@
 // lifts its orbit and its mark. The same on a phone, where the system is drawn above the key and the zoom.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
+import { pinClock } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -21,7 +22,7 @@ const boxes = (page, sel) => page.locator(sel).evaluateAll((es) => es.map((e) =>
 const hit = (a, b, m = 0) => a.x + m < b.x + b.w && b.x + m < a.x + a.w && a.y + m < b.y + b.h && b.y + m < a.y + a.h;
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const errors = [];
   for (const [vp, size] of [["desktop", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
     const page = await browser.newPage({ viewport: size, deviceScaleFactor: screens ? 2 : 1, ...(vp === "phone" ? { isMobile: true, hasTouch: true } : {}) });

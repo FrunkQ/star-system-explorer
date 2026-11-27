@@ -17,7 +17,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { desk, go } from "./nav.mjs";
+import { desk, go, pinClock } from "./nav.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -34,7 +34,7 @@ const shot = async (page, n) => {
 const addressOf = (page, name) => page.evaluate((n) => [...document.querySelectorAll(".insys [data-place]")].find((e) => e.getAttribute("aria-label") === n)?.getAttribute("data-place"), name);
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   const gm = await context.newPage();

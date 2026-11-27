@@ -37,9 +37,13 @@ export function defaultCalendar(epoch_yr: number): Calendar {
   return { id: "sse.calendar.standard", label: "Standard (days and years from the campaign's start)", epoch_yr, day_s: DAY_S, year_days: 365.25 };
 }
 
-/** A pack's calendar as the kernel serves it (`provides.other.calendar`), for the ruler. */
-export function fromPackCalendar(pc: { name: string; epoch_s: number; epoch_year?: number; day_s: number; year_days: number; months?: { name: string; days: number }[]; format: string }): Calendar {
-  return { id: `pack.calendar.${pc.name}`, label: pc.name, epoch_yr: pc.epoch_s / YEAR_S, ...(pc.epoch_year !== undefined ? { epoch_year: pc.epoch_year } : {}), day_s: pc.day_s, year_days: pc.year_days, ...(pc.months?.length ? { months: pc.months } : {}), format: pc.format };
+/**
+ * A pack's calendar as the kernel serves it (`provides.other.calendar`), for the ruler. Its epoch is a universe second;
+ * the ruler's years count from the viewed system's birth second (`birth_s`), so the epoch is taken from there.
+ */
+export function fromPackCalendar(pc: { name: string; epoch_s: number; epoch_year?: number; day_s: number; year_days: number; months?: { name: string; days: number }[]; format: string }, birth_s: bigint | null = null): Calendar {
+  const epoch_s = birth_s === null ? pc.epoch_s : Number(BigInt(Math.round(pc.epoch_s)) - birth_s);
+  return { id: `pack.calendar.${pc.name}`, label: pc.name, epoch_yr: epoch_s / YEAR_S, ...(pc.epoch_year !== undefined ? { epoch_year: pc.epoch_year } : {}), day_s: pc.day_s, year_days: pc.year_days, ...(pc.months?.length ? { months: pc.months } : {}), format: pc.format };
 }
 
 /** Problems with a calendar document, as sentences; empty when usable. */

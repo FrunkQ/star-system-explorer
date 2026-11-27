@@ -6,6 +6,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { pinClock } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -37,7 +38,7 @@ async function servePack(page) {
 let failed = false;
 try {
   for (const engine of engines) {
-    const browser = await pw[engine].launch();
+    const browser = pinClock(await pw[engine].launch());
     const errors = [];
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: shots ? 2 : 1 });
     page.on("pageerror", (e) => errors.push(e.message));

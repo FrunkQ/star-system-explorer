@@ -451,6 +451,11 @@ export interface SystemResolved {
   /** Per fact: its evidence label and the kind of event that set it (kernel 7c1ed04). */
   evidence?: Record<string, Record<string, { evidence: string; by: string }>>;
   spec?: import("./fate.ts").SystemSpec;
+  /**
+   * The universe second the system was born (time design section 4, `system.birth_s`), exact: a screen that counts
+   * time from the star's birth draws universe second `birth_s + age`. Absent when the kernel has no spec for it.
+   */
+  birth_s?: bigint;
   surfaces: { address: string; kind: string; t_surface_now_k: number; regime_label?: string; speculative: boolean }[];
   tiles: Json[];
   refused: Json[];

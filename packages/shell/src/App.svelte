@@ -51,7 +51,7 @@
   import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
-  import { MOTION_STEP_S, motionsFrom, orbitBodies, phasesFrom, placesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
+  import { MOTION_STEP_S, anchorOf, drawnSecond, motionWord, motionsFrom, orbitBodies, phasesFrom, placesFrom, screenYears, skyCalendar, universeSecondOf, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
@@ -787,6 +787,8 @@
   let places = $state<Map<string, [number, number, number]> | null>(null);
   // And how fast each moves (the same reply, a minute apart): a shadow's caster is read where the light passed it.
   let motions = $state<Map<string, [number, number, number]> | null>(null);
+  // Where the bodies were placed from (RW17): "as measured" inside a published motion series, "plausible" outside it.
+  let motionSay = $state<ReturnType<typeof motionWord>>(null);
   // Play asks ten times a second: one call at a time, and only the latest time waits.
   let orbitsFor = "";
   let orbitsBusy = false;
@@ -798,18 +800,19 @@
     orbitsBusy = true;
     w.s.orbitsAt(w.sc.system, [w.at, w.at - BigInt(MOTION_STEP_S)], orbitBodies(w.sc, w.epoch)).then((r) => {
       orbitsBusy = false;
-      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)));
+      if (r.ok && orbitsFor === w.key) ((phases = phasesFrom(r.bodies)), (places = placesFrom(r.bodies)), (motions = motionsFrom(r.bodies)), (motionSay = motionWord(r.bodies)));
       pumpOrbits();
     });
   }
   $effect(() => {
     const s = session;
     const sc = scene;
-    const at = yearsToSeconds(ws.now_yr);
-    const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
+    // One epoch (RW17 part 2): the screen's years count from the viewed system's birth second.
+    const at = drawnSecond(ws.birth_s, ws.now_yr);
+    const epoch = drawnSecond(ws.birth_s, ws.campaign_epoch_yr ?? base.now_yr);
     if (!s) return;
     const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
-    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null));
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null), (places = null), (motions = null), (motionSay = null));
     orbitsWant = { s, sc, at, epoch, key };
     pumpOrbits();
   });
@@ -818,7 +821,9 @@
     const s = session;
     void status.stack;
     if (!s) return;
-    s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
+    const sky = viewAnchor;
+    // A real-sky system counts its days from its own anchor (time.j2000_s), never a typed copy of it.
+    s.calendar().then((r) => (ws.pack_calendar = sky !== null ? skyCalendar(sky) : r.ok ? (r.calendar ?? null) : null));
   });
   const timed = $derived(withPhases(scene, phases, places, motions));
   // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
@@ -881,7 +886,7 @@
   const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
   // The Run desk's clock (TM3a): the pack's calendar, as the ruler reads it; a step moves the campaign's now and the time
   // in view together, as stepping on the ruler does while it sits at now.
-  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  const clockCalendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar, ws.birth_s ?? null) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   function stepCampaign(yr: number) {
     ws.setTime(yr);
     ws.setCampaignNow?.(yr);
@@ -920,10 +925,22 @@
         const marks = v.system === SOL ? solUnverified : null;
         const ids = v.system === SOL ? solIds : null;
         const read = marks?.size || ids?.size ? { ...read0, subjects: read0.subjects.map((x) => ({ ...x, ...(marks?.has(x.address) ? { stamps: [...x.stamps, "unverified"] } : {}), ...(ids?.has(x.address) ? { world_fixture: ids.get(x.address) } : {}) })) } : read0;
-        const now_yr = v.fresh ? read.now_yr : now;
-        if (v.fresh) ((v.fresh = false), shiftCampaign(read.now_yr));
+        // One epoch (RW17 part 2): the screen counts this system's time from its birth second, and a real-sky system's
+        // days from its anchor. The Solar System's door, opened fresh on a clock nobody has set, opens on the device's
+        // present, and the kernel's campaign now is set to the same second.
+        ws.birth_s = r.result.birth_s ?? null;
+        viewAnchor = anchorOf(r.result.facts);
+        let present = read.now_yr;
+        if (v.fresh && skyDateDue && viewAnchor !== null && ws.birth_s !== null) {
+          skyDateDue = false;
+          const at_s = universeSecondOf(Date.now(), viewAnchor);
+          present = screenYears(ws.birth_s, at_s);
+          void s.setCampaignNow(at_s);
+        }
+        const shown = v.fresh ? present : now;
+        if (v.fresh) ((v.fresh = false), shiftCampaign(present));
         viewingSpec = r.result.spec ?? null;
-        mainScene = scene = { ...read, now_yr, span_yr: [read.span_yr[0], Math.max(read.span_yr[1], now_yr * 1.25)] };
+        mainScene = scene = { ...read, now_yr: shown, span_yr: [read.span_yr[0], Math.max(read.span_yr[1], shown * 1.25)] };
       });
       return;
     }
@@ -960,12 +977,15 @@
   // V13 part 2: systems adopted into the campaign this session, and the one on the chart (null: the campaign's own).
   let adoptedSystems = $state<{ system: string; title: string }[]>([]);
   let viewing = $state<{ system: string; title: string; fresh: boolean } | null>(null);
+  // The viewed system's real-sky anchor (time.j2000_s), and whether the Solar System's door is to set the date.
+  let viewAnchor = $state<bigint | null>(null);
+  let skyDateDue = false;
   let viewingSpec = $state<SystemSpec | null>(null);
   function showSystem(system: string) {
     const a = adoptedSystems.find((x) => x.system === system);
     ws.select(null);
     if (a) viewing = { ...a, fresh: true };
-    else ((viewing = null), (viewingSpec = null), shiftCampaign(base.now_yr));
+    else ((viewing = null), (viewingSpec = null), (ws.birth_s = null), (viewAnchor = null), shiftCampaign(base.now_yr));
     ws.revision++;
   }
   // The place line at every scale (U24, top-level design 2.1): a breadcrumb up, the list of what is nested below for
@@ -1199,6 +1219,10 @@
     const s = session;
     if (!s) return;
     if (!adoptedSystems.some((x) => x.system === SOL)) {
+      // Its own real-sky scene, opened fresh: it opens on today unless the campaign's clock has been set (a saved
+      // campaign, or a date the GM chose), which is left as it is.
+      const set = await s.campaignNow();
+      skyDateDue = set.ok && set.at_s === undefined && ws.campaign_now_yr === ws.campaign_epoch_yr;
       whatNote = "Entering the Solar System from its catalogue…";
       try {
         const sheet = await solSheet();
@@ -1888,6 +1912,7 @@
           {/if}
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
         </span>{/if}
+        {#if motionSay}<span class="motion-say" data-motion={motionSay.word} title={motionSay.text}>{motionSay.word === "measured" ? "As measured" : motionSay.word === "plausible" ? "Plausible" : "Partly measured"}</span>{/if}
         <span class="strip">
           {#if partShows("light", desk)}<LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />{/if}
           <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
@@ -2354,6 +2379,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--sse-ink);
+  }
+  .ruler-side .motion-say {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ruler-side .motion-say[data-motion="plausible"] {
+    font-style: italic;
   }
   .strip {
     display: inline-flex;

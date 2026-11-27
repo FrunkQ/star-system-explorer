@@ -136,6 +136,7 @@ export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";
 export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.ts";
 export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";
 export * from "./orbits.ts";
+export * from "./sky-clock.ts";
 export { climateBelts, isExtrapolation, regimeWords } from "./climate.ts";
 export type { ClimateBelt, ClimateSummary } from "./climate.ts";
 export { bandWords, replayAt, replayClock, replayModel } from "./replay.ts";
