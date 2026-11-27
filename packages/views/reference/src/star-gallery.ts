@@ -134,7 +134,7 @@ export interface GalleryStar {
   cells: { across: number; size_m: number; life_s: number; scale_height_m: number; big: { count: number; size_m: number; life_s: number; dt: number } | null } | null;
 }
 
-interface Reader {
+export interface Reader {
   describeStar?: Describe;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
 }
@@ -165,11 +165,32 @@ export async function readGalleryStar(session: Reader, tile: StarTile): Promise<
   if (notYet) return { ...base, live: null, why: notYet };
   if (!(n.teff_k > 0 && n.radius_m > 0 && n.mass_kg > 0)) return { ...base, live: null, why: "the life line gives it no surface to draw" };
   // An address of its own, outside any campaign (the activity's draws are keyed by it): the class id, made safe.
-  const address = `u:star-gallery/star:${tile.id.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
-  const age_s = ask.age_yr * YEAR;
+  const surface = await readSurface(session, `u:star-gallery/star:${slug(tile.id)}`, n, ask.age_yr, true);
+  if (typeof surface === "string") return { ...base, live: null, why: surface };
+  const without = DRAWN_WITHOUT[n.phase];
+  return { ...base, ...surface, ...(without ? { without } : {}) };
+}
+
+/** An id made safe for an address segment. */
+export const slug = (id: string): string => id.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+/** A star's surface as drawn: the living star, its cells, and the clock that shows them. */
+export interface StarSurface {
+  live: LiveStar;
+  clock: number;
+  clockWhy: string;
+  cells: GalleryStar["cells"];
+}
+
+/**
+ * The activity of a star the life line describes, at `age_yr`: spin, spots and cells from its own mass, radius, light
+ * and temperature, under `address`. With `flares`, a year of its flares too (a card shows them; a life's frames do not).
+ */
+export async function readSurface(session: Reader, address: string, n: StarDescription["now"], age_yr: number, flares = false): Promise<StarSurface | string> {
+  const age_s = age_yr * YEAR;
   const star = { address, mass_kg: n.mass_kg, radius_m: n.radius_m, luminosity_w: n.luminosity_w, teff_k: n.teff_k, age_s };
-  const a = await session.readActivity({ stars: [star], at_s: age_s, window: { from_s: age_s - 2 * DAY, to_s: age_s + YEAR, min_energy_j: 1e24 } });
-  if (!a.ok) return { ...base, live: null, why: a.message };
+  const a = await session.readActivity({ stars: [star], at_s: age_s, ...(flares ? { window: { from_s: age_s - 2 * DAY, to_s: age_s + YEAR, min_energy_j: 1e24 } } : {}) });
+  if (!a.ok) return a.message;
   const one = a.stars[0] as unknown as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: LiveStar["flares"] } };
   const live: LiveStar = { address, teff: n.teff_k, mass: n.mass_kg, radius: n.radius_m, lum: n.luminosity_w, age_s, activity: one.activity, moment: one.moment, flares: one.flares?.flares ?? [] };
   const c = one.activity.convection as Record<string, Json> | null | undefined;
@@ -184,15 +205,15 @@ export async function readGalleryStar(session: Reader, tile: StarTile): Promise<
   // cells, it turns in half a minute. The clock is said on the card.
   const clock = cells ? cells.life_s / CELL_LIFE_ON_SCREEN_S : spin && spin > 0 ? spin / TURN_ON_SCREEN_S : STAR_SECONDS_PER_SECOND;
   const clockWhy = cells ? `one cell's life (${span(cells.life_s)}) every ${CELL_LIFE_ON_SCREEN_S} seconds` : spin && spin > 0 ? `one turn (${span(spin)}) every ${TURN_ON_SCREEN_S} seconds` : "six hours a second";
-  const without = DRAWN_WITHOUT[n.phase];
-  return { ...base, live, clock, clockWhy, cells, ...(without ? { without } : {}) };
+  return { live, clock, clockWhy, cells };
 }
 
 /** A span of time in words. */
 export function span(s: number): string {
-  if (s < HOUR) return `${Math.round((s / HOUR) * 60)} minutes`;
-  if (s < 2 * DAY) return `${Math.round(s / HOUR)} hours`;
-  if (s < 2 * YEAR) return `${Math.round(s / DAY)} days`;
+  const say = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
+  if (s < HOUR) return say(Math.max(1, Math.round((s / HOUR) * 60)), "minute");
+  if (s < 2 * DAY) return say(Math.round(s / HOUR), "hour");
+  if (s < 2 * YEAR) return say(Math.round(s / DAY), "day");
   return `${sayNumber(s / YEAR, 2)} years`;
 }
 

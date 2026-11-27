@@ -654,6 +654,9 @@
     .classes {
       grid-template-columns: minmax(0, 1fr);
     }
+    .gallery.wide {
+      grid-column: 1 / -1;
+    }
     .schemes {
       grid-auto-flow: column;
       grid-auto-columns: minmax(160px, max-content);

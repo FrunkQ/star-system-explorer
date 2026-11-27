@@ -10,7 +10,6 @@ use sse_chronicle::Chronicle;
 use sse_core::cbor::Value;
 use sse_core::quantity::consts::{JULIAN_YEAR, L_SUN, R_EARTH, R_SUN, STEFAN_BOLTZMANN};
 use sse_core::{math as m, Address};
-use sse_flow::Atom;
 use sse_formation::pipeline::SystemRun;
 use sse_nav::{Belt, NavBody, NavSettings, NavSystem, RouteRequest, Ship};
 use std::collections::BTreeMap;
@@ -390,12 +389,11 @@ pub(crate) fn radiators(
     } else {
         1.0
     };
-    let block = sse_atoms::formulas::loaded()
-        .iter()
-        .find(|a| a.decl().id == RADIATOR_BLOCK)
+    // ER2: the block in force, run with its settings in force (none passed).
+    let block = sse_physics::block(RADIATOR_BLOCK)
         .ok_or_else(|| err("eval", format!("{RADIATOR_BLOCK} is not loaded")))?;
     let d = block.decl();
-    let params: Vec<f64> = d.params.iter().map(|p| p.default).collect();
+    let params: [f64; 0] = [];
     let mut out = vec![];
     // Hottest first: the smallest panels.
     for (k, q) in l.heat_by_k.iter().rev() {

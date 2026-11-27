@@ -11,6 +11,7 @@ sse-core.workspace = true
 sse-flow.workspace = true
 sse-light = { path = "../sse-light" }
 sse-atoms.workspace = true
+sse-physics.workspace = true
 sse-nav.workspace = true
 sse-reference.workspace = true
 serde.workspace = true
