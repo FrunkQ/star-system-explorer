@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addProminences, prominenceColour, prominencesAt, prominenceShown, type Prominence } from "../src/star-prominences.ts";
+import { addProminences, prominenceColour, prominencePoints, prominencesAt, prominenceShown, type Prominence } from "../src/star-prominences.ts";
 import { turnAt, type LiveStar } from "../src/live-star.ts";
 import { drawStarNow } from "../src/star-now.ts";
 
@@ -88,4 +88,46 @@ test("the living star draws its prominences into the halo and says so", () => {
   const now = drawStarNow(face, halo, s, { t: s.age_s, clock: DAY / 4, span: DAY / 40, lat_deg: 0, disc_deg: 10 });
   assert.equal(now.limb, 2);
   assert.ok(now.words.some((w) => /2 prominences at the limb/.test(w) && /95 gauss/.test(w)), now.words.join(" | "));
+});
+
+test("an erupting prominence balloons out as it rises, feet on the surface: a bulb, not a rod, even edge-on", () => {
+  const t0 = turnAt(sun([]), 1e9);
+  // At the limb with its spine pointing at us: the loop is seen edge-on, the view that drew a rod before.
+  const p = prom({ lon_deg: 90 + t0, born_s: 1e9 - 10 * DAY, life_s: 10 * DAY, eruption: { at_s: 1e9, speed_m_s: 800e3 } });
+  const s = sun([p]);
+  const at = 1e9 + (2 * R_SUN) / 800e3;
+  const [up] = prominencesAt(s, at, 4);
+  assert.ok(up && up.erupting && up.h > 1.9, `${up?.h}`);
+  const pts = prominencePoints(up, R_SUN);
+  const r = (q: number[]) => Math.hypot(q[0]!, q[1]!, q[2]!);
+  // The axis's feet near the surface (within the rope's own thickness), its top risen by h.
+  assert.ok(Math.abs(r(pts[0]!.at) - 1) < 0.02, `${r(pts[0]!.at)}`);
+  assert.ok(Math.abs(Math.max(...pts.map((q) => r(q.at))) - (1 + up.h)) < 0.45 * up.h);
+  // Seen from us (x across, y up), as wide as a good share of its height (absolute: a rod is under a tenth).
+  const ys = pts.map((q) => q.at[1]!);
+  const xs = pts.map((q) => q.at[0]!);
+  const width = Math.max(...ys) - Math.min(...ys);
+  const tall = Math.max(...xs) - 1;
+  assert.ok(width > 0.4 * tall, `${width} across for ${tall} tall`);
+});
+
+test("a risen loop is drawn as one patch of light, not a row of beads", () => {
+  const t0 = turnAt(sun([]), 1e9);
+  for (const tilt_deg of [0, 90]) {
+    const p = prom({ lon_deg: 90 + t0, tilt_deg, born_s: 1e9 - 10 * DAY, life_s: 10 * DAY, eruption: { at_s: 1e9, speed_m_s: 800e3 } });
+    const s = sun([p]);
+    const at = 1e9 + (1.5 * R_SUN) / 800e3;
+    // Close in (150 px a radius), where the old 48 points along a risen arch lay further apart than their spots.
+    const W = 1200;
+    const o = { width: W, data: new Uint8ClampedArray(W * W * 4) };
+    addProminences(o, prominencesAt(s, at, 4), s.radius, 4, 0);
+    // Walk straight out from the limb along the equator (the row through the star's middle): the light is unbroken
+    // from the limb to the loop's top.
+    const y = W / 2;
+    const lit: boolean[] = [];
+    for (let x = W / 2 + 151; x < W; x++) lit.push(o.data[(y * W + x) * 4 + 3]! > 0);
+    let runs = 0;
+    for (let i = 0; i < lit.length; i++) if (lit[i] && !lit[i - 1]) runs++;
+    assert.ok(runs >= 1 && runs <= 2, `tilt ${tilt_deg}: ${runs} separate lit runs out from the limb`);
+  }
 });

@@ -527,8 +527,8 @@ export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, str
 }
 
 /**
- * The cell our galaxy sits in. The sky puts home at (4, 4, 4) Mpc in the web (F37) and a cell is 8 Mpc a side, so home
- * is in cell 0.0.0; if GZ12 moves home, this follows it.
+ * Where to look for home before the kernel's `home_galaxy` has answered: the middle cell. Since GZ12 home is one of the
+ * web's own haloes, within two cells of it; pass `HomeGalaxy.cell` to `cellName` once it is read.
  */
 export const HOME_CELL: readonly [number, number, number] = [0, 0, 0];
 
@@ -551,10 +551,11 @@ export function placeholderGalaxyName(address: string): string {
 }
 
 /**
- * A cell is named after the most important galaxy in it: ours where we live ("Milky Way neighbourhood"), otherwise its
+ * A cell is named after the most important galaxy in it: ours where we live (`homeCell`, the kernel's home galaxy's
+ * cell; "Milky Way neighbourhood"), otherwise its
  * biggest halo's galaxy, by its stand-in name until it has a real one. A cell with no halo drawn keeps its number.
  */
-export function cellName(index: readonly [number, number, number], biggestAddress: string | null | undefined): string {
-  if (index.every((v, i) => v === HOME_CELL[i])) return "Milky Way neighbourhood";
+export function cellName(index: readonly [number, number, number], biggestAddress: string | null | undefined, homeCell: readonly [number, number, number] | null = HOME_CELL): string {
+  if (homeCell && index.every((v, i) => v === homeCell[i])) return "Milky Way neighbourhood";
   return biggestAddress ? `${placeholderGalaxyName(biggestAddress)} neighbourhood` : `Cell ${index.join(" · ")}`;
 }

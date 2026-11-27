@@ -81,12 +81,16 @@ sources?: unknown,
 /**
  * Which weather block, `{id, version, level}`; default the rule block.
  */
-block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
+block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "read_light_paths", fixture?: string, bodies?: unknown[], table?: boolean, } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
 /**
  * The setting's range bands (a measure, RK11): each detection's
  * distance and range are labelled with them.
  */
-range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_bows", items: unknown[], } | { "op": "read_scattering", items: unknown[], } | { "op": "read_shadow_light", items: unknown[], } | { "op": "formation_record", system: string, } | { "op": "describe_star", mass_msun: number, age_yr: number, feh?: number, } | { "op": "fog_of_war", seats: unknown[], } | { "op": "read_limb", discs: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "hazard_map", asks: unknown[], fixture?: string, body?: string, ship?: unknown, line?: string, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, prominences?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
+range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_bows", items: unknown[], } | { "op": "age_pair", node: unknown, to_myr: number, z?: number, planets?: unknown[], } | { "op": "read_scattering", items: unknown[], } | { "op": "read_shadow_light", items: unknown[], } | { "op": "formation_record", system: string, } | { "op": "describe_star", mass_msun: number, age_yr: number, feh?: number, } | { "op": "fog_of_war", seats: unknown[], } | { "op": "read_limb", discs: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "hazard_map", asks: unknown[], fixture?: string, body?: string, ship?: unknown, line?: string, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, 
+/**
+ * A date in seconds: a whole number is read exactly (TP1).
+ */
+at_s?: number, window?: unknown, prominences?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
 /**
  * An adopted system: every planet read from its facts, each with a
  * `glance` (what holds off the wind, bubble size, shielded or not,

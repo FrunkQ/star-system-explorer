@@ -1,0 +1,1 @@
+G estimated {"block":"sse.star.ms_radius","law":"stellar homology, R ∝ G M at a fixed ignition energy (Adams 2008, doi:10.1088/1475-7516/2008/08/010)","reads":["G"]}

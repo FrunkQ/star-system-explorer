@@ -1155,6 +1155,402 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.activity.differential_rotation",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "latitude",
+     "letter": "phi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "share",
+     "letter": "w"
+    }
+   ],
+   "params": [
+    {
+     "param": "a",
+     "letter": "A",
+     "default": 14.713,
+     "range": [
+      5.0,
+      30.0
+     ],
+     "description": "equator's rate, degrees a day (Snodgrass and Ulrich 1990: 14.713); only the ratios matter"
+    },
+    {
+     "param": "b",
+     "letter": "B",
+     "default": -2.396,
+     "range": [
+      -10.0,
+      0.0
+     ],
+     "description": "sin² term, degrees a day (−2.396)"
+    },
+    {
+     "param": "c",
+     "letter": "C",
+     "default": -1.787,
+     "range": [
+      -10.0,
+      0.0
+     ],
+     "description": "sin⁴ term, degrees a day (−1.787)"
+    }
+   ],
+   "references": [
+    "Snodgrass, H. B. and Ulrich, R. K. 1990, Rotation of Doppler features in the solar photosphere, ApJ 351, 309: ω = A + B sin²φ + C sin⁴φ with A = 14.713, B = −2.396, C = −1.787 degrees a day. doi:10.1086/168467"
+   ],
+   "shown": "ω(φ)/ω_eq = (A + B sin²φ + C sin⁴φ) / A",
+   "equation": {
+    "name": "How fast a star's surface turns at a latitude, as a share of its equator's rate",
+    "formula": "s2 = sin(phi) * sin(phi)\nw = (A + B * s2 + C * s2 * s2) / A",
+    "inputs": {
+     "phi": {
+      "kind": "star.active_latitude",
+      "unit": "1",
+      "name": "latitude on the star"
+     },
+     "A": {
+      "kind": "model.rotation_equator",
+      "unit": "1",
+      "name": "equator's rate, degrees a day"
+     },
+     "B": {
+      "kind": "model.rotation_sin2",
+      "unit": "1",
+      "name": "sin² term"
+     },
+     "C": {
+      "kind": "model.rotation_sin4",
+      "unit": "1",
+      "name": "sin⁴ term"
+     }
+    },
+    "outputs": {
+     "w": {
+      "kind": "star.rotation_rate_share",
+      "unit": "1",
+      "name": "surface rate over the equator's"
+     }
+    },
+    "source": {
+     "text": "Snodgrass, H. B. and Ulrich, R. K. 1990, ApJ 351, 309",
+     "doi": "10.1086/168467",
+     "where": "the Doppler-feature fit"
+    },
+    "explain": {
+     "curious": "A star is not solid: its equator goes round faster than its poles. On the Sun the equator laps the poles about every three months, which drags spots and filaments into slanting streaks.",
+     "science": "The Sun's surface rate from Doppler features, used for every cool star scaled to its own equator's spin (a stand-in: Barnes et al. 2005 find the shear depends weakly on temperature). Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "phi": 0.0,
+      "w": 1.0
+     },
+     {
+      "phi": 0.5,
+      "w": 0.95615265903194
+     },
+     {
+      "phi": 1.2,
+      "w": 0.7668776563936451
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.butterfly_latitude",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "progress",
+     "letter": "psi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "latitude",
+     "letter": "phi"
+    }
+   ],
+   "models": {
+    "deg": {
+     "value": 0.017453292519943295,
+     "grade": "derived",
+     "source": "one degree is π/180 radians"
+    }
+   },
+   "params": [
+    {
+     "param": "start_deg",
+     "letter": "L0",
+     "default": 28.0,
+     "range": [
+      5.0,
+      80.0
+     ],
+     "description": "mean latitude of new spot groups as a cycle begins, degrees (Hathaway 2015: about 25 to 30)"
+    },
+    {
+     "param": "end_deg",
+     "letter": "L1",
+     "default": 8.0,
+     "range": [
+      0.0,
+      60.0
+     ],
+     "description": "mean latitude at the cycle's end, degrees (about 8)"
+    }
+   ],
+   "references": [
+    "Hathaway, D. H. 2015, The solar cycle, Living Reviews in Solar Physics 12, 4: spot groups appear near 25 to 30 degrees latitude early in a cycle and drift toward about 8 degrees by its end (Spörer's law, the butterfly diagram); groups follow Joy's law and Hale's polarity law. https://arxiv.org/abs/1502.07020"
+   ],
+   "shown": "φ = L0 − (L0 − L1) ψ, ψ the share of the cycle gone since its minimum",
+   "equation": {
+    "name": "Where on a star new spot groups appear as its cycle goes on",
+    "formula": "phi = (L0 - (L0 - L1) * clamp(psi, 0, 1)) * deg",
+    "inputs": {
+     "psi": {
+      "kind": "star.cycle_progress",
+      "unit": "1",
+      "name": "share of the cycle gone since its minimum"
+     },
+     "deg": {
+      "kind": "model.degree",
+      "unit": "1",
+      "name": "one degree"
+     },
+     "L0": {
+      "kind": "model.butterfly_start",
+      "unit": "1",
+      "name": "latitude as a cycle begins, degrees"
+     },
+     "L1": {
+      "kind": "model.butterfly_end",
+      "unit": "1",
+      "name": "latitude at its end, degrees"
+     }
+    },
+    "outputs": {
+     "phi": {
+      "kind": "star.active_latitude",
+      "unit": "1",
+      "name": "mean latitude of new spot groups"
+     }
+    },
+    "source": {
+     "text": "Hathaway, D. H. 2015, Living Reviews in Solar Physics 12, 4",
+     "url": "https://arxiv.org/abs/1502.07020",
+     "where": "the butterfly diagram (Spörer's law)"
+    },
+    "explain": {
+     "curious": "Early in each cycle the Sun's spots break out at mid latitudes; as the cycle goes on they appear nearer and nearer the equator. Plotted against time they make the famous butterfly wings.",
+     "science": "A straight line through the cycle as a stand-in for the measured curve (fudge register), with a spread drawn about it. Used for every star with a cycle; stars without one place their spots by a separate stand-in. Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "psi": 0.0,
+      "phi": 0.4886921905584123
+     },
+     {
+      "psi": 0.5,
+      "phi": 0.3141592653589793
+     },
+     {
+      "psi": 1.0,
+      "phi": 0.13962634015954636
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.joy_tilt",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "latitude",
+     "letter": "phi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "tilt",
+     "letter": "gamma"
+    }
+   ],
+   "models": {
+    "deg": {
+     "value": 0.017453292519943295,
+     "grade": "derived",
+     "source": "one degree is π/180 radians"
+    }
+   },
+   "params": [
+    {
+     "param": "scale_deg",
+     "letter": "k",
+     "default": 32.1,
+     "range": [
+      0.0,
+      90.0
+     ],
+     "description": "tilt at the pole, degrees (Stenflo and Kosovichev 2012: 32.1)"
+    }
+   ],
+   "references": [
+    "Stenflo, J. O. and Kosovichev, A. G. 2012, Bipolar magnetic regions on the Sun: global analysis of the SOHO/MDI data set, ApJ 745, 129: tilt angle γ ≈ 32.1° sin φ (Joy's law). https://arxiv.org/abs/1112.5226",
+    "Hathaway, D. H. 2015, The solar cycle, Living Reviews in Solar Physics 12, 4: spot groups appear near 25 to 30 degrees latitude early in a cycle and drift toward about 8 degrees by its end (Spörer's law, the butterfly diagram); groups follow Joy's law and Hale's polarity law. https://arxiv.org/abs/1502.07020"
+   ],
+   "shown": "γ = 32.1° sin|φ|, the leading spot nearer the equator",
+   "equation": {
+    "name": "How far a spot group's pair is tilted from east to west",
+    "formula": "gamma = k * deg * sin(abs(phi))",
+    "inputs": {
+     "phi": {
+      "kind": "star.active_latitude",
+      "unit": "1",
+      "name": "latitude on the star"
+     },
+     "deg": {
+      "kind": "model.degree",
+      "unit": "1",
+      "name": "one degree"
+     },
+     "k": {
+      "kind": "model.joy_scale",
+      "unit": "1",
+      "name": "tilt at the pole, degrees"
+     }
+    },
+    "outputs": {
+     "gamma": {
+      "kind": "star.active_region_tilt",
+      "unit": "1",
+      "name": "tilt of the pair, leading spot toward the equator"
+     }
+    },
+    "source": {
+     "text": "Stenflo, J. O. and Kosovichev, A. G. 2012, ApJ 745, 129",
+     "url": "https://arxiv.org/abs/1112.5226",
+     "where": "Joy's law fit"
+    },
+    "explain": {
+     "curious": "Spots come in pairs of opposite magnetic sign. The leading one sits a little nearer the equator, and more so the further from the equator the pair is: the twist the star's spin gives the rising field.",
+     "science": "Joy's law from magnetograms of the Sun, used for every star with spots (a stand-in for other stars). Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "phi": 0.0,
+      "gamma": 0.0
+     },
+     {
+      "phi": 0.3,
+      "gamma": 0.16556539965850398
+     },
+     {
+      "phi": -0.3,
+      "gamma": 0.16556539965850398
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.spot_group_life",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "area",
+     "letter": "A"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "life",
+     "letter": "T"
+    }
+   ],
+   "constants": {
+    "day": "sheet/day"
+   },
+   "params": [
+    {
+     "param": "decay_msh_day",
+     "letter": "W",
+     "default": 10.0,
+     "range": [
+      1.0,
+      100.0
+     ],
+     "description": "decay rate, millionths of a hemisphere a day (Petrovay and van Driel-Gesztelyi 1997: about 10)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "area",
+     "says": "area"
+    }
+   ],
+   "references": [
+    "Petrovay, K. and van Driel-Gesztelyi, L. 1997, Making sense of sunspot decay. I. Parabolic decay law and Gnevyshev-Waldmeier relation, Solar Physics 176, 249: a group's lifetime is about its peak area over W ≈ 10 millionths of a hemisphere a day. doi:10.1023/A:1004988123265"
+   ],
+   "shown": "T = A / W, W ≈ 10 millionths of a hemisphere a day",
+   "equation": {
+    "name": "How long a spot group lives for its size",
+    "formula": "T = A / W * day",
+    "inputs": {
+     "A": {
+      "kind": "star.spot_group_area",
+      "unit": "1",
+      "name": "a spot group's peak area, millionths of a hemisphere"
+     },
+     "day": {
+      "kind": "constant.day",
+      "unit": "s",
+      "name": "one day"
+     },
+     "W": {
+      "kind": "model.spot_decay_rate",
+      "unit": "1",
+      "name": "decay rate, millionths of a hemisphere a day"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "star.spot_group_life",
+      "unit": "s",
+      "name": "how long the group lives"
+     }
+    },
+    "source": {
+     "text": "Petrovay, K. and van Driel-Gesztelyi, L. 1997, Solar Physics 176, 249",
+     "doi": "10.1023/A:1004988123265",
+     "where": "the Gnevyshev-Waldmeier relation"
+    },
+    "explain": {
+     "curious": "Big spots last longer: a small spot is gone in a few days, a huge group can last for months.",
+     "science": "The Gnevyshev-Waldmeier rule: spots shrink at a steady rate in area, so life is peak area over that rate. Used for every star's spot groups (a stand-in for other stars). Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "A": 100.0,
+      "T": 864000.0
+     },
+     {
+      "A": 1000.0,
+      "T": 8640000.0
+     }
+    ]
+   }
   }
  ]
 }

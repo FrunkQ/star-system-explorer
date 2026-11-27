@@ -95,12 +95,28 @@ pub(crate) fn to_ecliptic(p: V3, node: f64, argp: f64, inc: f64) -> V3 {
 
 /// Position and velocity at `dt_s` after the elements' reference time.
 pub fn state(el: &Elements, mu: f64, dt_s: f64) -> (V3, V3) {
+    state_turned(el, mu, |n| n * dt_s)
+}
+
+/// As `state`, at date `t` for elements dated `epoch`: the angle turned is
+/// formed exactly from the whole-second dates (TP1), so a position moves
+/// every second however far the date is from the epoch.
+pub fn state_at(
+    el: &Elements,
+    mu: f64,
+    t: sse_core::time::Instant,
+    epoch: sse_core::time::Instant,
+) -> (V3, V3) {
+    state_turned(el, mu, |n| t.angle_since(epoch, n))
+}
+
+fn state_turned(el: &Elements, mu: f64, turned: impl Fn(f64) -> f64) -> (V3, V3) {
     let a = el.a_m;
     let e = el.e.clamp(0.0, 0.99);
     let n = m::sqrt(mu / (a * a * a));
     let varpi = el.varpi_deg.to_radians();
     let node = el.node_deg.to_radians();
-    let mean = el.mean_longitude_deg.to_radians() - varpi + n * dt_s;
+    let mean = el.mean_longitude_deg.to_radians() - varpi + turned(n);
     let big_e = eccentric_anomaly(mean, e);
     let (ce, se) = (m::cos(big_e), m::sin(big_e));
     let b = m::sqrt(1.0 - e * e);

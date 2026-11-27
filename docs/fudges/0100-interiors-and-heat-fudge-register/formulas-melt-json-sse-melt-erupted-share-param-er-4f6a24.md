@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why (as the code/log says) | Real physics to replace it | Status |
+|---|---|---|---|---|
+| formulas/melt.json `sse.melt.erupted_share` param `erupted_share` = 0.2 (HF4b.0) | One fixed share of the melt reaches the surface; the rest freezes in the lid | About 5 parts intruded to 1 erupted in long-term magma budgets (White et al. 2006, unverified); no model yet of whether melt can rise through its column | The magma's own head: melt erupts where its buoyancy against the rock column lifts it to the surface (HF8) | Stand-in (HF4b.0; nothing reads it until HF4b.2) |

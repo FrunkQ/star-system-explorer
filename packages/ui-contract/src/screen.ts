@@ -130,6 +130,11 @@ export function railOf(screens: Readonly<Record<string, Pick<ScreenDoc, "rail">>
   })).filter((g) => g.lines.length);
 }
 
+/** Whether a screen is on a desk: some rail entry of it is listed there. A screen with no rail entry is on every desk. */
+export function screenOnDesk(doc: Pick<ScreenDoc, "rail">, desk: Desk): boolean {
+  return !doc.rail?.length || doc.rail.some((r) => shows(r, desk));
+}
+
 /** The scales a screen is on, in rail order. */
 export function scalesOf(doc: Pick<ScreenDoc, "rail">): RailScale[] {
   return RAIL_SCALES.filter((s) => (doc.rail ?? []).some((r) => r.scale === s));

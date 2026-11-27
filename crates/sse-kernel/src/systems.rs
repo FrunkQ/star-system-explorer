@@ -265,6 +265,58 @@ pub(crate) fn read_light(fixture: Option<&str>, bodies: Option<Vec<serde_json::V
     })
 }
 
+/// Light near a mass (XO2, XO3): design 3.4's fixtures or given bodies.
+pub(crate) fn read_light_paths(
+    fixture: Option<&str>,
+    bodies: Option<Vec<serde_json::Value>>,
+    table: bool,
+) -> Out {
+    let bad = |e: String| err("bad_light_paths", e);
+    let (source, asks) = match (fixture, bodies) {
+        (_, Some(list)) => {
+            let mut out = vec![];
+            for (i, v) in list.into_iter().enumerate() {
+                out.push(
+                    serde_json::from_value::<sse_light::paths::PathsAsk>(v)
+                        .map_err(|e| bad(format!("body {i}: {e}")))?,
+                );
+            }
+            ("given".to_string(), out)
+        }
+        (Some("black-holes"), None) => (
+            "fixture:black-holes".to_string(),
+            sse_light::scenario::fixtures(),
+        ),
+        (f, None) => {
+            return Err(bad(format!(
+                "no light paths for {}; fixtures: black-holes, or give bodies",
+                f.unwrap_or("(nothing asked)")
+            )))
+        }
+    };
+    let light = &sse_light::emit::Model::base().table;
+    let mut paths = vec![];
+    for (i, a) in asks.iter().enumerate() {
+        let p = sse_light::paths::read(a, light).map_err(|e| bad(format!("body {i}: {e}")))?;
+        paths.push(serde_json::to_value(p).expect("plain data"));
+    }
+    let bend_table = table.then(|| {
+        let t = sse_gravity::scenario::table();
+        serde_json::json!({
+            "hash": t.hash().hex(),
+            "rows": sse_gravity::bend::ROWS,
+            "cols": sse_gravity::bend::COLS,
+            "row_length": sse_gravity::bend::COLS + 4,
+            "flat": t.flat(),
+        })
+    });
+    Ok(Response::LightPathsRead {
+        source,
+        paths,
+        bend_table,
+    })
+}
+
 fn parse_list<T: serde::de::DeserializeOwned>(
     what: &str,
     v: Option<Vec<serde_json::Value>>,
@@ -966,11 +1018,12 @@ pub(crate) fn read_photometry(stars: Vec<serde_json::Value>, bands: Vec<String>)
 pub(crate) fn read_activity(
     stars: Vec<serde_json::Value>,
     seed: Option<&str>,
-    at_s: Option<f64>,
+    at_s: Option<sse_core::time::Seconds>,
     window: Option<serde_json::Value>,
     prominences: Option<serde_json::Value>,
 ) -> Out {
     use sse_activity::*;
+    use sse_core::time::Instant;
     #[derive(serde::Deserialize)]
     struct Item {
         #[serde(flatten)]
@@ -980,8 +1033,10 @@ pub(crate) fn read_activity(
     }
     #[derive(serde::Deserialize)]
     struct Window {
-        from_s: f64,
-        to_s: f64,
+        #[serde(deserialize_with = "sse_core::time::seconds")]
+        from_s: Instant,
+        #[serde(deserialize_with = "sse_core::time::seconds")]
+        to_s: Instant,
         #[serde(default = "min_e")]
         min_energy_j: f64,
     }
@@ -1008,7 +1063,12 @@ pub(crate) fn read_activity(
         let it: Item =
             serde_json::from_value(v).map_err(|e| err("bad_activity", format!("star {n}: {e}")))?;
         let a = activity(&seed, &it.star, &set).map_err(|e| err("bad_activity", e))?;
-        let mo = moment(&a, at_s.unwrap_or(it.star.age_s), &set);
+        let age = match at_s {
+            Some(t) => t.0,
+            None => Instant::from_seconds_f64(it.star.age_s)
+                .map_err(|e| err("bad_activity", format!("star {n}: age: {e}")))?,
+        };
+        let mo = moment(&a, age, &set);
         let fl = match &window {
             Some(w) => Some(
                 flares(
@@ -1037,6 +1097,10 @@ pub(crate) fn read_activity(
             )
             .map_err(|e| err("bad_activity", e))?;
             one["prominences"] = serde_json::to_value(p).expect("plain data");
+            // SG7: the active regions over the same span (the spots, and where flares and prominences sit).
+            let g = regions::regions(&seed, &a, w.from_s, w.to_s, &set)
+                .map_err(|e| err("bad_activity", e))?;
+            one["regions"] = serde_json::to_value(g).expect("plain data");
         }
         out.push(one);
     }
@@ -1113,5 +1177,45 @@ pub(crate) fn read_nebulae(
         at_s,
         nebulae,
         absent,
+    })
+}
+
+/// BX1: a pair of stars aged together.
+pub(crate) fn age_pair(
+    node: serde_json::Value,
+    to_myr: f64,
+    z: Option<f64>,
+    planets: Option<Vec<serde_json::Value>>,
+    time: Option<&sse_time::epoch::TimeSettings>,
+) -> Out {
+    use sse_time::pair::*;
+    let node: Node =
+        serde_json::from_value(node).map_err(|e| err("bad_pair", format!("node: {e}")))?;
+    let planets: Vec<PlanetIn> = planets
+        .unwrap_or_default()
+        .into_iter()
+        .map(|p| serde_json::from_value(p).map_err(|e| err("bad_pair", format!("planet: {e}"))))
+        .collect::<Result<_, _>>()?;
+    // The stack's time settings (its ageing star); the rule table and the
+    // pair settings are their defaults until they join the stack.
+    let time = time.ok_or_else(|| {
+        err(
+            "no_time_settings",
+            "no pack in the stack provides time settings",
+        )
+    })?;
+    let star = time.star.clone();
+    let line = age_node(
+        &node,
+        z.unwrap_or(0.02),
+        to_myr,
+        &planets,
+        &star,
+        &sse_time::binary::BinaryRules::default(),
+        &PairSettings::default(),
+    )
+    .map_err(|e| err("bad_pair", e))?;
+    Ok(Response::PairAged {
+        line: serde_json::to_value(line).expect("plain data"),
     })
 }

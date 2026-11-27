@@ -62,6 +62,18 @@ export function readSol(pack: unknown): SolSheet | null {
   return s && Array.isArray(s.bodies) && Array.isArray(s.regions) && Array.isArray(s.sources) ? s : null;
 }
 
+/**
+ * A short fingerprint of a Solar System sheet (FNV-1a over its JSON text), kept with a campaign when it enters Sol, so
+ * a campaign kept from an older sheet can say so: once entered, Sol's values live in the campaign's chronicle and a
+ * newer sheet (more moons, ring structure, J2) does not reach it by itself.
+ */
+export function solFingerprint(sheet: SolSheet): string {
+  const text = JSON.stringify(sheet);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return `fnv1a:${h.toString(16).padStart(8, "0")}:${sheet.bodies.length}b${sheet.regions.length}r`;
+}
+
 /** One catalogued batch: every edit from one source, so each fact keeps the source it came from. */
 export interface SolBatch {
   source: string;

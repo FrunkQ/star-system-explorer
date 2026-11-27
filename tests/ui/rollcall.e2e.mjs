@@ -4,8 +4,10 @@
 // in words, and fits a phone. No figure from a book is pinned here: only that the page agrees with the look-up.
 // Then the same pack as one file through the Open door, like any pack (CM0): added to the campaign, Roll call reads it
 // from the stack with no folder anywhere, and it is still there after a reload, kept beside the save in IndexedDB
-// because it is too big for local storage.
+// because it is too big for local storage. Last, a fresh campaign fetches it from Explorers by itself (stack.json
+// `from_explorers`, Alex 27 Nov), checked against the listing's sha256, with no file opened.
 // Usage: node tests/ui/rollcall.e2e.mjs [chromium firefox] [--screens DIR]   (SSE_SHOTS=<dir> for screenshots)
+import { createHash } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -223,6 +225,57 @@ try {
       assert.deepEqual(errors, [], `page errors in ${engine}`);
       await browser.close();
       console.log(`rollcall e2e: ${engine} Sol today opened as a file, added, read and reopened`);
+    }
+
+    // Fetched from Explorers into a fresh campaign. Explorers is served here from the bundle; an automated browser
+    // fetches nothing by itself, so this page says it is not automated.
+    const stackDoc = JSON.parse(readFileSync("packages/shell/src/documents/stack.json", "utf8"));
+    const link = stackDoc.from_explorers.find((u) => u.includes("sol-today"));
+    assert.ok(link, "the stack document fetches Sol today");
+    const bytes = readFileSync(bundle);
+    const sha = createHash("sha256").update(bytes).digest("hex");
+    for (const engine of engines) {
+      const browser = await pw[engine].launch();
+      const errors = [];
+      const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+      await context.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
+      let fetched = 0;
+      await context.route(`${link}**`, (r) => {
+        const cors = { "access-control-allow-origin": "*", "access-control-expose-headers": "x-sse-sha256" };
+        if (r.request().url().endsWith("/file")) return (fetched++, r.fulfill({ status: 200, body: bytes, headers: { ...cors, "x-sse-sha256": sha } }));
+        return r.fulfill({ status: 200, contentType: "application/json", headers: cors, body: JSON.stringify({ sha256: sha, pack: { id: "sse.sol-today", version: "0.1.0" }, source: { site: "Explorers", title: "Sol today", url: link, creditChain: ["FrunkQ"] } }) });
+      });
+      const page = await context.newPage();
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto(`http://localhost:${port}/#chart`);
+      await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
+      await page.waitForFunction(() => (localStorage.getItem("sse4.campaign") ?? "").includes('"sse.pack.kept/1"'), null, { timeout: 120000 });
+      assert.equal(fetched, 1, "fetched once");
+      await go(page, "rollcall");
+      await page.waitForFunction(() => /Sol today/.test(document.querySelector("[data-rollcall]")?.textContent ?? ""), null, { timeout: 60000 });
+      // A reopened campaign keeps its own stack: nothing is fetched again.
+      await page.reload();
+      await page.waitForFunction(() => /Reopened the campaign/.test(document.body.textContent ?? ""), null, { timeout: 60000 });
+      assert.equal(fetched, 1, "a reopened campaign fetches nothing");
+      assert.deepEqual(errors, [], `page errors in ${engine}`);
+      await browser.close();
+      console.log(`rollcall e2e: ${engine} Sol today fetched from Explorers into a fresh campaign`);
+
+      // Explorers has no such pack (or is down): the campaign opens as ever and a line says the pack was not fetched.
+      const b2 = await pw[engine].launch();
+      const c2 = await b2.newContext({ viewport: { width: 1440, height: 1000 } });
+      await c2.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
+      await c2.route(`${link}**`, (r) => r.fulfill({ status: 404, body: "", headers: { "access-control-allow-origin": "*" } }));
+      const p2 = await c2.newPage();
+      const e2 = [];
+      p2.on("pageerror", (e) => e2.push(e.message));
+      await p2.goto(`http://localhost:${port}/#chart`);
+      await p2.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
+      await p2.locator("[data-explorers-fetch-note]").getByText(/was not fetched from Explorers, so this campaign opened without it/).waitFor({ timeout: 20000 });
+      assert.ok(!(await p2.evaluate(() => localStorage.getItem("sse4.campaign") ?? "")).includes("sse.sol-today"), "nothing stacked");
+      assert.deepEqual(e2, [], `page errors in ${engine}`);
+      await b2.close();
+      console.log(`rollcall e2e: ${engine} Explorers without the pack: opened without it, and said so`);
     }
   } finally {
     rmSync(bundle, { force: true });

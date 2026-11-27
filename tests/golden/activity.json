@@ -76,13 +76,25 @@
   },
   {
     "star": "u:t/sys:1/star:0",
+    "from": {
+      "s": 0,
+      "ns": 0
+    },
+    "to": {
+      "s": 2592000,
+      "ns": 0
+    },
     "from_s": 0.0,
     "to_s": 2592000.0,
     "listed_above_j": 3e+24,
     "flares": [
       {
         "address": "u:t/sys:1/star:0/flare:0",
-        "at_s": 84666.00001340988,
+        "at": {
+          "s": 84666,
+          "ns": 13410
+        },
+        "at_s": 84666.00001341,
         "energy_j": 1.0219059842976352e+25,
         "rise_s": 60.50921488171912,
         "decay_s": 605.0921488171912,
@@ -125,20 +137,29 @@
           "speed_m_s": 1009118.5272147168,
           "mass_kg": 16056340350670.936,
           "direction": [
-            0.8689273140286528,
-            0.3226776128786205,
-            -0.3752925273462106
+            0.6851720199678212,
+            0.6363608815192732,
+            -0.3543785144802508
           ],
           "half_width_rad": 0.5235987755982988,
           "hits": [],
           "misses": [
             "u:t/sys:1/body:1"
           ]
+        },
+        "site": {
+          "region": "u:t/sys:1/star:0/region:-2.5",
+          "lat_deg": -20.755359783301397,
+          "lon_deg": 123.42696547741687
         }
       },
       {
         "address": "u:t/sys:1/star:0/flare:1",
-        "at_s": 977371.9981565876,
+        "at": {
+          "s": 977371,
+          "ns": 998156588
+        },
+        "at_s": 977371.998156588,
         "energy_j": 4.585146579060083e+24,
         "rise_s": 44.266889621555784,
         "decay_s": 442.6688962155578,
@@ -181,20 +202,29 @@
           "speed_m_s": 859667.752757471,
           "mass_kg": 9926860852863.04,
           "direction": [
-            -0.7812689168840815,
-            -0.5719353778088486,
-            -0.2500176056229315
+            0.3660010090433104,
+            -0.6765148325596756,
+            0.6390390776048307
           ],
           "half_width_rad": 0.5235987755982988,
           "hits": [],
           "misses": [
             "u:t/sys:1/body:1"
           ]
+        },
+        "site": {
+          "region": "u:t/sys:1/star:0/region:-2.15",
+          "lat_deg": 39.72020320097944,
+          "lon_deg": 148.18169547885776
         }
       },
       {
         "address": "u:t/sys:1/star:0/flare:2",
-        "at_s": 1201352.5878320506,
+        "at": {
+          "s": 1201352,
+          "ns": 587832051
+        },
+        "at_s": 1201352.587832051,
         "energy_j": 6.987968122318222e+24,
         "rise_s": 52.17327600374755,
         "decay_s": 521.7327600374755,
@@ -232,6 +262,11 @@
               "doi": "10.1103/RevModPhys.93.025010"
             }
           ]
+        },
+        "site": {
+          "region": "u:t/sys:1/star:0/region:-2.10",
+          "lat_deg": 74.2119512741447,
+          "lon_deg": 195.26495436265736
         }
       }
     ],
@@ -243,7 +278,7 @@
     "stand_ins": [
       "flare durations scale as E^0.39 from 600 s at 10²⁵ J; rise is a tenth of decay",
       "flare light is a 10000 K black body plus 10 % extra in soft X-rays; no radio burst yet",
-      "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving within 30° of the star's equator; planets on circular orbits in that equator",
+      "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving from over the flare's active region (anywhere within 30° of the equator in a spell with none); planets on circular orbits in that equator",
       "largest possible flare 1e29 J"
     ],
     "references": [
