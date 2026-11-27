@@ -77,8 +77,10 @@ pub fn mask_ops(line: &str) -> String {
 
 /// The constants reach report lists every block, so every new block used to
 /// change its line. The golden keeps the line's head; the lists go one entry
-/// per line to `tests/golden/contract-reach.txt` (`reach_entries`), where a
-/// new block is one new line.
+/// per block to `tests/golden/reach/<constant>/<block>.txt` (`reach_entries`,
+/// checked by `check_reach_golden`), where a new block is one new file. The
+/// mask text still names the old one-file `contract-reach.txt` because it sits
+/// in the core golden; change it with the next core golden change.
 pub const REACH: &str = "{\"type\":\"reach\"";
 pub const REACH_FROM: &str = "\"follows\":[";
 pub const REACH_MASK: &str = "\"lists\":\"one line per block in tests/golden/contract-reach.txt\"";
