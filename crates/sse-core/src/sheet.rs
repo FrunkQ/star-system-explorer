@@ -962,6 +962,8 @@ pub mod mixture_density {
     pub const GRAPHITE: f64 = 1700.0;
     /// stainless-304l (kim1975).
     pub const STAINLESS_304L: f64 = 7894.0;
+    /// basalt (turcotte2014).
+    pub const BASALT: f64 = 2900.0;
 }
 
 /// Yield strength, Pa, by mixture (the sheet's mixtures).

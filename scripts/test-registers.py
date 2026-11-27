@@ -103,6 +103,14 @@ with tempfile.TemporaryDirectory() as tmp:
     expect(text.index("gpu.ts") > text.index("## Light") > text.index("Closing words."), "absorb puts a new table at the end, with its heading")
     expect(r.check_one("fudges") == 6, "after absorb the register checks")
 
+    # With a base, only the old side's own changes move: an edited row without an id replaces its old text.
+    base = DOC
+    mine = DOC.replace("| disc.rs | Stand-in |", "| disc.rs:12 | Stand-in |")
+    r.absorb("fudges", None, base, mine)
+    text = r.render("fudges")
+    expect("| disc.rs:12 | Stand-in |" in text and "| disc.rs | Stand-in |" not in text, "absorb with a base moves an edit")
+    expect("| F-S4 | added.rs | Stand-in |" in text, "absorb with a base leaves rows the other side added")
+
 # The deploy builds the readable pages with scripts/build-registers.mjs; it must read the folders as this
 # script does, on the real registers.
 r.ROOT = os.path.dirname(HERE)

@@ -11,7 +11,8 @@ id or a short slug (for example `F-S37.md`), and edit its last line. Keep the he
 are. Prose and headings are the plain `.md` files beside the table folders. `scripts/check.sh` runs
 `python3 scripts/registers.py --check`.
 
-A branch from before the split that added rows to this file: take main's version of this file, put your copy aside,
-and run `python3 scripts/registers.py --absorb fudges --from <your copy>`.
+A branch from before the split that changed this file: merge main, and while git reports the conflict on this file
+run `python3 scripts/registers.py --absorb fudges`. It moves your branch's own row changes (added, edited, removed)
+into the folder and writes this page back; then `git add` both and commit.
 
 This file is written by `scripts/registers.py`; do not add rows here.
