@@ -89,7 +89,7 @@
   {#if ws.adding && ws.adding.a_au === null}
     <p class="undo-note clip-note" role="status" data-add-note>Press on the chart where it should go round {ws.adding.label}; the ghost says how far out. Esc puts it away.{#if typeAdd} <button type="button" class="type-add" data-add-type onclick={typeAdd}>Type a distance</button>{/if}</p>
   {:else if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
-  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
+  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"} data-picked={ws.selection ? "" : undefined}>{#if desk === "run" && ws.selection}<button type="button" class="sheet-close" data-sheet-close onclick={() => ws.select(null)}>Close</button>{/if}{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
 </main>
 
 <style>
@@ -228,6 +228,12 @@
       padding: 8px 12px 6px;
       pointer-events: auto;
     }
+    /* The folded rail's button (Run) heads the view controls on its own line, where the chips row was. */
+    .viewrow {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
     .area-chart {
       position: relative;
       height: 44vh;
@@ -273,6 +279,44 @@
       overflow-x: clip;
       margin: 16px 16px 24px;
       padding: 0 6px 6px 0;
+    }
+  }
+  .sheet-close {
+    display: none;
+  }
+  /* The phone's Run frame (three desks design section 8): the card is a sheet that comes up only on a press, over the
+     foot of the picture, and goes with Close or Esc. */
+  @media (max-width: 760px) {
+    .stage[data-desk="run"] .area-card:not([data-picked]) {
+      display: none;
+    }
+    .stage[data-desk="run"] .area-card[data-picked] {
+      position: fixed;
+      top: auto;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: auto;
+      box-sizing: border-box;
+      z-index: 30;
+      max-height: 60dvh;
+      margin: 0;
+      padding: 8px 12px 12px;
+      overflow: auto;
+      background: var(--sse-ground);
+      border-top: var(--sse-line) solid var(--sse-ink);
+      box-shadow: 0 -6px 18px rgb(0 0 0 / 0.14);
+    }
+    .stage[data-desk="run"] .sheet-close {
+      display: block;
+      margin: 0 0 8px auto;
+      min-height: 44px;
+      padding: 0 16px;
+      font: inherit;
+      border: var(--sse-line) solid var(--sse-ink);
+      border-radius: var(--sse-radius);
+      background: transparent;
+      color: var(--sse-ink);
     }
   }
   @media (max-width: 760px) {
