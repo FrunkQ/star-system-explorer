@@ -19,6 +19,8 @@ mod caves;
 mod class_sample_tests;
 mod clock;
 mod composition;
+#[cfg(test)]
+mod conservation_tests;
 pub mod contract;
 mod conventions;
 #[cfg(test)]

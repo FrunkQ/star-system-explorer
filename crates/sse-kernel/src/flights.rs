@@ -16,7 +16,7 @@ use sse_nav::flightlog::{
     elements_from_state, push_direction, Ephemeris, FlightLog, LogEvent, Mark, MountSettings,
     Piece, State, What,
 };
-use sse_nav::kepler::{lambert, norm, sub, V3};
+use sse_nav::kepler::{add, lambert, norm, sub, V3};
 use sse_record::flights::{self, Entry, FlightDraft, FlightEntry};
 
 fn bad(m: impl Into<String>) -> Response {
@@ -383,8 +383,8 @@ pub(crate) fn on_release(
         })
     };
     let state = match (&piece.state, eph) {
-        (State::Orbit { around, elements }, Some(e)) => match e.body(around, at_s as f64) {
-            Some((_, _, mu)) => {
+        (State::Orbit { around, elements }, Some(e)) => match e.mu_of(around) {
+            Some(mu) => {
                 let (r, v) = elements.state(mu, (at_s - elements.epoch_s) as f64);
                 seeded(r, v, mu, around)
             }
@@ -509,28 +509,31 @@ fn rendezvous(
     let State::Orbit { around, elements } = &p.state else {
         return None;
     };
-    let (_, _, mu) = eph.body(around, t_s as f64)?;
+    let mu = eph.mu_of(around)?;
     if !(elements.e < 1.0 && elements.a_m > 0.0) {
         return None;
     }
     let a = elements.a_m;
     let period = sse_core::math::TAU * sse_core::math::sqrt(a * a * a / mu);
-    let rel = |c: &Address, t: i64| {
+    // Everything around the target's body, with no absolute date held as a
+    // double: the target from its own elements (dates as differences), the
+    // chaser by its offset from the target in the star's frame.
+    let target_rel = |t: i64| elements.state(mu, (t - elements.epoch_s) as f64);
+    let star = |c: &Address, t: i64| {
         let (log, _) = assemble(record, c, UniverseTime::seconds(i64::MAX));
         let at = where_followed(record, root, &log, t, eph);
-        let (rb, vb, _) = eph.body(around, t as f64)?;
-        Some((sub(at.r_m?, rb), sub(at.v_m_s?, vb)))
+        Some((at.r_m?, at.v_m_s?))
     };
-    let (r1, v1c) = rel(chaser, t_s)?;
+    let ((rc, vc), (rt, vt)) = (star(chaser, t_s)?, star(target, t_s)?);
+    let (rt0, vt0) = target_rel(t_s);
+    let (r1, v1c) = (add(sub(rc, rt), rt0), add(sub(vc, vt), vt0));
     let mut best: Option<(i64, i64, f64)> = None;
     for f in fractions {
         let tof = sse_core::math::round(f * period) as i64;
         if tof <= 0 {
             continue;
         }
-        let Some((r2, v2t)) = rel(target, t_s + tof) else {
-            continue;
-        };
+        let (r2, v2t) = target_rel(t_s + tof);
         let Some((v1, v2)) = lambert(r1, r2, tof as f64, mu) else {
             continue;
         };

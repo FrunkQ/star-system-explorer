@@ -304,6 +304,10 @@ pub trait Ephemeris {
     /// A body's position and velocity around the star, and its GM; `star` is the origin.
     fn body(&self, name: &str, t_s: f64) -> Option<(V3, V3, f64)>;
     fn star_mu(&self) -> f64;
+    /// A body's GM, which does not change with the date.
+    fn mu_of(&self, name: &str) -> Option<f64> {
+        self.body(name, 0.0).map(|b| b.2)
+    }
 }
 
 impl Ephemeris for NavSystem {
