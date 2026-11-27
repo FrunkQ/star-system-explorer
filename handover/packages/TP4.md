@@ -41,7 +41,7 @@ The Moon's rung leaves the Moon's own mass out of the pair (the block takes one 
 ## The check (a ledger that only shrinks)
 `crates/sse-kernel/src/pace_tests.rs`, `every_dated_op_is_declared_or_on_the_ledger`, runs in `cargo test` (no CI change). It reads the `Request` enum in `protocol.rs` as text: a variant with a field whose name ends `_s`, `_yr`, `_myr` or `_gyr` and whose last word says when (`at_s`, `occurred_at_s`, `t_myr`, `age_myr`, `true_on_s` ...) is a dated op. Each must be named in a declaration's `ops` or listed in `handover/packages/TP4-undeclared-ops.txt`. A ledger line whose op is now declared fails until deleted; a line that is not a dated op fails too.
 
-Today: 97 dated ops; 67 declared, 30 on the ledger (weather, formation, surface, navigation, the night sky, the galaxy chart, nebulae, fields, the reads of a resolved system, and the sifters). Each leaves the ledger when its owner declares its process.
+Today: 98 dated ops; 68 declared, 30 on the ledger (weather, formation, surface, navigation, the night sky, the galaxy chart, nebulae, fields, the reads of a resolved system, and the sifters). Each leaves the ledger when its owner declares its process. While this package waited, the check caught three new ops from main and they were declared: `mount_construct` and `release_construct` on the campaign record, and BX1's `age_pair` on `star.life`.
 
 ## Tests, seen red
 - `the_check_fails_an_undeclared_dated_op`: a request `tide_at { at_s }` put into the protocol source fails the check by name; a declared op left on the ledger fails too. Also run for real: with the ledger empty the check listed all 30 undeclared ops and failed.

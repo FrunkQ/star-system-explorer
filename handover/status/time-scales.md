@@ -44,7 +44,7 @@ Built: TP1 (on main), TP4 (see below). Nothing else is built. Golden notes are e
 ## TP4, what it left (27 Nov 2026)
 
 - Six declarations in `packs/base-time` (`provides.other.processes`): `star.life`, `system.ageing` (march, follows `star.life`), `orbit.kepler`, `star.activity` (stream), `cosmos.expansion`, `campaign.record` (paced by its own marks). Op `pace_ladder`.
-- The check `every_dated_op_is_declared_or_on_the_ledger` (`crates/sse-kernel/src/pace_tests.rs`): 97 ops take a date, 67 declared, 30 on `packages/TP4-undeclared-ops.txt` (only shrinks). **Any thread adding an op with a date field declares its process in the same PR** (time design section 10); an owner who declares a ledgered op deletes its line.
+- The check `every_dated_op_is_declared_or_on_the_ledger` (`crates/sse-kernel/src/pace_tests.rs`): 98 ops take a date, 68 declared, 30 on `packages/TP4-undeclared-ops.txt` (only shrinks). **Any thread adding an op with a date field declares its process in the same PR** (time design section 10); an owner who declares a ledgered op deletes its line.
 - Owed by the 30: weather, formation, surface, navigation and voyages, the night sky and star cells, the galaxy chart (its own time needs the galaxy's mass inside the Sun's radius as a stack value), nebulae, fields, composition and inventory, and the reads of a resolved system and the sifters.
 - For TP6: the declared `marks` are the kinds each process will publish. For TP7: a view names its ops; the ladder says which processes they read.
 

@@ -35,7 +35,8 @@
       ],
       "ops": [
        "describe_star",
-       "set_system_age"
+       "set_system_age",
+       "age_pair"
       ],
       "how": "Drawn once when the star resolves (sse-time star.rs state_at and mass_at); any age is a read of the curve. Its own time is how long it burns hydrogen. Until TP2 the anchor is the star's age in years, read through dated's convention."
      },
