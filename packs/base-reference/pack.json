@@ -19000,6 +19000,112 @@
        "note": "real index only, 360 to 702 nm, where the paper prints no k"
       }
      }
+    },
+    {
+     "id": "water-ice-fine",
+     "names": {
+      "physics": "water ice, fine grains (~70 micron)",
+      "plain": "fresh frost",
+      "story": "hoarfrost"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "fresh water ice of fine grains, as frost, new snow or freshly broken ice: the brightest ground there is, white with a faint blue",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        800.0,
+        850.0,
+        900.0,
+        950.0,
+        1000.0
+       ],
+       "r": [
+        1.020175,
+        0.982685,
+        0.982494,
+        0.975033,
+        0.960795,
+        0.955426,
+        0.952003,
+        0.940339,
+        0.937319,
+        0.915876,
+        0.91107,
+        0.860197
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 0.0,
+       "e_deg": 30.0,
+       "at_k": 100.0,
+       "grain_um": 70.0,
+       "grain_shape": "spherical",
+       "src": "stephan2021-ice",
+       "check": "unverified",
+       "note": "laboratory spectrum of pure water ice grains at 100 K in vacuum (SSHADE SPECTRUM_OP_20201223_301), relative to a Lambertian surface; the file starts at 450 nm, and its 450 nm point is noisy; values above 1 are real for bright grains seen at this geometry; interpolate linearly, hold the ends"
+      }
+     }
+    },
+    {
+     "id": "water-ice-coarse",
+     "names": {
+      "physics": "water ice, coarse grains (~680 micron)",
+      "plain": "coarse old ice",
+      "story": "old ice"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "water ice of coarse grains, as sintered or recrystallised old ice: light travels further inside each grain, so it absorbs more and is a little greyer and bluer than frost",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        800.0,
+        850.0,
+        900.0,
+        950.0,
+        1000.0
+       ],
+       "r": [
+        0.795823,
+        0.790779,
+        0.813512,
+        0.814476,
+        0.825094,
+        0.804172,
+        0.799499,
+        0.789402,
+        0.790782,
+        0.77332,
+        0.769907,
+        0.700926
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 0.0,
+       "e_deg": 30.0,
+       "at_k": 100.0,
+       "grain_um": 680.0,
+       "grain_shape": "irregular",
+       "src": "stephan2021-ice",
+       "check": "unverified",
+       "note": "laboratory spectrum of pure water ice grains at 100 K in vacuum (SSHADE SPECTRUM_OP_20201223_304), relative to a Lambertian surface; the file starts at 450 nm, and its 450 nm point is noisy; values above 1 are real for bright grains seen at this geometry; interpolate linearly, hold the ends"
+      }
+     }
     }
    ],
    "reactions": [
@@ -20488,6 +20594,13 @@
      "id": "sse-light-bands",
      "text": "SSE4 nebulae and light design, the fixed band set (handover/design/SSE4-nebulae-and-light-design.md): band edges are conventions chosen for the renderer, not measurements; the ultraviolet and visible edges follow common astronomical usage",
      "status": "authored"
+    },
+    {
+     "id": "stephan2021-ice",
+     "text": "Stephan, K., Ciarniello, M., Poch, O., Schmitt, B., Haack, D. and Raponi, A. 2021, Minerals 11, 1328: VIS-NIR/SWIR spectral properties of H2O ice depending on particle size and surface temperature (CC BY). Pure ice grains (spherical ~70 um sprayed into liquid nitrogen; irregular ~300, ~680, ~1060, ~1360 um crushed and sieved from a slowly frozen slab) at 70 to 220 K under vacuum, behind sapphire windows, measured with the SHINE spectro-gonio radiometer (IPAG) at incidence 0, emergence 30, phase 30 degrees, calibrated against Spectralon (0.40 to 1.10 micron). Data: SSHADE/CSS experiment EXPERIMENT_OP_20201223_001 (Stephan, Ciarniello, Poch, Haack and Raponi 2019, doi 10.26302/SSHADE/EXPERIMENT_OP_20201223_001), spectra SPECTRUM_OP_20201223_301 (~70 um spherical, 100 K) and SPECTRUM_OP_20201223_304 (~680 um irregular, 100 K), read from SSHADE's plot files /plot/<spectrum>/1.micron.json.gz on 26 Nov 2026",
+     "status": "unverified",
+     "doi": "10.3390/min11121328",
+     "url": "https://www.sshade.eu/data/experiment/EXPERIMENT_OP_20201223_001"
     },
     {
      "id": "taylor2001-lscc",
