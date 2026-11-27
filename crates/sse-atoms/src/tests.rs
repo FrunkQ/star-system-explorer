@@ -1902,3 +1902,36 @@ fn active_region_blocks_match_their_sums() {
     let t = a::joy_tilt(15.0 / deg, 32.1) * deg;
     assert!((7.0..10.0).contains(&t), "{t}");
 }
+
+#[test]
+fn pair_blocks_match_their_sums() {
+    use crate::binary as b;
+    for (q, a) in [(1.0, 1e11), (0.3, 2e10), (5.0, 3e9)] {
+        let got = run("sse.orbit.roche_lobe", &[q, a])[0];
+        let want = b::roche_lobe(q, a);
+        assert!(
+            (got - want).abs() <= 1e-12 * want,
+            "{q}: {got} against {want}"
+        );
+    }
+    // Absolute: equal stars each own 38 % of the separation; a light star much less.
+    assert!((0.37..0.39).contains(&b::roche_lobe(1.0, 1.0)));
+    assert!((0.2..0.26).contains(&b::roche_lobe(0.2, 1.0)));
+    for (mk, x) in [(2e30, 1.0), (2e30, 1.1), (3e31, 1.02)] {
+        let got = run("sse.orbit.overflow_rate", &[mk, x])[0];
+        let want = b::overflow_rate(mk, x, 5.0);
+        assert!(
+            (got - want).abs() <= 1e-12 * want.max(1e-30),
+            "{mk} {x}: {got} against {want}"
+        );
+    }
+    let m = sse_core::sheet::M_SUN;
+    for (ms, mc, r, l) in [(2e30, 0.0, 7e8, 3.8e26), (2e30, 8e29, 7e10, 3.8e28)] {
+        let got = run("sse.star.thermal_timescale", &[ms, mc, r, l])[0];
+        let want = b::thermal_timescale(ms, mc, r, l, 0.5);
+        assert!((got - want).abs() <= 1e-12 * want, "{got} against {want}");
+    }
+    // The Sun settles in about 15 million years (HTP02's 1.5e7 yr).
+    let sun = b::thermal_timescale(m, 0.0, R_SUN, L_SUN, 0.5) / JULIAN_YEAR;
+    assert!((1.2e7..1.9e7).contains(&sun), "{sun}");
+}

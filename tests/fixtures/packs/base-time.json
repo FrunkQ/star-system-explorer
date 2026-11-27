@@ -1,0 +1,51 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-time",
+ "version": "0.1.0",
+ "kind": ["base-physics"],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Ageing settings (T1, T2; handoff 6.3): epoch step sizes, when detailed windows open, the predictability horizon, the ageing star's wind and the names of white dwarf colours.",
+   "time": {
+    "star": {
+     "reimers_eta": 0.5,
+     "wind_steps": 400,
+     "core_start_fraction": 0.4
+    },
+    "main_sequence_step_myr": 250.0,
+    "subgiant_steps": 8,
+    "giant_steps": 80,
+    "tide_substeps": 8,
+    "white_dwarf_steps": 24,
+    "window_hill": 3.4641016151377544,
+    "window_years": 200.0,
+    "window_steps_per_orbit": 120.0,
+    "window_rewrite_da": 0.02,
+    "horizon_myr": 60.0,
+    "runaway_greenhouse_flux": 1.1,
+    "colours": [
+     [30000.0, "blue"],
+     [10000.0, "blue-white"],
+     [7500.0, "white"],
+     [6000.0, "yellow-white"],
+     [5000.0, "yellow"],
+     [3700.0, "orange"],
+     [0.0, "red"]
+    ],
+    "pollution_delay_myr": 100.0,
+    "sources": {
+     "reimers_eta": "Reimers 1975; eta near 0.5 fits the red giant branch mass loss implied by horizontal branch stars in globular clusters (McDonald and Zijlstra 2015 give 0.477)",
+     "window_hill": "2 sqrt(3) mutual Hill radii: Gladman 1993's stability limit for two planets on circular orbits",
+     "window_rewrite_da": "above the short-period swing of osculating semi-major axes in the Solar System (Saturn about 0.4 percent across a window), so only real changes such as scattering are written back",
+     "window_steps_per_orbit": "fourth-order steps per innermost orbit; the integrator's own precession, about (2 pi / steps)^4 rad per orbit, stays below secular rates",
+     "horizon_myr": "Laskar 1989 and 1994: the inner Solar System's Lyapunov time is about 5 Myr, so individual orbits are unpredictable beyond some tens of Myr",
+     "runaway_greenhouse_flux": "Kopparapu et al. 2014 (ApJL 787, L29, table 1): runaway greenhouse at 1.107 times Earth's insolation for an Earth-mass planet round a Sun-like star (the 2013 paper's 1.06 was corrected there); 1.1 used as the point oceans are lost (Wolf and Toon 2015 find a stable moist state up to about 1.1)",
+     "colours": "blackbody colour names by effective temperature (pack data, change freely)",
+     "pollution_delay_myr": "Mustill et al. 2018 and Veras 2016: scattering onto white dwarfs begins within about 100 Myr of the planetary nebula and continues for Gyr"
+    }
+   }
+  }
+ }
+}
