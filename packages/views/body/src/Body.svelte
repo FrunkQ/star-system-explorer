@@ -421,8 +421,10 @@
       // Only a turn the runtime made itself (its spin) comes back: a late echo of any turn this view sent must not undo
       // a newer one (two quick key presses lost the second). The runtime can repeat its last status after a newer turn
       // is sent but before it is drawn, so every sent turn not yet seen back is remembered, not only the last.
+      // The newest echo seen is kept too: the runtime can repeat it while a newer turn is still on its way, and that
+      // repeat must not undo the newer turn either (seen on CI: two Shift+ArrowRight presses read 45, not 90).
       const echo = sentLons.indexOf(st.lon);
-      if (echo >= 0) sentLons = sentLons.slice(echo + 1);
+      if (echo >= 0) sentLons = sentLons.slice(echo);
       else if (st.lon !== lon) lon = st.lon;
     });
     run = r;
