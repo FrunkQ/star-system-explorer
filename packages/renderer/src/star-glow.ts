@@ -76,12 +76,25 @@ export interface GlowDraw {
   exposure?: number;
   /** The star's light now over its quiet light (1 + a flare's share). */
   boost?: number;
-  /** A precomputed `glareProfile` for this disc (the profile depends only on the disc's size). */
+  /** A precomputed `glareProfile` for this disc and reach (it depends on nothing else). */
   profile?: Float64Array;
+  /** The picture's half-width as an angle from the centre, degrees (`haloReachDeg`); GLOW_REACH_DEG unless given. */
+  reach_deg?: number;
 }
 
 /**
- * The glow as a square picture reaching `GLOW_REACH_DEG` from the centre (the sprite's half-width is that angle).
+ * How far the halo picture reaches from the star's centre, degrees: the glare's own reach, or, for a star seen large
+ * (the close-up), far enough past its limb to hold what stands over it, two and a half times its outline on the
+ * picture's plane, never past 70 degrees, where a flat picture facing the camera stretches too far to hold a shape.
+ */
+export function haloReachDeg(disc_deg: number): number {
+  const d = (Math.min(80, Math.max(0, disc_deg)) * Math.PI) / 180;
+  return Math.min(70, Math.max(GLOW_REACH_DEG, (Math.atan(2.5 * Math.tan(d)) * 180) / Math.PI));
+}
+
+/**
+ * The glow as a square picture reaching `reach_deg` (GLOW_REACH_DEG unless given) from the centre: a flat picture at
+ * the star's distance facing the camera, so a point r of its half-width out lies atan(r tan(reach)) from the centre.
  * Linear light over white is squeezed by L/(1 + L) so the bright core saturates to the star's colour and the falling
  * skirt keeps its shape; inside the disc it is clear, because the disc is drawn at its own exposure (the face).
  * Alpha is the light itself: the picture is added to the scene.
@@ -89,12 +102,15 @@ export interface GlowDraw {
 export function drawGlow(out: { width: number; data: Uint8ClampedArray }, g: GlowDraw): void {
   const n = out.width;
   const d = out.data;
-  const prof = g.profile ?? glareProfile(g.disc_deg);
+  const reach = g.reach_deg ?? GLOW_REACH_DEG;
+  const prof = g.profile ?? glareProfile(g.disc_deg, 128, reach);
   const m = prof.length;
   const k = (g.exposure ?? 1) * (g.boost ?? 1);
   const base = (thermalColour(g.teff_k).match(/[0-9a-f]{2}/gi) ?? ["ff", "ff", "ff"]).map((h) => decode(parseInt(h, 16) / 255));
   const c = n / 2;
-  const discR = g.disc_deg / GLOW_REACH_DEG;
+  const rad = Math.PI / 180;
+  const tanReach = Math.tan(reach * rad);
+  const discR = Math.tan(g.disc_deg * rad) / tanReach;
   for (let py = 0; py < n; py++)
     for (let px = 0; px < n; px++) {
       const o = (py * n + px) * 4;
@@ -107,7 +123,8 @@ export function drawGlow(out: { width: number; data: Uint8ClampedArray }, g: Glo
         continue;
       }
       const into = r >= discR ? 1 : (r - inner) / (discR - inner);
-      const f = r * (m - 1);
+      // The profile is sampled evenly in angle out to the reach; this pixel's angle from the centre, as a share of it.
+      const f = (Math.atan(r * tanReach) / (reach * rad)) * (m - 1);
       const i = Math.min(m - 2, Math.floor(f));
       const L = k * (prof[i]! + (f - i) * (prof[i + 1]! - prof[i]!));
       // Fade the outer part (beyond 40% of the reach, where the glare is already under a fifth of white) smoothly to
@@ -128,7 +145,7 @@ export function glowReach(profile: Float64Array, share = 0.5, reach_deg = GLOW_R
 }
 
 /** The glow in words. */
-export function narrateGlow(profile: Float64Array, exposure = 1): string {
-  const half = glowReach(profile, 1, GLOW_REACH_DEG, exposure);
-  return `The glow round the star is light scattered in the eye (the CIE glare equation), not anything in space: it outshines a sunlit surface out to about ${half.toFixed(1)}° from the star and fades over ${GLOW_REACH_DEG}°.`;
+export function narrateGlow(profile: Float64Array, exposure = 1, reach_deg = GLOW_REACH_DEG): string {
+  const half = glowReach(profile, 1, reach_deg, exposure);
+  return `The glow round the star is light scattered in the eye (the CIE glare equation), not anything in space: it outshines a sunlit surface out to about ${half.toFixed(1)}° from the star and fades over ${Math.round(reach_deg)}°.`;
 }

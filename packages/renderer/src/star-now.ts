@@ -7,7 +7,7 @@ import { spotsAt, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
 import { bigCellContrast, cellsAcross, churningBigCells, churningGranules, granuleBlur, limbLumps, narrateLumps } from "./star-churn.ts";
 import { addEjections, ejectionsAt, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares, type EjectionNow, type ShownFlare } from "./star-events.ts";
 import { addProminences, narrateProminences, prominencesAt, type ProminenceNow } from "./star-prominences.ts";
-import { drawGlow, glareProfile, GLOW_REACH_DEG, narrateGlow } from "./star-glow.ts";
+import { drawGlow, glareProfile, haloReachDeg, narrateGlow } from "./star-glow.ts";
 
 export interface StarNowAsk {
   /** Star time, seconds of age. */
@@ -25,6 +25,8 @@ export interface StarNowAsk {
   lat_deg?: number;
   /** The drawn disc's angular radius as the camera sees it, degrees (for the glare). */
   disc_deg?: number;
+  /** The halo's half-width as an angle, degrees; `haloReachDeg(disc_deg)` unless given. */
+  reach_deg?: number;
   /** Flux at the eye over the exposure's (star-glow.ts). */
   exposure?: number;
 }
@@ -37,21 +39,22 @@ export interface StarNow {
   limb: number;
   /** The star's light now over its quiet light. */
   boost: number;
-  /** The halo's half-width in stellar radii (GLOW_REACH_DEG over the disc's angular radius). */
+  /** The halo's half-width in stellar radii (on the picture's plane: tan of its reach over tan of the disc's radius). */
   reach: number;
   /** Words for the note beside the view. */
   words: string[];
 }
 
-const profiles = new Map<number, Float64Array>();
+const profiles = new Map<string, Float64Array>();
 /** The glare profile for a disc size, kept in quarter-octave steps of angular radius (it depends on nothing else). */
-function profileFor(disc_deg: number): Float64Array {
+function profileFor(disc_deg: number, reach_deg: number): Float64Array {
   const step = Math.round(Math.log2(Math.max(1e-4, disc_deg)) * 4);
-  const hit = profiles.get(step);
+  const key = `${step}|${reach_deg}`;
+  const hit = profiles.get(key);
   if (hit) return hit;
-  const p = glareProfile(2 ** (step / 4), 96);
+  const p = glareProfile(2 ** (step / 4), 96, reach_deg);
   if (profiles.size > 32) profiles.clear();
-  profiles.set(step, p);
+  profiles.set(key, p);
   return p;
 }
 
@@ -59,7 +62,7 @@ const decode = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) 
 
 /**
  * Draw the star at star time `ask.t` into `face` (the disc) and, given, `halo` (the glow and ejections, a square whose
- * half-width is GLOW_REACH_DEG of the camera's view). Returns what it showed, for the view's note and checks.
+ * half-width is `reach_deg` of the camera's view, GLOW_REACH_DEG for a star seen small). Returns what it showed, for the view's note and checks.
  */
 export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, halo: { width: number; data: Uint8ClampedArray } | null, s: LiveStar, ask: StarNowAsk): StarNow {
   const light = ask.light ?? "visible";
@@ -94,18 +97,20 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   drawStar(face, { teff_k: s.teff, spots, lon_deg: turnAt(s, ask.t), lat_deg: lat, light, corona_h: coronaScaleHeight(s.mass, s.radius), flares, granules, granuleContrast: showCells && !ask.calm ? granuleBlur(conv!.granule_lifetime_s, ask.span) : 1, bigCells, lumps }, disc);
   const boost = flareBoost(s, shown);
   const discDeg = Math.max(1e-4, ask.disc_deg ?? 0.25);
-  const reach = GLOW_REACH_DEG / discDeg;
+  const reachDeg = ask.reach_deg ?? haloReachDeg(discDeg);
+  const rad = Math.PI / 180;
+  const reach = Math.tan(reachDeg * rad) / Math.tan(discDeg * rad);
   const ejections = ejectionsAt(s, ask.t, reach, ask.calm);
   const prominences = prominencesAt(s, ask.t, reach, ask.calm);
   let limb = 0;
   const words: string[] = [];
   if (halo && light === "visible") {
-    const profile = profileFor(discDeg);
-    drawGlow(halo, { teff_k: s.teff, disc_deg: discDeg, exposure: ask.exposure ?? 1, boost, profile });
+    const profile = profileFor(discDeg, reachDeg);
+    drawGlow(halo, { teff_k: s.teff, disc_deg: discDeg, exposure: ask.exposure ?? 1, boost, profile, reach_deg: reachDeg });
     const rgb = (thermalColour(s.teff).match(/[0-9a-f]{2}/gi) ?? ["ff", "ff", "ff"]).map((h) => decode(parseInt(h, 16) / 255)) as [number, number, number];
     addEjections(halo, ejections, reach, rgb, lat);
     limb = addProminences(halo, prominences, s.radius, reach, lat);
-    words.push(narrateGlow(profile, ask.exposure ?? 1));
+    words.push(narrateGlow(profile, ask.exposure ?? 1, reachDeg));
   }
   const lumpWords = light === "visible" && granules ? narrateLumps(lumps, discPx) : "";
   if (lumpWords) words.push(lumpWords);

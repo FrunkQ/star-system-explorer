@@ -59,7 +59,7 @@ export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granule
 export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
 export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, PROMINENCE_WINDOW_S, readLiveStar, spotsOf, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
-export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
+export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, haloReachDeg, narrateGlow } from "./star-glow.ts";
 export { BIG_CELL_DT_MAX, BIG_CELLS_LEAST, bigCellContrast, cellsAcross, churningBigCells, GAMMA_PHOTOSPHERE, CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
 export { addEjections, capFlashes, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
 export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
@@ -166,7 +166,7 @@ export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
 export { AURORA_REFERENCES, auroraSky, lineName, cieXyz, COLOUR_VISION_CD_M2, exposeAurora, loadAurora, skyGlowAlong, toSite, kiloRayleighRadiance, lineRgb, oxygenShare, OXYGEN_STAND_IN, planAurora, RAYLEIGH_PH_M2_S_SR } from "./aurora.ts";
 export type { AuroraDraw, AuroraDrawLayer, AuroraSession, AuroraSky, AuroraEmissionJson, AuroraExposure, AuroraJson, AuroraLayer, AuroraOvalJson, AuroraPlan, AuroraWorld } from "./aurora.ts";
 // Close-up: the camera down to a grazing orbit over a world in True, and the ground under it.
-export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, type Orbit } from "./close-up.ts";
+export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, STAR_CLOSE_SHARE, closeMin, outlineRadius, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, type Orbit } from "./close-up.ts";
 // The shared finish (VP1) and the sky's stars behind True (VP2).
 export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
 export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";

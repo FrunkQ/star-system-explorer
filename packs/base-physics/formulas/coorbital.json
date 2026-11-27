@@ -293,7 +293,7 @@
         },
         "source": {
           "doi": "10.1088/0004-637X/768/1/45",
-          "text": "Lykawka and Horner 2010: most caught Trojans are unstable and leak away. Nesvorny et al. 2013: Jupiter keeps about 7e-7 of the disc. Schwamb et al. 2026: Neptune's long-lived swarm is 4 to 10 times Jupiter's",
+          "text": "Lykawka and Horner 2010 (doi:10.1111/j.1365-2966.2010.16538.x): most caught Trojans are unstable and leak away. Schwamb et al. 2026 (doi:10.3847/2041-8213/aead9a): Neptune's long-lived swarm is 4 to 10 times Jupiter's. Nesvorny et al. 2013: Jupiter keeps about 7e-7 of the disc",
           "where": "Lykawka and Horner 2010 abstract; Nesvorny et al. 2013 abstract; Schwamb et al. 2026 section 1"
         },
         "explain": {
@@ -458,7 +458,7 @@
         },
         "source": {
           "doi": "10.1111/j.1365-2966.2010.16538.x",
-          "text": "Only Jupiter and Neptune of the four giants hold long-lived swarms, though all four catch them (Lykawka and Horner 2010). Mars keeps a primordial L5 group (de la Fuente Marcos et al. 2024). Our rule: a swarm is shaken loose when an adjacent world at least as heavy sits within 3% of a resonance of order 3 or less",
+          "text": "Mars keeps a primordial L5 group (de la Fuente Marcos et al. 2024, doi:10.1051/0004-6361/202449688). Only Jupiter and Neptune of the four giants hold long-lived swarms, though all four catch them (Lykawka and Horner 2010). Our rule: a swarm is shaken loose when an adjacent world at least as heavy sits within 3% of a resonance of order 3 or less",
           "where": "judged by this package against the Solar System; fudge register CO-neighbour"
         },
         "explain": {

@@ -207,3 +207,115 @@ fn show_algol() {
     }
     eprintln!("rows {}", l.rows.len());
 }
+
+/// Prints a post-common-envelope pair aged on (run with --ignored --nocapture).
+#[test]
+#[ignore]
+fn show_cv() {
+    let l = two(2.0, 0.4, 1.0, 0.0, 13_700.0, &[]);
+    for e in &l.events {
+        println!("{:9.1} {} {}", e.age_myr, e.kind, e.why);
+    }
+    for r in l
+        .rows
+        .iter()
+        .filter(|r| r.b.as_ref().is_some_and(|b| b.mass_msun < 0.2))
+        .step_by(10)
+        .take(30)
+    {
+        println!(
+            "{:?} {:?}",
+            r.a.phase,
+            r.b.as_ref().map(|b| b.phase.clone())
+        );
+        println!(
+            "{:9.1} a {:.3e} P {:.4} d donor {:?} rate {:.2e} {:.3} {:.3} R {:.3} fill {:.3}",
+            r.age_myr,
+            r.separation_au,
+            r.period_days,
+            r.donor,
+            r.transfer_msun_yr,
+            r.a.mass_msun,
+            r.b.as_ref().map_or(0.0, |b| b.mass_msun),
+            r.b.as_ref().map_or(0.0, |b| b.radius_rsun),
+            r.b.as_ref().map_or(0.0, |b| b.lobe_fill)
+        );
+    }
+}
+
+/// BX3: a 2 + 0.4 solar mass pair 1 au apart. The 2 makes a common envelope as a
+/// giant; magnetic braking then draws the white dwarf and the red dwarf into
+/// touch, a cataclysmic variable. The red dwarf is fed off near the rates seen
+/// above the period gap, stops braking once it is convective through (0.35),
+/// is drawn on by gravitational waves alone at far lower rates, and shrinks to
+/// a brown dwarf: the period falls to a minimum near an hour and rises again.
+#[test]
+fn braking_and_waves_make_a_cataclysmic_variable() {
+    let l = two(2.0, 0.4, 1.0, 0.0, 13_700.0, &[]);
+    let cv = l
+        .events
+        .iter()
+        .find(|e| e.kind == "cataclysmic-variable")
+        .expect("a cataclysmic variable");
+    // Contact a few hours apart (observed CVs, 1.3 to about 10 hours).
+    let p_h = cv.numbers["period_days"] * 24.0;
+    assert!((2.0..8.0).contains(&p_h), "{p_h}");
+    let fed: Vec<&PairRow> = l
+        .rows
+        .iter()
+        .filter(|r| r.age_myr > cv.age_myr && r.transfer_msun_yr > 0.0)
+        .collect();
+    let mass = |r: &PairRow| r.b.as_ref().unwrap().mass_msun;
+    // Above the gap: about 1e-9 to 1e-8 solar masses a year (Knigge et al. 2011).
+    let above = fed
+        .iter()
+        .filter(|r| mass(r) > 0.36)
+        .map(|r| r.transfer_msun_yr);
+    let top = above.fold(0.0, f64::max);
+    assert!((1e-9..1e-7).contains(&top), "{top}");
+    // Below it, gravitational waves alone: about 1e-11 to 1e-10.
+    // The rows catch the flow at moments of a step, so the middle value is read.
+    let mut below: Vec<f64> = fed
+        .iter()
+        .filter(|r| mass(r) < 0.2 && mass(r) > 0.08)
+        .map(|r| r.transfer_msun_yr)
+        .collect();
+    assert!(!below.is_empty());
+    below.sort_by(f64::total_cmp);
+    let mid = below[below.len() / 2];
+    assert!((1e-11..1e-9).contains(&mid), "{mid}");
+    assert!(below.iter().all(|x| *x < 1e-9));
+    // The period minimum (observed near 80 minutes) and the bounce.
+    let after: Vec<&PairRow> = l.rows.iter().filter(|r| r.age_myr > cv.age_myr).collect();
+    let (i, p_min) = after
+        .iter()
+        .enumerate()
+        .map(|(i, r)| (i, r.period_days))
+        .fold((0, f64::MAX), |b, x| if x.1 < b.1 { x } else { b });
+    assert!((0.03..0.07).contains(&p_min), "{p_min}");
+    let last = after.last().unwrap();
+    assert!(i < after.len() - 1 && last.period_days > p_min * 1.2);
+    assert_eq!(last.b.as_ref().unwrap().phase, "brown dwarf");
+    assert_eq!(last.a.phase, "white dwarf");
+}
+
+/// BX3: two white dwarfs from Algol's second episode draw together by waves.
+#[test]
+fn white_dwarf_pairs_spiral_in() {
+    let l = two(3.0, 1.5, 0.08, 0.0, 3_000.0, &[]);
+    let rows: Vec<&PairRow> = l
+        .rows
+        .iter()
+        .filter(|r| {
+            r.a.phase == "white dwarf" && r.b.as_ref().is_some_and(|b| b.phase == "white dwarf")
+        })
+        .collect();
+    assert!(rows.len() >= 2, "no double white dwarf");
+    let (first, last) = (rows[0], rows[rows.len() - 1]);
+    assert!(
+        last.separation_au < first.separation_au,
+        "{} {}",
+        first.separation_au,
+        last.separation_au
+    );
+}
