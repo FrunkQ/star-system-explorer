@@ -219,7 +219,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       // One frame at twice the size, scaled down.
       const big = document.createElement("canvas");
       const a = atm(cur.plan);
-      drawCanvas(big, shown, { ...cur.plan, render_scale: 1 }, lon, lat, full() * 2, {}, a && airPhys ? airRender(airPhys, Number(a.thickness ?? 1)) : null);
+      drawCanvas(big, shown, { ...cur.plan, render_scale: 1 }, lon, lat, full() * 2, {}, a && airPhys ? airRender(airPhys, Number(a.thickness ?? 1)) : null, o.shape ?? null);
       restLayer.add(big, step.k, full(), full());
     } else return;
     perf.record("render.rest", performance.now() - t0, { detail: tier });
@@ -365,7 +365,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     let drew = false;
     if (want === "canvas" && canvas) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
-      drawCanvas(canvas, drawn, pl, lon, lat, full(), scratch, airNow);
+      drawCanvas(canvas, drawn, pl, lon, lat, full(), scratch, airNow, o.shape ?? null);
       drew = true;
     } else if (want === "gpu" && gpu && canvas && !switching) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;

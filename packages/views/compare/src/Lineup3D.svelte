@@ -18,8 +18,8 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { bodySeconds, globeFrame, graticule, liveFace, nearSide, readLiveStar, readTrueFace, readTrueShape, ringEdge, spinAt, startGpu, trueLook, type AirFlow, type FaceReader, type ShapeReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type StarReader, type Vec3 } from "../../../renderer/src/index.ts";
-  import { clockAt, cycleAt, reachKm, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { bodySeconds, globeFrame, smallBodyMesh, graticule, liveFace, nearSide, readLiveStar, readTrueFace, readTrueShape, ringEdge, spinAt, startGpu, trueLook, type AirFlow, type FaceReader, type ShapeReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type StarReader, type Vec3 } from "../../../renderer/src/index.ts";
+  import { clockAt, cycleAt, reachKm, type SmallShape, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
     ctx,
@@ -34,6 +34,7 @@
     colour,
     own,
     given = () => ({}),
+    lumps = new Map(),
     onfail,
   }: {
     ctx: ViewContext;
@@ -54,6 +55,8 @@
     own: (i: CompareItem) => boolean;
     /** A star's temperature, mass and radius as the scene holds them, for a star the kernel has no facts for. */
     given?: (i: CompareItem) => { teff_k?: number; mass_sun?: number; radius_sun?: number };
+    /** RW16a: the lumps of the small bodies in the lineup, by key (Compare reads them): each drawn as its own shape. */
+    lumps?: Map<string, SmallShape>;
     onfail: () => void;
   } = $props();
 
@@ -212,12 +215,15 @@
         const starFace = live ? liveFace(`${system}|${i.key}`, live, { t: live.age_s + starT, clock: starRate, span: starRate / 10, calm: still, px: 2 * p.r * dpr }).face : undefined;
         const face =
           look === "true"
-            ? trueLook({ ...(starFace ? { face: starFace } : {}), key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(flats.has(`${system}|${i.key}`) ? { flatten: flats.get(`${system}|${i.key}`)! } : {}), ...(flows.has(`${system}|${i.key}`) ? { flow: { flow: flows.get(`${system}|${i.key}`)!, dt_s: bodyDt(i.day_h) } } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
+            ? trueLook({ ...(starFace ? { face: starFace } : {}), key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(flats.has(`${system}|${i.key}`) ? { flatten: flats.get(`${system}|${i.key}`)! } : {}), ...(flows.has(`${system}|${i.key}`) ? { flow: { flow: flows.get(`${system}|${i.key}`)!, dt_s: bodyDt(i.day_h) } } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), ...(lumps.get(i.key) ? { figure: lumps.get(i.key)! } : {}), pole: f[2] })
             : { colour: rgb(colour(i)), ...(i.kind === "star" ? { shines: true } : {}) };
-        items.push({ id: i.key, rel: c, radius: p.r, frame: f, ...face });
+        // A lump seeded by its address alone, as the system's True and the Body globe seed it: the same lump everywhere.
+        const lump = lumps.get(i.key);
+        items.push({ id: i.key, rel: c, radius: p.r, frame: f, ...face, ...(lump ? { mesh: smallBodyMesh(lump, i.key) } : {}) });
       }
-      // Wireframe: every line, see-through. 3D: the near side only, drawn over the shaded globe.
-      if (look !== "true" && p.r >= 6)
+      // Wireframe: every line, see-through. 3D: the near side only, drawn over the shaded globe; a lump turns by its own
+      // shape, and a sphere's lines would float off it.
+      if (look !== "true" && p.r >= 6 && !(look === "3d" && lumps.has(i.key)))
         for (const g of graticule(f, c, p.r)) {
           const colour = g.kind === "line" ? ink : mark;
           if (look === "wireframe") lines.push({ points: g.points, colour });
