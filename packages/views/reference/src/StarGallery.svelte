@@ -12,6 +12,7 @@
   import { cellsAcross, granulesShow, limbLumps, narrateLumps, startGpu, type Gpu } from "../../../renderer/src/index.ts";
   import { readGalleryStar, radiiOnPage, shareWords, span, type GalleryStar, type SizeMode, type StarTile } from "./star-gallery.ts";
   import { drawStage, type StageStar } from "./star-stage.ts";
+  import StarLife from "./StarLife.svelte";
 
   let {
     session,
@@ -30,6 +31,15 @@
     stamp?: string;
   } = $props();
   const full = $derived(depth !== "curious");
+
+  // Two ways to look: every kind side by side, or one star through its life (Alex 26 Nov: "order by 'same star'").
+  let view = $state<"kinds" | "life">("kinds");
+  let lifeMass = $state(1);
+  function follow(g: GalleryStar) {
+    lifeMass = g.ask.mass_msun;
+    openId = null;
+    view = "life";
+  }
 
   // Sizes, remembered on this device (aids are per device).
   const SIZE_KEY = "sse.star-gallery.size";
@@ -62,29 +72,24 @@
   const pageNow = $derived(Math.min(pageAt, pages - 1));
   const paged = $derived(shown.slice(pageNow * pageSize, (pageNow + 1) * pageSize));
 
-  // Each tile's star, read once (the life line, then its activity), the page's in order.
+  // Each tile's star, read once (the life line, then its activity). The page's are all asked at once, so they queue at
+  // the kernel together rather than one at a time behind whatever else the screen asks of it; each tile shows as its
+  // star comes back.
   let read = $state(new Map<string, GalleryStar | string>());
-  let reading = false;
+  const asked = new Set<string>();
   $effect(() => {
     const want = paged.filter((t) => !untrack(() => read.has(t.id)));
     if (!want.length) return;
-    untrack(() => void readAll(want));
+    untrack(() => readAll(want));
   });
-  async function readAll(want: readonly StarTile[]) {
-    if (reading) return;
-    reading = true;
-    try {
-      for (const t of want) {
-        if (read.has(t.id)) continue;
-        const g = await readGalleryStar(session, t).catch((e: Error) => e.message);
-        read = new Map(read).set(t.id, g);
-      }
-    } finally {
-      reading = false;
+  function readAll(want: readonly StarTile[]) {
+    for (const t of want) {
+      if (asked.has(t.id) || read.has(t.id)) continue;
+      asked.add(t.id);
+      void readGalleryStar(session, t)
+        .catch((e: Error) => e.message)
+        .then((g) => (read = new Map(read).set(t.id, g)));
     }
-    // Asked for more while reading (a page turned): read those too.
-    const more = paged.filter((t) => !read.has(t.id));
-    if (more.length) void readAll(more);
   }
   const starOf = (id: string): GalleryStar | null => {
     const g = read.get(id);
@@ -130,6 +135,7 @@
     ro.observe(h);
     let raf = 0;
     const t0 = performance.now();
+    let drawn = "";
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       if (!gpu || document.hidden) return;
@@ -146,8 +152,14 @@
       }
       const w = Math.max(1, Math.round(at.width));
       const hh = Math.max(1, Math.round(at.height));
+      // Drawn again only when something shows a change: the faces move on ten times a second, or the page moved. A
+      // frame of the whole page drawn every refresh starves the page on a device that draws in software.
+      const t_s = (now - t0) / 1000;
+      const sig = `${calm ? 0 : Math.floor(t_s * 10)}|${w}x${hh}@${dpr}|${stars.map((s) => `${s.key}:${Math.round(s.x)},${Math.round(s.y)},${s.r}`).join(";")}`;
+      if (sig === drawn) return;
+      drawn = sig;
       if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(hh * dpr)) ((cv.width = Math.round(w * dpr)), (cv.height = Math.round(hh * dpr)));
-      drawStage(gpu, { width: w, height: hh, dpr, ground: "black", t_s: (now - t0) / 1000, calm, stars });
+      drawStage(gpu, { width: w, height: hh, dpr, ground: "black", t_s, calm, stars });
       if (stars.length !== drawnCount) drawnCount = stars.length;
     };
     raf = requestAnimationFrame(frame);
@@ -247,6 +259,13 @@
   }}
 />
 
+<div class="views chips" role="group" aria-label="View">
+  <button type="button" class="chip" aria-pressed={view === "kinds"} data-star-view="kinds" onclick={() => (view = "kinds")}>Kinds</button>
+  <button type="button" class="chip" aria-pressed={view === "life"} data-star-view="life" onclick={() => (view = "life")}>One star's life</button>
+</div>
+{#if view === "life"}
+  <StarLife {session} mass={lifeMass} {depth} />
+{:else}
 <div class="stars" class:opened={!!open} data-star-gallery data-gpu={gpuState} data-size={size} data-drawn={drawnCount}>
   <section class="gallery" aria-label="Star classes">
     {#if stamp}<p class="muted small" data-star-stamp>{stamp}</p>{/if}
@@ -339,13 +358,26 @@
           {#each cellWords(openStar, BIG * 0.92 * zoom * Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1)) as w (w)}<p class="small">{w}</p>{/each}
         {/if}
         {#if full && openStar.desc.notes.length}<p class="muted small">{openStar.desc.notes.join(" ")}</p>{/if}
-        {#if onpick}<button type="button" class="btn ink" data-star-pick={open.id} onclick={() => onpick?.(openStar!)}>{pickWords}</button>{/if}
+        <div class="acts">
+          {#if onpick}<button type="button" class="btn ink" data-star-pick={open.id} onclick={() => onpick?.(openStar!)}>{pickWords}</button>{/if}
+          <button type="button" class="chip" data-star-follow={open.id} onclick={() => follow(openStar!)}>Follow its life</button>
+        </div>
       {/if}
     </section>
   {/if}
 </div>
+{/if}
 
 <style>
+  .views {
+    margin-bottom: 10px;
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
   .stars {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
