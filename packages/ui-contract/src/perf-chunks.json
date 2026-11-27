@@ -45,7 +45,7 @@
       "name": "Light, spectra and the sky",
       "meaning": "Starlight, spectra, activity, air optics, nebulae, planet finding, the sky from a world and light bent by gravity.",
       "budget_ms": 300,
-      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "effect_at_range", "hazard_map", "read_limb", "fog_of_war", "read_bows", "describe_star", "read_scattering", "read_shadow_light", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"],
+      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "effect_at_range", "hazard_map", "read_light_paths", "read_limb", "fog_of_war", "read_bows", "describe_star", "read_scattering", "read_shadow_light", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"],
       "bench": ["gravity"]
     },
     {

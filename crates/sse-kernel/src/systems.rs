@@ -265,6 +265,58 @@ pub(crate) fn read_light(fixture: Option<&str>, bodies: Option<Vec<serde_json::V
     })
 }
 
+/// Light near a mass (XO2, XO3): design 3.4's fixtures or given bodies.
+pub(crate) fn read_light_paths(
+    fixture: Option<&str>,
+    bodies: Option<Vec<serde_json::Value>>,
+    table: bool,
+) -> Out {
+    let bad = |e: String| err("bad_light_paths", e);
+    let (source, asks) = match (fixture, bodies) {
+        (_, Some(list)) => {
+            let mut out = vec![];
+            for (i, v) in list.into_iter().enumerate() {
+                out.push(
+                    serde_json::from_value::<sse_light::paths::PathsAsk>(v)
+                        .map_err(|e| bad(format!("body {i}: {e}")))?,
+                );
+            }
+            ("given".to_string(), out)
+        }
+        (Some("black-holes"), None) => (
+            "fixture:black-holes".to_string(),
+            sse_light::scenario::fixtures(),
+        ),
+        (f, None) => {
+            return Err(bad(format!(
+                "no light paths for {}; fixtures: black-holes, or give bodies",
+                f.unwrap_or("(nothing asked)")
+            )))
+        }
+    };
+    let light = &sse_light::emit::Model::base().table;
+    let mut paths = vec![];
+    for (i, a) in asks.iter().enumerate() {
+        let p = sse_light::paths::read(a, light).map_err(|e| bad(format!("body {i}: {e}")))?;
+        paths.push(serde_json::to_value(p).expect("plain data"));
+    }
+    let bend_table = table.then(|| {
+        let t = sse_gravity::scenario::table();
+        serde_json::json!({
+            "hash": t.hash().hex(),
+            "rows": sse_gravity::bend::ROWS,
+            "cols": sse_gravity::bend::COLS,
+            "row_length": sse_gravity::bend::COLS + 4,
+            "flat": t.flat(),
+        })
+    });
+    Ok(Response::LightPathsRead {
+        source,
+        paths,
+        bend_table,
+    })
+}
+
 fn parse_list<T: serde::de::DeserializeOwned>(
     what: &str,
     v: Option<Vec<serde_json::Value>>,
