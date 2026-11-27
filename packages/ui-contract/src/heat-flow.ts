@@ -15,6 +15,7 @@
 import type { FlowRow } from "./flow.ts";
 import { say, sayNumber } from "./figures.ts";
 import type { Depth } from "./depth.ts";
+import type { LifeEnergy, LifeView } from "./life.ts";
 
 /** One step of the core history, as the kernel publishes it. */
 export interface HeatStep {
@@ -374,5 +375,83 @@ export function sunWhy(env: HeatEnvelope, sun: Sunlight, depth: Depth = "science
   return out;
 }
 
-/** What the outside half does not publish yet, in words. */
-export const LIFE_SHARE_MISSING = "How much of this energy life catches and uses is not published yet: it comes with the life energy ledger (package LE2).";
+// Life's share (LE-U1; Alex, 26 Nov: energy available "will control the pace of development/evolution as it is the
+// "first step" of the energy gradient"). The kernel's energy ledger (LE2, `life_view` `view.energy.world`): usable
+// energy reaching places life could live, what its kinds of life could catch, what they catch, what staying alive
+// costs, and what is spare. These nest inside one another and span many powers of ten, so they are drawn as a ladder
+// of bars on a log scale under the sunlight soaked up, never as bands of the sunlight flow (they would be hairlines).
+
+export interface LifeRung {
+  id: "absorbed" | "arriving" | "offered" | "captured" | "keep_alive" | "surplus";
+  label: string;
+  w: number;
+}
+
+/** The ladder, biggest first; a line the kernel leaves null is left out. Surplus only when there is some. */
+export function lifeLadder(e: LifeEnergy, absorbed_w: number | null): LifeRung[] {
+  const w = e.world;
+  const out: LifeRung[] = [];
+  const add = (id: LifeRung["id"], label: string, v: number | null | undefined) => {
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) out.push({ id, label, w: v });
+  };
+  add("absorbed", "Sunlight soaked up", absorbed_w);
+  add("arriving", "Usable energy where life could live", w.arriving_w);
+  add("offered", "What its kinds of life could catch", w.offered_w);
+  add("captured", "What life catches", w.captured_w);
+  add("keep_alive", "What staying alive costs", w.keep_alive_w);
+  add("surplus", "Spare, for growing and spreading", w.surplus_w);
+  return out;
+}
+
+/** Bar lengths on a log scale, 0 to 1, over the ladder's own span (at least three powers of ten). */
+export function ladderLengths(rungs: LifeRung[]): number[] {
+  if (!rungs.length) return [];
+  const logs = rungs.map((r) => Math.log10(r.w));
+  const hi = Math.max(...logs);
+  const lo = Math.min(Math.min(...logs), hi - 3) - 0.5;
+  return logs.map((l) => (l - lo) / (hi - lo));
+}
+
+/**
+ * The pace of evolution against Earth's, from the kernel's own opportunity clock (box D: opportunity gathers in
+ * Earth-Myr, so Earth-Myr gathered per Myr is the pace against Earth's), over the last two points of the timeline.
+ * Null when there is no life now or the clock has stopped.
+ */
+export function lifePace(v: Pick<LifeView, "timeline">): number | null {
+  const t = v.timeline;
+  if (t.length < 2) return null;
+  const a = t[t.length - 2]!;
+  const b = t[t.length - 1]!;
+  if (!b.alive || b.at_myr <= a.at_myr) return null;
+  const r = (b.opportunity - a.opportunity) / (b.at_myr - a.at_myr);
+  return r > 0 && Number.isFinite(r) ? r : null;
+}
+
+/** Life's share in words: what it catches against the sunlight, whether it pays its keep, and how fast it evolves. */
+export function lifeWhy(e: LifeEnergy, absorbed_w: number | null, pace: number | null, depth: Depth = "science"): string[] {
+  const w = e.world;
+  const out: string[] = [];
+  const cap = w.captured_w;
+  if (cap === null) {
+    out.push(`How much energy life catches here is not known: ${e.unknown.length ? "some places life could live lack the figures it needs" : "the kernel leaves it out"}.`);
+    return out;
+  }
+  if (cap <= 0) {
+    out.push(w.arriving_w && w.arriving_w > 0 ? `No life catches any of the ${heatWatts(w.arriving_w, depth)} of usable energy reaching places it could live.` : `No usable energy reaches anywhere life could live, so nothing catches any.`);
+    return out;
+  }
+  out.push(absorbed_w && absorbed_w > cap ? `Life catches ${heatWatts(cap, depth)}: about 1 part in ${sayNumber(absorbed_w / cap, 2)} of the sunlight it soaks up.` : `Life catches ${heatWatts(cap, depth)}.`);
+  const keep = w.keep_alive_w;
+  // "Alive, barely" when every habitat where life catches anything is barely alive (LE1).
+  const living = e.habitats.filter((h) => !h.closed && (h.captured_w ?? 0) > 0);
+  const barely = living.length > 0 && living.every((h) => h.barely);
+  if (keep !== null && keep > 0) {
+    if (barely) out.push(`Staying alive costs ${heatWatts(keep, depth)} at the thinnest population ever counted, more than it catches: it is alive, barely.`);
+    // The kernel's own surplus (summed where life pays its keep), never caught less kept here.
+    else if ((w.surplus_w ?? 0) > 0) out.push(`Staying alive costs ${heatWatts(keep, depth)}; where life pays its keep it has ${heatWatts(w.surplus_w!, depth)} spare for growing and spreading.`);
+    else out.push(`Staying alive costs ${heatWatts(keep, depth)}, more than it catches: life here is doubtful.`);
+  }
+  if (depth === "curious") return out;
+  if (pace !== null) out.push(pace >= 0.5 && pace <= 2 ? `Its life evolves at about Earth's pace.` : `Its life evolves at about ${sayNumber(pace, 2)} times Earth's pace: more energy caught means more chances to try new things.`);
+  return out;
+}

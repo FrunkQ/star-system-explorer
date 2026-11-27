@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatWhen, heatWhy, sunBooks, sunColumn, sunWhy, surfaceArea, HEAT_NODES, SUN_NODES, type HeatEnvelope, type HeatHistory, type HeatStep, type Sunlight } from "../src/heat-flow.ts";
+import { booksClose, ladderLengths, lifeLadder, lifePace, lifeWhy, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatWhen, heatWhy, sunBooks, sunColumn, sunWhy, surfaceArea, HEAT_NODES, SUN_NODES, type HeatEnvelope, type HeatHistory, type HeatStep, type Sunlight } from "../src/heat-flow.ts";
 import { layoutFlow } from "../src/flow.ts";
+import type { LifeEnergy, LifeEnergyLines } from "../src/life.ts";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
@@ -101,6 +102,29 @@ test("the outside half draws the climate's sunlight books, closing, at their own
   assert.match(sunWhy(e, sunny({ arriving_w_m2: 0, absorbed_w_m2: 0, reflected_w_m2: 0 }))[0]!, /No sunlight reaches/);
 });
 
+const lines = (o: Partial<LifeEnergyLines> = {}): LifeEnergyLines => ({ arriving_w: 4e15, offered_w: 1e15, captured_w: 1e14, keep_alive_w: 2e13, surplus_w: 8e13, brought_in_w: 0, ...o });
+const ledger = (o: Partial<LifeEnergyLines> = {}, barely = false): LifeEnergy => ({ habitats: [{ habitat: "h", kind: "ocean-sunlit", ...lines(o), light_w: 4e15, chemical_w: 0, exergy_factor: 0.93, barely, closed: null }], world: lines(o), unknown: [], absorbed_sunlight_w: null, notes: [] });
+
+test("life's share: the kernel's ledger as a ladder under the sunlight, and the pace of evolution from its clock", () => {
+  const rungs = lifeLadder(ledger(), 1.2e17);
+  assert.deepEqual(rungs.map((r) => r.id), ["absorbed", "arriving", "offered", "captured", "keep_alive", "surplus"]);
+  const L = ladderLengths(rungs);
+  assert.equal(L[0], 1);
+  assert.ok(L.every((x, i) => i === 0 || x < L[i - 1]! || rungs[i]!.w >= rungs[i - 1]!.w), L.join(","));
+  const why = lifeWhy(ledger(), 1.2e17, 1);
+  assert.match(why[0]!, /Life catches .*1 part in 1,200 of the sunlight/);
+  assert.match(why[1]!, /costs .*20 TW; where life pays its keep it has .*80 TW spare for growing and spreading/);
+  assert.match(why[2]!, /about Earth's pace/);
+  assert.match(lifeWhy(ledger({ captured_w: 1e6, keep_alive_w: 2e8, surplus_w: -2e8 }, true), 1e15, null)[1]!, /alive, barely/);
+  assert.match(lifeWhy(ledger({ captured_w: 1e6, keep_alive_w: 2e8, surplus_w: -2e8 }), 1e15, null)[1]!, /life here is doubtful/);
+  assert.match(lifeWhy(ledger({ captured_w: 0, surplus_w: 0 }), 1e15, null)[0]!, /No life catches any/);
+  assert.equal(lifeWhy(ledger(), 1e17, 3, "curious").length, 2);
+  // The pace is Earth-Myr of opportunity gathered per Myr, over the last two points.
+  const pt = (at: number, opp: number) => ({ at_myr: at, alive: true, capabilities: [], diversity: 1, opportunity: opp, production_gc_yr: 1 });
+  assert.equal(lifePace({ timeline: [pt(0, 0), pt(100, 30), pt(200, 330)] }), 3);
+  assert.equal(lifePace({ timeline: [pt(0, 0), { ...pt(10, 5), alive: false }] }), null);
+});
+
 test("caveats follow the world's conditions, never its name", () => {
   const lid = heatCaveats(env(null, { regime_now: "stagnant-lid" }), today(4.5, 1, 0.1)).map((c) => c.id);
   assert.ok(lid.includes("lid-hot"));
@@ -136,6 +160,11 @@ test("the GM reads a world's heat history from the kernel; Earth runs down as it
     const sb = sunBooks(earth.envelope, earth.sunlight);
     assert.ok(sb.albedo > 0.2 && sb.albedo < 0.4, `Earth's albedo ${sb.albedo}`);
     assert.ok(sb.absorbed_w > 1e3 * now.lost_w, `${sb.absorbed_w} W absorbed against ${now.lost_w} W from inside`);
+    // Life's share from the kernel's ledger (LE2): Earth's life catches energy and pays its keep.
+    const life = await s.lifeView({ body: subjects.find((b) => b.label === "Earth")!.address });
+    assert.ok(life.ok && life.view.energy, JSON.stringify(life).slice(0, 300));
+    const cap = life.view.energy.world.captured_w ?? 0;
+    assert.ok(cap > 0 && cap < sb.absorbed_w, `Earth's life catches ${cap} W`);
     const moon = await s.surveyHeat(sys, subjects.find((b) => b.label === "Moon")!.address);
     assert.ok(moon.ok);
     const p = await Session.open(k.client, tableSeat(), { id: "kestrel", seed: "k" }, packs).catch(() => null);

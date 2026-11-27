@@ -23,3 +23,11 @@ Still open, owned by the thread "Fix climate sunlight for other stars and moons"
 ## Golden
 
 None: `tests/golden/contract.jsonl` is unchanged (no moon is surveyed in the contract).
+
+## LE-U1: life's share (added 27 Nov, after PR 680 put LE2 on main)
+
+The coordinator gave LE-U1 (track LE's Energy flow life branch) to this thread. Under the sunlight words, "Life's share" reads the kernel's energy ledger (`life_view` `view.energy.world`, LE2) and draws it as a ladder of bars on a log scale, biggest first: sunlight soaked up (the climate's), usable energy where life could live, what its kinds of life could catch, what life catches, what staying alive costs, and what is spare. These nest and span many powers of ten, so they are never bands of the sunlight flow. The words (`lifeWhy`) say what life catches as a share of the sunlight, whether it pays its keep (the kernel's own surplus, never caught minus kept, because the kernel sums surplus only where life pays its keep), "alive, barely" when every living habitat is barely alive (LE1), "doubtful" when nothing is spare, and the pace of evolution (`lifePace`): Earth-Myr of opportunity gathered per Myr over the last two timeline points (box D's clock, so 1 is the reference pace). The life view is read beside the survey (`Session.lifeView`); a world with no habitats says why.
+
+The Sol door's Earth: about 69 TW caught, 1 part in 1,800 of the 121 PW soaked up; 32 TW keep-alive; pace about 0.43. The V3 synthetic Sol's Earth catches only about 1 GW ("alive, barely") in the node test. That is the life suite's reading of that import, recorded here for the life threads; the view shows it as it is.
+
+`handover/status/life-energy.md` belongs to the life threads: its LE-U1 row needs "built (HV2b log)" from its owner.

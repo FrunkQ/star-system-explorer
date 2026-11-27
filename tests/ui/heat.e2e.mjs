@@ -3,7 +3,7 @@
 // Open the Solar System from the start sheet, pick Earth, open the Body screen and "Energy flow": the flow is drawn from the
 // kernel's core history, the words say how much heat it loses, sliding back to its youth shows more heat lost and
 // changes nothing in the campaign, and "Back to now" returns. Above it, the outside half: sunlight in, the share
-// reflected as a bar, what is given off, and that life's share is not published yet. The Moon, under a lid, carries its honesty mark. On a
+// reflected as a bar, what is given off, and life's share as a ladder (LE2). The Moon, under a lid, carries its honesty mark. On a
 // phone the open panel never scrolls sideways.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -73,7 +73,10 @@ try {
     assert.ok((await heat.locator("[data-heat-outside] [data-flow] [data-band]").count()) >= 3, "sunlight in, reflected, given off");
     assert.match(await heat.locator("[data-heat-albedo]").getAttribute("aria-label"), /^\d+% of the sunlight reflected/);
     assert.match(await heat.locator("[data-heat-sun-why]").innerText(), /reflects \d+% straight back to space[\s\S]*sunlight, not its inside, sets how warm/);
-    assert.match(await heat.locator("[data-heat-life]").innerText(), /not published yet/);
+    // Life's share from the kernel's ledger (LE2): a ladder under the sunlight, and words.
+    await heat.locator("[data-heat-life-why], [data-heat-life-none]").first().waitFor();
+    assert.ok((await heat.locator("[data-heat-life] [data-rung]").count()) >= 3, "the ladder has its rungs");
+    assert.match(await heat.locator("[data-heat-life-why]").innerText(), /Life catches/);
     const nowWhy = await heat.locator("[data-heat-why]").innerText();
     assert.match(nowWhy, /loses .* of heat from inside through its surface/);
     const nowW = watts(nowWhy);
@@ -87,6 +90,7 @@ try {
     await gm.waitForSelector("[data-heat-line]");
     assert.equal(await heat.locator("[data-heat-line] svg").count(), 2, "temperature and heat lines");
     await shot(gm, `heat-earth-now-${name}`, heat);
+    await shot(gm, `heat-earth-life-${name}`, heat.locator("[data-heat-life]"));
 
     // Slide to its youth: more heat lost, and the campaign is untouched.
     const slider = heat.locator("[data-heat-slider]");

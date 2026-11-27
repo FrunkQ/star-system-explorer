@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { HEAT_COLUMNS, LIFE_SHARE_MISSING, SUN_COLUMNS, sharePercent, sunBooks, sunColumn, sunRank, sunWhy, type Sunlight, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatWatts, heatWhen, heatWhy, booksClose, say, surfaceArea, type Depth, type HeatEnvelope, type HeatStep, type ViewSession } from "../../../ui-contract/src/index.ts";
+  import { HEAT_COLUMNS, SUN_COLUMNS, ladderLengths, lifeLadder, lifePace, lifeWhy, type LifeView, sharePercent, sunBooks, sunColumn, sunRank, sunWhy, type Sunlight, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatWatts, heatWhen, heatWhy, booksClose, say, surfaceArea, type Depth, type HeatEnvelope, type HeatStep, type ViewSession } from "../../../ui-contract/src/index.ts";
   import { opensFrom } from "../../../chart-grammar/src/index.ts";
   import Flow from "../../flow/src/Flow.svelte";
 
@@ -28,6 +28,8 @@
   let failed = $state<string | null>(null);
   let env = $state.raw<HeatEnvelope | null>(null);
   let sun = $state.raw<Sunlight | null>(null);
+  let life = $state.raw<LifeView | null>(null);
+  let lifeNote = $state<string | null>(null);
   /** The step looked at; null follows the world's present. */
   let picked = $state<number | null>(null);
 
@@ -36,6 +38,8 @@
     untrack(() => {
       env = null;
       sun = null;
+      life = null;
+      lifeNote = null;
       gen++;
       busy = false;
       picked = null;
@@ -50,6 +54,12 @@
     const g = ++gen;
     busy = true;
     failed = null;
+    // Life's ledger (LE2) comes from the life suite, read beside the survey; a world with no habitats says why.
+    const lv = session.lifeView({ body: address }).then((x) => {
+      if (g !== gen) return;
+      if (x.ok) life = x.view;
+      else lifeNote = x.message;
+    });
     const r = await session.surveyHeat(system, address);
     if (g !== gen) return;
     busy = false;
@@ -57,6 +67,7 @@
     // The screen's own name for the world (a catalogued world's envelope may carry only its address).
     env = { ...r.envelope, label };
     sun = r.sunlight;
+    await lv;
   }
   function toggle() {
     open = !open;
@@ -75,6 +86,10 @@
   const figures = $derived(depth !== "curious");
   // The outside half: the climate's sunlight books, today's only (the climate is not run back through the world's life).
   const outside = $derived(env && sun ? sunBooks(env, sun) : null);
+  const absorbedW = $derived(outside ? outside.absorbed_w : null);
+  const ladder = $derived(life?.energy ? lifeLadder(life.energy, absorbedW) : []);
+  const lengths = $derived(ladderLengths(ladder));
+  const lifeLines = $derived(life?.energy ? lifeWhy(life.energy, absorbedW, lifePace(life), depth) : []);
   const outWhy = $derived(env && sun && h ? sunWhy(env, sun, depth, heatBooks(env, h.steps[n - 1]!).lost_w) : []);
 
   // The thermal line: temperatures in one small chart, heat in another (never two scales on one axis).
@@ -160,7 +175,24 @@
               <div class="why" data-heat-sun-why>
                 {#each outWhy as line, k (k)}<p>{line}</p>{/each}
               </div>
-              <p class="small note" data-heat-life>{LIFE_SHARE_MISSING}</p>
+              <div class="life" data-heat-life>
+                <h5 class="hl">Life's share <span class="muted small">· bars on a log scale: each step down is ten times smaller or more</span></h5>
+                {#if life?.energy && ladder.length}
+                  <ul class="ladder" aria-label="Energy for life on {label}, biggest first">
+                    {#each ladder as r, k (r.id)}
+                      <li data-rung={r.id}><span class="lab">{r.label}</span><span class="track"><span class="fill {r.id}" style:width="{Math.round(Math.max(0.02, lengths[k] ?? 0) * 1000) / 10}%"></span></span>{#if figures}<span class="fig">{heatWatts(r.w, depth)}</span>{/if}</li>
+                    {/each}
+                  </ul>
+                  <div class="why" data-heat-life-why>
+                    {#each lifeLines as line, k (k)}<p>{line}</p>{/each}
+                  </div>
+                  {#if !when.now}<p class="small muted">Life's share as it is now.</p>{/if}
+                {:else if life}
+                  <p class="small muted" data-heat-life-none>The life suite publishes no energy ledger for {label}.</p>
+                {:else if lifeNote}
+                  <p class="small muted" data-heat-life-none>No life ledger: {lifeNote}</p>
+                {/if}
+              </div>
             </div>
           {/if}
           <div class="half" data-heat-inside>
@@ -351,6 +383,50 @@
   }
   .albedo .lab {
     padding: 0 6px;
+  }
+  .life {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .hl {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .ladder {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 15em) minmax(60px, 1fr) auto;
+    gap: 4px 8px;
+    font-size: 12px;
+    align-items: center;
+  }
+  .ladder li {
+    display: contents;
+  }
+  .ladder .track {
+    height: 10px;
+    background: color-mix(in srgb, var(--sse-line) 40%, transparent);
+  }
+  .ladder .fill {
+    display: block;
+    height: 100%;
+    background: var(--sse-ink-muted);
+  }
+  .ladder .fill.absorbed {
+    background: var(--sse-accent);
+  }
+  .ladder .fill.captured,
+  .ladder .fill.surplus {
+    background: var(--sse-ink);
+  }
+  .ladder .fig {
+    font-family: var(--sse-font-mono);
+    color: var(--sse-ink-muted);
   }
   .why p {
     margin: 0 0 4px;
