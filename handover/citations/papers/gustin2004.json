@@ -1,0 +1,1 @@
+{"key": "gustin2004", "citation": "Gustin et al. 2004", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-field/src/lib.rs"], "claims": ["/// A giant's spin-driven main oval: tens of keV (Gustin et al. 2004)."], "tier": 3}

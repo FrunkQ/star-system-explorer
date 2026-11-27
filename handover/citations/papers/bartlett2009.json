@@ -1,0 +1,1 @@
+{"key": "bartlett2009", "citation": "Bartlett 2009", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-atoms/src/tests.rs"], "claims": ["// 1.086e8 Pa measured (Bartlett 2009); compression is inside the 3 percent."], "tier": 3}

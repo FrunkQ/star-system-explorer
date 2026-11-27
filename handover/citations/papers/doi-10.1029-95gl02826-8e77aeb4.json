@@ -1,0 +1,1 @@
+{"key": "doi:10.1029/95gl02826", "citation": "10.1029/95gl02826", "doi": ["10.1029/95gl02826"], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-field/data/sol-field.json /wind/radial_field_src/doi"], "claims": ["10.1029/95GL02826"], "tier": 3}

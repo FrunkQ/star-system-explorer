@@ -381,6 +381,11 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
         "Jeans escape parameter at the exobase",
     ),
     ("tides.heating_power", "tidal heating power"),
+    ("tides.frequency", "how fast a tide flexes a world, as an angular rate: the orbit's mean motion for a locked moon"),
+    ("tides.im_k2", "imaginary part of a world's tidal Love number k2: the share of a tide's work turned to heat, the k2/Q of the heating law"),
+    ("tides.re_k2", "real part of a world's tidal Love number k2: how far its shape follows a tide"),
+    ("interior.rigidity", "shear modulus of a world's rock or ice: how stiffly it resists being bent"),
+    ("interior.viscosity", "dynamic viscosity of a world's insides over long times: how slowly the solid rock or ice creeps"),
     (
         "tides.locking_time",
         "time to despin to synchronous rotation",

@@ -1,0 +1,1 @@
+{"key": "brophy2011", "citation": "Brophy 2011", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-nav/src/power_tests.rs"], "claims": ["// Dawn's NSTAR ion engine: 92 mN at 2.6 kW, Isp 3100 s (Brophy 2011)."], "tier": 3}

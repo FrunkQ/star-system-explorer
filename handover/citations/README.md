@@ -9,13 +9,13 @@ list that is scored off as papers are confirmed. Owner thread: "Verify every cit
 
 | File | What |
 |---|---|
-| `master.jsonl` | **The master list**, one paper per line, sorted by key. The source of truth. |
+| `papers/` | **The master list**, one file per paper (`<key>.json`, one JSON line; a DOI key's file name is folded and carries a short hash). The source of truth. Until 27 Nov 2026 this was one file, `master.jsonl`; one file per paper means two pull requests that each add papers never touch the same file. |
 | `MASTER.md` | The same list as tables in order of work, with counts. Written by the script; never edit by hand. |
 | `../../scripts/citations.py` | Gathers, checks, writes batches, scores replies (`--help`). |
 | `../../scripts/test-citations.py` | Tests of what counts as a citation. |
-| Project files `sse4/citations/` | Daily batches `batch-NN.md` and the replies `results-NN.md` (working files, not in the repo; the scores and notes they carry are copied into `master.jsonl`). |
+| Project files `sse4/citations/` | Daily batches `batch-NN.md` and the replies `results-NN.md` (working files, not in the repo; the scores and notes they carry are copied into `papers/`). |
 
-Each line of `master.jsonl`:
+Each paper file (the fields are the same as the old `master.jsonl` lines):
 
 | Field | Meaning |
 |---|---|
@@ -51,8 +51,16 @@ Inside a tier: papers the first pass left unverified (or never saw) first, then 
 
 When a pack, the kernel, the UI or the worker cites a paper that is not on the list, `scripts/check.sh` prints a
 warning (`python3 scripts/citations.py --check --warn`). Fix: `python3 scripts/citations.py --add`, then commit
-`handover/citations/master.jsonl`. `--add` only adds the new papers as unchecked and touches no other line, so two
-pull requests rarely conflict; if they do, take both sides (lines are independent and sorted by key). The run-through
+the new files in `handover/citations/papers/`. `--add` only adds files for the new papers, as unchecked, and touches no
+other file, so two pull requests that add papers do not conflict. Two that add the same new paper make the same file;
+take either side.
+
+A branch made before the split that changed `master.jsonl` gets a "deleted in main, modified here" conflict when it
+merges main. A builder that only added papers takes main's side (`git rm handover/citations/master.jsonl`) and runs
+`python3 scripts/citations.py --add`, which finds its papers again from the sources; then commits
+`handover/citations/papers/`. A branch that carries scores (the run-through thread) keeps its file instead (`git add`
+it) and runs `--add`, which moves its rows into `papers/`, keeps every score and deletes the old file. `--check` fails
+while `master.jsonl` exists. The run-through
 thread also adds any it finds each day.
 
 ### Switching the check to fail (Alex's yes, 25 Nov 2026 01:27 UTC: "1-3 yes!", for "after the 25th")
@@ -76,7 +84,7 @@ Do this on the new account, on 26 Nov 2026 or later, in one pull request, never 
          - run: python3 scripts/citations.py --check
    ```
 4. Tell every builder thread before it merges: "a new citation needs `python3 scripts/citations.py --add` and the
-   commit of `handover/citations/master.jsonl`, or CI fails".
+   commit of the new files in `handover/citations/papers/`, or CI fails".
 5. Update this section and `handover/status/citations.md` to say the check now fails.
 
 Keep adding your row to `docs/citations.md` with what you checked, as before: that register is the builders' own
@@ -90,7 +98,7 @@ Consensus plan reached 100% of its month. **The plan resets on 1 December 2026: 
 - Done: 294 papers scored (219 confirmed, 63 not found, 6 say something else, 6 wrong citation). Tiers 1 and 2
   (from memory, and behind golden numbers) are finished except one tier 1 paper.
 - Left: 1,231 unchecked, all tier 3 (code and packs, 712) or tier 4 (design notes only, 518), plus the one tier 1.
-  The papers of batches 6 to 9 that got no reply line are still `unchecked` in `master.jsonl`, so they need no
+  The papers of batches 6 to 9 that got no reply line are still `unchecked` in `papers/`, so they need no
   list of their own: the next `--batches` run picks them up first, by tier.
 - Restart on or after 1 December: `python3 scripts/citations.py --batches <folder> --start 10 --size 50`, then the
   round for whichever account is in use (below). At 50 a day, about 25 days; a month's plan held about 400 papers,
@@ -138,7 +146,7 @@ There Claude reaches Consensus itself, so one thread (or a daily scheduled task)
 2. For each paper in the batch, search Consensus (title words, authors and year, or the DOI), read the abstract or
    text, and write one reply line exactly as the batch asks: `key | status | full citation found | key figure | note`.
    Do not guess; "abstract only" goes in the note. Save the lines as `results-NN.md` (project files if the account
-   has them, otherwise the scratch folder; the scores themselves land in `master.jsonl`).
+   has them, otherwise the scratch folder; the scores themselves land in `papers/`).
 3. Score, update, pull request and raise the wrong ones exactly as steps 2 and 3 above.
 4. About thirty papers a day keeps inside the Consensus budget; 1,465 papers is about seven weeks. Tiers 1 and 2 are
    done in the first week.

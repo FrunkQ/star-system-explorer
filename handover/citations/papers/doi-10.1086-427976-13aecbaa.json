@@ -1,0 +1,1 @@
+{"key": "doi:10.1086/427976", "citation": "10.1086/427976", "doi": ["10.1086/427976"], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-sky/src/healpix.rs"], "claims": ["//! doi:10.1086/427976), not from the reference library, which is GPL."], "tier": 3}
