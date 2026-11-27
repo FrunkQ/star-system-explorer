@@ -405,6 +405,8 @@
         history.replaceState(history.state, "", u.pathname + u.search + u.hash);
         void openFromExplorers(fromExplorers);
       }
+      // A fresh campaign also takes the packs the stack document fetches from Explorers; a reopened one keeps its own stack.
+      if (!reopened) void loadFromExplorers(s);
     })
     .catch((e) => (failure = String(e)));
 
@@ -604,6 +606,42 @@
   // ?explorers=<an Explorers /api/v4/<slug> URL>: the item page's Open in SSE4 button. The bytes are checked against
   // the listing before anything is offered, and the link leaves the address bar once read.
   let explorersNote = $state<string | null>(null);
+  // Packs fetched from Explorers into every fresh campaign (stack.json `from_explorers`). Alex, 27 Nov 2026: Sol today
+  // lives on Explorers "BUT also - for now - autoload in SSE - to keep the local executable smaller and still have the
+  // decent data set for testing". Each is checked against its listing's sha256 and goes through the same pack check and
+  // stack as a file opened by hand. It runs after the chart is up, so the campaign never waits for it: one that is slow
+  // (a time limit on each request), down or not published is skipped, and a line under the chart says so. An automated
+  // browser (navigator.webdriver: the browser tests) fetches nothing, so tests stay offline.
+  let fetchNote = $state<string | null>(null);
+  const EXPLORERS_WAIT_MS = { listing: 15_000, file: 90_000 };
+  const timedFetch: typeof fetch = (u, init) => fetch(u, { ...init, signal: AbortSignal.timeout(String(u).endsWith("/file") ? EXPLORERS_WAIT_MS.file : EXPLORERS_WAIT_MS.listing) });
+  async function loadFromExplorers(s: ViewSession) {
+    const links = (stackDoc as { from_explorers?: string[] }).from_explorers ?? [];
+    if (!links.length || (typeof navigator !== "undefined" && navigator.webdriver)) return;
+    for (const raw of links) {
+      const r = await fetchExplorers(raw, timedFetch);
+      if (!r.ok) {
+        const name = raw.replace(/\/$/, "").split("/").pop();
+        fetchNote = `${name} was not fetched from Explorers, so this campaign opened without it (the built-in Solar System is all here): ${r.why.replace(/\.$/, "")}. A fresh campaign tries again.`;
+        console.warn(`Not loaded from Explorers (${raw}): ${r.why}`);
+        continue;
+      }
+      let doc: unknown;
+      try {
+        doc = JSON.parse(r.text);
+      } catch {
+        continue;
+      }
+      const info = s.stack();
+      const bad = checkPackDoc(doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
+      if (bad) {
+        console.warn(`Not loaded from Explorers (${raw}): ${bad}`);
+        continue;
+      }
+      const added = await addPacks(s, ws, $state.snapshot([...(info.added as PackDoc[]), doc as PackDoc]) as PackDoc[]);
+      if (added.status !== "applied") console.warn(`Not loaded from Explorers (${raw}): ${added.status === "refused" ? added.reason : added.status}`);
+    }
+  }
   async function openFromExplorers(raw: string) {
     const r = await fetchExplorers(raw);
     if (!r.ok) return void (explorersNote = r.why);
@@ -1993,6 +2031,7 @@
         </span>
       </div>
     </footer>
+    {#if fetchNote}<p class="kept-note" role="status" data-explorers-fetch-note>{fetchNote} <button type="button" class="linkbtn" onclick={() => (fetchNote = null)}>OK</button></p>{/if}
     {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">

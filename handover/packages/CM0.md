@@ -61,3 +61,26 @@ things:
   join CM1, CM2 and CM9 make; making a stand-in now would be a special. Roll call already reads every log from the
   installed pack.
 - **Players' screens** receive the stack when they join, so a 4 MB pack goes to each player once; not measured here.
+
+## Part 2 (27 Nov 2026): on Explorers, and fetched into every fresh campaign
+
+Alex, 27 Nov 11:40 UTC: "have it on exploreres BUT also - for now - autoload in SSE - to keep the local executable
+smnaller and still have the decent data set for testing. We will test this setup - it may survive into production -
+this route gives us more options... i.e. we may ship a smaller version of sol and have a "expansion" on the store".
+
+- `packages/shell/src/documents/stack.json` gains `from_explorers`: Explorers V4 listings fetched into every fresh
+  campaign (now `https://explorers.starsystemx.com/api/v4/sse.sol-today-0.1.0`, the hub's slug for id and version).
+  Each is checked against its listing's sha256 (`fetchExplorers`, as the Open in SSE4 button does), passes the same
+  pack check and goes on the stack like a file opened by hand. A reopened campaign keeps its own stack, so a GM who
+  takes the pack off keeps it off. It runs after the chart is up, so a campaign never waits for it; each request has a
+  time limit (15 s for the listing, 90 s for the file), and when Explorers is slow, down or has no such pack, a line
+  under the chart says the pack was not fetched and the campaign opened without it. The file is not in
+  the app's build, so the download stays small.
+- An automated browser (`navigator.webdriver`, every browser test) fetches nothing by itself, so tests never reach the
+  live Explorers; `tests/ui/rollcall.e2e.mjs` says it is not automated for its own last part, serves Explorers from
+  the bundle, and checks one fetch, Roll call reading it, and no second fetch on reopening.
+- While Sol today is on the stack, the campaign's dates read in its Gregorian calendar (the top pack's calendar is the
+  campaign's).
+- Publishing: the hub's own reader (`starsystemx-creator-hub` `src/lib/v4/read.ts`) accepts the bundled file (pack,
+  universe, 1,285 held files, well under the 50 MB gate). It is uploaded from Alex's Explorers account, as the hub
+  gives a pack id to whoever publishes it first; the hub takes the listing's title from the upload form ("Sol today").
