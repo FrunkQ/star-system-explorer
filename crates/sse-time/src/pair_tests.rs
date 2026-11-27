@@ -219,7 +219,7 @@ fn show_cv() {
     for r in l
         .rows
         .iter()
-        .filter(|r| r.b.as_ref().map_or(false, |b| b.mass_msun < 0.2))
+        .filter(|r| r.b.as_ref().is_some_and(|b| b.mass_msun < 0.2))
         .step_by(10)
         .take(30)
     {
