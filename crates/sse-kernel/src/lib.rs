@@ -2349,7 +2349,7 @@ impl Kernel {
         let mut ms = Vec::new();
         for (i, p) in packs.iter().enumerate() {
             ms.push(
-                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                sse_pack::PackManifest::from_value(p)
                     .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
             );
         }
@@ -2563,7 +2563,7 @@ impl Kernel {
         let mut ms = Vec::new();
         for (i, p) in packs.iter().enumerate() {
             ms.push(
-                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                sse_pack::PackManifest::from_value(p)
                     .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
             );
         }
@@ -3325,7 +3325,7 @@ impl Kernel {
                 let mut ms = Vec::new();
                 for (i, p) in packs.iter().enumerate() {
                     ms.push(
-                        serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                        sse_pack::PackManifest::from_value(p)
                             .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
                     );
                 }
