@@ -114,3 +114,32 @@ test("each desk remembers its view and ruler span per level, and its depth per d
   // The keys never collide with the device's existing desk keys ("desk", "desk-lens").
   assert.ok(!["desk", "desk-lens"].includes(deskMemoryKey("explore", "depth")));
 });
+
+test("remembered per desk (TM6): a desk's own value first, else the latest anywhere; kept under both keys", async () => {
+  const { deskLevelOf, recallForDesk, keepForDesk } = await import("../src/desk.ts");
+  assert.equal(deskLevelOf("system"), "system");
+  assert.equal(deskLevelOf("workshop"), null);
+  const store = new Map<string, string>([["view", "latest"], ["desk.run.system.view", "run-system"], ["depth", "science"]]);
+  const load = (k: string) => store.get(k) ?? null;
+  assert.deepEqual(recallForDesk(load, "run", "view", "system"), { value: "run-system", own: true });
+  assert.deepEqual(recallForDesk(load, "run", "view", "world"), { value: "latest", own: false });
+  assert.deepEqual(recallForDesk(load, "build", "view", "system"), { value: "latest", own: false });
+  assert.deepEqual(recallForDesk(load, "run", "view", null), { value: "latest", own: false }, "the Workshop has no level: the plain key");
+  assert.deepEqual(recallForDesk(load, "explore", "depth"), { value: "science", own: false });
+  assert.deepEqual(keepForDesk("run", "view", "world"), ["desk.run.world.view", "view"]);
+  assert.deepEqual(keepForDesk("run", "view", null), ["view"]);
+  assert.deepEqual(keepForDesk("build", "depth"), ["desk.build.depth", "depth"]);
+});
+
+test("the ruler opens by desk and level (top-level 12.1), and keeps the GM's span", async () => {
+  const { rulerOpens, keepRulerSpan } = await import("../src/desk.ts");
+  assert.equal(rulerOpens("explore", "system", null), "week", "Explore at a system: human time");
+  assert.equal(rulerOpens("explore", "world", null), "week");
+  assert.equal(rulerOpens("explore", "galaxy", null), null, "Explore above the system: the whole history");
+  assert.equal(rulerOpens("build", "system", null), null, "Build: the full ruler");
+  assert.equal(rulerOpens("explore", null, null), null, "the Workshop: the whole history");
+  assert.equal(rulerOpens("build", "system", keepRulerSpan(1000)), 1000, "a kept span comes back");
+  assert.equal(rulerOpens("explore", "system", keepRulerSpan(null)), null, "a kept whole history comes back");
+  assert.equal(rulerOpens("explore", "system", "nonsense"), "week", "an odd kept value falls back to the default");
+  assert.equal(keepRulerSpan(Infinity), "whole");
+});
