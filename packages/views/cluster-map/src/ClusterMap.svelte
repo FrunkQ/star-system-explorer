@@ -11,7 +11,7 @@
   import FindHome from "./FindHome.svelte";
   import Nearby from "./Nearby.svelte";
   import { CLUSTER_CONTROLS } from "./controls.ts";
-  import { DEFAULT_VIEW, viewOptions, announcePlace, cellHalo, cellId, cellName, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import { DEFAULT_VIEW, viewOptions, announcePlace, cellHalo, cellId, cellName, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type HomeGalaxy, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ min: String(params.min_mass ?? "1e10"), web: params.web !== false }));
@@ -29,6 +29,29 @@
   let busy = $state(false);
   let picked = $state<string | null>(untrack(() => placeHalo ?? (fromPlace ? null : fromSel ? ctx.workspace.selection : null)));
   let gen = 0;
+  // GZ12: home is one of the web's own haloes (kernel `home_galaxy`). With no place or pick asked for, the map opens on
+  // home's cell with home picked; its cell is "Milky Way neighbourhood". GM only: a player's read fails and is ignored.
+  let home = $state<HomeGalaxy | null>(null);
+  let homeNote = $state<string | null>(null);
+  const opened = untrack(() => !fromPlace && !fromSel);
+  let touched = false; // the GM moved or picked before home was read: leave the map where they put it
+  void untrack(() => ctx.session.homeGalaxy()).then((r) => {
+    if (!r.ok) return;
+    home = r.home;
+    if (opened && !touched) {
+      idx = [...r.home.cell];
+      picked = r.home.halo;
+    }
+  });
+  const ws = $derived(ctx.workspace);
+  const canMakeHome = $derived(ws.mode === "edit" && ctx.session.seat.authority === "gm");
+  // "Make this home" (GZ12 `set_home`): the sky, Galaxies nearby and every chart read from home move with it.
+  async function makeHome(h: CellHalo) {
+    homeNote = null;
+    const r = await ctx.session.setHome(h.address);
+    if (r.ok) home = r.home;
+    else homeNote = r.message;
+  }
   // The shared view controls: Chart is the cube-by-cube catalogue; 3D is Galaxies nearby centred on home (GZ5).
   const shown = $derived(viewOptions(CLUSTER_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
   const nearbySeen = $derived(shown.seen === "edge" ? "edge" : shown.seen === "above" ? "above" : shown.seen === "free" ? "free" : "tilted");
@@ -63,6 +86,7 @@
   });
 
   function move(axis: 0 | 1 | 2, by: number) {
+    touched = true;
     const n: [number, number, number] = [...idx];
     n[axis] += by;
     idx = n;
@@ -86,8 +110,9 @@
   const one = $derived<CellHalo | null>(cell?.haloes.find((h) => h.address === picked) ?? null);
   const biggest = $derived(cell?.haloes[0] ?? null);
   // Named after the most important galaxy in it (Alex, 26 Nov): ours at home, else the biggest halo's.
-  const placeName = $derived(cellName(idx as [number, number, number], cell && cell.index.every((v, i) => v === idx[i]) ? biggest?.address : null));
+  const placeName = $derived(cellName(idx as [number, number, number], cell && cell.index.every((v, i) => v === idx[i]) ? biggest?.address : null, home?.cell ?? null));
   function pick(h: CellHalo) {
+    touched = true;
     picked = h.address;
   }
   let root = $state<HTMLDivElement | null>(null);
@@ -95,7 +120,7 @@
   $effect(() => {
     const c = cell;
     if (!c || !root) return;
-    announcePlace(root, { scale: "cluster", id: cellId(c.index), name: cellName(c.index, c.haloes[0]?.address), children: c.haloes.slice(0, PLACE_CHILDREN).map((h) => ({ id: h.address, name: nameOf(h.address) })) });
+    announcePlace(root, { scale: "cluster", id: cellId(c.index), name: cellName(c.index, c.haloes[0]?.address, home?.cell ?? null), children: c.haloes.slice(0, PLACE_CHILDREN).map((h) => ({ id: h.address, name: nameOf(h.address) })) });
   });
   function chart(h: CellHalo) {
     ctx.workspace.select(h.address);
@@ -103,12 +128,13 @@
   }
   // A home found in another cell: go there, low enough a floor that it shows, and pick it.
   function go(f: import("../../../ui-contract/src/index.ts").HomeFit) {
+    touched = true;
     if (Number(min) > f.halo.mass_msun) min = [...MINS].reverse().find((m) => Number(m) <= f.halo.mass_msun) ?? "1e10";
     picked = f.halo.address;
     idx = [...f.cell];
   }
   const PLACE_CHILDREN = 24;
-  const nameOf = (a: string) => a.split("/").at(-1)?.replace("halo:", "Halo ") ?? a;
+  const nameOf = (a: string) => (home && a === home.halo ? "Our galaxy" : (a.split("/").at(-1)?.replace("halo:", "Halo ") ?? a));
   const gyr = (t: number) => `${t.toFixed(t < 1 ? 2 : 1)} Gyr`;
   // The mass function: expected and drawn per bin, over the bins that matter.
   const bins = $derived(cell ? cell.bins.filter((b) => b.expected >= 0.05 || b.drawn > 0).sort((a, b) => a.log10_mass - b.log10_mass) : []);
@@ -244,6 +270,13 @@
               <dd>{nameOf(one.neighbour.address)}, {one.neighbour.distance_mpc.toFixed(2)} Mpc away, {one.neighbour.bound ? `bound: they first meet in about ${gyr(one.neighbour.approach_gyr ?? 0)}` : "not bound"}</dd>
             {/if}
           </dl>
+          {#if home && one.address === home.halo}
+            <p class="hint" data-is-home>This is home: {home.by === "gm" ? "chosen with Make this home" : "the web's best fit to a Milky Way"}.</p>
+          {:else if canMakeHome && home}
+            <button type="button" onclick={() => makeHome(one!)} data-make-home>Make this home</button>
+            <p class="hint">The sky, Galaxies nearby and the charts are then read from here.</p>
+          {/if}
+          {#if homeNote}<p class="hint" role="alert">{homeNote}</p>{/if}
           <button type="button" class="go" onclick={() => chart(one!)} data-chart-galaxy>Chart this galaxy</button>
           <p class="hint">Opens it in the galaxy chart, grown from its own history.</p>
         {:else}

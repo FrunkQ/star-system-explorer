@@ -109,7 +109,7 @@ Q = [
     ("sigma_T", "Thomson cross-section", 6.6524587321e-29, "m2", "CODATA 2018", 1e-3, [1]),
     # units and conventions
     ("au", "astronomical unit", 149597870700.0, "m", "IAU 2012 B2 (exact)", 1e-3, [1, 1e-3]),
-    ("pc", "parsec", 3.0856775814913673e16, "m", "IAU 2015 B2", 1e-3, [1, 1e-3]),
+    ("pc", "parsec", 3.0856775814913673e16, "m", "IAU 2015 B2", 1e-3, [1, 1e-3, 1e3, 1e6]),
     ("ly", "light year", 9.4607304725808e15, "m", "IAU (Julian year x c)", 1e-3, [1, 1e-3]),
     ("yr_julian", "Julian year", 31557600.0, "s", "IAU", 1e-4, [1]),
     ("yr_sidereal", "sidereal year", 31558149.8, "s", "IERS", 2e-7, [1]),
@@ -167,7 +167,28 @@ Q = [
     ("t_th232", "Th-232 half-life", 1.405e10, "yr", "Ruedas 2017", 2e-3, [1]),
     ("t_k40", "K-40 half-life", 1.248e9, "yr", "Ruedas 2017", 2e-3, [1]),
     ("t_al26", "Al-26 half-life", 7.17e5, "yr", "Ruedas 2017", 2e-3, [1]),
+    # The same constants in the working units code reaches for (SN5, 26 Nov
+    # 2026: G in parsec and kiloparsec units slipped past the SI-only rows).
+    ("G_pc", "gravitational constant in pc (km/s)^2 per solar mass", 4.300917e-3, "pc km2 s-2 Msun-1", "CODATA 2018 G, IAU 2015 M_sun and pc", 2e-3, [1, 1e-3, 1e-6]),
+    ("k_gauss", "Gaussian gravitational constant", 0.01720209895, "au^1.5 Msun^-0.5 day-1", "IAU (defining)", 2e-4, [1]),
+    ("k_gauss2", "Gaussian gravitational constant squared (G in au3 Msun-1 day-2)", 2.959122083e-4, "au3 Msun-1 day-2", "IAU (defining)", 2e-4, [1]),
+    ("G_au_yr", "G in au3 Msun-1 yr-2 (4 pi^2)", 39.47841760, "au3 Msun-1 yr-2", "Kepler's third law in solar units", 2e-4, [1]),
+    # Material values that slipped through by name (SN5): water's refractive
+    # index, and two-figure values that only count beside their unit.
+    ("n_h2o", "refractive index of liquid water (visible)", 1.333, "1", "Segelstein 1981 (the sheet's table)", 3e-3, [1]),
+    ("j_h2o", "photodissociation rate of water at 1 au (quiet Sun)", 1.2e-5, "s-1", "Huebner et al. 1992 (the sheet's lifetime)", 2e-2, [1]),
+    ("tau_h2o", "lifetime of water in sunlight at 1 au (quiet Sun)", 8.3e4, "s", "Huebner et al. 1992 (the sheet)", 1e-2, [1]),
 ]
+
+# Values with fewer than three figures are only counted where their unit is
+# written beside them on the line (or in the doc comment just above it): by
+# value and unit, so a bare 1.2e-5 tolerance is not a photolysis rate but a
+# "1.2e-5 per second" is.
+UNIT_HINTS = {
+    "j_h2o": re.compile(r"s⁻¹|s\^-1|s-1|/s\b|per second|photo|photodiss|photolys", re.I),
+    "tau_h2o": re.compile(r"lifetime|photo", re.I),
+    "n_h2o": re.compile(r"refract|index|\bn_?(water|liquid|h2o)|ior", re.I),
+}
 
 # Keys (packs) and const-name fragments (Rust) that name a matter property.
 PROP_KEY = re.compile(
@@ -249,11 +270,13 @@ def _walk_all():
                     yield os.path.relpath(os.path.join(d, f), ROOT)
 
 
-def match_quantity(v, lit):
+def match_quantity(v, lit, context=""):
     if v == 0:
         return None
     best = None
     for qid, name, val, unit, src, tol, scales in Q:
+        if qid in UNIT_HINTS and not UNIT_HINTS[qid].search(context):
+            continue
         for s in scales:
             ref = val * s
             rel = abs(v - ref) / abs(ref)
@@ -266,7 +289,7 @@ def match_quantity(v, lit):
     q = next(x for x in Q if x[0] == qid)
     # Round numbers only count when the catalogue value is itself round
     # (86400, 273.15) or the literal carries real precision.
-    if sig_digits(lit) < 3 and qid not in ("M_ch",):
+    if sig_digits(lit) < 3 and qid not in ("M_ch",) and qid not in UNIT_HINTS:
         return None
     return qid, s, rel
 
@@ -312,6 +335,20 @@ WAIVER = re.compile(r"(?://|#)\s*not-sheet:\s*(\S.*)$")
 waived = []
 
 
+def unit_context(lines, i, ext):
+    """Where a number's unit is written: its own line, and for code the doc
+    comment just above it; for a pack, the few lines round it (a parameter's
+    description or unit sits beside its default)."""
+    if ext == ".json":
+        return "\n".join(lines[max(0, i - 4): i + 5])
+    out = [lines[i]]
+    j = i - 1
+    while j >= 0 and i - j <= 6 and is_comment(lines[j], ext):
+        out.append(lines[j])
+        j -= 1
+    return "\n".join(out)
+
+
 def scan():
     consts, props, rust_consts = [], [], []
     for path in walk():
@@ -322,7 +359,8 @@ def scan():
             continue
         in_test = False
         json_tests = None  # indent of an open "tests": [ array in a pack (a flow's own test cases)
-        for n, line in enumerate(text.split("\n"), 1):
+        lines = text.split("\n")
+        for n, line in enumerate(lines, 1):
             if ext == ".rs" and re.match(r"\s*#\[cfg\(test\)\]", line):
                 in_test = True
             if ext == ".json":
@@ -347,7 +385,7 @@ def scan():
                 v = to_float(lit)
                 if v is None:
                     continue
-                hit = match_quantity(abs(v), lit)
+                hit = match_quantity(abs(v), lit, unit_context(lines, n - 1, ext))
                 if hit:
                     qid, s, rel = hit
                     test = in_test or json_tests is not None or "/tests/" in path or path.endswith("_tests.rs") or path.endswith("tests.rs") or "/test/" in path

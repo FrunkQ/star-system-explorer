@@ -21,6 +21,7 @@ use crate::kepler::{
 use crate::NavSystem;
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
+use sse_core::time::Instant;
 
 /// Who stands behind a piece or event.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -302,16 +303,17 @@ pub struct At {
 /// Where bodies are: the star at the origin, each body on its orbit.
 pub trait Ephemeris {
     /// A body's position and velocity around the star, and its GM; `star` is the origin.
-    fn body(&self, name: &str, t_s: f64) -> Option<(V3, V3, f64)>;
+    /// `t` is a whole-second date (TP1), so a body moves every second at any age.
+    fn body(&self, name: &str, t: Instant) -> Option<(V3, V3, f64)>;
     fn star_mu(&self) -> f64;
     /// A body's GM, which does not change with the date.
     fn mu_of(&self, name: &str) -> Option<f64> {
-        self.body(name, 0.0).map(|b| b.2)
+        self.body(name, Instant::ORIGIN).map(|b| b.2)
     }
 }
 
 impl Ephemeris for NavSystem {
-    fn body(&self, name: &str, t_s: f64) -> Option<(V3, V3, f64)> {
+    fn body(&self, name: &str, t: Instant) -> Option<(V3, V3, f64)> {
         // The star: by word, by name, or by the system's own address (the one every body's address starts with).
         let sys_addr = !name.is_empty()
             && self.bodies.iter().any(|b| {
@@ -323,7 +325,7 @@ impl Ephemeris for NavSystem {
             return Some(([0.0; 3], [0.0; 3], self.mu()));
         }
         let b = NavSystem::body(self, name)?;
-        let (r, v) = self.at(b, t_s);
+        let (r, v) = self.at_date(b, t);
         Some((r, v, b.mu()))
     }
     fn star_mu(&self) -> f64 {
@@ -382,7 +384,7 @@ impl FlightLog {
             mark: Some(p.mark),
             words,
         };
-        let t = t_s as f64;
+        let t = Instant::seconds(t_s);
         match &p.state {
             State::Orbit { around, elements } => match eph.body(around, t) {
                 Some((rb, vb, mu)) => {
@@ -411,13 +413,14 @@ impl FlightLog {
                 } else {
                     self.at_piece(i - 1, p.from_s, eph)
                 };
-                let end = eph.body(to, *arrive_s as f64);
+                let end = eph.body(to, Instant::seconds(*arrive_s));
                 let tof = (*arrive_s - p.from_s) as f64;
                 match (start, end) {
                     (Some(r1), Some((r2, _, _))) if tof > 0.0 => {
                         match lambert(r1, r2, tof, eph.star_mu()) {
                             Some((v1, _)) => {
-                                let (r, v) = propagate(r1, v1, eph.star_mu(), t - p.from_s as f64);
+                                let (r, v) =
+                                    propagate(r1, v1, eph.star_mu(), (t_s - p.from_s) as f64);
                                 At {
                                     kind: "course".into(),
                                     r_m: Some(r),

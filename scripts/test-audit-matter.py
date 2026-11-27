@@ -76,6 +76,20 @@ def main():
         code, out = run(root, "--closed")
         expect("closed: a typed density fails", code == 1 and "unlabelled typed copy" in out, out)
 
+        # By value and unit (SN5): G in working units, and two-figure values
+        # beside their unit, fail; the same bare number with no unit passes.
+        for name, code_text, bad in [
+            ("G in pc (km/s)^2 per solar mass fails", "pub fn g() -> f64 { 4.300_917e-3 }\n", True),
+            ("G in Mpc (km/s)^2 per solar mass fails", "pub fn g() -> f64 { 4.30091e-9 }\n", True),
+            ("water's refractive index by its name fails", "/// refractive index of water\npub fn n() -> f64 { 1.333 }\n", True),
+            ("a photolysis rate beside its unit fails", "/// photo rate, s⁻¹\npub const J: f64 = 1.2e-5;\n", True),
+            ("a bare 1.2e-5 tolerance passes", "pub fn tol() -> f64 { 1.2e-5 }\n", False),
+            ("a bare 1.333 ratio passes", "pub fn r() -> f64 { 1.333 }\n", False),
+        ]:
+            tree(root, code_text, {"other": {"x": 1}})
+            code, out = run(root, "--closed")
+            expect("closed: " + name, (code == 1 and "unlabelled typed copy" in out) if bad else code == 0, out)
+
         # A new typed constant in Rust fails while unlabelled.
         tree(root, "pub const AU_M: f64 = 149_597_870_700.0;\n", {"other": {"x": 1}})
         code, out = run(root, "--ledger", ledger)

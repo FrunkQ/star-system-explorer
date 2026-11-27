@@ -35,8 +35,10 @@ pub struct FromWorldParams {
     pub atmosphere_top_m: f64,
     pub crust_depth_m: f64,
     pub pore_water_fraction: f64,
-    /// Warming of the rock 5 km down per W/m² of heat flowing out, K.
-    pub warming_at_depth_k_per_w_m2: f64,
+    /// Depth of the deep-crust habitat, m: each W/m² of heat flowing out
+    /// warms the rock there by this over the crust rock's thermal
+    /// conductivity (the data sheet's `crust-rock`).
+    pub warming_depth_m: f64,
     /// Radiation at the ground: `floor + open × exp(-column / column_scale)`.
     pub dose_open_msv_yr: f64,
     pub dose_column_kg_m2: f64,
@@ -49,18 +51,23 @@ pub struct FromWorldParams {
     pub river_p_share: f64,
     /// Vent hydrogen, mol a year per W of the world's inner heat.
     pub vent_h2_mol_yr_per_w: f64,
-    /// Below this O2 mixing ratio the sea keeps its ferrous iron.
+    /// O2 mixing ratio at which the sea keeps half its ferrous iron
+    /// (graded as 1 / (1 + O2 / this)).
     pub anoxic_below_o2: f64,
     pub anoxic_fe2_mol_yr_per_w: f64,
-    /// Heat flow below which there are no vents, W/m².
+    /// Heat flow below which there are no vents, W/m². Still a switch: see
+    /// fudge L3-vents (Earth's modelled heat flow sits just above it).
     pub vents_above_w_m2: f64,
     /// How long a surface lasts by its tectonic regime, Gyr.
     #[serde(default)]
     pub recycling_gyr: BTreeMap<String, f64>,
     /// The air box's volcanic reducing gases, mol O2-equivalent a year per W.
     pub air_reductant_mol_yr_per_w: f64,
-    /// Above this H2 mixing ratio the air is reducing (a giant's).
+    /// H2 mixing ratio at which the air counts half as reducing (graded as
+    /// x^n / (x^n + this^n), n `reducing_hill`).
     pub reducing_above_h2: f64,
+    /// How sharply air turns reducing with its hydrogen.
+    pub reducing_hill: f64,
     /// L3-heat: a new history epoch where the interior's heat has moved by
     /// more than this share since the last, and at most `heat_epoch_cap`.
     pub heat_epoch_step: f64,
@@ -274,6 +281,25 @@ fn band_climate(
     }
 }
 
+/// Share of the vents' ferrous iron the sea keeps, 0 to 1, from the air's
+/// O2 mixing ratio: half at `anoxic_below_o2`.
+pub fn anoxic_share(o2: f64, p: &FromWorldParams) -> f64 {
+    if p.anoxic_below_o2 <= 0.0 {
+        return 0.0;
+    }
+    1.0 / (1.0 + o2.max(0.0) / p.anoxic_below_o2)
+}
+
+/// How reducing the air is, 0 to 1, from its H2 mixing ratio: half at
+/// `reducing_above_h2`.
+pub fn reducing_share(h2: f64, p: &FromWorldParams) -> f64 {
+    if h2 <= 0.0 || p.reducing_above_h2 <= 0.0 {
+        return if h2 > 0.0 { 1.0 } else { 0.0 };
+    }
+    let x = m::pow(h2 / p.reducing_above_h2, p.reducing_hill.max(0.0));
+    x / (1.0 + x)
+}
+
 fn band_area(radius_m: f64, lo: f64, hi: f64) -> f64 {
     let rad = m::PI / 180.0;
     2.0 * m::PI * radius_m * radius_m * (m::sin(hi * rad) - m::sin(lo * rad))
@@ -292,17 +318,16 @@ pub fn stack(
     p: &FromWorldParams,
     cs: &ClimateSettings,
 ) -> (WorldStack, Vec<String>) {
-    let anoxic = gas(&r.conditions, "o2") < p.anoxic_below_o2;
-    stack_ocean(r, p, cs, anoxic)
+    stack_ocean(r, p, cs, anoxic_share(gas(&r.conditions, "o2"), p))
 }
 
-/// As `stack`, with the ocean anoxic (keeping the iron vents bring) or not,
+/// As `stack`, with the share of the ocean that is anoxic (keeping the iron vents bring) given,
 /// whatever the air holds today: the history picks one by its own air.
 pub fn stack_ocean(
     r: &WorldReading,
     p: &FromWorldParams,
     cs: &ClimateSettings,
-    anoxic: bool,
+    anoxic: f64,
 ) -> (WorldStack, Vec<String>) {
     let c = &r.conditions;
     let mut held: Vec<String> = vec![];
@@ -324,9 +349,13 @@ pub fn stack_ocean(
     let vents = q >= p.vents_above_w_m2;
     let vent_supply = |extra: &mut Vec<(&'static str, f64)>| {
         if vents {
-            extra.push(("material.h2_mol_yr", p.vent_h2_mol_yr_per_w * heat_w));
-            if anoxic {
-                extra.push(("material.fe2_mol_yr", p.anoxic_fe2_mol_yr_per_w * heat_w));
+            let w = heat_w;
+            extra.push(("material.h2_mol_yr", p.vent_h2_mol_yr_per_w * w));
+            if anoxic > 0.0 {
+                extra.push((
+                    "material.fe2_mol_yr",
+                    p.anoxic_fe2_mol_yr_per_w * w * anoxic,
+                ));
             }
         }
     };
@@ -505,7 +534,10 @@ pub fn stack_ocean(
         }
         let mut crust = vec![
             ("temperature_min_k", t_s),
-            ("temperature_max_k", t_s + q * p.warming_at_depth_k_per_w_m2),
+            (
+                "temperature_max_k",
+                t_s + q * p.warming_depth_m / rock_conductivity(),
+            ),
             ("pressure_pa", p_pa),
             ("radiation_dose_msv_yr", 0.0),
             ("persistence_s", persistence),
@@ -577,7 +609,7 @@ fn observables(
         recycling_gyr: p.recycling_gyr.get(&r.regime).copied(),
         erosion_gyr: None,
         age_myr: r.age_myr,
-        reducing_air: gas(c, "h2") >= p.reducing_above_h2,
+        reducing_air: reducing_share(gas(c, "h2"), p),
     }
 }
 
@@ -654,7 +686,10 @@ pub fn life(
         // says (L3-air).
         let mut graph_while = vec![];
         if gas(c, "o2") >= p.anoxic_below_o2 {
-            let (ws_anoxic, _) = stack_ocean(&then, &p, cs, true);
+            // The variant is the fully anoxic sea (share 1) while the box's
+            // own O2 is below the threshold; today's graded share is not
+            // re-read each step (fudge L3-grades).
+            let (ws_anoxic, _) = stack_ocean(&then, &p, cs, 1.0);
             let g = HabitatGraph::derive(&ws_anoxic, &rules).map_err(|e| format!("{e:?}"))?;
             if g != g_then {
                 graph_while.push(GraphWhile {
@@ -767,4 +802,25 @@ pub fn life(
         view,
         held,
     })
+}
+
+/// The crust-rock thermal conductivity in force, W m-1 K-1 (the data sheet's
+/// `mixtures` row `crust-rock`): the stack's sheet inside a kernel call, so an
+/// edit reaches the deep-crust warming; the shipped sheet outside one.
+fn rock_conductivity() -> f64 {
+    fn read(r: &sse_reference::Reference) -> Option<f64> {
+        r.row("mixtures", "crust-rock")?
+            .get("thermal_conductivity")?
+            .get("v")?
+            .as_f64()
+    }
+    static BASE: std::sync::OnceLock<f64> = std::sync::OnceLock::new();
+    sse_physics::now()
+        .and_then(|p| read(p.sheet()))
+        .unwrap_or_else(|| {
+            *BASE.get_or_init(|| {
+                read(&sse_reference::Reference::base())
+                    .expect("crust-rock conductivity on the shipped sheet")
+            })
+        })
 }
