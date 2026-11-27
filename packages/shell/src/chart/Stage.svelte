@@ -89,7 +89,7 @@
   {#if ws.adding && ws.adding.a_au === null}
     <p class="undo-note clip-note" role="status" data-add-note>Press on the chart where it should go round {ws.adding.label}; the ghost says how far out. Esc puts it away.{#if typeAdd} <button type="button" class="type-add" data-add-type onclick={typeAdd}>Type a distance</button>{/if}</p>
   {:else if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
-  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"} data-picked={ws.selection ? "" : undefined}>{#if desk === "run" && ws.selection}<button type="button" class="sheet-close" data-sheet-close onclick={() => ws.select(null)}>Close</button>{/if}{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
+  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"} data-picked={ws.selection ? "" : undefined} data-sheet={partShows("card-sheet", desk) ? "" : undefined}>{#if partShows("card-sheet", desk) && ws.selection}<button type="button" class="sheet-close" data-sheet-close onclick={() => ws.select(null)}>Close</button>{/if}{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
 </main>
 
 <style>
@@ -287,10 +287,10 @@
   /* The phone's Run frame (three desks design section 8): the card is a sheet that comes up only on a press, over the
      foot of the picture, and goes with Close or Esc. */
   @media (max-width: 760px) {
-    .stage[data-desk="run"] .area-card:not([data-picked]) {
+    .area-card[data-sheet]:not([data-picked]) {
       display: none;
     }
-    .stage[data-desk="run"] .area-card[data-picked] {
+    .area-card[data-sheet][data-picked] {
       position: fixed;
       top: auto;
       left: 0;
@@ -307,7 +307,7 @@
       border-top: var(--sse-line) solid var(--sse-ink);
       box-shadow: 0 -6px 18px rgb(0 0 0 / 0.14);
     }
-    .stage[data-desk="run"] .sheet-close {
+    .area-card[data-sheet] .sheet-close {
       display: block;
       margin: 0 0 8px auto;
       min-height: 44px;

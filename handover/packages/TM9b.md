@@ -15,7 +15,7 @@ Status: done 27 Nov 2026, thread "Build the three desks". Design: `handover/desi
 
 - `packages/shell/src/App.svelte`: `.app[data-desk]`, and the phone rules that put the stepper on its own row.
 - `nav/PlaceLine.svelte`: the phone stepper row. `nav/Rail.svelte` and `nav/RailMenu.svelte`: the fold on a phone.
-- `chart/Stage.svelte`: the view controls' column on a phone, and the card sheet with Close.
+- `chart/Stage.svelte`: the view controls' column on a phone, and the card sheet with Close, asked of the new shell part `card-sheet` (desks: Run).
 - `chart-grammar/src/CampaignClock.svelte`: the one-row clock with "…" (`[data-clock-more]`).
 
 ## Left for later
