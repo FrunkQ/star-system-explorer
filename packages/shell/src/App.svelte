@@ -405,6 +405,8 @@
         history.replaceState(history.state, "", u.pathname + u.search + u.hash);
         void openFromExplorers(fromExplorers);
       }
+      // A fresh campaign also takes the packs the stack document fetches from Explorers; a reopened one keeps its own stack.
+      if (!reopened) void loadFromExplorers(s);
     })
     .catch((e) => (failure = String(e)));
 
@@ -604,6 +606,36 @@
   // ?explorers=<an Explorers /api/v4/<slug> URL>: the item page's Open in SSE4 button. The bytes are checked against
   // the listing before anything is offered, and the link leaves the address bar once read.
   let explorersNote = $state<string | null>(null);
+  // Packs fetched from Explorers into every fresh campaign (stack.json `from_explorers`). Alex, 27 Nov 2026: Sol today
+  // lives on Explorers "BUT also - for now - autoload in SSE - to keep the local executable smaller and still have the
+  // decent data set for testing". Each is checked against its listing's sha256 and goes through the same pack check and
+  // stack as a file opened by hand; one that cannot be fetched (offline, not published yet) is skipped and said in the
+  // console. An automated browser (navigator.webdriver: the browser tests) fetches nothing, so tests stay offline.
+  async function loadFromExplorers(s: ViewSession) {
+    const links = (stackDoc as { from_explorers?: string[] }).from_explorers ?? [];
+    if (!links.length || (typeof navigator !== "undefined" && navigator.webdriver)) return;
+    for (const raw of links) {
+      const r = await fetchExplorers(raw);
+      if (!r.ok) {
+        console.warn(`Not loaded from Explorers (${raw}): ${r.why}`);
+        continue;
+      }
+      let doc: unknown;
+      try {
+        doc = JSON.parse(r.text);
+      } catch {
+        continue;
+      }
+      const info = s.stack();
+      const bad = checkPackDoc(doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
+      if (bad) {
+        console.warn(`Not loaded from Explorers (${raw}): ${bad}`);
+        continue;
+      }
+      const added = await addPacks(s, ws, $state.snapshot([...(info.added as PackDoc[]), doc as PackDoc]) as PackDoc[]);
+      if (added.status !== "applied") console.warn(`Not loaded from Explorers (${raw}): ${added.status === "refused" ? added.reason : added.status}`);
+    }
+  }
   async function openFromExplorers(raw: string) {
     const r = await fetchExplorers(raw);
     if (!r.ok) return void (explorersNote = r.why);
