@@ -19,7 +19,6 @@ use serde::{Deserialize, Serialize};
 use sse_core::{Address, Quantity, Seed};
 use sse_flow::{Context, Flow, InputValue, SourceLabel};
 use std::collections::BTreeMap;
-use std::sync::OnceLock;
 
 /// The pipeline's own version: bump when its chaining changes.
 pub const PIPELINE_VERSION: &str = "formation-pipeline-v1";
@@ -87,13 +86,16 @@ struct HeatFlow {
     units: sse_core::Units,
 }
 
-fn heat_flow() -> &'static HeatFlow {
-    static CELL: OnceLock<HeatFlow> = OnceLock::new();
-    CELL.get_or_init(|| {
+/// The planet-heat flow compiled against the blocks in force (ER2), kept
+/// with the physics in force so an edit to a block's settings reaches it.
+/// The flow itself is still the shipped copy until ER3 (base flows from the
+/// stack).
+fn heat_flow() -> std::sync::Arc<HeatFlow> {
+    sse_physics::memo("sse-formation.planet-heat", || {
         let pack =
             sse_pack::PackManifest::from_json(BASE_PHYSICS).expect("base-physics pack parses");
         let stack = sse_pack::resolve(&[pack], "0.1.0").expect("base-physics pack resolves");
-        let atoms = sse_atoms::registry();
+        let atoms = sse_physics::registry();
         let doc = stack
             .flows
             .values()

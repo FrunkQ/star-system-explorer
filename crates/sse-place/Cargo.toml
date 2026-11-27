@@ -12,6 +12,7 @@ sse-chronicle.workspace = true
 sse-flow.workspace = true
 sse-pack.workspace = true
 sse-atoms.workspace = true
+sse-physics.workspace = true
 sse-world.workspace = true
 sse-sift = { path = "../sse-sift" }
 sse-life = { path = "../sse-life" }

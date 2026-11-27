@@ -1,0 +1,22 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.block-edit",
+  "version": "0.1.0",
+  "kind": ["physics"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "blocks": [
+      {
+        "id": "sse.light.stellar_wind",
+        "settings": { "speed_km_s": 880.0 },
+        "replaces": { "pack": "sse.base-physics", "range": "^0.1" }
+      },
+      {
+        "id": "sse.heat.radiogenic_heating",
+        "settings": { "k_ppm": 300.0 },
+        "replaces": { "pack": "sse.base-physics", "range": "^0.1" }
+      }
+    ]
+  }
+}

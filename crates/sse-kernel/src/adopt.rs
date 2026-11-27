@@ -895,12 +895,7 @@ pub(crate) fn radius_from_makeup(mass: f64, r: &BTreeMap<String, Value>) -> Opti
         return None;
     }
     let (cmf, wf) = makeup_shares(r).unwrap_or((0.32, 0.0));
-    let atoms = sse_atoms::atoms();
-    let a = atoms
-        .iter()
-        .find(|a| a.decl().id == "sse.interior.rocky_radius")?;
-    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
-    let out = a.eval(&[mass, cmf.min(1.0)], &p).ok()?;
+    let out = sse_physics::run("sse.interior.rocky_radius", &[mass, cmf.min(1.0)]).ok()?;
     Some(out[0] * (1.0 + 0.5 * wf)).filter(|x| x.is_finite() && *x > 0.0)
 }
 
