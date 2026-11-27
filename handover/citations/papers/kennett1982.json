@@ -1,0 +1,1 @@
+{"key": "kennett1982", "citation": "Kennett 1982, Marine Geology", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/wear.rs"], "claims": ["/// Kennett 1982, Marine Geology)."], "tier": 3}

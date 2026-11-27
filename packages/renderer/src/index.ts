@@ -20,7 +20,7 @@ export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround
 // TA6: a world flattened by its spin (Darwin-Radau flow), true-shape.ts.
 export { flattenScale, readTrueShape, SHAPE_FLOW, type ShapeReader, type TrueShape } from "./true-shape.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
-export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, kernelProfile, poleOf, RING_FALLBACK, RING_LOOK_SCALE, ringLook, ringProfile } from "./rings.ts";
+export { BELT_DUST, beltAt, beltHaze, beltParticles, kernelProfile, poleOf, RING_FALLBACK, RING_LOOK_SCALE, ringLook, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
 export type { KernelRing, RingBand, RingLookData, RingPhase, RingProfile } from "./rings.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
@@ -57,7 +57,7 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
 export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
-export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, PROMINENCE_WINDOW_S, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
+export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, PROMINENCE_WINDOW_S, readLiveStar, spotsOf, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
 export { BIG_CELL_DT_MAX, BIG_CELLS_LEAST, bigCellContrast, cellsAcross, churningBigCells, GAMMA_PHOTOSPHERE, CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
@@ -66,6 +66,7 @@ export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
 export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
 export { addProminences, narrateProminences, PROMINENCE_REFERENCES, PROMINENCE_SCALE, prominenceColour, prominencePoints, prominenceShown, prominencesAt } from "./star-prominences.ts";
 export type { Prominence, ProminenceNow } from "./star-prominences.ts";
+export { rateShareOf, regionLon, regionShare, spotsFromRegions, type Region, type Regions } from "./star-regions.ts";
 export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, drawnCellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, plateCellAngle, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
@@ -83,9 +84,11 @@ export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip,
 export type { DriveFacts, Hull, HullPart, HullPartKind, PlumeShape, PropellantPart, Propellants, ShipRecord, TankNeed } from "./ship.ts";
 // V3 gap item 14, stage 2: ships designed from their parts, in styles from the base-ships pack.
 export { designShip, narrateDesign, needsOf, remixes, shipViews } from "./ship-design.ts";
-export type { Callout, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
+export type { Callout, DesignBay, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
 // V3 gap item 14, stage 3: the 3D model from the same layout, with panel textures from the style's skin.
-export { panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export { compoundMesh, panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export { baysFromFacts, designCompound, mountFromFacts, placeCompound, portsFromFacts, reachOf, ringPoints, sizeBays } from "./compound-layout.ts";
+export type { BayFacts, CompoundLayout, CompoundMember, CompoundRules, MountFacts, MountPlace, PlacedMember, PortFacts, PortMark } from "./compound-layout.ts";
 export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
 // GH9: every collision leaves its mark: warps, ripples, rings, lopsided discs, drawn from the kernel's dated marks.
 export { brightnessAt, edgeOnPaths, faceOnPaths, heightAt, markStrengthAt, SCAR_SHAPES, scarsAt, scarWords } from "./galaxy-marks.ts";
@@ -150,7 +153,7 @@ export type { GrainShare, IndexTable } from "./sheet-optics.ts";
 export { readStains, stainFacts, stainHue, stainNote, stainPrepared, stainTiles, STAIN_GRAIN_UM } from "./stain-look.ts";
 export type { StainFact, StainHue, StainReader } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
-export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
+export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh, smallBodyShape } from "./small-body.ts";
 export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
 export type { CometActivity } from "./comet.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";

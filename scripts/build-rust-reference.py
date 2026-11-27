@@ -167,7 +167,8 @@ def build():
             "    /// Y, the mass share of helium.", f"    pub const Y: f64 = {lit(he / total)};",
             "    /// Z, the mass share of everything heavier.", f"    pub const Z: f64 = {lit((total - h - he) / total)};", "}"]
     # Mixture properties, by mixture id.
-    for prop, doc in [("density", "Density, kg/m3"), ("yield_strength", "Yield strength, Pa")]:
+    for prop, doc in [("density", "Density, kg/m3"), ("yield_strength", "Yield strength, Pa"),
+                      ("thermal_conductivity", "Thermal conductivity, W/m/K")]:
         out += ["", f"/// {doc}, by mixture (the sheet's mixtures).", f"pub mod mixture_{prop} {{"]
         for mx in ref["mixtures"]:
             v = mx.get(prop)

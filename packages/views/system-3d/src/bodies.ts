@@ -5,6 +5,7 @@
 import { KM_PER_AU, constant, fact, parentOf, primaryOf, subjectName, type Mark, type PlayerScene, type PlayerSubject, type SceneSubject, type SystemScene } from "../../../ui-contract/src/index.ts";
 import type { FrameNode } from "../../../renderer/src/index.ts";
 import type { SmallSample } from "./small-sample.ts";
+import type { SmallShape } from "../../../ui-contract/src/index.ts";
 
 export interface Body3D {
   id: string;
@@ -15,6 +16,9 @@ export interface Body3D {
   /** Phase angle, degrees; `phase_known` false when it is spread for display (players are not given phases). */
   phase_deg: number;
   phase_known: boolean;
+  /** Its period (seconds) and the clock time its phase is for (seconds since the campaign's epoch), when the kernel gave them: the picture runs it on between answers (CLK1). */
+  period_s?: number;
+  phase_at_s?: number;
   mark: Mark | null;
   /** The body's radius, metres, for Real scale; null or absent when the audience does not have it. */
   radius_m?: number | null;
@@ -32,6 +36,8 @@ export interface Body3D {
   ring_kernel?: import("../../../renderer/src/index.ts").KernelRing;
   /** A belt member the kernel resolved for True (small-sample.ts): drawn in its own shape, with its coma and tails when active. */
   small?: SmallSample;
+  /** RW16a: a scene body below the round size, drawn as its own lump (kernel `small_shape`, ui-contract small-shape.ts). */
+  figure?: SmallShape;
   /** Where the kernel places it from its parent's centre (metres, the system's frame), when placed by date: shadows in True. */
   r_m?: [number, number, number];
   /** Its velocity from its parent (m/s, the same frame), when placed by date: a shadow's caster is read where the light passed it. */
@@ -61,7 +67,7 @@ export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => M
     .filter((s) => s === star || s.orbit)
     .map((s) => {
       const rings = scene.subjects.filter((r) => r.ring && r.parent === s.address).map((r) => ({ name: r.label, ...r.ring! }));
-      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), ...(s.orbit?.v_m_s ? { v_m_s: s.orbit.v_m_s } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s), ...j2Of(s) };
+      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), ...(s.orbit?.v_m_s ? { v_m_s: s.orbit.v_m_s } : {}), ...(s.orbit?.period_s && s.orbit.at_s !== undefined ? { period_s: s.orbit.period_s, phase_at_s: s.orbit.at_s } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s), ...j2Of(s) };
     });
 }
 

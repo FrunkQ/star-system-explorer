@@ -95,6 +95,11 @@ pub const DECLARED: &[(&str, Reach)] = &[
     ("math.cos", Reach::Follows(&[])),
     ("math.tan", Reach::Follows(&[])),
     ("math.atan2", Reach::Follows(&[])),
+    // Tanks and dishes (CM13 part 2): closed forms, the link reading k_B.
+    ("sse.ship.tank_wall_mass", Reach::Follows(&[])),
+    ("sse.ship.split_surface", Reach::Follows(&[])),
+    ("sse.ship.dish_gain", Reach::Follows(&[])),
+    ("sse.ship.link_rate", Reach::Follows(&["k_B"])),
 ];
 
 /// The cosmos chain's stages (DM1, galaxy histories design section 3.3).

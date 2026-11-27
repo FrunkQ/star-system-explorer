@@ -9,7 +9,7 @@ export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, update
 export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
 export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
 export type { Split, Display } from "./displays.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, ClassSample, ClassSampled, PackCalendar, StabilityCheck } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, ClassSample, ClassSampled, PackCalendar, StabilityCheck, SmallDesign } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
 export type { Preview } from "./physics-edit.ts";
@@ -43,10 +43,13 @@ export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./composite.ts";
+export * from "./picture-clock.ts";
 export * from "./part-controls.ts";
-export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey } from "./desk.ts";
+export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan } from "./desk.ts";
 export type { DeskDoc, DeskWrites, DeskTime, OnDesks, ShellPart, DeskLevel, DeskMemory } from "./desk.ts";
 export { NO_HAPPENINGS, byDate, dueAhead, passedWords, checkHappenings } from "./due.ts";
+export { stepperLine, stepOut, stepIn } from "./stepper.ts";
+export type { StepperStep } from "./stepper.ts";
 export type { TimeMark, Summarised, Happenings, DueTick } from "./due.ts";
 export * from "./layouts.ts";
 export * from "./picker.ts";
@@ -158,7 +161,7 @@ export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./
 // The performance readout and its reports (PF1).
 export * from "./perf.ts";
 // The master data sheet's constants (MP22): one door to a constant's value for every package.
-export { constant, constantOf, constantIds, SHEET_BANDS, SHEET_PACK, numberOf, sheetUnitFactor, sheetValue, type SheetRef } from "./sheet.ts";
+export { constant, constantOf, constantIds, SHEET_BANDS, SHEET_LINES, sheetLine, type SheetLine, SHEET_PACK, numberOf, sheetUnitFactor, sheetValue, type SheetRef } from "./sheet.ts";
 export type { SheetBand, SheetConstant } from "./sheet.ts";
 // One Open door (V3 gap 28): what a file is, by looking inside it; Explorers V4 listings, checked by sha256.
 export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
@@ -228,10 +231,13 @@ export { atlasPacks, classNamesIn, sweepAsk, sweepMarks } from "./sweep.ts";
 export { MAKEUP_FIELD, MAKEUP_PARTS, makeupEdits, makeupKinds, makeupOf, PART_WORDS, retradeMakeup } from "./makeup.ts";
 export type { MakeupKind, MakeupPart } from "./makeup.ts";
 export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";
+export { STAR_FAMILY_WORDS, starClassWords } from "./star-class.ts";
 export * from "./approach.ts";
 export * from "./journey.ts";
-export { STAR_KINDS, spectralLetter, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
-export type { StarDescription, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
+export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export { readShape, readShapes, shapeAsk, shapeOf } from "./small-shape.ts";
+export type { ShapeAsk, ShapeReader, SmallShape } from "./small-shape.ts";
 export { chartFate, fateLine, fatePlan, withFate, FATE_LIMIT_MYR } from "./formation-fate.ts";
 export type { ChartFate, FateMark, FatePlan, FateWorld } from "./formation-fate.ts";
 export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markWords, moveJoin, profileMass, profileSpans, sculptorOf, setDensity, setShare, srgb } from "./profile.ts";
@@ -239,3 +245,5 @@ export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Scul
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
 export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";
+export { clips, flownBy, partWarnings, shapeArea, shapeVolume, stretchPart } from "./parts.ts";
+export type { ConnectionPoint, FigureMark, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";

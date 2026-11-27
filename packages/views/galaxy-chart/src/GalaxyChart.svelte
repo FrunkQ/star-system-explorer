@@ -20,7 +20,7 @@
   const viewed = $derived(viewOptions(GALAXY_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW));
   const shownView = $derived(viewed.shown);
   const turned = $derived(shownView.style === "3d" || shownView.style === "true");
-  const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
+  const first = untrack(() => ({ halo: String(params.halo ?? "home"), layer: String(params.layer ?? "metals") }));
   // A named halo, or a catalogued halo's address picked on the cluster map (V9).
   type HaloKey = string;
   // A link's place (U24) opens first, then a galaxy picked on the cluster map, then the screen's own choice.
@@ -29,7 +29,7 @@
     const p = params.place;
     if (typeof p === "string" && (cellHalo(p) || named(p))) return p;
     const sel = ctx.workspace.selection;
-    return cellHalo(sel) ? sel! : named(first.halo) ? first.halo : "milky-way-like";
+    return cellHalo(sel) ? sel! : named(first.halo) ? first.halo : "home";
   });
   let halo = $state<HaloKey>(startHalo);
   const catalogued = $derived(cellHalo(halo));
@@ -85,7 +85,7 @@
     const t = at;
     const p = picked;
     const ed = edits;
-    const r = untrack(() => (p !== null && chart && (chart.key === h || chart.halo === h) ? chart.rings[p]?.radius_kpc : undefined));
+    const r = untrack(() => (p !== null && chart && (chart.key === h || chart.halo === h || (h === "home" && !!chart.home)) ? chart.rings[p]?.radius_kpc : undefined));
     const g = ++gen;
     busy = true;
     const ch = cellHalo(h);

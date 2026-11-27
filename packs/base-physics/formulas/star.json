@@ -275,6 +275,137 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.star.thermal_timescale",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "core_mass",
+     "letter": "Mc"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "luminosity",
+     "letter": "L"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "timescale",
+     "letter": "tau"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "params": [
+    {
+     "param": "share",
+     "letter": "k",
+     "default": 0.5,
+     "range": [
+      0.1,
+      2.0
+     ],
+     "description": "share of the envelope's binding energy the star must radiate (0.5, matching the 1.5e7 yr of Hurley, Tout and Pols 2002 eq. 61)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "luminosity",
+     "says": "luminosity"
+    }
+   ],
+   "references": [
+    "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, Evolution of binary stars and the effect of tides on binary populations, MNRAS 329, 897: overflow rate F(M) [ln(R/R_L)]³ M☉/yr with F = 3e-6 (min(M, 5))² (eq. 58), capped by the donor's thermal timescale τ_KH = 1.5e7 M (M − M_c) / (R L) yr in solar units (eq. 61). https://arxiv.org/abs/astro-ph/0201220",
+    "Kelvin, Lord 1862 and Helmholtz, H. von 1856: a star's thermal timescale is the time its light takes to carry off its gravitational binding energy."
+   ],
+   "shown": "τ_KH = k G M (M − M_c) / (R L)",
+   "equation": {
+    "name": "How long a star takes to settle after its outer layers are disturbed",
+    "formula": "tau = k * G * M * max(M - Mc, 0) / (R * L)",
+    "inputs": {
+     "M": {
+      "kind": "star.mass",
+      "unit": "kg",
+      "name": "mass of the star"
+     },
+     "Mc": {
+      "kind": "star.core_mass",
+      "unit": "kg",
+      "name": "mass of its core"
+     },
+     "R": {
+      "kind": "star.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "L": {
+      "kind": "star.luminosity",
+      "unit": "W",
+      "name": "power the star gives out"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "k": {
+      "kind": "model.thermal_share",
+      "unit": "1",
+      "name": "share of the binding energy"
+     }
+    },
+    "outputs": {
+     "tau": {
+      "kind": "star.thermal_timescale",
+      "unit": "s",
+      "name": "time for the star's light to carry off its envelope's binding energy"
+     }
+    },
+    "source": {
+     "text": "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, MNRAS 329, 897",
+     "url": "https://arxiv.org/abs/astro-ph/0201220",
+     "where": "eq. 61"
+    },
+    "explain": {
+     "curious": "A star can only shrink or swell as fast as its light carries energy away: for the Sun about thirty million years, for a giant's loose envelope a few thousand.",
+     "science": "The Kelvin-Helmholtz time of the envelope. It caps how fast a star can hand gas to a partner, and how fast a partner can take it. Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "M": 2e+30,
+      "Mc": 0.0,
+      "R": 700000000.0,
+      "L": 3.8e+26,
+      "tau": 501827067669172.8
+     },
+     {
+      "M": 2e+30,
+      "Mc": 8e+29,
+      "R": 70000000000.0,
+      "L": 3.8e+28,
+      "tau": 30109624060.15038
+     }
+    ]
+   }
   }
  ]
 }

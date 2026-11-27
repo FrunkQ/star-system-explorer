@@ -23,6 +23,11 @@ export interface GlobeGpu {
   readonly backend: "webgpu" | "webgl2";
   /** Draw one frame. `jitter` shifts the view by a fraction of a pixel (the still tier averages jittered frames). */
   draw(p: Prepared, plan: Plan, lon: number, lat: number, full: number, air?: AirRender | null, jitter?: [number, number], aurora?: AuroraDraw | null): void;
+  /**
+   * A small body's lump (small-body.ts `smallBodyShape`): the mesh is displaced to it, its largest radius at the unit
+   * globe's, and the tiles' relief kept as a tilt of the lump's own normals (RW16a). Null: a sphere.
+   */
+  setShape(shape: { key: string; at: (d: [number, number, number]) => number } | null): void;
   dispose(): void;
 }
 
@@ -84,7 +89,8 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
   let auroraGpu: AuroraGpu | null = null;
   let mesh: Mesh | null = null;
   let lines: LineSegments | null = null;
-  let built: { p: Prepared; grid: number } | null = null;
+  let built: { p: Prepared; grid: number; shape: string } | null = null;
+  let shape: { key: string; at: (d: [number, number, number]) => number } | null = null;
   let builtLines: number | null = null;
 
   function buildMesh(p: Prepared, grid: number) {
@@ -128,6 +134,32 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
       }
     }
     const g = new BufferGeometry();
+    if (shape) {
+      // Displaced to the lump; normals from the displaced faces, tilted by the tiles' own relief (their departure
+      // from the sphere's radial direction).
+      const radial = pos.slice();
+      for (let v = 0; v < pos.length; v += 3) {
+        const k = shape.at([radial[v]!, radial[v + 1]!, radial[v + 2]!]);
+        pos[v] = radial[v]! * k;
+        pos[v + 1] = radial[v + 1]! * k;
+        pos[v + 2] = radial[v + 2]! * k;
+      }
+      const geo = new Float32Array(pos.length);
+      for (let t = 0; t < idx.length; t += 3) {
+        const [a, b, c] = [idx[t]! * 3, idx[t + 1]! * 3, idx[t + 2]! * 3];
+        const e1 = [pos[b]! - pos[a]!, pos[b + 1]! - pos[a + 1]!, pos[b + 2]! - pos[a + 2]!];
+        const e2 = [pos[c]! - pos[a]!, pos[c + 1]! - pos[a + 1]!, pos[c + 2]! - pos[a + 2]!];
+        const n = [e1[1]! * e2[2]! - e1[2]! * e2[1]!, e1[2]! * e2[0]! - e1[0]! * e2[2]!, e1[0]! * e2[1]! - e1[1]! * e2[0]!];
+        for (const q of [a, b, c]) for (let x = 0; x < 3; x++) geo[q + x] = geo[q + x]! + n[x]!;
+      }
+      for (let v = 0; v < pos.length; v += 3) {
+        const l = Math.hypot(geo[v]!, geo[v + 1]!, geo[v + 2]!) || 1;
+        const out = geo[v]! * radial[v]! + geo[v + 1]! * radial[v + 1]! + geo[v + 2]! * radial[v + 2]! < 0 ? -1 : 1;
+        const n = [0, 1, 2].map((x) => (out * geo[v + x]!) / l + (nor[v + x]! - radial[v + x]!));
+        const m = Math.hypot(n[0]!, n[1]!, n[2]!) || 1;
+        for (let x = 0; x < 3; x++) nor[v + x] = n[x]! / m;
+      }
+    }
     g.setAttribute("position", new BufferAttribute(pos, 3));
     g.setAttribute("color", new BufferAttribute(col, 3));
     g.setAttribute("normal", new BufferAttribute(nor, 3));
@@ -137,7 +169,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
     mesh = new Mesh(g, material);
     mesh.matrixAutoUpdate = false;
     scene.add(mesh);
-    built = { p, grid };
+    built = { p, grid, shape: shape?.key ?? "" };
   }
 
   function buildLines(spacing: number) {
@@ -161,11 +193,14 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
 
   return {
     backend,
+    setShape(s) {
+      shape = s;
+    },
     draw(p, plan, lon, lat, full, air, jitter, aurora) {
       const relief = plan.passes.find((x) => x.pass === "relief-globe")?.params ?? {};
       const grat = plan.passes.find((x) => x.pass === "graticule")?.params;
       const grid = Math.round(num(relief.grid, 128));
-      if (!built || built.p !== p || built.grid !== grid) buildMesh(p, grid);
+      if (!built || built.p !== p || built.grid !== grid || built.shape !== (shape?.key ?? "")) buildMesh(p, grid);
       if (grat) {
         if (builtLines !== num(grat.spacing_deg, 30)) buildLines(num(grat.spacing_deg, 30));
         uLineA.value = num(grat.opacity, 0.3);

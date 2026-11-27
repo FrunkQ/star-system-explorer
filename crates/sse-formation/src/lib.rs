@@ -6,6 +6,7 @@
 
 pub mod accrete;
 pub mod body;
+pub mod coorbital;
 pub mod describe;
 pub mod disc;
 pub mod early;
@@ -19,6 +20,7 @@ pub mod lifeline;
 pub mod pins;
 pub mod pipeline;
 pub mod scenario;
+pub mod spectral;
 pub mod stars;
 pub mod violent;
 
@@ -28,6 +30,8 @@ pub use lifeline::{LifeLine, Phase, StarState};
 
 #[cfg(test)]
 mod accrete_tests;
+#[cfg(test)]
+mod coorbital_tests;
 #[cfg(test)]
 mod describe_tests;
 #[cfg(test)]
@@ -40,6 +44,8 @@ mod leftovers_tests;
 mod pins_tests;
 #[cfg(test)]
 mod pipeline_tests;
+#[cfg(test)]
+mod spectral_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

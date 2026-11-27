@@ -11,6 +11,7 @@
   Presentation only: every step, every tick of Run ▸ and every jump is handed to `onstep` with the new campaign time.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import { motionMs } from "./motion.ts";
   import { DAY_S, YEAR_S, dateWords, defaultCalendar, spanWords, steps, type Calendar } from "./calendar.ts";
   import { NO_HAPPENINGS, passedWords, type DueTick, type Happenings } from "../../ui-contract/src/index.ts";
@@ -23,6 +24,7 @@
     dueWindowS = 3n * BigInt(DAY_S),
     passing,
     onstep,
+    onrate,
   }: {
     /** The campaign's now, in years. */
     campaignNow: number;
@@ -36,6 +38,8 @@
     /** What a jump of this many seconds would pass over (the kernel's happenings for the stretch); absent until TP6. */
     passing?: (span_s: bigint) => Happenings;
     onstep?: (yr: number) => void;
+    /** How fast time passes while Run ▸ runs, campaign seconds per real second (0 when stopped): the picture's clock (CLK1) runs at it. */
+    onrate?: (s_per_s: number) => void;
   } = $props();
 
   const cal = $derived(calendar ?? defaultCalendar(campaignNow));
@@ -51,22 +55,28 @@
   ];
   let rateId = $state("minute");
   let running = $state(false);
+  /** On a phone the clock is one row (three desks design section 8): the date, one step, and the rest under "…". */
+  let rest = $state(false);
   const rate = $derived(RATES.find((r) => r.id === rateId) ?? RATES[1]!);
 
   // Human time flows a few times a second: smooth enough for a turning world, gentle on the kernel. Reduced motion
   // still lets the clock run (it is a clock, not an animation); it just ticks once a second.
   let clockEl: HTMLElement | undefined = $state();
+  // The picture's clock (CLK1) runs at Run ▸'s rate, and stops with it, so the worlds move smoothly between ticks.
+  $effect(() => {
+    const r = running && moving ? rate.hours * 3600 : 0;
+    untrack(() => onrate?.(r));
+  });
+  $effect(() => () => untrack(() => onrate?.(0)));
   $effect(() => {
     if (!running || !moving) return;
     const every = motionMs(clockEl ?? null) > 0 ? 250 : 1000;
-    let last = performance.now();
-    let at = campaignNow;
-    const id = setInterval(() => {
-      const t = performance.now();
-      at += ((t - last) / 1000) * rate.hours * hourYr;
-      last = t;
-      onstep?.(at);
-    }, every);
+    const first = performance.now();
+    const from = untrack(() => campaignNow);
+    const per_ms = (rate.hours * hourYr) / 1000;
+    // The date is the start plus the time run, worked out afresh at each tick: adding a quarter second at a time to
+    // a year near a star's age is lost to rounding (a year there resolves about 30 s), so real time never moved on.
+    const id = setInterval(() => onstep?.(from + (performance.now() - first) * per_ms), every);
     return () => clearInterval(id);
   });
   $effect(() => {
@@ -96,23 +106,24 @@
   };
 </script>
 
-<div class="clock" bind:this={clockEl} data-campaign-clock={campaignNow} data-running={running ? "yes" : "no"}>
+<div class="clock" bind:this={clockEl} data-campaign-clock={campaignNow} data-running={running ? "yes" : "no"} data-rest={rest ? "" : undefined}>
   <div class="readout">
     <div class="date" data-clock-date>{words}</div>
     <div class="sub"><span class="stamp">Now</span> in the campaign{cal.id !== "sse.calendar.standard" ? ` · ${cal.label}` : ""}</div>
   </div>
   {#if moving}
     <div class="bar" role="toolbar" aria-label="Campaign clock">
-      {#each chips as s (s.id)}
-        <button type="button" class="chip" data-clock-step={s.id} onclick={() => onstep?.(campaignNow + s.yr)} title="Move the campaign on {spanWords(s.yr, cal)}; players' screens follow">+ 1 {s.label}</button>
+      {#each chips as s, i (s.id)}
+        <button type="button" class="chip" class:rest={i > 0} data-clock-step={s.id} onclick={() => onstep?.(campaignNow + s.yr)} title="Move the campaign on {spanWords(s.yr, cal)}; players' screens follow">+ 1 {s.label}</button>
       {/each}
-      <span class="run">
+      <button type="button" class="chip more" aria-expanded={rest} data-clock-more onclick={() => (rest = !rest)} title={rest ? "Fewer clock controls" : "More clock controls: the other steps, Run, what is due and Jump to a date"}>{rest ? "×" : "…"}</button>
+      <span class="run rest">
         <button type="button" class="chip" class:on={running} aria-pressed={running} data-clock-run onclick={() => (running = !running)} title={running ? "Stop the clock" : "Let time pass in the campaign"}>{running ? "Stop ❚❚" : "Run ▸"}</button>
         <select aria-label="Rate" bind:value={rateId} data-clock-rate>
           {#each RATES as r (r.id)}<option value={r.id}>{r.label}</option>{/each}
         </select>
       </span>
-      <div class="due" data-clock-due aria-label="What is due">
+      <div class="due rest" data-clock-due aria-label="What is due">
         <span class="due-label">Due</span>
         <span class="due-line" title="The next {spanWords(toYr(dueWindowS), cal)}">
           {#each due as d (d.mark.source + d.mark.at_s)}
@@ -127,7 +138,7 @@
         </span>
         {#if !due.length}<span class="none" data-due-none>Nothing due</span>{/if}
       </div>
-      <button type="button" class="chip" data-clock-jump onclick={() => jumpDialog?.showModal()} title="Move the campaign on by weeks or years: says what it will do first">Jump to a date…</button>
+      <button type="button" class="chip rest" data-clock-jump onclick={() => jumpDialog?.showModal()} title="Move the campaign on by weeks or years: says what it will do first">Jump to a date…</button>
     </div>
   {/if}
 </div>
@@ -297,6 +308,9 @@
     font: inherit;
     font-size: 12px;
   }
+  .more {
+    display: none;
+  }
   @media (max-width: 760px) {
     .clock {
       gap: 12px;
@@ -305,6 +319,25 @@
     }
     .date {
       font-size: 18px;
+    }
+    /* One row: the date, one step and "…"; the rest wraps in under it when "…" is pressed. */
+    .sub {
+      display: none;
+    }
+    .bar {
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      min-height: 44px;
+    }
+    .clock:not([data-rest]) .rest {
+      display: none;
+    }
+    .more {
+      display: inline-block;
+      min-width: 44px;
     }
   }
 </style>

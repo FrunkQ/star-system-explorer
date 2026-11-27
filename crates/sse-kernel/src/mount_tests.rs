@@ -323,6 +323,18 @@ fn a_dock_reads_as_a_latch_on_the_hull() {
         r["message"].as_str().unwrap().contains("already docked to"),
         "{r}"
     );
+    // No loops through docks either (CM4 found two craft docked to each other).
+    let r = send(
+        &mut k,
+        json!({"op":"join_constructs","address":soyuz,"with":station,"how":"dock","at_s":300}),
+    );
+    assert!(
+        r["message"]
+            .as_str()
+            .unwrap()
+            .contains("cannot dock to what is docked to it"),
+        "{r}"
+    );
     let r = send(
         &mut k,
         json!({"op":"release_construct","address":soyuz,"from":station,"at_s":400}),

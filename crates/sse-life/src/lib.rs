@@ -28,6 +28,7 @@ pub mod scenario;
 pub mod sift;
 pub mod signatures;
 pub mod soil;
+pub mod speed;
 mod suite;
 pub mod traits;
 pub mod world_life;
@@ -260,5 +261,7 @@ mod ledger_tests;
 mod signatures_tests;
 #[cfg(test)]
 mod soil_tests;
+#[cfg(test)]
+mod speed_tests;
 #[cfg(test)]
 mod traits_tests;

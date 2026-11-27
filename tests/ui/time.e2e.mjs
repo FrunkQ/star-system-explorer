@@ -1,7 +1,7 @@
 // U11 in a real browser, against the built shell (scripts/build-shell.sh
 // first). Usage: node tests/ui/time.e2e.mjs [chromium firefox webkit] [--screens <dir>]
-// Human-scale time on the ruler: it opens at the campaign's now; Show "A
-// week" zooms to days; stepping forward while at now moves the campaign
+// Human-scale time on the ruler: it opens at the campaign's now, on Explore in human time with "Whole life ›" beside
+// it (top-level 12.1); Show "A week" zooms to days; stepping forward while at now moves the campaign
 // (time passes); the track itself only looks, leaving the campaign where it
 // was; Back to now returns; Make this now moves it; Play advances; the
 // campaign's now survives a reload. On a phone the ruler fits its width.
@@ -41,12 +41,18 @@ try {
       await page.goto(base + "#chart");
       await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
 
-      // Opens at the campaign's now, in deep time.
+      // Opens at the campaign's now. On Explore at a system that is human time, with "Whole life ›" beside it (top-level
+      // design 12.1); Whole life › shows the deep time.
       assert.equal(await linked(), "yes");
       assert.match(await ruler.innerText(), /Now\s*in the campaign/i);
-      assert.match(await readout(), /Gyr/);
+      assert.equal(await readout(), "Year 1, day 1, 00:00");
+      const opened = Number(await ruler.getAttribute("data-span"));
+      assert.ok(Math.abs(opened - 7 * DAY) < 1e-6, `opens on a week, not ${opened} years`);
       const start = await viewing();
       await shot("1-open");
+      await ruler.locator("[data-whole-life]").click();
+      await page.waitForFunction(() => /Gyr/.test(document.querySelector(".area-ruler .ruler .now")?.textContent ?? ""));
+      assert.equal(await ruler.locator("[data-whole-life]").count(), 0, "no Whole life › on the whole life");
 
       // A week on screen: dates and hours.
       await page.getByLabel("Show", { exact: true }).selectOption("week");
@@ -117,6 +123,16 @@ try {
       assert.equal(await ruler.count(), 0, "no ruler on Run");
       const clockDate = () => clock.locator("[data-clock-date]").innerText();
       assert.equal(await clockDate(), before);
+      // On a phone the clock is one row (three desks design section 8): the date, one step and "…" for the rest.
+      const more = clock.locator("[data-clock-more]");
+      assert.equal(await more.isVisible(), vpName === "phone", "… only on a phone");
+      if (vpName === "phone") {
+        assert.deepEqual(await clock.locator("[data-clock-step]").evaluateAll((bs) => bs.filter((b) => b.checkVisibility()).length), 1, "one step chip");
+        assert.ok(!(await clock.locator("[data-clock-jump]").isVisible()), "Jump waits under …");
+        const note = page.locator("[data-kept-note]");
+        if (await note.isVisible()) await note.getByRole("button", { name: "OK" }).click();
+        await more.click();
+      }
       assert.equal(await clock.locator("[data-due-none]").innerText(), "Nothing due");
       await shot("5-run-clock");
 

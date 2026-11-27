@@ -138,12 +138,14 @@ export interface ShellPart extends OnDesks {
 
 /**
  * The shell's parts and the desks each shows on, as the shell draws them now. TM2a gave the rail entries their desks;
- * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run; TM2c folded the rail on Run; TM3a put the clock in the ruler's place on Run and took Light with it. The rest
- * are on every desk until their package says otherwise. Form changes on one desk (the place line
- * as a stepper, the folded rail) are the shell's, not a field here.
+ * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run; TM2c folded the rail on Run; TM3a put the clock in the ruler's place on Run and took Light with it; TM7 made the place line the stepper on Run. The rest
+ * are on every desk until their package says otherwise. A form that changes on one desk is a part of its own (the rail
+ * open, the stepper), so the shell asks `partShows` and never tests the desk.
  */
 export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "place-line", words: "The place line: where you are, step by step" },
+  // On Run the place line is the main way to move (design 3.2, TM7): every level drawn, Out and In at its end.
+  { id: "stepper", words: "The stepper: the place line with every level drawn, and Out and In (Page Up, Page Down)", desks: ["run"] },
   { id: "subtitle", words: "The line under the name: the place's subtitle and the date" },
   { id: "desk-switch", words: "The desk switch: Explore, Build, Run" },
   { id: "see-as", words: "See as: the lens the chart is seen through" },
@@ -180,6 +182,9 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "clock", words: "The campaign clock: the date, step chips and Run ▸", desks: ["run"] },
   { id: "light", words: "Light (on Run, the Band control)", desks: ["explore", "build"] },
   { id: "sound", words: "Sound" },
+  // F on the Run desk (design question 11, TM9a): the picture alone; the bar comes back at the top edge.
+  { id: "fill-screen", words: "Fill the screen (F): the picture alone, the bar back at the top edge", desks: ["run"] },
+  { id: "card-sheet", words: "On a phone, the card as a sheet that comes up only on a press, with Close", desks: ["run"] },
   {
     id: "status-line",
     words: "The status line",
@@ -229,4 +234,45 @@ export function deskMemoryKey(desk: Desk, what: DeskMemory, level?: DeskLevel): 
   if (per === "level" && level === undefined) throw new Error(`${what} is remembered per level: give the level`);
   if (per === "desk" && level !== undefined) throw new Error(`${what} is remembered per desk, not per level`);
   return level === undefined ? `desk.${desk}.${what}` : `desk.${desk}.${level}.${what}`;
+}
+
+/** The level a rail scale remembers under; the Workshop changes the tool, not the universe, and has none. */
+export function deskLevelOf(scale: string): DeskLevel | null {
+  return (DESK_LEVELS as readonly string[]).includes(scale) ? (scale as DeskLevel) : null;
+}
+
+/**
+ * What a desk remembers, read back (TM6, design question 9): the desk's own value if it has one, else the last value
+ * chosen anywhere on this device (the plain key), so a desk or level visited for the first time starts from the
+ * viewer's latest choice rather than from nothing. `load` is the shell's `loadPref`.
+ */
+export function recallForDesk(load: (key: string) => string | null, desk: Desk, what: DeskMemory, level?: DeskLevel | null): { value: string | null; own: boolean } {
+  if (DESK_MEMORY[what] === "level" && !level) return { value: load(what), own: false };
+  const own = load(deskMemoryKey(desk, what, DESK_MEMORY[what] === "level" ? level! : undefined));
+  return own !== null ? { value: own, own: true } : { value: load(what), own: false };
+}
+
+/** The keys a choice is kept under: the desk's own (when it has a level, or needs none) and the plain key. */
+export function keepForDesk(desk: Desk, what: DeskMemory, level?: DeskLevel | null): string[] {
+  if (DESK_MEMORY[what] === "level" && !level) return [what];
+  return [deskMemoryKey(desk, what, DESK_MEMORY[what] === "level" ? level! : undefined), what];
+}
+
+/**
+ * What the ruler opens on (top-level design 12.1), for a desk at a level: the span this desk last chose there, else the
+ * desk's default. Explore at a system, world or site opens on human time ("week", a Show id the ruler knows), with
+ * "Whole life ›" beside it; Build, and every desk above the system, on the whole history (null). Run has the clock, not
+ * the ruler. `kept` is what `keepRulerSpan` wrote: a length of time, or "whole".
+ */
+export function rulerOpens(desk: Desk, level: DeskLevel | null, kept: string | null): number | string | null {
+  if (kept === "whole") return null;
+  const n = kept === null ? NaN : Number(kept);
+  if (Number.isFinite(n) && n > 0) return n;
+  const human = level === "system" || level === "world" || level === "site";
+  return desk === "explore" && human ? "week" : null;
+}
+
+/** A span the GM chose, as `rulerOpens` reads it back. */
+export function keepRulerSpan(span: number | null): string {
+  return span === null || !(span > 0) || !Number.isFinite(span) ? "whole" : String(span);
 }

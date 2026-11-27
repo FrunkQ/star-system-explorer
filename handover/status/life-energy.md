@@ -13,11 +13,11 @@ In one line: free energy captured, set against the cost of staying alive, decide
 |---|---|---|---|
 | LE1 keep-alive test in the shared step, starved and laboratory maintenance in one shared cited block, "alive, barely", biomass capped by power over maintenance | nothing | life goldens only (hashes; no core line moved) | built, PR with LE2; log `packages/LE1-LE2.md` |
 | LE2 energy ledger on `life_view` (arriving, offered, captured, keep-alive, surplus, brought in at zero) | LE1 | none (new field on chart worlds only; the contract's life cases are fixtures) | built, PR with LE1; world "absorbed sunlight" not published until PR 678 lands |
-| LE3 where the energy goes: power and share by diet per guild, rough numbers by size class | LE1 | core (new fields) | not started |
-| LE4 speed read-out: fill time per habitat, one speed line per world | LE1 | core (new fields) | not started |
+| LE3 where the energy goes: power and share by diet per guild, rough numbers by size class | LE1 | life goldens only (hashes) | built, PR with LE4; log `packages/LE3-LE4.md` |
+| LE4 speed read-out: fill time per habitat, one speed line per world | LE1 | none (new field on chart worlds) | built, PR with LE3 |
 | LE5 broad-brush spread in the deep-time history (link rates, colonisation waiting times, refuges) | LE4 | core (dated history moves) | not started |
 | LE6a recovery clocked in Earth-Myr of opportunity | LE4 | core (dated history moves) | not started |
-| LE-U1 Energy flow life branch | LE2, the Energy flow view (PR 670, HV) | none | not started |
+| LE-U1 Energy flow life branch | LE2, the Energy flow view (PR 670, HV) | none | built (log `handover/packages/HV2b.md`) |
 | LE-U2 Life screen card "Where the energy goes" | LE3, LE4 | none | not started |
 
 Only the owner thread edits this file. One row per package: update it in the same pull request as the package.

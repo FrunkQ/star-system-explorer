@@ -82,7 +82,8 @@
   function line(d: StarDescription): string {
     const r = d.now;
     const remnant = r.phase === "white-dwarf" || r.phase === "neutron-star" || r.phase === "black-hole";
-    const bits = [`${r.label}`];
+    // Its formal class beside its phase, as the kernel reads it ("main sequence, G2 V"; "white dwarf, DX 5").
+    const bits = [r.label, ...(r.class ? [r.class.code] : [])];
     if (r.phase !== "black-hole") bits.push(say(r.teff_k, "temperature", { class: "star" }, { depth }).text, say(r.luminosity_w, "power", { class: "star", what: "light" }, { depth }).text);
     if (remnant) bits.push(`${sayMass(r.mass_msun)} left`);
     return bits.join(", ");

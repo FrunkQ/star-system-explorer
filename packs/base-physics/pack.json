@@ -1899,6 +1899,62 @@
         "range": null
       },
       {
+        "description": "a star's radius over its Roche lobe's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.lobe_fill",
+        "range": null
+      },
+      {
+        "description": "one star's mass over its partner's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.mass_ratio",
+        "range": null
+      },
+      {
+        "description": "radius of the sphere with the volume of a star's Roche lobe",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.roche_lobe_radius",
+        "range": null
+      },
+      {
+        "description": "mass a star gives its partner each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.transfer_rate",
+        "range": null
+      },
+      {
         "description": "time since the body formed",
         "dim": [
           0,
@@ -2148,6 +2204,20 @@
           0
         ],
         "id": "body.rotation_period",
+        "range": null
+      },
+      {
+        "description": "area of the world's surface",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.surface_area",
         "range": null
       },
       {
@@ -3019,6 +3089,34 @@
         "range": null
       },
       {
+        "description": "share of a stirred belt a world catches as Trojans",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "formation.captured_share",
+        "range": null
+      },
+      {
+        "description": "share of a world's caught Trojans still there after billions of years",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "formation.long_lived_share",
+        "range": null
+      },
+      {
         "description": "absorbing cross-section of one particle at this wavelength",
         "dim": [
           2,
@@ -3719,6 +3817,174 @@
         "range": null
       },
       {
+        "description": "temperature drop across the mantle's top boundary layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "heat.boundary_layer_temperature_drop",
+        "range": null
+      },
+      {
+        "description": "how fast erupted lava buries the surface",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.burial_speed",
+        "range": null
+      },
+      {
+        "description": "heat of melt freezing inside the lid",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.intruded_flux",
+        "range": null
+      },
+      {
+        "description": "heat conducted away from the lid's base",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_base_flux",
+        "range": null
+      },
+      {
+        "description": "how fast the lid's base moves down (negative: the lid thins)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_growth_rate",
+        "range": null
+      },
+      {
+        "description": "heat made inside the lid, per square metre of surface (its crust's radioactivity)",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_heating",
+        "range": null
+      },
+      {
+        "description": "heat conducted out of the surface",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.lid_surface_flux",
+        "range": null
+      },
+      {
+        "description": "heat the convecting mantle delivers to the lid's base",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.mantle_flux",
+        "range": null
+      },
+      {
+        "description": "heat erupted lava gives the surface",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.melt_erupted",
+        "range": null
+      },
+      {
+        "description": "heat frozen melt gives the lid",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.melt_intruded",
+        "range": null
+      },
+      {
+        "description": "heat the mantle loses to the melt",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.melt_mantle_loss",
+        "range": null
+      },
+      {
+        "description": "heat the mantle gains beyond what it loses (only a gain melts rock)",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "heat.surplus_power",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,
@@ -3817,6 +4083,20 @@
         "range": null
       },
       {
+        "description": "how the rock's slow creep spreads over time scales (Andrade exponent)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.andrade_exponent",
+        "range": null
+      },
+      {
         "description": "heat flux at the core's top beyond what conduction along the adiabat carries",
         "dim": [
           0,
@@ -3828,6 +4108,20 @@
           0
         ],
         "id": "interior.convected_flux",
+        "range": null
+      },
+      {
+        "description": "typical speed of the mantle's flow",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.convection_speed",
         "range": null
       },
       {
@@ -3901,6 +4195,20 @@
           0
         ],
         "id": "interior.core_top_temperature",
+        "range": null
+      },
+      {
+        "description": "how strongly the rock's stiffness depends on temperature (activation energy)",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "interior.creep_activation_energy",
         "range": null
       },
       {
@@ -4100,6 +4408,20 @@
         "range": null
       },
       {
+        "description": "depth of the convecting mantle",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.mantle_depth",
+        "range": null
+      },
+      {
         "description": "mass of the silicate mantle and crust",
         "dim": [
           0,
@@ -4114,6 +4436,20 @@
         "range": null
       },
       {
+        "description": "temperature of the convecting mantle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "interior.mantle_temperature",
+        "range": null
+      },
+      {
         "description": "metal's mass share of a separated body's metal and silicate",
         "dim": [
           0,
@@ -4125,6 +4461,20 @@
           0
         ],
         "id": "interior.metal_fraction",
+        "range": null
+      },
+      {
+        "description": "temperature of the rock",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "interior.parcel_temperature",
         "range": null
       },
       {
@@ -4212,6 +4562,20 @@
         "range": null
       },
       {
+        "description": "shear modulus of a world's rock or ice: how stiffly it resists being bent",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.rigidity",
+        "range": null
+      },
+      {
         "description": "how far a world separated into metal and silicate, 0 to 1",
         "dim": [
           0,
@@ -4237,6 +4601,48 @@
           0
         ],
         "id": "interior.silicate_mass",
+        "range": null
+      },
+      {
+        "description": "how well the lid's rock conducts heat",
+        "dim": [
+          1,
+          1,
+          -3,
+          0,
+          -1,
+          0,
+          0
+        ],
+        "id": "interior.thermal_conductivity",
+        "range": null
+      },
+      {
+        "description": "how fast heat spreads through the lid's rock",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.thermal_diffusivity",
+        "range": null
+      },
+      {
+        "description": "dynamic viscosity of a world's insides over long times: how slowly the solid rock or ice creeps",
+        "dim": [
+          -1,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.viscosity",
         "range": null
       },
       {
@@ -5080,6 +5486,314 @@
         "range": null
       },
       {
+        "description": "density of the melt",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.density",
+        "range": null
+      },
+      {
+        "description": "how much denser the rock is than its melt",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.density_contrast",
+        "range": null
+      },
+      {
+        "description": "melt erupted at the surface, volume per second",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.erupted_rate",
+        "range": null
+      },
+      {
+        "description": "share of the rock that can still melt (falls as basalt is taken)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.fertile_share",
+        "range": null
+      },
+      {
+        "description": "share of the rock that is molten",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.fraction",
+        "range": null
+      },
+      {
+        "description": "size of the rock's grains",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.grain_size",
+        "range": null
+      },
+      {
+        "description": "share of that heat landing in the melting zone (its volume share; all of a tide's heat)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.heat_share",
+        "range": null
+      },
+      {
+        "description": "melt frozen inside the lid, volume per second",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.intruded_rate",
+        "range": null
+      },
+      {
+        "description": "share of the mantle's fertile rock, water and heat-making elements left behind",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.kept_factor",
+        "range": null
+      },
+      {
+        "description": "where the rock is wholly molten at this depth (liquidus)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "melt.liquidus_temperature",
+        "range": null
+      },
+      {
+        "description": "melt share at which the grains stop touching",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.lockup_share",
+        "range": null
+      },
+      {
+        "description": "the permeability law's constant: permeability is b² φⁿ / C",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.permeability_constant",
+        "range": null
+      },
+      {
+        "description": "how fast the rock's permeability grows with its melt share",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.permeability_exponent",
+        "range": null
+      },
+      {
+        "description": "share of the mantle that passed through the melting zone this step",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.processed_share",
+        "range": null
+      },
+      {
+        "description": "melt made, volume per second",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.production_rate",
+        "range": null
+      },
+      {
+        "description": "share of the rock that is melt waiting to leave",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.retained_share",
+        "range": null
+      },
+      {
+        "description": "where the rock starts to melt at this depth (solidus)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "melt.solidus_temperature",
+        "range": null
+      },
+      {
+        "description": "how runny the melt is (its viscosity)",
+        "dim": [
+          -1,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.viscosity",
+        "range": null
+      },
+      {
+        "description": "how strongly melt weakens the rock's flow",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.weakening_exponent",
+        "range": null
+      },
+      {
+        "description": "mean molten share across the melting zone",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.zone_mean_fraction",
+        "range": null
+      },
+      {
+        "description": "area of the melting zone's top",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.zone_top_area",
+        "range": null
+      },
+      {
+        "description": "volume of the melting zone under the lid",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "melt.zone_volume",
+        "range": null
+      },
+      {
         "description": "moment of inertia over M R² (0.4 uniform, lower when mass sinks to the centre)",
         "dim": [
           0,
@@ -5500,6 +6214,20 @@
         "range": null
       },
       {
+        "description": "1 if a neighbour shakes a world's Trojans loose, 0 if not",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.coorbital_disturbed",
+        "range": null
+      },
+      {
         "description": "eccentric anomaly in radians",
         "dim": [
           0,
@@ -5529,6 +6257,20 @@
           0.0,
           1.0
         ]
+      },
+      {
+        "description": "how many giant worlds sit between a world and a belt",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.giants_between",
+        "range": null
       },
       {
         "description": "inner apoapsis to outer periapsis, in mutual Hill radii",
@@ -5598,6 +6340,34 @@
           0
         ],
         "id": "orbit.kozai_time",
+        "range": null
+      },
+      {
+        "description": "1 if the points 60 degrees ahead of and behind a world (L4, L5) hold small bodies, 0 if not",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.lagrange_stable",
+        "range": null
+      },
+      {
+        "description": "a world's share of its own and its host's mass together, mu",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.mass_ratio",
         "range": null
       },
       {
@@ -5699,6 +6469,20 @@
         "range": null
       },
       {
+        "description": "the outer of two orbits' period over the inner's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.period_ratio",
+        "range": null
+      },
+      {
         "description": "current distance from the host as a fraction of the semi-major axis",
         "dim": [
           0,
@@ -5738,6 +6522,34 @@
           0
         ],
         "id": "orbit.resonance_offset",
+        "range": null
+      },
+      {
+        "description": "a mean motion resonance's outer number (p in p:q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_p",
+        "range": null
+      },
+      {
+        "description": "a mean motion resonance's inner number (q in p:q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_q",
         "range": null
       },
       {
@@ -5808,6 +6620,20 @@
           0
         ],
         "id": "orbit.star_distance",
+        "range": null
+      },
+      {
+        "description": "how far a Trojan's orbit size swings round the world's, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.tadpole_width",
         "range": null
       },
       {
@@ -7013,6 +7839,34 @@
         "range": null
       },
       {
+        "description": "share of a dish's area that works",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.aperture_efficiency",
+        "range": null
+      },
+      {
+        "description": "energy per bit over noise density a link's coding needs, as a ratio",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.bit_energy_ratio",
+        "range": null
+      },
+      {
         "description": "people aboard",
         "dim": [
           0,
@@ -7038,6 +7892,48 @@
           0
         ],
         "id": "ship.crew_volume",
+        "range": null
+      },
+      {
+        "description": "bits a second a link supports",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.data_rate",
+        "range": null
+      },
+      {
+        "description": "width of a dish antenna",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.dish_aperture",
+        "range": null
+      },
+      {
+        "description": "gain of a dish over a bare antenna, as a ratio",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.dish_gain",
         "range": null
       },
       {
@@ -7097,6 +7993,34 @@
         "range": null
       },
       {
+        "description": "distance a link spans",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.link_distance",
+        "range": null
+      },
+      {
+        "description": "wavelength a radio or laser link works at",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.link_wavelength",
+        "range": null
+      },
+      {
         "description": "share of a pressurised module left free once equipment is in",
         "dim": [
           0,
@@ -7108,6 +8032,34 @@
           0
         ],
         "id": "ship.net_to_gross",
+        "range": null
+      },
+      {
+        "description": "system noise temperature of a receiver",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "ship.noise_temperature",
+        "range": null
+      },
+      {
+        "description": "surface of one tank holding the whole load",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.one_tank_surface",
         "range": null
       },
       {
@@ -7167,6 +8119,34 @@
         "range": null
       },
       {
+        "description": "gain of the receiving dish, as a ratio",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.receive_gain",
+        "range": null
+      },
+      {
+        "description": "surface of all the tanks a load is split into",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.split_surface",
+        "range": null
+      },
+      {
         "description": "mass of propellant or cargo carried",
         "dim": [
           0,
@@ -7195,6 +8175,34 @@
         "range": null
       },
       {
+        "description": "number of like tanks a load is split into",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.tank_count",
+        "range": null
+      },
+      {
+        "description": "pressure a tank holds its load at",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.tank_pressure",
+        "range": null
+      },
+      {
         "description": "push a drive gives",
         "dim": [
           1,
@@ -7206,6 +8214,76 @@
           0
         ],
         "id": "ship.thrust",
+        "range": null
+      },
+      {
+        "description": "power a link sends",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.transmit_power",
+        "range": null
+      },
+      {
+        "description": "pressure vessel shape factor: 1.5 for a sphere, 2 for a long cylinder",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.vessel_shape",
+        "range": null
+      },
+      {
+        "description": "density of a tank wall's material",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.wall_density",
+        "range": null
+      },
+      {
+        "description": "mass of a pressure tank's wall",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.wall_mass",
+        "range": null
+      },
+      {
+        "description": "stress a tank wall may carry: its strength over the safety factor",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.wall_stress",
         "range": null
       },
       {
@@ -7271,6 +8349,34 @@
         ]
       },
       {
+        "description": "latitude on a star's surface where its magnetic activity sits",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.active_latitude",
+        "range": null
+      },
+      {
+        "description": "tilt of a spot group's pair of opposite polarities from east to west",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.active_region_tilt",
+        "range": null
+      },
+      {
         "description": "length of a star's spot and activity cycle",
         "dim": [
           0,
@@ -7327,6 +8433,20 @@
         "range": null
       },
       {
+        "description": "mass of a star's burnt-out core (helium or carbon and oxygen)",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.core_mass",
+        "range": null
+      },
+      {
         "description": "particles per cubic metre at the foot of a star's corona",
         "dim": [
           -3,
@@ -7352,6 +8472,20 @@
           0
         ],
         "id": "star.corona_temperature",
+        "range": null
+      },
+      {
+        "description": "share of a star's activity cycle gone since its minimum",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.cycle_progress",
         "range": null
       },
       {
@@ -7481,6 +8615,48 @@
         "range": null
       },
       {
+        "description": "a star's surface spin rate at a latitude over its equator's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.rotation_rate_share",
+        "range": null
+      },
+      {
+        "description": "a spot group's peak area, millionths of a hemisphere",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spot_group_area",
+        "range": null
+      },
+      {
+        "description": "how long a spot group lives",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spot_group_life",
+        "range": null
+      },
+      {
         "description": "mean magnetic field strength over a star's surface",
         "dim": [
           0,
@@ -7492,6 +8668,20 @@
           0
         ],
         "id": "star.surface_field",
+        "range": null
+      },
+      {
+        "description": "time a star's light takes to carry off its envelope's binding energy",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.thermal_timescale",
         "range": null
       },
       {
@@ -7677,6 +8867,20 @@
         "range": null
       },
       {
+        "description": "how fast a tide flexes a world, as an angular rate: the orbit's mean motion for a locked moon",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.frequency",
+        "range": null
+      },
+      {
         "description": "tidal heating power",
         "dim": [
           2,
@@ -7688,6 +8892,62 @@
           0
         ],
         "id": "tides.heating_power",
+        "range": null
+      },
+      {
+        "description": "how strongly the host flexes and loses energy under the moon's tide (its k2/Q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.host_k2_over_q",
+        "range": null
+      },
+      {
+        "description": "the most heat the host's tide can keep feeding the moon",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.host_power_ceiling",
+        "range": null
+      },
+      {
+        "description": "radius of the host",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.host_radius",
+        "range": null
+      },
+      {
+        "description": "imaginary part of a world's tidal Love number k2: the share of a tide's work turned to heat, the k2/Q of the heating law",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.im_k2",
         "range": null
       },
       {
@@ -7758,6 +9018,34 @@
           0
         ],
         "id": "tides.raiser_period",
+        "range": null
+      },
+      {
+        "description": "real part of a world's tidal Love number k2: how far its shape follows a tide",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.re_k2",
+        "range": null
+      },
+      {
+        "description": "length of the step",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "time.step",
         "range": null
       },
       {

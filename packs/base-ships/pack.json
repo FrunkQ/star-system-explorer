@@ -23,6 +23,14 @@
           "why": "mixed packed cargo; authored",
           "src": "authored"
         },
+        "compound": {
+          "bay_clearance": 1.15,
+          "bay_per_layer": 4,
+          "port_ring_share": 0.12,
+          "tether_share": 0.02,
+          "why": "compound ships (CM7): a bay is this much longer and wider than what it holds, and a door this much wider than what must leave; several carried in one bay sit up to this many round each layer, layers along the bay; a port is drawn as a ring this share of its size thick; a tether or arm is drawn this share of the carried construct's radius thick. Arrangement for pictures, not physics",
+          "src": "authored"
+        },
         "radiator": {
           "emissivity": 0.9,
           "two_sided": true,

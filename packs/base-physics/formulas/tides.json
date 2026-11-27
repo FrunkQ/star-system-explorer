@@ -133,6 +133,149 @@
    }
   },
   {
+   "id": "sse.tides.maxwell_response",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "rigidity",
+     "letter": "mu"
+    },
+    {
+     "port": "viscosity",
+     "letter": "eta"
+    },
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "frequency",
+     "letter": "w"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "im_k2",
+     "letter": "ki"
+    },
+    {
+     "port": "re_k2",
+     "letter": "kr"
+    }
+   ],
+   "constants": {},
+   "params": [],
+   "positive": [
+    {
+     "port": "rigidity",
+     "says": "rigidity"
+    },
+    {
+     "port": "viscosity",
+     "says": "viscosity"
+    },
+    {
+     "port": "density",
+     "says": "density"
+    },
+    {
+     "port": "gravity",
+     "says": "surface gravity"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "frequency",
+     "says": "tidal frequency"
+    }
+   ],
+   "references": [
+    "Henning, W. G., O'Connell, R. J. and Sasselov, D. D. 2009, ApJ 707, 1000: tidally heated terrestrial exoplanets, viscoelastic response models (the homogeneous Maxwell body's Love number). doi:10.1088/0004-637X/707/2/1000",
+    "Segatz, M., Spohn, T., Ross, M. N. and Schubert, G. 1988, Icarus 75, 187: tidal dissipation in Io https://ui.adsabs.harvard.edu/abs/1988Icar...75..187S"
+   ],
+   "shown": "k₂ = (3/2) / (1 + 19 μ̃ / (2 ρ g R)),  μ̃ = μ · iωη / (μ + iωη);  Im k₂ = (3/2) A X / (1 + (1+A)² X²),  A = 19μ/(2ρgR),  X = ωη/μ",
+   "equation": {
+    "name": "How much a world gives and lags under a tide",
+    "formula": "A = 19 * mu / (2 * rho * g * R)\nX = w * eta / mu\nD = 1 + (1 + A) * (1 + A) * X * X\nki = 3/2 * A * X / D\nkr = 3/2 * (1 + (1 + A) * X * X) / D",
+    "inputs": {
+     "mu": {
+      "kind": "interior.rigidity",
+      "unit": "kg m-1 s-2",
+      "name": "how stiff the world's rock or ice is (shear modulus)"
+     },
+     "eta": {
+      "kind": "interior.viscosity",
+      "unit": "kg m-1 s-1",
+      "name": "how slowly the world's insides flow"
+     },
+     "rho": {
+      "kind": "body.bulk_density",
+      "unit": "kg m-3",
+      "name": "mean density"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the surface"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "w": {
+      "kind": "tides.frequency",
+      "unit": "s-1",
+      "name": "how fast the tide flexes it (the orbit's mean motion for a locked moon)"
+     }
+    },
+    "outputs": {
+     "ki": {
+      "kind": "tides.im_k2",
+      "unit": "1",
+      "name": "share of the tide's work turned to heat (Im k2, the k2/Q of the heating law)"
+     },
+     "kr": {
+      "kind": "tides.re_k2",
+      "unit": "1",
+      "name": "how far the world's shape follows the tide (Re k2)"
+     }
+    },
+    "source": {
+     "text": "Henning, W. G., O'Connell, R. J. and Sasselov, D. D. 2009, ApJ 707, 1000",
+     "doi": "10.1088/0004-637X/707/2/1000",
+     "where": "the homogeneous incompressible Maxwell body (correspondence principle on the elastic Love number)"
+    },
+    "explain": {
+     "curious": "Squeeze a world and it gives a little and springs back a little late. The lateness is what turns the tide's work into heat. A stiff cold world springs back at once and stays cold; a world that flows like warm toffee lags, and heats. Too runny, and it just follows the tide without fighting it, and stays cool again.",
+     "science": "Tidal response of a uniform, incompressible Maxwell body: the elastic Love number 3/2 / (1 + 19μ/2ρgR) with the rigidity replaced by its complex Maxwell form at the tidal frequency. Dissipation peaks where ωη/μ = 1/(1 + 19μ/2ρgR), and falls away both stiffer (elastic) and runnier (fluid). Im k2 here is the k2/Q of the eccentricity heating law. A layered world (an ocean under a shell, a molten layer under a lid) responds differently; this is the one-layer form."
+    },
+    "examples": [
+     {
+      "mu": 65000000000.0,
+      "eta": 10000000000000.0,
+      "rho": 3530.0,
+      "g": 1.796,
+      "R": 1821600.0,
+      "w": 4.11e-05,
+      "ki": 0.4533567714375957,
+      "kr": 1.3438583359544456
+     }
+    ]
+   }
+  },
+  {
    "id": "sse.tides.locking_time",
    "version": "1.0.0",
    "cost": "trivial",
