@@ -9,7 +9,7 @@
 // point of light spreads on a screen) is chosen here, and both are in the
 // fudge register.
 
-import { thermalColour } from "../../ui-contract/src/index.ts";
+import { thermalColour, tempFromBV } from "../../ui-contract/src/index.ts";
 import { dirIndex } from "./timelapse.ts";
 
 export type V3 = [number, number, number];
@@ -321,14 +321,8 @@ export function glowLevel(mag_arcsec2: number, white = SKY_WHITE_MAG_ARCSEC2): n
   return Math.min(1, Math.pow(10, -0.4 * (mag_arcsec2 - white)));
 }
 
-/**
- * Colour temperature from a B−V colour (Ballesteros 2012, EPL 97, 34008):
- * T = 4600 (1 / (0.92 (B−V) + 1.7) + 1 / (0.92 (B−V) + 0.62)).
- */
-export function tempFromBV(bv: number): number {
-  const x = Math.max(-0.4, Math.min(2.5, bv));
-  return 4600 * (1 / (0.92 * x + 1.7) + 1 / (0.92 * x + 0.62));
-}
+/** Colour temperature from B−V: the one copy is ui-contract's (Ballesteros 2012). */
+export { tempFromBV };
 
 const colourCache = new Map<number, [number, number, number]>();
 /** Linear sRGB chromaticity (brightest channel 1) of a thermal source, cached per 100 K. */

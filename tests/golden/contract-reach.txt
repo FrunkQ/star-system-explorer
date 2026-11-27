@@ -15,6 +15,7 @@ G follows {"block":"sse.atmosphere.surface_pressure","reads":[],"uses_it":false}
 G follows {"block":"sse.climate.equilibrium_temperature","reads":["sigma_SB"],"uses_it":false}
 G follows {"block":"sse.climate.grey_surface_temperature","reads":[],"uses_it":false}
 G follows {"block":"sse.climate.insolation","reads":[],"uses_it":false}
+G follows {"block":"sse.gravity.zero_velocity_radius","reads":["G"],"uses_it":true}
 G follows {"block":"sse.math.equation","reads":[],"uses_it":false}
 G follows {"block":"sse.ocean.wind_waves","reads":[],"uses_it":false}
 G follows {"block":"sse.orbit.apsides","reads":[],"uses_it":false}
@@ -84,18 +85,14 @@ G cannot_follow {"block":"logic.sum","why":"computed or fitted with the real con
 G cannot_follow {"block":"logic.switch","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"logic.take","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"logic.trunc","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
-G cannot_follow {"block":"sse.activity.butterfly_latitude","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.closed_corona_radius","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.convective_turnover_time","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.corona_base_density","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.corona_temperature","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.cycle_period_active","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.cycle_period_inactive","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
-G cannot_follow {"block":"sse.activity.differential_rotation","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.flare_rate_above","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
-G cannot_follow {"block":"sse.activity.joy_tilt","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.rossby_number","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
-G cannot_follow {"block":"sse.activity.spot_group_life","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.surface_field","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.activity.xray_fraction","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.air.column_optical_depth","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

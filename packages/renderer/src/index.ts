@@ -12,7 +12,7 @@ export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-c
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
 // R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
-export { flowFace, gasAbove, gasTint, readTrueAir, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
+export { flowFace, gasAbove, gasTint, readCloudRows, readTrueAir, readTrueFace, sheetColours, CLOUD_ROW_NAMES, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
 // VP-A3: the air's look-up tables (Hillaire 2020) for its rim and terminator in True.
 export { airLuts, airShapeOf, AIR_LUT_REFS, type AirLuts, type AirShape } from "./air-luts.ts";
 // VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
@@ -147,8 +147,8 @@ export type { CaveOpening } from "./cave-mouths.ts";
 // Surface stains hued from the data sheet's optics (TRUE4).
 export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
 export type { GrainShare, IndexTable } from "./sheet-optics.ts";
-export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
-export type { StainFact, StainHue } from "./stain-look.ts";
+export { readStains, stainFacts, stainHue, stainNote, stainPrepared, stainTiles, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue, StainReader } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
 export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
