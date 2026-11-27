@@ -78,7 +78,16 @@ jobs:
           git fetch --depth=1 origin main
           python3 scripts/test-audit-matter.py
           python3 scripts/audit-matter.py --ledger handover/packages/MP0-typed-copies.txt --base FETCH_HEAD
+      - if: matrix.os == 'ubuntu-latest'
+        name: no new physics side doors (ER ledger, may only shrink)
+        run: |
+          git fetch --depth=1 origin main
+          python3 scripts/test-audit-side-doors.py
+          python3 scripts/audit-side-doors.py --check --base FETCH_HEAD
       - run: cargo run -q -p sse-cli --release -- harness
+      - if: matrix.os == 'ubuntu-latest'
+        name: the Solar System catalogue build (RW7) on its invented fixture
+        run: python3 scripts/test-build-sol-catalogues.py --sse target/release/sse
 
   wasm:
     name: wasm (node + browsers)
@@ -149,6 +158,8 @@ jobs:
       - run: node tests/ui/campaign.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/biosphere.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/time.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/desk-memory.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/stepper.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/rollcall.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/tactile.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/atlas.e2e.mjs --screens ui-screens
@@ -160,9 +171,19 @@ jobs:
       - run: node tests/ui/aurora.e2e.mjs --screens ui-screens
       - run: node tests/ui/composite.e2e.mjs --screens ui-screens
       - run: node tests/ui/hazard.e2e.mjs --screens ui-screens
+      # The landing run-through (track LR): GM and a joined player, Earth to Mars, orbit, Land, the ground, take-off.
+      - run: node tests/ui/run-through.e2e.mjs
       # The Formation screen (F10a): how a grown system was made, read from its record; the slice moves the ruler.
       - run: node tests/ui/formation.e2e.mjs --screens ui-screens
+      # The small-body designer (RW16a): a lump drawn turning, what a design would take, a comet awake near its star.
+      - run: node tests/ui/small-designer.e2e.mjs --screens ui-screens
+      # Energy flow on the Body screen (track HF screen): the core history as a flow over the world's life.
+      - run: node tests/ui/heat.e2e.mjs --screens ui-screens
       # Ship manifest and crew (track MC): aboard, life support, Known to, pictures, fuel and the ship's log.
       - run: SSE_SHOTS=ui-screens/manifest node tests/ui/manifest.e2e.mjs
+      # The star chooser (PR 615): pick a star for a new system.
+      - run: node tests/ui/star-chooser.e2e.mjs --screens ui-screens/star-chooser
+      # The star class gallery and star picker (SC1): every kind live in True, both sizes, a giant's cells, Make a system's picker.
+      - run: SCREENS=ui-screens/star-gallery node tests/ui/star-gallery.e2e.mjs
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }

@@ -226,7 +226,8 @@ pub(crate) fn read_world_stack(
 
 /// Light from bodies (O2): the Solar System fixture or given conditions.
 pub(crate) fn read_light(fixture: Option<&str>, bodies: Option<Vec<serde_json::Value>>) -> Out {
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let (source, conds) = match (fixture, bodies) {
         (_, Some(list)) => {
             let mut out = vec![];
@@ -329,7 +330,8 @@ pub(crate) fn detect(
         #[serde(default)]
         radar_cross_section_m2: Option<f64>,
     }
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let light_of = |l: Lit, what: &str| -> Result<sse_light::LightDescription, Response> {
         match (l.conditions, l.light) {
             (Some(c), _) => Ok(sse_light::emit::describe(&c, model)
@@ -413,7 +415,8 @@ pub(crate) fn read_air_optics(
     airs: Vec<serde_json::Value>,
     wavelengths_m: Option<Vec<f64>>,
 ) -> Out {
-    let table = &sse_light::emit::Model::base().table;
+    let light_model = sse_light::emit::Model::base();
+    let table = &light_model.table;
     let wl = wavelengths_m.unwrap_or_else(|| vec![680e-9, 550e-9, 440e-9]);
     if wl.iter().any(|&l| !(1e-8..=1e-3).contains(&l)) {
         return Err(err(
@@ -525,7 +528,8 @@ pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {
         #[serde(default)]
         contacts: Vec<sse_sense::fog::Contact>,
     }
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let fits = sse_sense::fog::base_fits().map_err(|e| err("bad_light", e))?;
     let mut out = vec![];
     for (n, v) in seats.into_iter().enumerate() {
@@ -575,7 +579,8 @@ pub(crate) fn read_limb(discs: Vec<serde_json::Value>) -> Out {
         #[serde(default)]
         wavelengths_m: Option<Vec<f64>>,
     }
-    let table = &sse_light::emit::Model::base().table;
+    let light_model = sse_light::emit::Model::base();
+    let table = &light_model.table;
     let eye = table
         .eye
         .as_ref()
@@ -710,7 +715,8 @@ pub(crate) fn light_through_gas(
         #[serde(default)]
         floor: f64,
     }
-    let table = &sse_light::emit::Model::base().table;
+    let light_model = sse_light::emit::Model::base();
+    let table = &light_model.table;
     let eye = table
         .eye
         .as_ref()
@@ -803,7 +809,8 @@ pub(crate) fn read_spectrum(
         distance_m: f64,
         components: Vec<In>,
     }
-    let model = sse_light::emit::Model::base();
+    let light_model = sse_light::emit::Model::base();
+    let model = &*light_model;
     let o: Observer = match observer {
         Some(v) => {
             serde_json::from_value(v).map_err(|e| err("bad_spectrum", format!("observer: {e}")))?
@@ -961,6 +968,7 @@ pub(crate) fn read_activity(
     seed: Option<&str>,
     at_s: Option<f64>,
     window: Option<serde_json::Value>,
+    prominences: Option<serde_json::Value>,
 ) -> Out {
     use sse_activity::*;
     #[derive(serde::Deserialize)]
@@ -985,6 +993,16 @@ pub(crate) fn read_activity(
     let window: Option<Window> = window
         .map(|w| serde_json::from_value(w).map_err(|e| err("bad_activity", format!("window: {e}"))))
         .transpose()?;
+    #[derive(serde::Deserialize)]
+    struct Span {
+        from_s: f64,
+        to_s: f64,
+    }
+    let span: Option<Span> = prominences
+        .map(|w| {
+            serde_json::from_value(w).map_err(|e| err("bad_activity", format!("prominences: {e}")))
+        })
+        .transpose()?;
     let mut out = vec![];
     for (n, v) in stars.into_iter().enumerate() {
         let it: Item =
@@ -1006,7 +1024,21 @@ pub(crate) fn read_activity(
             ),
             None => None,
         };
-        out.push(serde_json::json!({ "activity": a, "moment": mo, "flares": fl }));
+        let mut one = serde_json::json!({ "activity": a, "moment": mo, "flares": fl });
+        if let Some(w) = &span {
+            let p = prominence::prominences(
+                &seed,
+                &it.star,
+                &a,
+                w.from_s,
+                w.to_s,
+                &prominence::ProminenceSettings::default(),
+                &set,
+            )
+            .map_err(|e| err("bad_activity", e))?;
+            one["prominences"] = serde_json::to_value(p).expect("plain data");
+        }
+        out.push(one);
     }
     Ok(Response::ActivityRead { stars: out })
 }

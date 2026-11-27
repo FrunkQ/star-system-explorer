@@ -123,6 +123,13 @@ pub struct SmallBody {
     pub swarm: Option<String>,
 }
 
+impl Moon {
+    /// Its mass, Earth masses.
+    pub fn mass_earth(&self) -> f64 {
+        earth(sum6(&self.solid))
+    }
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Moon {
     pub address: Address,
@@ -413,11 +420,15 @@ pub fn leftovers(seed: &Seed, system: &Address, disc: &Disc, u: &Upheaval) -> Le
                 c.i = Tilt::Rayleigh { sigma_deg: 15.0 };
             }
             "trojans" => {
+                // The swarm spans the world's tadpole width (crate::coorbital).
                 let gw = worlds.iter().find(|w| Some(&w.id) == r.of.as_ref());
                 let ga = gw.map_or(belt_a, |w| w.a_au);
+                let width = gw.map_or(0.0, |w| {
+                    crate::coorbital::zone(w.mass_earth(), MSUN_IN_EARTH * host).width
+                });
                 c.around = r.of.clone();
-                c.a_min_au = ga * 0.98;
-                c.a_max_au = ga * 1.02;
+                c.a_min_au = ga * (1.0 - width);
+                c.a_max_au = ga * (1.0 + width);
                 c.e = Spread::Rayleigh { sigma: 0.07 };
                 c.i = Tilt::Rayleigh { sigma_deg: 12.0 };
             }

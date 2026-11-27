@@ -3019,6 +3019,34 @@
         "range": null
       },
       {
+        "description": "share of a stirred belt a world catches as Trojans",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "formation.captured_share",
+        "range": null
+      },
+      {
+        "description": "share of a world's caught Trojans still there after billions of years",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "formation.long_lived_share",
+        "range": null
+      },
+      {
         "description": "absorbing cross-section of one particle at this wavelength",
         "dim": [
           2,
@@ -3691,6 +3719,34 @@
         "range": null
       },
       {
+        "description": "age of the universe when a group's edge is found (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.age",
+        "range": null
+      },
+      {
+        "description": "radius round a group inside which galaxies have stopped moving apart and fall together (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.zero_velocity_radius",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,
@@ -4184,6 +4240,20 @@
         "range": null
       },
       {
+        "description": "shear modulus of a world's rock or ice: how stiffly it resists being bent",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.rigidity",
+        "range": null
+      },
+      {
         "description": "how far a world separated into metal and silicate, 0 to 1",
         "dim": [
           0,
@@ -4209,6 +4279,20 @@
           0
         ],
         "id": "interior.silicate_mass",
+        "range": null
+      },
+      {
+        "description": "dynamic viscosity of a world's insides over long times: how slowly the solid rock or ice creeps",
+        "dim": [
+          -1,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.viscosity",
         "range": null
       },
       {
@@ -4660,6 +4744,20 @@
         "range": null
       },
       {
+        "description": "share of light a surface reflects straight back at normal incidence",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.normal_reflectance",
+        "range": null
+      },
+      {
         "description": "target area an ion offers a photon that can strip it",
         "dim": [
           2,
@@ -4937,6 +5035,20 @@
           0
         ],
         "id": "material.molar_mass",
+        "range": null
+      },
+      {
+        "description": "how long a molecule of a gas lasts in a quiet Sun's light at 1 AU before it is broken up or ionised",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.photo_lifetime_1au",
         "range": null
       },
       {
@@ -5346,6 +5458,20 @@
         "range": null
       },
       {
+        "description": "mean square slope of the waves on a sea, which sets how far the sun's glint spreads",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ocean.slope_variance",
+        "range": null
+      },
+      {
         "description": "period of the waves carrying the most energy",
         "dim": [
           0,
@@ -5430,6 +5556,20 @@
         "range": null
       },
       {
+        "description": "1 if a neighbour shakes a world's Trojans loose, 0 if not",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.coorbital_disturbed",
+        "range": null
+      },
+      {
         "description": "eccentric anomaly in radians",
         "dim": [
           0,
@@ -5459,6 +5599,20 @@
           0.0,
           1.0
         ]
+      },
+      {
+        "description": "how many giant worlds sit between a world and a belt",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.giants_between",
+        "range": null
       },
       {
         "description": "inner apoapsis to outer periapsis, in mutual Hill radii",
@@ -5528,6 +5682,34 @@
           0
         ],
         "id": "orbit.kozai_time",
+        "range": null
+      },
+      {
+        "description": "1 if the points 60 degrees ahead of and behind a world (L4, L5) hold small bodies, 0 if not",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.lagrange_stable",
+        "range": null
+      },
+      {
+        "description": "a world's share of its own and its host's mass together, mu",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.mass_ratio",
         "range": null
       },
       {
@@ -5629,6 +5811,20 @@
         "range": null
       },
       {
+        "description": "the outer of two orbits' period over the inner's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.period_ratio",
+        "range": null
+      },
+      {
         "description": "current distance from the host as a fraction of the semi-major axis",
         "dim": [
           0,
@@ -5668,6 +5864,34 @@
           0
         ],
         "id": "orbit.resonance_offset",
+        "range": null
+      },
+      {
+        "description": "a mean motion resonance's outer number (p in p:q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_p",
+        "range": null
+      },
+      {
+        "description": "a mean motion resonance's inner number (q in p:q)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_q",
         "range": null
       },
       {
@@ -5738,6 +5962,20 @@
           0
         ],
         "id": "orbit.star_distance",
+        "range": null
+      },
+      {
+        "description": "how far a Trojan's orbit size swings round the world's, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.tadpole_width",
         "range": null
       },
       {
@@ -7229,6 +7467,20 @@
         "range": null
       },
       {
+        "description": "reach of a star's closed magnetic field, in stellar radii",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.closed_corona_extent",
+        "range": null
+      },
+      {
         "description": "time for the churning outer layer of a cool star to turn over once",
         "dim": [
           0,
@@ -7240,6 +7492,34 @@
           0
         ],
         "id": "star.convective_turnover_time",
+        "range": null
+      },
+      {
+        "description": "particles per cubic metre at the foot of a star's corona",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.corona_base_density",
+        "range": null
+      },
+      {
+        "description": "mean temperature of a star's corona",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "star.corona_temperature",
         "range": null
       },
       {
@@ -7366,6 +7646,20 @@
           0
         ],
         "id": "star.rossby_number",
+        "range": null
+      },
+      {
+        "description": "mean magnetic field strength over a star's surface",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "star.surface_field",
         "range": null
       },
       {
@@ -7551,6 +7845,20 @@
         "range": null
       },
       {
+        "description": "how fast a tide flexes a world, as an angular rate: the orbit's mean motion for a locked moon",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.frequency",
+        "range": null
+      },
+      {
         "description": "tidal heating power",
         "dim": [
           2,
@@ -7562,6 +7870,20 @@
           0
         ],
         "id": "tides.heating_power",
+        "range": null
+      },
+      {
+        "description": "imaginary part of a world's tidal Love number k2: the share of a tide's work turned to heat, the k2/Q of the heating law",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.im_k2",
         "range": null
       },
       {
@@ -7632,6 +7954,20 @@
           0
         ],
         "id": "tides.raiser_period",
+        "range": null
+      },
+      {
+        "description": "real part of a world's tidal Love number k2: how far its shape follows a tide",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.re_k2",
         "range": null
       },
       {

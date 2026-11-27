@@ -11,6 +11,7 @@
   looks: arrows 1 % of the window, Page Up/Down 10 %, Home/End, + and − zoom.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
   import { motionMs } from "./motion.ts";
   import { constant, drawn } from "../../ui-contract/src/index.ts";
@@ -26,7 +27,10 @@
     label = "Time",
     onchange,
     onmakenow,
+    onrate,
     note,
+    opens,
+    onspan,
   }: {
     from: number;
     to: number;
@@ -38,8 +42,18 @@
     label?: string;
     onchange?: (yr: number) => void;
     onmakenow?: (yr: number) => void;
+    /** How fast time passes while playing, years per real second (0 when stopped): the picture's clock runs at it (CLK1). */
+    onrate?: (yr_per_s: number) => void;
     /** A caveat shown while the window is in human time (under 10,000 years). */
     note?: string;
+    /**
+     * The span the ruler opens on (top-level design 12.1, by desk and level): a length of time around the time in view,
+     * one of the Show list's ids ("week"), or null for the whole history. Applied when `key` changes (a desk or level switch), not on every new span, so a
+     * zoom is never re-centred. With it, "Whole life ›" shows beside a narrower window.
+     */
+    opens?: { key: string; span: number | string | null };
+    /** The GM changed the span (zoom, Show, Whole life ›): its length, or null for the whole history, to remember. */
+    onspan?: (span: number | null) => void;
   } = $props();
 
   const cal = $derived(calendar ?? defaultCalendar(campaignNow ?? now));
@@ -59,9 +73,10 @@
   const w = $derived(anim ?? wt);
   const span = $derived(wt.to - wt.from);
   let glideRaf = 0;
-  function glide(next: RulerWindow | null) {
+  function glide(next: RulerWindow | null, remember = true) {
     const prev = w;
     win = next;
+    if (remember) said();
     const target = wt;
     cancelAnimationFrame(glideRaf);
     anim = null;
@@ -130,8 +145,26 @@
   function zoomBy(factor: number, about: number, smooth = true) {
     const next = zoom(wt, factor, about, bounds);
     if (smooth) glide(next);
-    else ((anim = null), (win = next));
+    else ((anim = null), (win = next), said());
   }
+  /** Tell the shell the span the GM chose, as a length (a difference of times), or null for the whole history. */
+  function said() {
+    onspan?.(full ? null : span);
+  }
+  // The opening span, once per key (a desk or level switch).
+  let openedKey: string | null = null;
+  $effect(() => {
+    const o = opens;
+    if (!o || o.key === openedKey) return;
+    untrack(() => {
+      openedKey = o.key;
+      const len = typeof o.span === "string" ? SHOWS.find((x) => x.id === o.span)?.span : o.span;
+      // At once, not a glide: the desk or level changed the whole screen, and the ruler arrives with it.
+      cancelAnimationFrame(glideRaf);
+      anim = null;
+      win = len === null || len === undefined || !(len > 0) || len === Infinity ? null : around(now, len, bounds);
+    });
+  });
   // Wheel zoom about the pointer (non-passive, so the page does not scroll).
   $effect(() => {
     const el = track;
@@ -176,25 +209,35 @@
   function play() {
     if (span > stepYr * 600) {
       const fit = SHOWS.filter((x) => x.span !== Infinity && x.span >= stepYr * 30).sort((a, b) => a.span - b.span)[0];
-      if (fit && fit.span < span) glide(around(now, fit.span, bounds));
+      if (fit && fit.span < span) glide(around(now, fit.span, bounds), false);
     }
     playing = true;
   }
+  // The picture's clock (CLK1) runs at the rate play moves the time, and stops with it.
+  $effect(() => {
+    const r = playing ? stepYr : 0;
+    untrack(() => onrate?.(r));
+  });
+  $effect(() => () => untrack(() => onrate?.(0)));
   $effect(() => {
     if (!playing) return;
-    let last: number | null = null;
+    let first: number | null = null;
     let sent = 0;
-    let t = now;
+    const from_yr = untrack(() => now);
+    let t = from_yr;
     const move = linked;
     let raf = 0;
+    // The time is the start plus the time played, worked out afresh each frame: adding each frame's step to a year
+    // near a star's age loses up to half of it to rounding (a year then resolves about 30 s), so the ruler ran slow
+    // or fast at an hour a second and the picture's clock (CLK1) would have parted from it.
     const frame = (ms: number) => {
-      if (last !== null) {
-        t += ((ms - last) / 1000) * stepYr;
+      if (first === null) first = ms;
+      else {
+        t = from_yr + ((ms - first) / 1000) * stepYr;
         if (t >= to) ((t = to), (playing = false));
         // Ten updates a second is plenty for the chart and keeps the kernel calm.
         if (ms - sent >= 100 || !playing) ((sent = ms), set(t, move));
       }
-      last = ms;
       if (playing) raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -222,6 +265,7 @@
       <span class="grp">
         <button type="button" onclick={() => zoomBy(2, now)} disabled={full} aria-label="Zoom out" title="Zoom out (−)">−</button>
         <button type="button" onclick={() => zoomBy(0.5, now)} aria-label="Zoom in" title="Zoom in (+)">+</button>
+        {#if opens && !full}<button type="button" class="link" data-whole-life onclick={() => glide(null)} title="Show the whole of this place's life, birth to death">Whole life ›</button>{/if}
         <select aria-label="Show" onchange={(e) => (show(e.currentTarget.value), (e.currentTarget.value = ""))}>
           <option value="">{full ? "Whole history" : `Showing ${spanWords(span, cal)}`}</option>
           {#each SHOWS as s (s.id)}<option value={s.id}>{s.label}</option>{/each}

@@ -6,6 +6,7 @@
 // peak power, energy, drawn from the light track's flare-frequency law) all come from `read_activity` (O10). This
 // file only places them on the disc at a time and draws them with star.ts.
 import { constant, type Json } from "../../ui-contract/src/index.ts";
+import type { Prominence } from "./star-prominences.ts";
 import { coronaScaleHeight, drawStar, granulesFor, granulesShow, spotsFor, type Convection, type Spot, type StarDraw } from "./star.ts";
 
 
@@ -33,12 +34,18 @@ export interface LiveStar {
   moment: Record<string, Json>;
   /** Flares above 10²⁴ J from two days before the present to a year after. */
   flares: Flare[];
+  /** Prominences standing from the present to PROMINENCE_WINDOW_S after (SG6), and the field and corona that hold them. */
+  prominences?: Prominence[];
+  corona?: Record<string, Json>;
 }
+
+/** How much of the star's time the drawn star keeps prominences for: about six minutes on the True view's star clock. */
+export const PROMINENCE_WINDOW_S = 90 * constant("day");
 
 /** What a session needs to read a star (session.ts `resolvedSystem` and `readActivity`). */
 export interface StarReader {
   resolvedSystem(system: string): Promise<{ ok: true; result: { facts: Record<string, Record<string, Json>> } } | { ok: false; message: string }>;
-  readActivity(ask: { stars: Json[]; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; message: string }>;
+  readActivity(ask: { stars: Json[]; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number }; prominences?: { from_s: number; to_s: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; message: string }>;
 }
 
 /** A star's own numbers from its scene facts (teff_k, mass_sun, radius_sun), for a system the kernel did not resolve. */
@@ -99,10 +106,10 @@ export async function readLiveStar(session: StarReader, system: string, address:
   const age_s = age > 0 ? age : 4.6e9 * constant("yr_julian");
   const aim = targets === "system" ? targetsFromFacts(rs.result.facts as Record<string, Record<string, Json>>, address) : targets;
   const star = { address, mass_kg: mass, radius_m: radius, luminosity_w: lum, teff_k: teff, age_s, ...(aim?.length ? { targets: aim as unknown as Json[] } : {}) };
-  const r = await session.readActivity({ stars: [star], at_s: age_s, window: { from_s: age_s - 2 * constant("day"), to_s: age_s + constant("yr_julian"), min_energy_j: 1e24 } });
+  const r = await session.readActivity({ stars: [star], at_s: age_s, window: { from_s: age_s - 2 * constant("day"), to_s: age_s + constant("yr_julian"), min_energy_j: 1e24 }, prominences: { from_s: age_s, to_s: age_s + PROMINENCE_WINDOW_S } });
   if (!r.ok) return r.message;
-  const one = r.stars[0] as unknown as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: Flare[] } };
-  return { address, teff, mass, radius, lum, age_s, activity: one.activity, moment: one.moment, flares: one.flares?.flares ?? [] };
+  const one = r.stars[0] as unknown as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: Flare[] }; prominences?: { prominences?: Prominence[]; corona?: Record<string, Json> | null } };
+  return { address, teff, mass, radius, lum, age_s, activity: one.activity, moment: one.moment, flares: one.flares?.flares ?? [], prominences: one.prominences?.prominences ?? [], ...(one.prominences?.corona ? { corona: one.prominences.corona } : {}) };
 }
 
 /** Where the star is in its cycle: progress from minimum and the cycle's number, or null with no clean cycle. */
@@ -185,12 +192,6 @@ export function drawLiveStar(out: { width: number; data: Uint8ClampedArray }, s:
   drawStar(out, { teff_k: s.teff, spots, lon_deg: turnAt(s, t), lat_deg, light, corona_h: coronaScaleHeight(s.mass, s.radius), flares: flaresAt(s, spots, t, span).map(({ lat_deg, lon_deg, strength }) => ({ lat_deg, lon_deg, strength })), granules }, disc);
 }
 
-/**
- * How fast the True view's star runs: six hours of the star's time each second on the screen, stated beside the
- * view. At that rate a Sun-like star turns once in under two minutes, so its spots are seen going round, and a flare
- * shows for a moment; the universe clock is not moved.
- */
-export const STAR_SECONDS_PER_SECOND = constant("day") / 4;
 
 /**
  * Differential rotation (VP-S4): a star's surface turns faster at its equator than near its poles. The Sun's rate is

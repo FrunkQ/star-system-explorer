@@ -7,14 +7,26 @@
 
 use crate::err;
 use crate::protocol::Response;
+use sse_core::math as m;
 use sse_core::{Address, Seed};
 use sse_formation::leftovers::Cloud;
 use sse_formation::pipeline::SystemRun;
-use sse_small::{Host, Member, Pins, Settings};
+use sse_small::{Host, Makeup, Member, Pins, Settings};
 
 /// The base pack's numbers, read once (parsing the sheet for grain
 /// densities is the slow part).
+/// The small-body settings in force: the stack's `small_bodies` block and
+/// its sheet (ER1), or the base pack's outside a call or on a stack without
+/// one.
 fn settings() -> Settings {
+    if let Some(p) = sse_physics::now() {
+        if let Some(v) = p.settings("small_bodies") {
+            let json = serde_json::to_value(v).ok();
+            if let Some(Ok(s)) = json.map(|j| Settings::from_block_with(&j, p.sheet())) {
+                return s;
+            }
+        }
+    }
     static S: std::sync::OnceLock<Settings> = std::sync::OnceLock::new();
     S.get_or_init(Settings::default).clone()
 }
@@ -159,23 +171,65 @@ pub(crate) struct Make<'a> {
     pub mass_kg: Option<f64>,
     pub a_au: f64,
     pub e: Option<f64>,
+    /// The designer's pins (RW16a); `pair` here overrides the kind's.
+    pub pins: Pins,
+}
+
+/// A Sun-like host for a body designed in a system with no formation record
+/// (fudge SB-designed-field).
+fn sunlike() -> Host {
+    Host {
+        luminosity_lsun: 1.0,
+        mass_msun: 1.0,
+        age_myr: 4_570.0,
+    }
+}
+
+/// The makeup the designer pins, as mass shares of metal, rock, carbon and ice.
+pub(crate) fn makeup_pin(v: Option<&[f64]>) -> Result<Option<Makeup>, Response> {
+    let Some(v) = v else { return Ok(None) };
+    if v.len() != 4 || v.iter().any(|x| !x.is_finite() || *x < 0.0) || v.iter().sum::<f64>() <= 0.0
+    {
+        return Err(err(
+            "bad_request",
+            "makeup is four shares, metal, rock, carbon and ice, none below 0",
+        ));
+    }
+    Ok(Some(Makeup::from_array([v[0], v[1], v[2], v[3]])))
+}
+
+/// The answer for a made or designed body: the member, what it was made
+/// from, and what an implausible design takes (only when it takes something).
+fn made_json(m: &Member, template: Option<&Cloud>, host: &Host, s: &Settings) -> serde_json::Value {
+    let mut j = match template {
+        Some(t) => member_json(m, t, host, None, None, s),
+        None => {
+            let mut j = serde_json::to_value(m).expect("plain");
+            if m.makeup.ice > 0.0 {
+                // A designed field's ice is all water.
+                let shares = [1.0, 0.0, 0.0];
+                let r = m.orbit.a_au * (1.0 - m.orbit.e);
+                let a = sse_small::activity(m, &shares, r, host, s);
+                j["activity"] = serde_json::to_value(a).expect("plain");
+            }
+            j
+        }
+    };
+    let t = sse_small::takes(m, s);
+    if !t.is_empty() {
+        j["takes"] = serde_json::to_value(t).expect("plain");
+    }
+    j
 }
 
 /// `make_small_body`: a body a GM adds by hand, made of the system's own
-/// nearest cloud (a comet nucleus of its icy reservoirs).
-pub(crate) fn make(run: Option<&SystemRun>, req: Make) -> Result<Response, Response> {
-    let run = run.ok_or_else(|| {
-        err(
-            "no_formation",
-            "this system has no formation run to make a small body from",
-        )
-    })?;
-    let l = run.leftovers.as_ref().ok_or_else(|| {
-        err(
-            "no_formation",
-            "this system's formation made no small bodies",
-        )
-    })?;
+/// nearest cloud (a comet nucleus of its icy reservoirs), or of a designed
+/// field where the system has no formation record.
+pub(crate) fn make(
+    run: Option<&SystemRun>,
+    universe_seed: &Seed,
+    req: Make,
+) -> Result<Response, Response> {
     let s = settings();
     let (kinds, pair, cloud_kind): (&[&str], Option<&str>, &str) = match req.kind {
         "asteroid" => (&[], None, "made"),
@@ -196,17 +250,130 @@ pub(crate) fn make(run: Option<&SystemRun>, req: Make) -> Result<Response, Respo
     if req.a_au.is_nan() || req.a_au <= 0.0 {
         return Err(err("bad_request", "a_au must be above 0"));
     }
-    let template = sse_small::nearest_cloud(&l.clouds, req.a_au, kinds)
-        .or_else(|| sse_small::nearest_cloud(&l.clouds, req.a_au, &[]))
-        .ok_or_else(|| {
-            err(
-                "no_formation",
-                "this system has no clouds to make a small body from",
+    let address: Address = req
+        .address
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e}")))?;
+    let mut pins = req.pins;
+    pins.e = req.e;
+    if pins.pair.is_none() {
+        pins.pair = pair.map(str::to_string);
+    }
+    let clouds = run
+        .and_then(|r| r.leftovers.as_ref())
+        .map(|l| &l.clouds[..])
+        .unwrap_or(&[]);
+    let template = sse_small::nearest_cloud(clouds, req.a_au, kinds)
+        .or_else(|| sse_small::nearest_cloud(clouds, req.a_au, &[]));
+    let positive = |x: Option<f64>| x.filter(|v| *v > 0.0 && v.is_finite());
+    let (field, host) = match (template, run) {
+        (Some(t), Some(run)) => {
+            let mass = match (positive(req.mass_kg), positive(req.diameter_km)) {
+                (Some(m), _) => m,
+                (_, Some(d)) => match pins.makeup {
+                    Some(mk) => sse_small::mass_for_makeup(&mk, d, &s),
+                    None => sse_small::mass_for_diameter(t, d, &s),
+                },
+                _ => {
+                    return Err(err(
+                        "bad_request",
+                        "give a diameter_km or a mass_kg above 0",
+                    ))
+                }
+            };
+            (
+                sse_small::made_field(t, address.clone(), cloud_kind, req.a_au, mass),
+                host_of(run),
             )
-        })?;
-    let mass = match (req.mass_kg, req.diameter_km) {
-        (Some(m), _) if m > 0.0 => m,
-        (_, Some(d)) if d > 0.0 => sse_small::mass_for_diameter(template, d, &s),
+        }
+        _ => {
+            // No cloud to make it of: a designed field of the pinned makeup,
+            // or the recipe's own (rocky, or icy for a comet).
+            let mk = pins.makeup.unwrap_or_else(|| {
+                if req.kind == "comet-nucleus" {
+                    Makeup::from_array([0.0, 0.3, 0.2, 0.5])
+                } else {
+                    Makeup::from_array([0.05, 0.85, 0.1, 0.0])
+                }
+            });
+            let mass = match (positive(req.mass_kg), positive(req.diameter_km)) {
+                (Some(m), _) => m,
+                (_, Some(d)) => sse_small::mass_for_makeup(&mk, d, &s),
+                _ => {
+                    return Err(err(
+                        "bad_request",
+                        "give a diameter_km or a mass_kg above 0",
+                    ))
+                }
+            };
+            pins.makeup = Some(mk);
+            (
+                sse_small::designed_field(
+                    address.clone(),
+                    cloud_kind,
+                    &mk,
+                    req.a_au,
+                    req.e.unwrap_or(0.1),
+                    mass,
+                ),
+                run.map(host_of).unwrap_or_else(sunlike),
+            )
+        }
+    };
+    let seed = run.map(seed_of).unwrap_or(*universe_seed);
+    let mut m = sse_small::resolve_pinned(&seed, &field, 1, &host, None, None, &s, &pins);
+    m.address = address.to_string();
+    let mut j = made_json(&m, template.filter(|_| run.is_some()), &host, &s);
+    match template.filter(|_| run.is_some()) {
+        Some(t) => j["made_from"] = t.address.to_string().into(),
+        None => j["made_from"] = "designed".into(),
+    }
+    Ok(Response::SmallBodyIs {
+        body: Some(j),
+        notables: None,
+    })
+}
+
+/// What `small_shape` is asked for.
+pub(crate) struct Shape<'a> {
+    pub address: &'a str,
+    pub diameter_km: Option<f64>,
+    pub mass_kg: Option<f64>,
+    pub ice: Option<f64>,
+    pub spin_hours: Option<f64>,
+    pub a_au: Option<f64>,
+}
+
+/// `small_shape`: the body at an address as the one resolve makes it,
+/// single, of the makeup its density or ice share says, with whether it is
+/// round. The seed is the universe's (from `universe_seed`), so the same
+/// address is the same lump everywhere.
+pub(crate) fn shape(
+    run: Option<&SystemRun>,
+    universe_seed: &Seed,
+    req: Shape,
+) -> Result<Response, Response> {
+    let s = settings();
+    let address: Address = req
+        .address
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e}")))?;
+    let positive = |x: Option<f64>| x.filter(|v| *v > 0.0 && v.is_finite());
+    let (d, mass) = (positive(req.diameter_km), positive(req.mass_kg));
+    let makeup = match (req.ice.filter(|x| x.is_finite()), d, mass) {
+        (Some(ice), _, _) => {
+            let ice = ice.clamp(0.0, 1.0);
+            Makeup::from_array([0.0, 1.0 - ice, 0.0, ice])
+        }
+        (None, Some(d), Some(m)) => {
+            let v = m::PI / 6.0 * m::pow(d * 1000.0, 3.0);
+            sse_small::makeup_for_density(m / v, &s)
+        }
+        _ => Makeup::from_array([0.05, 0.85, 0.1, 0.0]),
+    };
+    let mass = match (mass, d) {
+        (Some(m), _) => m,
+        (None, Some(d)) => sse_small::mass_for_makeup(&makeup, d, &s),
         _ => {
             return Err(err(
                 "bad_request",
@@ -214,22 +381,138 @@ pub(crate) fn make(run: Option<&SystemRun>, req: Make) -> Result<Response, Respo
             ))
         }
     };
-    let address: Address = req
-        .address
-        .parse()
-        .map_err(|e| err("bad_address", format!("{e}")))?;
-    let field = sse_small::made_field(template, address.clone(), cloud_kind, req.a_au, mass);
+    let a_au = positive(req.a_au).unwrap_or(2.7);
+    let field = sse_small::designed_field(address.clone(), "shape", &makeup, a_au, 0.1, mass);
     let pins = Pins {
-        pair: pair.map(str::to_string),
-        e: req.e,
+        pair: Some("single".into()),
+        spin_hours: positive(req.spin_hours),
+        makeup: Some(makeup),
+        ..Pins::default()
     };
-    let host = host_of(run);
-    let mut m = sse_small::resolve_pinned(&seed_of(run), &field, 1, &host, None, None, &s, &pins);
-    m.address = address.to_string();
-    let mut j = member_json(&m, template, &host, None, None, &s);
-    j["made_from"] = template.address.to_string().into();
+    let host = run.map(host_of).unwrap_or_else(sunlike);
+    let seed = *universe_seed;
+    let mut b = sse_small::resolve_pinned(&seed, &field, 1, &host, None, None, &s, &pins);
+    b.address = address.to_string();
+    let mut j = serde_json::to_value(&b).expect("plain");
+    j["round"] = (b.structure.kind == "relaxed").into();
+    j["round_km"] = sse_small::round_km(&b.makeup, &s).into();
     Ok(Response::SmallBodyIs {
         body: Some(j),
         notables: None,
+    })
+}
+
+/// `ring_structure` from a system's formation: the ring cloud at `cloud`, its
+/// world, that world's moons and the ring's own largest members as the
+/// sculptors (members big enough clear gaps; Cloud::resolve, the one method).
+pub(crate) fn ring_ask_from_run(
+    run: Option<&SystemRun>,
+    cloud: &str,
+    variant: u64,
+    samples: Option<usize>,
+    window: Option<[f64; 2]>,
+) -> Result<sse_small::ring::RingAsk, Response> {
+    use sse_small::ring::{RingAsk, RingHost, RingIn, Sculptor};
+    let run = run.ok_or_else(|| {
+        err(
+            "no_formation",
+            "this system has no formation run, so its rings have no makeup to read",
+        )
+    })?;
+    let l = run
+        .leftovers
+        .as_ref()
+        .ok_or_else(|| err("no_formation", "this system's formation made no rings"))?;
+    let c = l
+        .clouds
+        .iter()
+        .find(|c| c.address.to_string() == cloud && c.kind == "ring")
+        .ok_or_else(|| err("not_found", format!("no ring {cloud} in this system")))?;
+    let around = c.around.clone().unwrap_or_default();
+    let w = l.worlds.iter().find(|w| w.id == around).ok_or_else(|| {
+        err(
+            "not_found",
+            format!("the world {around} that ring {cloud} goes round is gone"),
+        )
+    })?;
+    let au = sse_core::sheet::AU;
+    // Earth's mass and radius from the physics in force (the formation's worlds are in Earth units); a stack loaded
+    // without a sheet (tests, toy stacks) reads the shipped one, as `ring_structure` does.
+    let earth = |id: &str| {
+        sse_physics::constant(id)
+            .or_else(|| sse_reference::Reference::base().constant(id))
+            .ok_or_else(|| err("eval", format!("no {id} on the data sheet")))
+    };
+    let (me, re) = (earth("M_earth")?, earth("R_earth_mean")?);
+    let radius_m = w.radius_earth() * re;
+    let mut sculptors: Vec<Sculptor> = l
+        .moons
+        .iter()
+        .filter(|mo| mo.parent == around)
+        .map(|mo| Sculptor {
+            id: mo.address.to_string(),
+            name: mo.address.to_string(),
+            a_m: mo.a_planet_radii * radius_m,
+            mass_kg: mo.mass_earth() * me,
+        })
+        .collect();
+    let seed = seed_of(run);
+    for k in 1..=3u64 {
+        let b = c.resolve(&seed, k);
+        sculptors.push(Sculptor {
+            id: b.address.to_string(),
+            name: b.address.to_string(),
+            a_m: b.a_au * au,
+            mass_kg: b.mass_kg,
+        });
+    }
+    let s = c.solid.map(|x| x as f64);
+    let t: f64 = s.iter().sum();
+    let makeup = (t > 0.0).then(|| sse_small::Makeup {
+        metal: s[0] / t,
+        rock: s[1] / t,
+        carbon: s[2] / t,
+        ice: (s[3] + s[4] + s[5]) / t,
+    });
+    Ok(RingAsk {
+        key: cloud.to_string(),
+        variant,
+        host: RingHost {
+            mass_kg: w.mass_earth() * me,
+            radius_m,
+            ..Default::default()
+        },
+        sculptors,
+        ring: RingIn {
+            inner_m: c.a_min_au * au,
+            outer_m: c.a_max_au * au,
+            mass_kg: Some(c.mass_earth() * me),
+            makeup,
+            ..Default::default()
+        },
+        samples,
+        window,
+    })
+}
+
+/// `ring_structure`: one ring, whole (sse-small ring.rs).
+pub(crate) fn ring_structure(
+    ask: &sse_small::ring::RingAsk,
+    seed: &Seed,
+    sheet: &sse_reference::Reference,
+) -> Result<Response, Response> {
+    let s = settings();
+    // The stack's sheet; a stack loaded without one (tests, toy stacks) reads the shipped sheet, as the settings do.
+    let base;
+    let sheet = if sheet.row("substances", &s.rings.ice).is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    let r = sse_small::ring::structure(ask, &s.rings, &s.makeup.grain_density_kg_m3, seed, sheet)
+        .map_err(|e| err("bad_request", e))?;
+    Ok(Response::RingStructureIs {
+        ring: serde_json::to_value(r).expect("plain"),
     })
 }

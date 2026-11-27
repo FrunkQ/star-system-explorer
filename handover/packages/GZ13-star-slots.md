@@ -25,3 +25,4 @@ F37c: a fit by three tolerances, not a likelihood over the cell's population, an
 ## Tests and goldens
 - New: `sse-kernel` `slot_tests` (6): adoption gives a home star counted once; a map keeps its layout (300 ly is about 92 pc); fit within tolerances and never the same star twice; the GM's move and a refused taken star; a site history that repeats; and the standing rule that no adopted system is without a place.
 - Golden area `grand-zoom` gains the GZ13 cases. Core golden `contract.jsonl` and area `small-bodies` move on purpose: every adoption now carries its slot (`places` in the answer, the slot facts in the event).
+- Reach gate (ER1b): `adopt` now follows the physics (its slot is read from the drawn star field), so its `still adopt` line is off `handover/packages/ER-reach-ledger.txt`. `star_slot`, `set_star_slot` and `site_history` have area cases and follow.

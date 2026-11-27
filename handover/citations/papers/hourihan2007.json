@@ -1,0 +1,1 @@
+{"key": "hourihan2007", "citation": "Hourihan and Nordenstam 2007", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["packages/renderer/src/ladder-noise.ts"], "claims": ["//   Hourihan and Nordenstam 2007)."], "tier": 3}

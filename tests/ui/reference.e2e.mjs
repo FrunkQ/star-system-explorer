@@ -177,7 +177,7 @@ try {
     const classes = gm.locator('[data-classes="offered"]');
     await classes.waitFor({ timeout: 20000 });
     assert.equal(await classes.getAttribute("data-atlas"), "sse.base-atlas", "SSE4's own atlas first");
-    assert.deepEqual(await classes.locator("[data-scheme]").evaluateAll((els) => els.map((e) => e.dataset.scheme)), ["physical", "surface", "air", "habitability"]);
+    assert.deepEqual(await classes.locator("[data-scheme]").evaluateAll((els) => els.map((e) => e.dataset.scheme)), ["physical", "surface", "air", "habitability", "star"]);
     const tiles = classes.locator('[data-gallery="physical"] .tile');
     // V14i part 2: the gallery a page at a time, 12 by default, then 24 or 48 (Alex, 24 Nov).
     await tiles.nth(11).waitFor({ timeout: 20000 });

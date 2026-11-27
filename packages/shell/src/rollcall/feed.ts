@@ -1,10 +1,12 @@
-// Where Roll call's people and logs come from (SH2). One `RollSource` either way:
-// - a "Sol today" folder (crews.json, pack.json, logs/) named by the address bar's `?spaceflight=<folder URL>`, the first
-//   part of the front door (SH8): the pack stays on Explorers, never built in (Alex, 23 Nov);
+// Where Roll call's people and logs come from (SH2). One `RollSource` whichever way:
+// - a pack in the campaign's stack that holds a roll (crews, a calendar and flight logs), such as "Sol today" once it
+//   is added through the Open door like any pack (CM0): its files are read from the pack itself (`heldFiles`);
+// - a "Sol today" folder (crews.json, pack.json, logs/) named by the address bar's `?spaceflight=<folder URL>`, kept
+//   as a shortcut (SH8 part 1): the same files, fetched from the folder;
 // - otherwise the open campaign: its people (manifest entries) and its constructs' flight logs, read from the kernel.
-// The logs of the day's craft are fetched as they are needed; a pack's `logs/index.json` says where each one is (RS9
+// The logs of the day's craft are read as they are needed; a pack's `logs/index.json` says where each one is (RS9
 // part 2); without it the feed looks in the pack's three log folders and cannot follow a docking by catalogue id.
-import { GREGORIAN, PERSON, inMemory, namesCarried, type CarriedName, type InMemory, entryFrom, indexRoll, logFrom, sourceFromCrews, sourceFromManifest, yearsToSeconds, type Calendar, type Json, type RecordRead, type RollIndex, type RollLog, type ViewContext } from "../../../ui-contract/src/index.ts";
+import { GREGORIAN, heldFiles, PERSON, inMemory, namesCarried, type CarriedName, type InMemory, entryFrom, indexRoll, logFrom, sourceFromCrews, sourceFromManifest, yearsToSeconds, type Calendar, type Json, type RecordRead, type RollIndex, type RollLog, type ViewContext } from "../../../ui-contract/src/index.ts";
 
 export interface RollFeed {
   ix: RollIndex;
@@ -48,15 +50,36 @@ async function getJson(url: string): Promise<Json | null> {
   }
 }
 
-/** Open a "Sol today" folder. Null with the reason when it cannot be read. */
-export async function openPack(base: string): Promise<RollFeed | { why: string }> {
-  const [crews, pack, index] = await Promise.all([getJson(`${base}crews.json`), getJson(`${base}pack.json`), getJson(`${base}logs/index.json`)]);
-  const memFile = (pack as { provides?: { other?: { in_memory?: unknown } } } | null)?.provides?.other?.in_memory;
-  const memDoc = typeof memFile === "string" && !memFile.includes("..") ? await getJson(`${base}${memFile}`) : null;
-  const carFile = (pack as { provides?: { other?: { memorials?: unknown } } } | null)?.provides?.other?.memorials;
-  const carDoc = typeof carFile === "string" && !carFile.includes("..") ? await getJson(`${base}${carFile}`) : null;
-  if (!crews) return { why: `No crews could be read from ${base}.` };
-  const cal = (pack as { provides?: { other?: { calendar?: Calendar } } } | null)?.provides?.other?.calendar;
+/** Reads one file of a pack by its path in the pack's folder: JSON, or null when it is not there. */
+export type PackRead = (path: string) => Promise<Json | null>;
+
+/** A pack folder on a server, read file by file. */
+export const folderRead = (base: string): PackRead => (p) => getJson(`${base}${p}`);
+
+/** The top pack in the stack that holds a roll (its crews file among its held files), as a reader and its name. */
+export function heldRoll(packs: readonly unknown[]): { read: PackRead; label: string } | null {
+  for (const p of [...packs].reverse()) {
+    const held = heldFiles(p);
+    const other = (p as { provides?: { other?: { crews?: unknown; about?: { label?: unknown } } } }).provides?.other;
+    if (!held || typeof other?.crews !== "string" || !held(other.crews)) continue;
+    const label = typeof other.about?.label === "string" ? other.about.label : String((p as { id?: unknown }).id ?? "the pack");
+    // The pack document itself is pack.json, as it is in the folder.
+    return { read: async (path) => (path === "pack.json" ? (p as Json) : held(path)), label };
+  }
+  return null;
+}
+
+/** Open a pack's roll, from its folder or from the stack. Null with the reason when it cannot be read. */
+export async function openPack(read: PackRead, label = "Sol today"): Promise<RollFeed | { why: string }> {
+  const [pack, index] = await Promise.all([read("pack.json"), read("logs/index.json")]);
+  const other = (pack as { provides?: { other?: { crews?: unknown; in_memory?: unknown; memorials?: unknown; calendar?: Calendar } } } | null)?.provides?.other;
+  const fileOf = (f: unknown) => (typeof f === "string" && !f.includes("..") ? f : null);
+  const crewsFile = fileOf(other?.crews) ?? "crews.json";
+  const memFile = fileOf(other?.in_memory);
+  const carFile = fileOf(other?.memorials);
+  const [crews, memDoc, carDoc] = await Promise.all([read(crewsFile), memFile ? read(memFile) : null, carFile ? read(carFile) : null]);
+  if (!crews) return { why: `No crews could be read from ${label}.` };
+  const cal = other?.calendar;
   if (!cal) return { why: "This copy of the pack gives no calendar, so its days cannot be written. A newer copy of Sol today has one." };
   // logs/index.json: { about, logs: [{ construct, path (under logs/), name, gcat, from_s, to_s }] }.
   const listed = (index as { logs?: unknown } | null)?.logs;
@@ -75,7 +98,7 @@ export async function openPack(base: string): Promise<RollFeed | { why: string }
     if (missing.has(id)) return null;
     const paths = where.has(id) ? [where.get(id)!] : id.startsWith("gcat:") ? [] : [`${id}.json`, `earth-orbit/${id}.json`, `departed/${id}.json`];
     for (const p of paths) {
-      const doc = await getJson(`${base}logs/${p}`);
+      const doc = await read(`logs/${p}`);
       if (doc && typeof doc === "object" && !Array.isArray(doc) && "pieces" in doc) {
         const l = logFrom(doc);
         logs.set(id, l);
@@ -96,7 +119,7 @@ export async function openPack(base: string): Promise<RollFeed | { why: string }
       return ix;
     },
     calendar: cal,
-    from: "Sol today",
+    from: label,
     allLogs: false,
     ...(source.credit ? { credit: source.credit } : {}),
     ...(steps ? { steps } : {}),

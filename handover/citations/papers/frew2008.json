@@ -1,0 +1,1 @@
+{"key": "frew2008", "citation": "Frew 2008", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/tests.rs"], "claims": ["// Planetary nebulae near the Sun: about 25 per kpc^3 (Frew 2008);"], "tier": 3}

@@ -210,6 +210,7 @@ impl ZonalBlock {
                     strength: st.peak_wind_m_s,
                     born,
                     ends,
+                    aspect: 0.0,
                     count: 0,
                     why: format!(
                         "A cyclone where the temperature falls fastest with latitude ({:.2} K per degree) in the energy-balance model.",

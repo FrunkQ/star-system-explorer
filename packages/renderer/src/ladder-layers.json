@@ -10,7 +10,7 @@
       "hurst": 0.3333,
       "stretch": { "fact": "rhines_scale_m", "over": "deformation_radius_m" },
       "along": "jets",
-      "amplitude": { "fact": "jet_shear_m_s", "over": "jet_speed_m_s" },
+      "amplitude": { "fact": "curl_share" },
       "speed": { "fact": "eddy_speed_m_s" },
       "from": "the wind's figures",
       "fudge": "Detail ladder: giant's curls"

@@ -358,6 +358,14 @@ pub(crate) fn home_galaxy(
     };
     let h = home_of(&hs, &cp, chosen)?;
     let mut v = home_json(&h, &cp.home);
+    // What the home is, from the physics in force: its size and circular
+    // speed today (R_200, V_200) and when it had half its mass. The choice
+    // of halo is a draw that a small edit rarely changes; these follow it.
+    let (r200, v200) = cp.galaxy.virial(&c, h.halo.mass, 1.0);
+    let z_half = h.halo.z_half;
+    v["r200_kpc"] = serde_json::json!(r200);
+    v["v200_kms"] = serde_json::json!(v200);
+    v["half_mass_z"] = serde_json::json!(z_half);
     v["model"] = serde_json::json!([
         "home: the catalogued halo (G2) nearest the middle of the wished mass range among those that meet every wish, in the first shell of halo cells round the origin cell that holds one; with none in the searched shells, the one nearest the wished mass, marked fits_wish false (GZ12)",
         "the GM may choose another catalogued halo (set_home); it is a fact in the record, and clearing it returns to the web's choice",
@@ -1748,6 +1756,52 @@ mod tests {
             checked += 1;
         }
         assert!(checked > 0);
+    }
+
+    #[test]
+    fn the_group_s_edge_is_the_zero_velocity_sphere_of_the_mass_inside_it() {
+        // The edge reads the Sun's mass from the sheet in force: a stack.
+        let mut k = Kernel::new();
+        let pack = |p: &str| -> serde_json::Value {
+            serde_json::from_str(
+                &std::fs::read_to_string(format!("{}/../../{p}", env!("CARGO_MANIFEST_DIR")))
+                    .unwrap(),
+            )
+            .unwrap()
+        };
+        let r = k.handle_json(&serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json"), pack("packs/base-physics/pack.json")]}).to_string());
+        assert!(r.contains("stack_loaded"), "{r}");
+        let r = k.handle_json(r#"{"op":"open_universe","id":"g3","seed":"g3"}"#);
+        assert!(r.contains("universe_opened"), "{r}");
+        let plain = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":30,"bands":["V"],"stars":false}"#,
+        );
+        assert!(plain["sky"]["galaxy_walk"].get("group_edge").is_none());
+        let r = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":30,"bands":["V"],"stars":false,"satellite_paths":true}"#,
+        );
+        let walk = &r["sky"]["galaxy_walk"];
+        let e = &walk["group_edge"];
+        assert_eq!(e["block"], "sse.gravity.zero_velocity_radius", "{r}");
+        let radius = e["radius_mpc"].as_f64().unwrap();
+        let host = walk["satellites"]["host_mass_msun"].as_f64().unwrap();
+        let mass = e["mass_msun"].as_f64().unwrap();
+        // Sandage 1986: 3e12 suns at 13.8 Gyr reach about 1.28 Mpc; scaled
+        // as the cube root of mass times age squared.
+        let t = e["t_gyr"].as_f64().unwrap();
+        let want = 1.277_16 * sse_core::math::cbrt(mass / 3.0e12 * (t / 13.8) * (t / 13.8));
+        assert!((radius - want).abs() < 2.0e-3 * want, "{radius} {want}");
+        assert!(mass >= host && radius > 0.5 && radius < 3.0, "{e}");
+        // Settled: exactly the galaxies inside it are counted, satellites not.
+        let inside = r["sky"]["galaxies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|g| g["satellite"] != true && g["distance_mpc"].as_f64().unwrap() <= radius)
+            .count();
+        assert_eq!(inside as f64, e["members"].as_f64().unwrap(), "{e}");
     }
 
     #[test]

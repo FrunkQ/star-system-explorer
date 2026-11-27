@@ -44,7 +44,8 @@ fn contact(c: Craft, d: f64) -> Contact {
 
 #[test]
 fn a_sunlit_hull_is_seen_further_than_a_dark_one() {
-    let m = Model::base();
+    let base = Model::base();
+    let m = &*base;
     let eyes = default_fit(&base_fits().unwrap(), "today", 50.0).unwrap();
     let mut lit = hull(1e5, None);
     lit.lit_by = sun_at_1au();
@@ -67,7 +68,8 @@ fn the_default_fit_grows_with_the_hull_and_stops_at_its_cap() {
 
 #[test]
 fn a_fusion_torch_is_seen_far_off_and_a_coasting_hull_only_close() {
-    let m = Model::base();
+    let base = Model::base();
+    let m = &*base;
     let eyes = default_fit(&base_fits().unwrap(), "today", 50.0).unwrap();
     // A 1 GW-jet fusion torch at 3000 km/s: its plasma is hundreds of
     // millions of kelvin, X-ray hot.
@@ -108,7 +110,8 @@ fn a_fusion_torch_is_seen_far_off_and_a_coasting_hull_only_close() {
 
 #[test]
 fn a_lost_contact_leaves_a_growing_ring() {
-    let m = Model::base();
+    let base = Model::base();
+    let m = &*base;
     let eyes = default_fit(&base_fits().unwrap(), "today", 50.0).unwrap();
     let mut c = contact(hull(1e5, None), 1e11);
     c.lost_for_s = Some(3600.0);

@@ -23,10 +23,10 @@ export function isDepth(x: unknown): x is Depth {
 /** How many facts a card leads with at Curious. */
 export const CURIOUS_FACTS = 4;
 
-const HEADLINE = [/^a_au$/, /surface|temperature|teff/, /^day|rotation/, /year|period/, /^mass/, /lumin/, /^radius/, /gravity/];
+const HEADLINE = [/^spectral$/, /^a_au$/, /surface|temperature|teff/, /^day|rotation/, /year|period/, /^mass/, /lumin/, /^radius/, /gravity/];
 
 /**
- * The facts a card leads with at Curious: where it goes round, how warm, how
+ * The facts a card leads with at Curious: a star's class, where it goes round, how warm, how
  * long its day and year are, how heavy, in that order where the card has them,
  * then the card's own order. Presentation only: the rest stay one tap away.
  */

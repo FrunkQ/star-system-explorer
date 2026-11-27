@@ -269,7 +269,7 @@ mod o2 {
     use crate::*;
 
     fn solar() -> Vec<BodyLight> {
-        publish_all(&solar_system().bodies, Model::base()).unwrap()
+        publish_all(&solar_system().bodies, &Model::base()).unwrap()
     }
 
     fn by_name<'a>(all: &'a [BodyLight], n: &str) -> &'a BodyLight {
@@ -388,9 +388,9 @@ mod o2 {
             .into_iter()
             .find(|c| c.name.as_deref() == Some("Jupiter"))
             .unwrap();
-        let with = publish_all(std::slice::from_ref(&c), Model::base()).unwrap();
+        let with = publish_all(std::slice::from_ref(&c), &Model::base()).unwrap();
         c.magnetic_moment_a_m2 = 0.0;
-        let without = publish_all(&[c], Model::base()).unwrap();
+        let without = publish_all(&[c], &Model::base()).unwrap();
         for (a, b) in with[0].light.bands.iter().zip(&without[0].light.bands) {
             if a.band == "radio" {
                 // The difference is exactly the auroral radio (it all lies inside the radio band).
@@ -436,7 +436,7 @@ mod o2 {
             },
             ..Default::default()
         };
-        let all = publish_all(&[ship(600.0, true), ship(150.0, false)], Model::base()).unwrap();
+        let all = publish_all(&[ship(600.0, true), ship(150.0, false)], &Model::base()).unwrap();
         let hot = band(&all[0], "mid-ir");
         let cold = band(&all[1], "mid-ir");
         // The cold ship is dim but never zero: its hull still sits near the
@@ -452,7 +452,7 @@ mod o2 {
             }],
             ..Default::default()
         };
-        let p = publish_all(&[city], Model::base()).unwrap();
+        let p = publish_all(&[city], &Model::base()).unwrap();
         assert_eq!(p[0].light.visible_slices[2].power_w, 1e9);
     }
 
@@ -1154,12 +1154,17 @@ mod shadow_light {
         );
         let [lo, hi] = s.heights_m.unwrap();
         assert!(lo < 20e3 && hi > lo, "{lo} {hi}");
+        // Clear air only (no clouds or haze, which dim a real eclipse several
+        // times more): Link's clear-air umbra is some 7 to 9 magnitudes under
+        // the full Moon, a few parts in ten thousand to a few in a thousand.
+        let share = s.share.unwrap();
+        assert!(share > 1e-4 && share < 1e-2, "share {share}");
     }
 
     #[test]
     fn an_airless_worlds_shadow_stays_black() {
         let s = read(air(&[], 0.0, 250.0, 1.62), 1.737e6, 1e8);
-        assert!(!s.lit && s.colour.is_none());
+        assert!(!s.lit && s.colour.is_none() && s.share.is_none());
         assert!(s.why[0].contains("No air"));
     }
 
