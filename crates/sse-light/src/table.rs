@@ -20,7 +20,9 @@ pub struct LineDef {
     pub id: String,
     pub name: String,
     pub species: String,
-    /// Rest wavelength, m.
+    /// Rest wavelength, m. Filled from the sheet when the line names its
+    /// row there (`sheet`) and the pack leaves it out.
+    #[serde(default)]
     pub at_m: f64,
     /// "air" or "vacuum".
     pub medium: String,
@@ -38,6 +40,11 @@ pub struct LineDef {
     /// a line electron knocks in a nebula do not make.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub nebular: Option<NebularLine>,
+    /// The master data sheet's row whose `optical.emission` holds this line
+    /// (an ion such as "o+2"): its wavelength and atomic data are read
+    /// there, never typed in the pack.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sheet: Option<String>,
 }
 
 /// The gases that take up ionising photons, each from its ionisation edge
@@ -341,6 +348,68 @@ fn fill_from_sheet(g: &mut GasDef, sheet: &sse_reference::Reference) -> Result<(
     Ok(())
 }
 
+/// A line's wavelength and nebular data from its sheet row's
+/// `optical.emission` entry of the same id, where the pack left them out.
+fn line_from_sheet(l: &mut LineDef, sheet: &sse_reference::Reference) -> Result<(), String> {
+    let Some(row_id) = l.sheet.clone() else {
+        return Ok(());
+    };
+    let entry = sheet
+        .row("substances", &row_id)
+        .and_then(|r| r.get("optical")?.get("emission")?.as_array())
+        .and_then(|a| {
+            a.iter()
+                .find(|e| e.get("id").and_then(|x| x.as_str()) == Some(l.id.as_str()))
+        })
+        .ok_or_else(|| format!("line {}: the sheet row {row_id} has no such line", l.id))?;
+    if l.at_m == 0.0 {
+        let nm = entry
+            .get("lambda_nm")
+            .and_then(|x| x.as_f64())
+            .ok_or_else(|| format!("line {}: no wavelength on the sheet", l.id))?;
+        // The decimal written in nanometres, read as metres exactly.
+        l.at_m = format!("{nm}e-9")
+            .parse()
+            .map_err(|e| format!("line {}: {e}", l.id))?;
+    }
+    if l.nebular.is_none() {
+        if let Some(n) = entry.get("nebular") {
+            let mut neb: NebularLine = serde_json::from_value(n.clone())
+                .map_err(|e| format!("line {}: nebular data on the sheet: {e}", l.id))?;
+            neb.source = cited(entry, sheet);
+            if let (Some(b), Some(nb)) = (neb.balance.as_mut(), n.get("balance")) {
+                b.source = cited(nb, sheet);
+            }
+            l.nebular = Some(neb);
+        }
+    }
+    Ok(())
+}
+
+/// A sheet value's citation as one line: its source's text, its note, and
+/// the source's DOI or link last (the form `Reference::parse` reads).
+fn cited(v: &serde_json::Value, sheet: &sse_reference::Reference) -> String {
+    let src = v
+        .get("src")
+        .and_then(|x| x.as_str())
+        .and_then(|id| sheet.sources.get(id));
+    let field = |k: &str| {
+        src.and_then(|s| s.get(k))
+            .and_then(|x| x.as_str())
+            .unwrap_or_default()
+    };
+    let mut out = field("text").to_string();
+    if let Some(note) = v.get("note").and_then(|x| x.as_str()) {
+        out = format!("{out}. {note}");
+    }
+    if !field("doi").is_empty() {
+        out = format!("{out} doi:{}", field("doi"));
+    } else if !field("url").is_empty() {
+        out = format!("{out} {}", field("url"));
+    }
+    out
+}
+
 /// The light rows of the sheet's Bands table (RK10), in order of wavelength.
 pub fn bands_from_sheet(sheet: &sse_reference::Reference) -> Result<Vec<Band>, String> {
     let num = |row: &serde_json::Map<String, serde_json::Value>, k: &str| {
@@ -406,6 +475,12 @@ impl LightTable {
         if t.bands.is_empty() {
             t.bands = bands_from_sheet(&sheet())?;
         }
+        if t.lines.iter().any(|l| l.sheet.is_some()) {
+            let sheet = sheet();
+            for l in &mut t.lines {
+                line_from_sheet(l, &sheet)?;
+            }
+        }
         if let Some(g) = t.gases.as_mut() {
             let sheet = sheet();
             for gas in &mut g.list {
@@ -427,6 +502,9 @@ impl LightTable {
             if !(b.from_m > 0.0 && b.to_m > b.from_m) {
                 return Err(format!("band {} has a bad range", b.id));
             }
+        }
+        if let Some(l) = self.lines.iter().find(|l| l.at_m.is_nan() || l.at_m <= 0.0) {
+            return Err(format!("line {} has no wavelength", l.id));
         }
         let mut ids: Vec<&str> = self.lines.iter().map(|l| l.id.as_str()).collect();
         ids.sort_unstable();

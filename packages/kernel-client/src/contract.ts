@@ -30,7 +30,8 @@ const UNKNOWN_FROM = "unknown variant `nonsense`, expected one of ";
 const UNKNOWN_TO = " at line ";
 const UNKNOWN_MASK = "every op, checked against ops()";
 
-// The reach report's per-block lists go to tests/golden/contract-reach.txt (checked natively), one block per line.
+// The reach report's per-block lists go to tests/golden/reach/<constant>/<block>.txt (checked natively), one file
+// per block. The mask text below still names the old contract-reach.txt: it is in the core golden.
 const REACH = '{"type":"reach"';
 const REACH_FROM = '"follows":[';
 const REACH_MASK = '"lists":"one line per block in tests/golden/contract-reach.txt"';

@@ -184,6 +184,7 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "sound", words: "Sound" },
   // F on the Run desk (design question 11, TM9a): the picture alone; the bar comes back at the top edge.
   { id: "fill-screen", words: "Fill the screen (F): the picture alone, the bar back at the top edge", desks: ["run"] },
+  { id: "card-sheet", words: "On a phone, the card as a sheet that comes up only on a press, with Close", desks: ["run"] },
   {
     id: "status-line",
     words: "The status line",
@@ -274,4 +275,14 @@ export function rulerOpens(desk: Desk, level: DeskLevel | null, kept: string | n
 /** A span the GM chose, as `rulerOpens` reads it back. */
 export function keepRulerSpan(span: number | null): string {
   return span === null || !(span > 0) || !Number.isFinite(span) ? "whole" : String(span);
+}
+
+/**
+ * The desk to open something on from outside the desks (the start sheet, TM9c): the desk in front if it shows the
+ * thing, else the first desk in the switch's order that does (Explore before Build before Run), else the desk in front.
+ * So a verb such as "Follow life" pressed while Run was last used lands where Life is, while "Carry on" keeps the desk.
+ */
+export function deskFor(desk: Desk, onDesk: (d: Desk) => boolean): Desk {
+  if (onDesk(desk)) return desk;
+  return DESKS.find(onDesk) ?? desk;
 }

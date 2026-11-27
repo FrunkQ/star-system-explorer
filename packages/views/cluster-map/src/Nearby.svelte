@@ -15,6 +15,14 @@
   each swaps its type picture for its real face as the read finishes ("Histories read: 2 of 3"). Under HUD, the web's
   threads through the neighbourhood lie on our disc's plane, from the kernel's web slice through home.
 -->
+<script lang="ts" module>
+  // The sky read is several seconds of kernel work (39 web cells and 3,000 haloes' light), and the same for the same
+  // universe state: kept here by the state hash (which moves with every event, the date and "Make this home"), so
+  // coming back to this view, or turning to True, does not read it again. A few kept; a cache only.
+  const KEPT = 4;
+  const kept = new Map<string, import("../../../ui-contract/src/index.ts").NearbyRead>();
+</script>
+
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { galaxyFace, glowPicture, SPACE_CSS } from "../../../renderer/src/index.ts";
@@ -51,11 +59,17 @@
       read = null;
       failed = null;
     });
-    void s.skyFromHere({ stars: false, galaxies: true, limit_mag: 30, satellite_paths: true }).then((r) => {
-      if (!r.ok) return void (failed = r.message);
-      const got = readNearby(r.sky);
-      if (!got) return void (failed = "the sky came back with no galaxies");
-      read = got;
+    void s.stateHash().then((hash) => {
+      const had = kept.get(hash);
+      if (had) return void (read = had);
+      return s.skyFromHere({ stars: false, galaxies: true, limit_mag: 30, satellite_paths: true }).then((r) => {
+        if (!r.ok) return void (failed = r.message);
+        const got = readNearby(r.sky);
+        if (!got) return void (failed = "the sky came back with no galaxies");
+        kept.set(hash, got);
+        if (kept.size > KEPT) kept.delete(kept.keys().next().value!);
+        read = got;
+      });
     });
   });
 
