@@ -14,7 +14,7 @@ const AU = constant("au");
 const scene = {
   subjects: [
     subject("u/sun", "star", { facts: [fact("mass_sun", 1)] }),
-    subject("u/saturn", "planet", { orbit: { a_au: 9.58, phase_deg: 0 }, facts: [fact("mass_earth", 95.16), fact("radius_earth", 9.14)] }),
+    subject("u/saturn", "planet", { orbit: { a_au: 9.58, phase_deg: 0 }, facts: [fact("mass_earth", 95.16), fact("radius_earth", 9.14), fact("j2", 0.016298)] }),
     subject("u/saturn/b", "ring", { parent: "u/saturn", ring: { inner_m: 9.1975e7, outer_m: 1.17507e8, tau: 1.45, albedo: 0.5, tau_range: [0.4, 2.5] } }),
     subject("u/saturn/a", "ring", { parent: "u/saturn", ring: { inner_m: 1.2234e8, outer_m: 1.3678e8, tau: 0.7, albedo: 0.5 } }),
     subject("u/pan", "moon", { parent: "u/saturn", orbit: { a_au: 1.33584e8 / AU, phase_deg: 0 }, facts: [fact("mass_earth", 4.95e15 / constant("M_earth"))] }),
@@ -30,11 +30,12 @@ test("a catalogued ring is asked for whole, with the world and its moons that ha
   assert.ok(Math.abs(saturn.mass_kg! / 5.683e26 - 1) < 0.01, `${saturn.mass_kg}`);
   // Janus has no mass on record, so only Pan shapes the ring.
   assert.deepEqual(sculptorsOf(bodies, "u/saturn").map((m) => m.name), ["pan"]);
-  const ask = ringAskFor(bodies, "u/saturn") as { ask: { host: { mass_kg: number }; sculptors: unknown[]; ring: { zones: { tau_range?: number[]; source: string }[] } } };
+  const ask = ringAskFor(bodies, "u/saturn") as { ask: { host: { mass_kg: number; j2?: number }; sculptors: unknown[]; ring: { zones: { tau_range?: number[]; source: string }[] } } };
   assert.equal(ask.ask.ring.zones.length, 2);
   assert.deepEqual(ask.ask.ring.zones[0]!.tau_range, [0.4, 2.5]);
   assert.equal(ask.ask.ring.zones[0]!.source, "catalogued");
   assert.equal(ask.ask.sculptors.length, 1);
+  assert.equal(ask.ask.host.j2, 0.016298, "the world's J2 moves its resonances");
 });
 
 test("a ring formation made is asked for by its cloud", () => {

@@ -10,6 +10,7 @@ export { default as Stamp } from "./Stamp.svelte";
 export { default as Card } from "./Card.svelte";
 export { default as CardField } from "./CardField.svelte";
 export { default as TimeRuler } from "./TimeRuler.svelte";
+export { default as CampaignClock } from "./CampaignClock.svelte";
 export { default as ToolButton } from "./ToolButton.svelte";
 export { default as Segmented } from "./Segmented.svelte";
 export { default as ViewControls } from "./ViewControls.svelte";

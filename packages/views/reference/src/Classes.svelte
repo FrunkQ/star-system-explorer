@@ -14,6 +14,8 @@
   import { classBandWords, className, classTree, classesOnStack, findClass, findClasses, needsWords, stackPacks, type AtlasClass, type ClassAtlas, type Depth, type PackDoc, type SymbologyHost, type ViewSession, type Workspace } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, Mark, Stamp } from "../../../chart-grammar/src/index.ts";
   import { drawClassPictures, pictureOf } from "./class-picture.svelte.ts";
+  import StarGallery from "./StarGallery.svelte";
+  import { STAND_IN, tilesFromScheme } from "./star-gallery.ts";
 
   let { session, workspace, depth, symbology, offer = [], pick = null }: { session: ViewSession; workspace: Workspace; depth: Depth; symbology?: SymbologyHost; offer?: readonly string[]; pick?: string | null } = $props();
   const full = $derived(depth !== "curious");
@@ -51,7 +53,12 @@
   const atlas = $derived(shownAtlas?.atlas ?? null);
 
   let schemeChosen = $state<string | null>(null);
-  const scheme = $derived(atlas?.schemes.find((s) => s.id === schemeChosen) ?? atlas?.schemes[0] ?? null);
+  // Stars (SC1): the atlas's "star" scheme drawn as live stars; until an atlas carries one, a stand-in list per family.
+  const STARS = "star";
+  const starScheme = $derived(atlas?.schemes.find((s) => s.id === STARS) ?? null);
+  const starsOpen = $derived(schemeChosen === STARS);
+  const starTiles = $derived(starScheme ? tilesFromScheme(starScheme, (c) => className(c)) : STAND_IN);
+  const scheme = $derived(starsOpen ? null : (atlas?.schemes.find((s) => s.id === schemeChosen) ?? atlas?.schemes.find((s) => s.id !== STARS) ?? null));
   const tree = $derived(scheme ? classTree(scheme) : { base: [], modifiers: [] });
 
   let query = $state("");
@@ -183,14 +190,20 @@
     {/if}
     {#if atlas}
       <ul class="schemes" aria-label="Schemes">
-        {#each atlas.schemes as s (s.id)}
+        {#each atlas.schemes.filter((s) => s.id !== STARS) as s (s.id)}
           <li>
-            <button type="button" class="scheme" aria-pressed={scheme?.id === s.id} data-scheme={s.id} onclick={() => ((schemeChosen = s.id), (openId = null))}>
+            <button type="button" class="scheme" aria-pressed={!starsOpen && scheme?.id === s.id} data-scheme={s.id} onclick={() => ((schemeChosen = s.id), (openId = null))}>
               <span class="label">{s.question || s.id}</span>
               <span class="k">{s.classes.length} classes{full ? ` · ${s.id}` : ""}</span>
             </button>
           </li>
         {/each}
+        <li>
+          <button type="button" class="scheme" aria-pressed={starsOpen} data-scheme={STARS} onclick={() => ((schemeChosen = STARS), (openId = null))}>
+            <span class="label">{starScheme?.question || "What kind of star is this?"}</span>
+            <span class="k">{starTiles.length} {starScheme ? "classes" : "kinds"}{full ? ` · ${STARS}` : ""}</span>
+          </button>
+        </li>
       </ul>
       <label class="find">
         <span class="k">Find a class</span>
@@ -209,7 +222,12 @@
     {/if}
   </section>
 
-  {#if atlas && scheme}
+  {#if atlas && starsOpen}
+    <section class="gallery wide" aria-labelledby="classes-gallery" data-gallery={STARS}>
+      <h2 id="classes-gallery">{starScheme?.question || "What kind of star is this?"}</h2>
+      <StarGallery {session} tiles={starTiles} {depth} stamp={starScheme ? "" : "A star for each kind along the life line, until the class atlas carries the formal star classes."} />
+    </section>
+  {:else if atlas && scheme}
     <section class="gallery" aria-labelledby="classes-gallery" data-gallery={scheme.id}>
       <h2 id="classes-gallery">{scheme.question || scheme.id}</h2>
       <svg width="0" height="0" class="defs" aria-hidden="true"><HatchDefs prefix="cl" /></svg>
@@ -334,6 +352,10 @@
   .gallery,
   .card {
     min-width: 0;
+  }
+  /* The star gallery keeps its own card beside its tiles, so it takes both columns. */
+  .gallery.wide {
+    grid-column: 2 / -1;
   }
   .defs {
     position: absolute;

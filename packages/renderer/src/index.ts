@@ -12,7 +12,7 @@ export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-c
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
 // R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
-export { flowFace, gasAbove, gasTint, readTrueAir, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
+export { flowFace, gasAbove, gasTint, readCloudRows, readTrueAir, readTrueFace, sheetColours, CLOUD_ROW_NAMES, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
 // VP-A3: the air's look-up tables (Hillaire 2020) for its rim and terminator in True.
 export { airLuts, airShapeOf, AIR_LUT_REFS, type AirLuts, type AirShape } from "./air-luts.ts";
 // VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
@@ -60,7 +60,7 @@ export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts
 export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
-export { CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
+export { BIG_CELL_DT_MAX, BIG_CELLS_LEAST, bigCellContrast, cellsAcross, churningBigCells, GAMMA_PHOTOSPHERE, CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
 export { addEjections, capFlashes, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
 export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
 export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
@@ -145,8 +145,8 @@ export type { CaveOpening } from "./cave-mouths.ts";
 // Surface stains hued from the data sheet's optics (TRUE4).
 export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
 export type { GrainShare, IndexTable } from "./sheet-optics.ts";
-export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
-export type { StainFact, StainHue } from "./stain-look.ts";
+export { readStains, stainFacts, stainHue, stainNote, stainPrepared, stainTiles, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue, StainReader } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
 export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
@@ -175,3 +175,5 @@ export type { Ops, V3 } from "./ladder-noise.ts";
 // The GPU bake is texture-ladder-gpu.ts, used by gpu.ts.
 export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_CAP, FACE_MIN, faceDirection, faceSize, faceWords, levelFor as tileLevelFor, reliefNormal, sampleFaces, texelAngle, TILE_SAMPLES, tilesFacing, withFiner, composePatch, frameAt, patchDirection, patchFor, patchLevel, PATCH_N, PATCH_PX_PER_SAMPLE, PATCH_TILES, samplePatch, tilesNear } from "./texture-ladder.ts";
 export type { Composite, FacePicture, GroundAsk, PatchPicture, TileKey } from "./texture-ladder.ts";
+export { discCover, GLINT_FALLBACK, glintBrdf, MAX_CASTERS, ringPassAt, seenFrom, shadeFor, starLightAt, turnOnto, umbraLight, type Caster, type Placed, type Shade, type ShadowLightRead } from "./eclipse.ts";
+export { readSeaGlint, readUmbras, umbraKey, type GlintReader, type SeaGlint, type UmbraPair, type UmbraReader } from "./eclipse-read.ts";

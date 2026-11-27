@@ -100,7 +100,9 @@ pub struct VolatileSettings {
     pub id: String,
     /// Which of formation's solid groups it is (3 water, 4 CO2, 5 CO).
     pub group: usize,
-    /// Photodissociation lifetime at 1 AU, s (scales as r^2).
+    /// Lifetime in sunlight at 1 AU, s (scales as r^2): the sheet's
+    /// `photochemistry.lifetime_1au`, filled at load.
+    #[serde(skip)]
     pub lifetime_s_at_1au: f64,
     #[serde(skip)]
     pub molar_kg_mol: f64,
@@ -301,6 +303,13 @@ impl Settings {
             v.molar_kg_mol = sheet
                 .molar_mass_kg_mol(&v.id)
                 .ok_or_else(|| format!("the sheet has no molar mass for {}", v.id))?;
+            v.lifetime_s_at_1au = sheet
+                .row("substances", &v.id)
+                .and_then(|r| r.get("photochemistry"))
+                .and_then(|p| p.get("lifetime_1au"))
+                .and_then(|l| l.get("v"))
+                .and_then(|x| x.as_f64())
+                .ok_or_else(|| format!("the sheet has no lifetime in sunlight for {}", v.id))?;
             v.phases = sheet
                 .row("substances", &v.id)
                 .and_then(|r| r.get("phases"))

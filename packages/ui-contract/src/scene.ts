@@ -44,7 +44,8 @@ export interface SceneSubject {
   /** One-line description, e.g. "III · temperate ocean world". */
   subtitle?: string;
   parent?: string;
-  orbit?: { a_au: number; phase_deg: number };
+  /** `r_m`: where the kernel places it from its host's centre (orbits_at, metres, the system's frame), when placed by date. */
+  orbit?: { a_au: number; phase_deg: number; r_m?: [number, number, number]; v_m_s?: [number, number, number] };
   /** Radial extent of a belt or zone, in AU. */
   band_au?: [number, number];
   /**

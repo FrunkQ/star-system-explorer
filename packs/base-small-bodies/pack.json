@@ -101,7 +101,7 @@
      "t_myr_at_1au": 1.0
     },
     "comet": {
-     "about": "A nucleus's ices sublimate where sunlight can pay their latent heat: each ice's free-sublimation energy balance (Cowan and A'Hearn 1979) with its vapour curve and molar mass read from the sheet. Lifetimes and the outflow speed are recalled survey values (fudge SB-comet-coma).",
+     "about": "A nucleus's ices sublimate where sunlight can pay their latent heat: each ice's free-sublimation energy balance (Cowan and A'Hearn 1979) with its vapour curve, molar mass and lifetime in sunlight read from the sheet. The outflow speed is a recalled survey value (fudge SB-comet-coma).",
      "active_fraction": 0.05,
      "insolation_share": 0.25,
      "emissivity": 0.9,
@@ -115,9 +115,9 @@
      "dust_beta": 0.5,
      "solar_wind_km_s": 400.0,
      "volatiles": [
-      {"id": "h2o", "group": 3, "lifetime_s_at_1au": 83000.0},
-      {"id": "co2", "group": 4, "lifetime_s_at_1au": 500000.0},
-      {"id": "co", "group": 5, "lifetime_s_at_1au": 1300000.0}
+      {"id": "h2o", "group": 3},
+      {"id": "co2", "group": 4},
+      {"id": "co", "group": 5}
      ]
     },
     "rings": {

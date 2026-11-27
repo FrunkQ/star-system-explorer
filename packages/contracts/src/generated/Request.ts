@@ -194,7 +194,8 @@ galaxies?: boolean,
 stars?: boolean, 
 /**
  * GZ6: with the galaxies, every one of home's satellites' paths
- * since infall, in `galaxy_walk.satellites.paths` (default false).
+ * since infall, in `galaxy_walk.satellites.paths`, and the group's
+ * edge in `galaxy_walk.group_edge` (default false).
  */
 satellite_paths?: boolean, } | { "op": "sky_glow", position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, nside?: bigint, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
 /**
@@ -216,4 +217,4 @@ parent?: string,
 /**
  * Facts as words, for forms that read them (`colour`: `red`).
  */
-facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, } | { "op": "pack_reports", pack?: string, } | { "op": "atmosphere_advice", body: string, at_s?: bigint, facts?: Record<string, unknown>, };
+facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, } | { "op": "pack_reports", pack?: string, } | { "op": "atmosphere_advice", body: string, at_s?: bigint, facts?: Record<string, unknown>, } | { "op": "read_catalogue", text?: string, packed_b64?: string, min_size?: number, rank?: number, limit?: number, };

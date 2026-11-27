@@ -43,7 +43,7 @@ export function ringAskFor(bodies: readonly Body3D[], id: string, samples = RING
   return {
     ask: {
       key: id,
-      host: { mass_kg: b.mass_kg, radius_m: b.radius_m },
+      host: { mass_kg: b.mass_kg, radius_m: b.radius_m, ...(b.j2 ? { j2: b.j2 } : {}) },
       sculptors: sculptorsOf(bodies, id),
       ring: { inner_m: Math.min(...zones.map((z) => z.inner_m)), outer_m: Math.max(...zones.map((z) => z.outer_m)), zones },
     },

@@ -91,8 +91,9 @@ try {
   await gm.keyboard.press("Escape");
   await pop.waitFor({ state: "detached", timeout: 5000 });
 
-  // The ruler stepped on a few days: the eye reads and changes at the campaign's now, so it stays where it was pressed.
-  for (let i = 0; i < 3; i++) await gm.getByRole("button", { name: /^Forward one/ }).click();
+  // The clock stepped on a few days (on Run the clock has the ruler's place, three desks design 7.3): the eye reads and
+  // changes at the campaign's now, so it stays where it was pressed.
+  for (let i = 0; i < 3; i++) await gm.locator('[data-clock-step="day"]').click();
   // Keyboard only: focus the eye and press Space.
   await eye.focus();
   await gm.keyboard.press(" ");

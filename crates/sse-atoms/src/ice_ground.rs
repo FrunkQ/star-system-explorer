@@ -13,11 +13,6 @@
 
 use sse_core::math as m;
 
-/// Photodissociation rate of a water molecule at 1 AU under the quiet Sun,
-/// s⁻¹ (Huebner, Keady and Lyon 1992); it falls with the square of the
-/// distance.
-pub const PHOTO_RATE_1AU: f64 = 1.2e-5;
-
 /// Share of the mass that is ice from the mean density, mixing by volume:
 /// 1/ρ = w/ρ_ice + (1 − w)/ρ_rock, clamped to 0..1.
 pub fn ice_share(rho: f64, rho_rock: f64, rho_ice: f64) -> f64 {
@@ -30,7 +25,9 @@ pub fn ice_share(rho: f64, rho_rock: f64, rho_ice: f64) -> f64 {
 
 /// Depth of open ice lost over `age_s`, m. `p_pa` the ice's vapour pressure
 /// at `t_k`, `molar_kg` its molar mass, `g` and `v_esc` the world's surface
-/// gravity and escape speed, `d_au` the distance from the star.
+/// gravity and escape speed, `d_au` the distance from the star, `life_1au_s`
+/// how long a molecule of the ice's vapour lasts in starlight at 1 AU (the
+/// data sheet's `photochemistry.lifetime_1au`; it grows as d²).
 #[allow(clippy::too_many_arguments)]
 pub fn open_loss_m(
     p_pa: f64,
@@ -41,7 +38,7 @@ pub fn open_loss_m(
     d_au: f64,
     age_s: f64,
     rho_ice: f64,
-    photo_rate_1au: f64,
+    life_1au_s: f64,
 ) -> f64 {
     if p_pa <= 0.0 || t_k <= 0.0 || g <= 0.0 || rho_ice <= 0.0 {
         return 0.0;
@@ -50,8 +47,8 @@ pub fn open_loss_m(
     let flux = p_pa * m::sqrt(molar_kg / (2.0 * m::PI * r * t_k));
     let v2 = 2.0 * r * t_k / molar_kg;
     let hop_s = 2.0 * m::sqrt(v2) / g;
-    let rate = if d_au > 0.0 {
-        photo_rate_1au / (d_au * d_au)
+    let rate = if d_au > 0.0 && life_1au_s > 0.0 {
+        1.0 / (life_1au_s * d_au * d_au)
     } else {
         0.0
     };

@@ -57,7 +57,9 @@ export interface FormationRequest {
   from_star?: string;
   block?: "modern" | "classic" | "classic-corrected";
   now_gyr?: number;
-  star_pins?: { primary_mass?: number };
+  star_pins?: { primary_mass?: number; count?: number };
+  /** Stage 1's draws held at these values (sse_formation InheritancePins): a star picked from the gallery keeps its age and metals. */
+  inherit_pins?: { feh?: number; age_gyr?: number };
   pins?: { worlds: { label: string; mass_earth: number; a_au: number; e?: number }[]; tries?: number };
 }
 export interface FormationWorld {
@@ -539,6 +541,9 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         if (radius !== undefined) out.push(f("radius_earth", "Radius", radius / R_EARTH_M, "R⊕", srcOf(a, "body.radius"), at("body.radius", R_EARTH_M)));
         const day = num(a, "body.rotation_period");
         if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period"), at("body.rotation_period", 3600)));
+        // The world's oblateness in its gravity (J2): it moves the resonances that shape its rings (VP-R3).
+        const j2 = num(a, "body.j2");
+        if (j2 !== undefined) out.push(f("j2", "J2", j2, undefined, srcOf(a, "body.j2"), at("body.j2")));
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
       }
       // The GM's own pictures and the one it opens on (views/pictures): carried for the card, never shown as facts.
