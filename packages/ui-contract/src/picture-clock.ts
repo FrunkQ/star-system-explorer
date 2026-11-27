@@ -15,7 +15,7 @@ const YR_S = Number(YEAR_S);
 export const YEAR_SECONDS = YR_S;
 
 export interface PictureClock {
-  /** Clock seconds since the campaign's epoch (`campaign_epoch_yr`, its zero; no absolute time is kept here) at the wall time `wall_ms`. */
+  /** Clock seconds since the campaign's epoch (its zero; no absolute time is kept here) at the wall time `wall_ms`. */
   at_s: number;
   /** The wall time of the anchor, milliseconds (performance.now's). */
   wall_ms: number;
@@ -23,9 +23,9 @@ export interface PictureClock {
   rate: number;
 }
 
-/** A stopped clock at a time in years. */
-export function stoppedAt(now_yr: number, epoch_yr: number, wall_ms = 0): PictureClock {
-  return { at_s: (now_yr - epoch_yr) * YR_S, wall_ms, rate: 0 };
+/** A stopped clock at `since_s`, seconds since the campaign's epoch. */
+export function stoppedAt(since_s: number, wall_ms = 0): PictureClock {
+  return { at_s: since_s, wall_ms, rate: 0 };
 }
 
 /** The clock's time at a wall time, seconds since the epoch. */
@@ -36,16 +36,18 @@ export function clockAt(c: PictureClock, wall_ms: number): number {
 /**
  * The time being viewed moved (a step, a drag, a tick of play): follow it. While running, a tick that agrees with the
  * clock to within `slack_s` keeps the anchor, so the picture is not knocked about by the ruler's rounding; a jump
- * (a drag, a step, "Back to now") re-anchors. Stopped, the clock always takes the new time.
+ * (a drag, a step, "Back to now") re-anchors. Stopped, the clock always takes the new time. `since_s` is the time in
+ * view in seconds since the campaign's epoch, and `grain_s` how finely the time it came from can say it (a 64-bit year
+ * resolves about 30 s at a star's age; 0 for a time held in whole seconds).
  */
-export function followTime(c: PictureClock, now_yr: number, epoch_yr: number, wall_ms: number): PictureClock {
-  const at_s = (now_yr - epoch_yr) * YR_S;
+export function followTime(c: PictureClock, since_s: number, grain_s: number, wall_ms: number): PictureClock {
+  const at_s = since_s;
   // A moved epoch (a campaign shifted to another system's present) is a jump like any other.
   if (c.rate === 0) return { at_s, wall_ms, rate: c.rate };
   const drift = Math.abs(clockAt(c, wall_ms) - at_s);
   // The ruler sends ten times a second and rounds the time to its float: half a second of clock time is the most a
-  // tick can honestly lag, and anything a 64-bit year cannot resolve (about 30 s at a star's age) is rounding too.
-  const slack_s = Math.max(c.rate * 0.5, Math.abs(now_yr) * Number.EPSILON * 4 * YR_S);
+  // tick can honestly lag, and anything finer than the time's own grain is rounding too.
+  const slack_s = Math.max(c.rate * 0.5, grain_s);
   return drift <= slack_s ? c : { at_s, wall_ms, rate: c.rate };
 }
 

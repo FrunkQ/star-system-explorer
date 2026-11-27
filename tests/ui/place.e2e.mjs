@@ -63,8 +63,8 @@ try {
   await until(gm, "galaxy");
   await gm.locator(".gal").waitFor({ timeout: 30000 });
   // The galaxy chart says which galaxy is in view: its name is the place, and its key is in the link.
-  await gm.waitForFunction(() => location.hash === "#chart/galaxy//milky-way-like", null, { timeout: 20000 });
-  assert.equal((await line.locator("h1").innerText()).trim(), "A Milky-Way-like galaxy");
+  await gm.waitForFunction(() => location.hash === "#chart/galaxy//home", null, { timeout: 20000 });
+  assert.equal((await line.locator("h1").innerText()).trim(), "Our galaxy");
   assert.deepEqual((await line.locator("[data-place-step].below").allInnerTexts()).map((s) => s.trim()), ["Kestrel", tarnName]);
   assert.match(await gm.locator('.rail [data-go="back"]').innerText(), new RegExp(`Back to ${tarnName}`));
   // The galaxy's picker holds the campaign's systems, the levels above, and recent places.

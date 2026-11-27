@@ -9,7 +9,7 @@
 // - stand-ins (docs/fudges.md, rows COMET-*): how bright each part is drawn (from its production on a log scale, as
 //   there is no grain size or ion density yet), the tails' widths, and the dust tail drawn straight (its curve needs
 //   the grains' sizes, which the kernel does not give).
-import { constant, LINES, say } from "../../ui-contract/src/index.ts";
+import { constant, say, sheetLine } from "../../ui-contract/src/index.ts";
 import { wavelengthRgb } from "./star-shells.ts";
 
 export const COMET_REFERENCES = [
@@ -49,11 +49,10 @@ export const isActive = (a: CometActivity | undefined | null): a is CometActivit
 /**
  * The ion tail's colour, linear: the light of its commonest ion. CO and CO2 comets glow in CO+ (about 426 nm, blue);
  * a water comet's tail is H2O+ (about 615 nm, orange), which is why water-driven tails look less blue (Brandt and
- * Chapman 2004). Taken from the line list where the line is there, else from the wavelength.
+ * Chapman 2004). The wavelengths are the ion rows' lines on the master data sheet.
  */
 export function ionColour(a: CometActivity): [number, number, number] {
-  const at = (id: string, m: number) => LINES.find((x) => x.id === id)?.at_m ?? m;
-  const w = a.dominant === "h2o" ? at("h2o+", 6.15e-7) : at("co+", 4.26e-7);
+  const w = sheetLine(a.dominant === "h2o" ? "h2o+" : "co+").at_m;
   const c = wavelengthRgb(w);
   const m = Math.max(c[0], c[1], c[2]) || 1;
   return [c[0] / m, c[1] / m, c[2] / m];
