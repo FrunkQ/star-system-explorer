@@ -621,7 +621,7 @@ pub fn life(
         o2_fraction: signatures.o2,
         now_myr: r.age_myr,
     };
-    let view = crate::sift::view(
+    let mut view = crate::sift::view(
         &r.body,
         biosphere.as_ref(),
         Some(&history),
@@ -629,6 +629,11 @@ pub fn life(
         &inp,
         &sift,
     );
+    view.energy = Some(crate::ledger::ledger(
+        &graph,
+        &bp,
+        biosphere.as_ref().map(|b| &b.budget),
+    ));
     Ok(WorldLife {
         stack: ws,
         graph,
