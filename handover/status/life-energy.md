@@ -17,7 +17,7 @@ In one line: free energy captured, set against the cost of staying alive, decide
 | LE4 speed read-out: fill time per habitat, one speed line per world | LE1 | none (new field on chart worlds) | built, PR with LE3 |
 | LE5 broad-brush spread in the deep-time history (link rates, colonisation waiting times, refuges) | LE4 | core (dated history moves) | not started |
 | LE6a recovery clocked in Earth-Myr of opportunity | LE4 | core (dated history moves) | not started |
-| LE-U1 Energy flow life branch | LE2, the Energy flow view (PR 670, HV) | none | not started |
+| LE-U1 Energy flow life branch | LE2, the Energy flow view (PR 670, HV) | none | built (log `handover/packages/HV2b.md`) |
 | LE-U2 Life screen card "Where the energy goes" | LE3, LE4 | none | not started |
 
 Only the owner thread edits this file. One row per package: update it in the same pull request as the package.
