@@ -227,3 +227,76 @@ fn biosphere_golden() {
         "tests/golden/life-biosphere.json moved: bless only on purpose"
     );
 }
+
+// LE3: where the energy goes (life-from-energy design section 5).
+
+#[test]
+fn shares_sum_to_the_captured_power_on_every_world() {
+    for (n, b) in biospheres() {
+        let captured: f64 = b
+            .guilds
+            .iter()
+            .filter(|g| g.role == "producer")
+            .map(|g| g.power_w)
+            .sum();
+        let used: f64 = b.guilds.iter().map(|g| g.uses_w).sum();
+        let share: f64 = b.guilds.iter().map(|g| g.share_of_captured).sum();
+        if captured > 0.0 {
+            assert!(
+                (used / captured - 1.0).abs() < 1e-9,
+                "{n}: {used:e} of {captured:e}"
+            );
+            assert!((share - 1.0).abs() < 1e-9, "{n}: {share}");
+        }
+        // The producers' power is the budget's.
+        assert!(
+            (captured / b.budget.power_w - 1.0).abs() < 1e-9 || b.budget.power_w == 0.0,
+            "{n}"
+        );
+        for g in &b.guilds {
+            assert!(!g.diet.is_empty() || g.role == "symbiont", "{n} {}", g.id);
+            if g.role == "producer" {
+                assert!(g.diet[0].starts_with("gradient:"), "{}", g.id);
+                assert!(g.sizes.is_none(), "producers are a gap, never a zero");
+            }
+        }
+    }
+}
+
+#[test]
+fn earth_land_grazers_weigh_about_what_earths_land_mammals_do() {
+    // The design asked for Damuth's densities within a factor of ten. His
+    // line (about 10^4.23 M^-0.75 per km^2, M in g) is ONE species'
+    // density; this count is every warm-blooded grazer of the class, so the
+    // two differ by the number of species and are not compared. The fair
+    // check is mass: the class's standing mass against Earth's land mammals
+    // today, about 0.17 Gt C (livestock 0.1, people 0.06, wild 0.007; Bar-On,
+    // Phillips and Milo 2018, unverified), at about 15% carbon by wet mass.
+    let b = get("earth");
+    let grazers = b
+        .guilds
+        .iter()
+        .find(|g| g.id == "consumer.2.land-surface")
+        .expect("land grazers");
+    let sizes = grazers.sizes.as_ref().unwrap();
+    for c in sizes {
+        println!(
+            "{} {:.0e}-{:.0e} kg {} {:.2e} W {:.2e}",
+            c.class, c.from_kg, c.to_kg, c.rate, c.power_w, c.count
+        );
+        assert!(c.count.is_finite() && c.count > 0.0, "{c:?}");
+    }
+    let warm = sizes
+        .iter()
+        .find(|c| c.class == "animal-sized" && c.rate == "endotherm")
+        .expect("warm-blooded animal-sized grazers");
+    // Numbers fall as M^-3/4 over ln M, so the mass in [a, b] is
+    // N / (a^-3/4 - b^-3/4) x 3 x (b^1/4 - a^1/4).
+    let (a, z) = (warm.from_kg, warm.to_kg);
+    let kg = warm.count / (sse_core::math::pow(a, -0.75) - sse_core::math::pow(z, -0.75))
+        * 3.0
+        * (sse_core::math::pow(z, 0.25) - sse_core::math::pow(a, 0.25));
+    let gt_c = kg * 1000.0 * 0.15 / 1.0e15;
+    println!("warm-blooded grazers {:.2e}, {gt_c:.3} Gt C", warm.count);
+    assert!((0.017..1.7).contains(&gt_c), "{gt_c} Gt C");
+}

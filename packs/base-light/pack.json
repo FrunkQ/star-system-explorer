@@ -160,37 +160,17 @@
             "id": "oiii-4959",
             "name": "[O III] 495.9 nm",
             "species": "O III",
-            "at_m": 4.95891e-07,
             "medium": "air",
             "matter": "o",
-            "nebular": {
-              "makes_ev": 35.12112,
-              "strips_ev": 54.93554,
-              "upsilon": 2.26177,
-              "lower_weight": 9,
-              "upper_weight": 5,
-              "share": 0.25,
-              "source": "Storey, P. J., Sochi, T. and Badnell, N. R. 2014, Collision strengths for nebular [O III] optical and infrared lines, table 6 at 10,000 K: 0.24917, 0.75062 and 1.26198 from 3P0, 3P1 and 3P2 to 1D2, summed over the 3P term (weight 9); 1D2 lies 20273.27 cm-1 above 3P0 (table 5), 20065.5 above the term's weighted centre. https://arxiv.org/abs/1311.6517. The 5007 and 4959 lines share the 1D2 level's decays about three to one (Storey, N-level atoms notes, https://pages.astro.umd.edu/~jpha/N-level.pdf); the exact ratio from Storey and Zeippen 2000 (MNRAS 312, 813) is a stand-in until checked (fudge register F64). De-excitation not worked: 1D2's critical density is far above nebular densities. ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
-              "upper_cm": 20065.5
-            }
+            "sheet": "o+2"
           },
           {
             "id": "oiii",
             "name": "[O III] 500.7 nm",
             "species": "O III",
-            "at_m": 5.00684e-07,
             "medium": "air",
             "matter": "o",
-            "nebular": {
-              "makes_ev": 35.12112,
-              "strips_ev": 54.93554,
-              "upsilon": 2.26177,
-              "lower_weight": 9,
-              "upper_weight": 5,
-              "share": 0.75,
-              "source": "Storey, P. J., Sochi, T. and Badnell, N. R. 2014, Collision strengths for nebular [O III] optical and infrared lines, table 6 at 10,000 K: 0.24917, 0.75062 and 1.26198 from 3P0, 3P1 and 3P2 to 1D2, summed over the 3P term (weight 9); 1D2 lies 20273.27 cm-1 above 3P0 (table 5), 20065.5 above the term's weighted centre. https://arxiv.org/abs/1311.6517. The 5007 and 4959 lines share the 1D2 level's decays about three to one (Storey, N-level atoms notes, https://pages.astro.umd.edu/~jpha/N-level.pdf); the exact ratio from Storey and Zeippen 2000 (MNRAS 312, 813) is a stand-in until checked (fudge register F64). De-excitation not worked: 1D2's critical density is far above nebular densities. ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
-              "upper_cm": 20065.5
-            }
+            "sheet": "o+2"
           },
           {
             "id": "mg-b",
@@ -312,63 +292,17 @@
             "id": "sii",
             "name": "[S II] 671.6 nm",
             "species": "S II",
-            "at_m": 6.71644e-07,
             "medium": "air",
             "matter": "s",
-            "nebular": {
-              "makes_ev": 10.36001,
-              "strips_ev": 23.33788,
-              "upsilon": 3.83,
-              "lower_weight": 4,
-              "upper_weight": 6,
-              "rate_s": 0.0002019,
-              "source": "[S II] 671.6 nm, 2D5/2 to 4S3/2. Effective collision strengths at 10,000 K and Einstein A from table B.5 of A&A 694, A133 (2025), doi:10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
-              "balance": {
-                "fit": {
-                  "e0_ev": 8.787,
-                  "sigma0_m2": 3.136e-20,
-                  "ya": 3.442,
-                  "p": 12.81,
-                  "yw": 0.7354,
-                  "y0": 2.782,
-                  "y1": 0.1788,
-                  "max_ev": 184.6
-                },
-                "recombination_m3_s": 4.48e-18,
-                "source": "Once- and twice-ionised sulphur balance where they are: S+ stripped by starlight with the cross-section fit of Verner, D. A. et al. 1996, ApJ 465, 487, table 1 row S II (doi:10.1086/177435), S2+ rejoined at 4.48e-12 cm3 s-1 at 10,000 K, the sum of the dielectronic 2.94e-12 and radiative 1.54e-12 of Badnell, N. R. et al. 2015, table 6 (https://arxiv.org/abs/1503.05905)."
-              }
-            }
+            "sheet": "s+"
           },
           {
             "id": "sii-6731",
             "name": "[S II] 673.1 nm",
             "species": "S II",
-            "at_m": 6.73082e-07,
             "medium": "air",
             "matter": "s",
-            "nebular": {
-              "makes_ev": 10.36001,
-              "strips_ev": 23.33788,
-              "upsilon": 2.56,
-              "lower_weight": 4,
-              "upper_weight": 4,
-              "rate_s": 0.000684,
-              "source": "[S II] 673.1 nm, 2D3/2 to 4S3/2. Effective collision strengths at 10,000 K and Einstein A from table B.5 of A&A 694, A133 (2025), doi:10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
-              "balance": {
-                "fit": {
-                  "e0_ev": 8.787,
-                  "sigma0_m2": 3.136e-20,
-                  "ya": 3.442,
-                  "p": 12.81,
-                  "yw": 0.7354,
-                  "y0": 2.782,
-                  "y1": 0.1788,
-                  "max_ev": 184.6
-                },
-                "recombination_m3_s": 4.48e-18,
-                "source": "Once- and twice-ionised sulphur balance where they are: S+ stripped by starlight with the cross-section fit of Verner, D. A. et al. 1996, ApJ 465, 487, table 1 row S II (doi:10.1086/177435), S2+ rejoined at 4.48e-12 cm3 s-1 at 10,000 K, the sum of the dielectronic 2.94e-12 and radiative 1.54e-12 of Badnell, N. R. et al. 2015, table 6 (https://arxiv.org/abs/1503.05905)."
-              }
-            }
+            "sheet": "s+"
           },
           {
             "id": "tio-7054",

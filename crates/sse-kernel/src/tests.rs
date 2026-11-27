@@ -28,18 +28,8 @@ fn contract_matches_golden() {
         .filter(|l| l.starts_with(crate::contract::REACH))
         .flat_map(|l| crate::contract::reach_entries(l))
         .collect();
-    let reach_path = root().join("tests/golden/contract-reach.txt");
-    let reach_text = reach.join("\n") + "\n";
-    if std::env::var("SSE_BLESS").is_ok() {
-        std::fs::write(&reach_path, &reach_text).unwrap();
-    }
-    let want = std::fs::read_to_string(&reach_path).expect("run with SSE_BLESS=1 once");
     assert!(!reach.is_empty(), "the contract reads a reach report");
-    assert_eq!(
-        reach_text,
-        want.replace("\r\n", "\n"),
-        "tests/golden/contract-reach.txt"
-    );
+    check_reach_golden(&reach);
     let path = root().join("tests/golden/contract.jsonl");
     let text = lines.join("\n") + "\n";
     if std::env::var("SSE_BLESS").is_ok() {
@@ -50,6 +40,93 @@ fn contract_matches_golden() {
         assert_eq!(a, b, "response {i} differs");
     }
     assert_eq!(lines.len(), golden.lines().count());
+}
+
+/// The reach report's entries, one file per constant and block:
+/// `tests/golden/reach/<constant>/<block>.txt` holds that block's line(s).
+/// One file per block means two PRs that each add blocks never edit the same
+/// file (it was one sorted list, and neighbouring additions conflicted). Fails
+/// when a block's reach changes, a block has no file (a new block: bless), or
+/// a file names a block the report no longer lists (a lost block).
+fn check_reach_golden(reach: &[String]) {
+    use std::collections::BTreeMap;
+    let mut got: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for line in reach {
+        let mut parts = line.splitn(3, ' ');
+        let constant = parts.next().unwrap_or("?");
+        let _list = parts.next();
+        let entry: serde_json::Value =
+            serde_json::from_str(parts.next().unwrap_or("null")).expect("reach entry is json");
+        let block = entry["block"]
+            .as_str()
+            .expect("reach entry names its block");
+        assert!(
+            !constant.is_empty()
+                && block
+                    .chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '.' || c == '_'),
+            "block id {block:?} cannot be a file name"
+        );
+        got.entry(format!("{constant}/{block}.txt"))
+            .or_default()
+            .push(line.clone());
+    }
+    let dir = root().join("tests/golden/reach");
+    if std::env::var("SSE_BLESS").is_ok() {
+        let _ = std::fs::remove_dir_all(&dir);
+        for (rel, lines) in &got {
+            let p = dir.join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(&p, lines.join("\n") + "\n").unwrap();
+        }
+    }
+    let mut want: BTreeMap<String, String> = BTreeMap::new();
+    let mut constants: Vec<PathBuf> = std::fs::read_dir(&dir)
+        .expect("tests/golden/reach/: run with SSE_BLESS=1 once")
+        .map(|e| e.unwrap().path())
+        .collect();
+    constants.sort();
+    for c in constants {
+        let mut files: Vec<PathBuf> = std::fs::read_dir(&c)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .collect();
+        files.sort();
+        for f in files {
+            let rel = format!(
+                "{}/{}",
+                c.file_name().unwrap().to_string_lossy(),
+                f.file_name().unwrap().to_string_lossy()
+            );
+            want.insert(
+                rel,
+                std::fs::read_to_string(&f).unwrap().replace("\r\n", "\n"),
+            );
+        }
+    }
+    let mut faults = vec![];
+    for (rel, lines) in &got {
+        let text = lines.join("\n") + "\n";
+        match want.get(rel) {
+            None => faults.push(format!(
+                "no golden for {rel} (a new block: run with SSE_BLESS=1)\n  got: {text}"
+            )),
+            Some(w) if *w != text => {
+                faults.push(format!("{rel} differs\n  got:    {text}  golden: {w}"))
+            }
+            Some(_) => {}
+        }
+    }
+    for rel in want.keys().filter(|k| !got.contains_key(*k)) {
+        faults.push(format!(
+            "tests/golden/reach/{rel} names a block the reach report no longer lists"
+        ));
+    }
+    assert!(
+        faults.is_empty(),
+        "tests/golden/reach/:\n{}",
+        faults.join("\n")
+    );
 }
 
 /// The core sequence (`tests/contract/requests.json`) is closed: it keeps the

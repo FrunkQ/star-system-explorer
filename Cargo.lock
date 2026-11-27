@@ -594,6 +594,7 @@ dependencies = [
  "sse-flow",
  "sse-nebula",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-resolve",
 ]
@@ -745,6 +746,7 @@ dependencies = [
  "sse-core",
  "sse-observe",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-suite",
  "sse-world",

@@ -30,6 +30,8 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+#[cfg(test)]
+mod eclipse_tests;
 mod fields;
 mod flights;
 #[cfg(test)]
@@ -44,6 +46,8 @@ mod from_star_tests;
 mod galaxies;
 mod glow;
 #[cfg(test)]
+mod home_tests;
+#[cfg(test)]
 mod hooks_tests;
 mod ice_ages;
 mod inventory;
@@ -55,6 +59,7 @@ mod life;
 mod life_tests;
 #[cfg(test)]
 mod matter_tests;
+pub mod motion;
 #[cfg(test)]
 mod mount_log_tests;
 #[cfg(test)]
@@ -72,6 +77,7 @@ pub mod protocol;
 #[cfg(test)]
 mod reach_gate_tests;
 mod reference;
+mod scenario;
 mod sea;
 mod sky;
 mod small;
@@ -561,6 +567,15 @@ fn with_record(d: &sse_observe::Disclosure, r: &sse_record::Registry) -> sse_obs
 pub const TAG_FIELD: &str = "tag.";
 
 impl Universe {
+    /// GZ12: the GM's stored home halo ("Make this home"), if any; absent,
+    /// the web's own choice is the home.
+    fn home(&self) -> Option<String> {
+        cosmos::stored_home(
+            &self.chronicle.state_at(UniverseTime::seconds(i64::MAX)),
+            &self.root,
+        )
+    }
+
     fn manifest(&self) -> RunManifest {
         RunManifest::new(
             self.seed,
@@ -971,7 +986,7 @@ fn territory_world(
         let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
         let pins = cosmos::star_pins(&state)?;
         let start = clock::campaign_span_s(&u.chronicle).map(|(a, _)| a);
-        positions = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+        positions = cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
             let t_myr = match start {
                 Some(s0) if at.s != i64::MAX => {
                     now + (at.s - s0) as f64 / sse_core::sheet::YR_JULIAN / 1.0e6
@@ -1675,6 +1690,7 @@ impl Kernel {
             Some(cosmos::reconstruct_origin(
                 &u.seed,
                 &u.root,
+                cosmos::stored_home(&all, &u.root).as_deref(),
                 cosmos::OriginAt {
                     age_gyr: age_myr / 1000.0,
                     elapsed_gyr: clock::elapsed_myr(&u.chronicle) / 1000.0,
@@ -2184,11 +2200,50 @@ impl Kernel {
             .map_err(|e| err("bad_record", format!("{address}: {e}")))?;
         let u = self.universe()?;
         let elapsed_myr = clock::elapsed_myr(&u.chronicle);
-        let (seed, root) = (u.seed, u.root.clone());
+        let (seed, root, home) = (u.seed, u.root.clone(), u.home());
         // `with_stars` gives the galaxy's now in Myr; the birth reads Gyr.
-        cosmos::with_stars(&seed, &root, None, |st, now_myr| {
+        cosmos::with_stars(&seed, &root, home.as_deref(), None, |st, now_myr| {
             let b = serde_json::to_value(st.birth(&s)).expect("plain data");
             Ok((b, (now_myr + elapsed_myr) / 1000.0))
+        })
+    }
+
+    /// `set_home` (GZ12 "Make this home"): store the GM's home halo on the
+    /// universe's root, or clear it (null) to return to the web's choice.
+    fn set_home(&mut self, halo: Option<String>) -> Result<Response, Response> {
+        let u = self.universe()?;
+        // Checked first: it must be one of this universe's catalogued haloes.
+        if let Some(h) = &halo {
+            cosmos::home_galaxy(&u.seed, &u.root, Some(h))?;
+        }
+        let mut f = BTreeMap::new();
+        f.insert(
+            cosmos::HOME_HALO.to_string(),
+            halo.clone().map_or(Value::Null, Value::Text),
+        );
+        let e = clock::timeless_set(
+            &u.chronicle,
+            &u.root,
+            f,
+            Evidence::Authored,
+            vec![],
+            cosmos::HOME_KIND,
+            Publisher::new("sse.base-cosmology", "home", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        let home = cosmos::home_galaxy(&u.seed, &u.root, u.home().as_deref())?;
+        Ok(Response::HomeSet {
+            home,
+            event_id: id.hex(),
+            state_hash: u
+                .chronicle
+                .state_at(UniverseTime::seconds(i64::MAX))
+                .hash()
+                .hex(),
         })
     }
 
@@ -2214,7 +2269,7 @@ impl Kernel {
                 state_hash: hash(&u.chronicle),
             });
         }
-        let drawn = cosmos::with_stars(&u.seed, &u.root, None, |st, _| {
+        let drawn = cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, _| {
             let s = st
                 .draw_one(&a)
                 .map_err(|e| err("bad_address", e))?
@@ -4273,7 +4328,14 @@ impl Kernel {
                 mass_kg,
                 a_au,
                 e,
+                pair,
+                makeup,
+                structure,
+                spin_hours,
+                battered,
+                size_ratio,
             } => {
+                let makeup = small::makeup_pin(makeup.as_deref())?;
                 let u = self.universe()?;
                 let a = in_universe(&u.root, &system)?;
                 in_universe(&u.root, &address)?;
@@ -4285,6 +4347,7 @@ impl Kernel {
                 }
                 small::make(
                     u.runs.get(&system),
+                    &u.seed,
                     small::Make {
                         address: &address,
                         kind: &kind,
@@ -4292,6 +4355,40 @@ impl Kernel {
                         mass_kg,
                         a_au,
                         e,
+                        pins: sse_small::Pins {
+                            pair,
+                            makeup,
+                            structure,
+                            spin_hours,
+                            battered,
+                            size_ratio,
+                            ..sse_small::Pins::default()
+                        },
+                    },
+                )?
+            }
+            Request::SmallShape {
+                system,
+                address,
+                diameter_km,
+                mass_kg,
+                ice,
+                spin_hours,
+                a_au,
+            } => {
+                let u = self.universe()?;
+                in_universe(&u.root, &system)?;
+                in_universe(&u.root, &address)?;
+                small::shape(
+                    u.runs.get(&system),
+                    &u.seed,
+                    small::Shape {
+                        address: &address,
+                        diameter_km,
+                        mass_kg,
+                        ice,
+                        spin_hours,
+                        a_au,
                     },
                 )?
             }
@@ -4585,8 +4682,10 @@ impl Kernel {
                     .map(serde_json::from_value)
                     .collect::<Result<_, _>>()
                     .map_err(|e| err("bad_edit", format!("history edit: {e}")))?;
+                let home = u.home();
                 let chart = cosmos::galaxy_chart(cosmos::GalaxyAsk {
                     cell,
+                    home: home.as_deref(),
                     edits: &edits,
                     seed: &u.seed,
                     root: &u.root,
@@ -7661,6 +7760,12 @@ impl Kernel {
                     skipped,
                 }
             }
+            Request::HomeGalaxy => {
+                let u = self.universe()?;
+                let home = cosmos::home_galaxy(&u.seed, &u.root, u.home().as_deref())?;
+                Response::HomeGalaxy { home }
+            }
+            Request::SetHome { halo } => self.set_home(halo)?,
             Request::HaloCell {
                 cell,
                 min_mass_msun,
@@ -7686,9 +7791,10 @@ impl Kernel {
                 let pins =
                     cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
-                let cell = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
-                    cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
-                })?;
+                let cell =
+                    cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
+                        cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
+                    })?;
                 Response::StarCelled { cell }
             }
             Request::SkyFromHere {
@@ -7708,27 +7814,33 @@ impl Kernel {
                 let pins =
                     cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
-                let sky = cosmos::with_world(&u.seed, &u.root, None, |st, world, now| {
-                    sky::sky_from_here(
-                        st,
-                        world,
-                        &pins,
-                        &cosmos::sky_params()?,
-                        sky::Ask {
-                            observer: observer.as_deref(),
-                            position_pc,
-                            t_myr: t_myr.unwrap_or(now + elapsed),
-                            limit_mag: limit_mag.unwrap_or(6.5),
-                            band: band.as_deref().unwrap_or("V"),
-                            bands: bands.unwrap_or_default(),
-                            cone,
-                            max_stars: max_stars.unwrap_or(20_000) as usize,
-                            galaxies: galaxies.unwrap_or(true),
-                            stars: stars.unwrap_or(true),
-                            satellite_paths: satellite_paths.unwrap_or(false),
-                        },
-                    )
-                })?;
+                let sky = cosmos::with_world(
+                    &u.seed,
+                    &u.root,
+                    u.home().as_deref(),
+                    None,
+                    |st, world, now| {
+                        sky::sky_from_here(
+                            st,
+                            world,
+                            &pins,
+                            &cosmos::sky_params()?,
+                            sky::Ask {
+                                observer: observer.as_deref(),
+                                position_pc,
+                                t_myr: t_myr.unwrap_or(now + elapsed),
+                                limit_mag: limit_mag.unwrap_or(6.5),
+                                band: band.as_deref().unwrap_or("V"),
+                                bands: bands.unwrap_or_default(),
+                                cone,
+                                max_stars: max_stars.unwrap_or(20_000) as usize,
+                                galaxies: galaxies.unwrap_or(true),
+                                stars: stars.unwrap_or(true),
+                                satellite_paths: satellite_paths.unwrap_or(false),
+                            },
+                        )
+                    },
+                )?;
                 Response::Sky { sky }
             }
             Request::SkyGlow {
@@ -7741,20 +7853,21 @@ impl Kernel {
             } => {
                 let u = self.universe()?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
-                let glow = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
-                    glow::sky_glow(
-                        st,
-                        &cosmos::sky_params()?,
-                        glow::Ask {
-                            position_pc,
-                            t_myr: t_myr.unwrap_or(now + elapsed),
-                            limit_mag: limit_mag.unwrap_or(6.5),
-                            band: band.as_deref().unwrap_or("V"),
-                            bands: bands.unwrap_or_default(),
-                            nside: nside.unwrap_or(32),
-                        },
-                    )
-                })?;
+                let glow =
+                    cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
+                        glow::sky_glow(
+                            st,
+                            &cosmos::sky_params()?,
+                            glow::Ask {
+                                position_pc,
+                                t_myr: t_myr.unwrap_or(now + elapsed),
+                                limit_mag: limit_mag.unwrap_or(6.5),
+                                band: band.as_deref().unwrap_or("V"),
+                                bands: bands.unwrap_or_default(),
+                                nside: nside.unwrap_or(32),
+                            },
+                        )
+                    })?;
                 Response::SkyGlowed { glow }
             }
             Request::PlanVoyage {
@@ -7869,27 +7982,28 @@ impl Kernel {
                     (visited.unwrap_or_default(), surveyed.unwrap_or_default());
                 let known_fuel = known_fuel.unwrap_or_default();
                 let sensed_fuel = sensed_fuel.unwrap_or_default();
-                let voyage = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
-                    voyage::plan_voyage(
-                        st,
-                        now + elapsed,
-                        &pins,
-                        voyage::Ask {
-                            from: &from,
-                            to: to.as_deref(),
-                            home: home.as_deref(),
-                            ship: &ship,
-                            minimise: minimise.as_deref(),
-                            visited: &visited,
-                            known_fuel: &known_fuel,
-                            sensed_fuel: &sensed_fuel,
-                            surveyed: &surveyed,
-                            gambles: gambles.unwrap_or(false),
-                            links: &links,
-                            engines: &engines,
-                        },
-                    )
-                })?;
+                let voyage =
+                    cosmos::with_stars(&u.seed, &u.root, u.home().as_deref(), None, |st, now| {
+                        voyage::plan_voyage(
+                            st,
+                            now + elapsed,
+                            &pins,
+                            voyage::Ask {
+                                from: &from,
+                                to: to.as_deref(),
+                                home: home.as_deref(),
+                                ship: &ship,
+                                minimise: minimise.as_deref(),
+                                visited: &visited,
+                                known_fuel: &known_fuel,
+                                sensed_fuel: &sensed_fuel,
+                                surveyed: &surveyed,
+                                gambles: gambles.unwrap_or(false),
+                                links: &links,
+                                engines: &engines,
+                            },
+                        )
+                    })?;
                 Response::VoyagePlanned { voyage }
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,

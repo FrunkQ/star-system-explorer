@@ -9,7 +9,7 @@ export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, update
 export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
 export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
 export type { Split, Display } from "./displays.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, ClassSample, ClassSampled, PackCalendar, StabilityCheck } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, ClassSample, ClassSampled, PackCalendar, StabilityCheck, SmallDesign } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
 export type { Preview } from "./physics-edit.ts";
@@ -20,7 +20,7 @@ export { resolveParams } from "./view.ts";
 export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit, WhatIf } from "./view.ts";
 export { commitEdit, commitFields, tryFirst, TRY_LABEL, FIELDS, factEdit, placeBodies, withdrawBodies, PRESENCE, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
 export type { Difference } from "./edit.ts";
-export { checkScreen, boundScene, LAYOUT_AREAS, RAIL_SCALES, RAIL_GROUPS, RAIL_GROUP_WORDS, RAIL_MAX, railOf, scalesOf } from "./screen.ts";
+export { checkScreen, boundScene, LAYOUT_AREAS, RAIL_SCALES, RAIL_GROUPS, RAIL_GROUP_WORDS, RAIL_MAX, railOf, scalesOf, screenOnDesk } from "./screen.ts";
 export { resolveStyle, checkStyle, settingCost, settingsCost, promotedOf, settingsDiff, COSTS, TIER_RUNS_UP_TO } from "./style.ts";
 export type { StyleDoc, StyleCheck } from "./style.ts";
 export type { ScreenDoc, ScreenItem, CheckedScreen, RailEntry, RailLine, RailScale, RailGroup } from "./screen.ts";
@@ -45,7 +45,7 @@ export * from "./view-controls.ts";
 export * from "./composite.ts";
 export * from "./picture-clock.ts";
 export * from "./part-controls.ts";
-export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan } from "./desk.ts";
+export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskFor } from "./desk.ts";
 export type { DeskDoc, DeskWrites, DeskTime, OnDesks, ShellPart, DeskLevel, DeskMemory } from "./desk.ts";
 export { NO_HAPPENINGS, byDate, dueAhead, passedWords, checkHappenings } from "./due.ts";
 export { stepperLine, stepOut, stepIn } from "./stepper.ts";
@@ -133,7 +133,7 @@ export type { ShipAtWorldAsk, ShipAtWorldReport, ShipAtWorld, WorldCheck, Danger
 export { VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS, systemShort, voyageSpan, speedWords, agesWords, voyageFrame, orbitAxis, labelLanes } from "./voyage.ts";
 export type { Minimise, VoyageAsk, VoyageLeg, Voyage, VoyageSystem, VoyagePlan, StarCell, StarCellSystem, MapFrame, SystemPlace, SystemVoyagePlan } from "./voyage.ts";
 export { leadingArmWords, LEADING_ARM_SEEN, NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, cubeShares, editWords, toggleRemoval, cellHalo, projectHalo, haloRadius, overdensityWords, HOME_CELL, placeholderGalaxyName, cellName } from "./galaxy.ts";
-export type { LeadingArmWords, GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, WebCube, WebGalaxies, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, GalaxyMark, GalaxyAssembly, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
+export type { LeadingArmWords, GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, WebCube, WebGalaxies, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, GalaxyMark, GalaxyAssembly, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection, HomeGalaxy } from "./galaxy.ts";
 export { LIKE_THE_MILKY_WAY, homeFits, findHomes, cellsAround } from "./home-finder.ts";
 export type { HomeWish, HomeFit } from "./home-finder.ts";
 export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords, unprojectCamera } from "./window.ts";
@@ -161,7 +161,7 @@ export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./
 // The performance readout and its reports (PF1).
 export * from "./perf.ts";
 // The master data sheet's constants (MP22): one door to a constant's value for every package.
-export { constant, constantOf, constantIds, SHEET_BANDS, SHEET_PACK, numberOf, sheetUnitFactor, sheetValue, type SheetRef } from "./sheet.ts";
+export { constant, constantOf, constantIds, SHEET_BANDS, SHEET_LINES, sheetLine, type SheetLine, SHEET_PACK, numberOf, sheetUnitFactor, sheetValue, type SheetRef } from "./sheet.ts";
 export type { SheetBand, SheetConstant } from "./sheet.ts";
 // One Open door (V3 gap 28): what a file is, by looking inside it; Explorers V4 listings, checked by sha256.
 export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
@@ -236,6 +236,8 @@ export * from "./approach.ts";
 export * from "./journey.ts";
 export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export { readShape, readShapes, shapeAsk, shapeOf } from "./small-shape.ts";
+export type { ShapeAsk, ShapeReader, SmallShape } from "./small-shape.ts";
 export { chartFate, fateLine, fatePlan, withFate, FATE_LIMIT_MYR } from "./formation-fate.ts";
 export type { ChartFate, FateMark, FatePlan, FateWorld } from "./formation-fate.ts";
 export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markWords, moveJoin, profileMass, profileSpans, sculptorOf, setDensity, setShare, srgb } from "./profile.ts";

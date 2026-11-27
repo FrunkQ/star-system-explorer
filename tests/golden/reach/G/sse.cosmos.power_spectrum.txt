@@ -1,0 +1,1 @@
+G follows {"block":"sse.cosmos.power_spectrum","reads":["H0","Omega_m","Omega_b","n_s","sigma8","T_cmb"],"uses_it":false}

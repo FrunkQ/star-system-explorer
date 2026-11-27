@@ -1018,11 +1018,12 @@ pub(crate) fn read_photometry(stars: Vec<serde_json::Value>, bands: Vec<String>)
 pub(crate) fn read_activity(
     stars: Vec<serde_json::Value>,
     seed: Option<&str>,
-    at_s: Option<f64>,
+    at_s: Option<sse_core::time::Seconds>,
     window: Option<serde_json::Value>,
     prominences: Option<serde_json::Value>,
 ) -> Out {
     use sse_activity::*;
+    use sse_core::time::Instant;
     #[derive(serde::Deserialize)]
     struct Item {
         #[serde(flatten)]
@@ -1032,8 +1033,10 @@ pub(crate) fn read_activity(
     }
     #[derive(serde::Deserialize)]
     struct Window {
-        from_s: f64,
-        to_s: f64,
+        #[serde(deserialize_with = "sse_core::time::seconds")]
+        from_s: Instant,
+        #[serde(deserialize_with = "sse_core::time::seconds")]
+        to_s: Instant,
         #[serde(default = "min_e")]
         min_energy_j: f64,
     }
@@ -1060,7 +1063,12 @@ pub(crate) fn read_activity(
         let it: Item =
             serde_json::from_value(v).map_err(|e| err("bad_activity", format!("star {n}: {e}")))?;
         let a = activity(&seed, &it.star, &set).map_err(|e| err("bad_activity", e))?;
-        let mo = moment(&a, at_s.unwrap_or(it.star.age_s), &set);
+        let age = match at_s {
+            Some(t) => t.0,
+            None => Instant::from_seconds_f64(it.star.age_s)
+                .map_err(|e| err("bad_activity", format!("star {n}: age: {e}")))?,
+        };
+        let mo = moment(&a, age, &set);
         let fl = match &window {
             Some(w) => Some(
                 flares(
