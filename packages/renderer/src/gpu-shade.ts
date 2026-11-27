@@ -8,7 +8,7 @@
 import { DataTexture, RGBAFormat, UnsignedByteType, Vector3, Vector4 } from "three";
 import { PhysicalLightingModel, type NodeMaterial } from "three/webgpu";
 import { abs, acos, asin, atan, clamp, cross, dot, exp, float, Fn, length, max, min, normalize, normalView, positionViewDirection, positionWorld, pow, select, sqrt, texture, uniform, vec2, vec3 } from "three/tsl";
-import { MAX_CASTERS, slopeVariance, type Shade } from "./eclipse.ts";
+import { GLINT_FALLBACK, MAX_CASTERS, type Shade } from "./eclipse.ts";
 import type { Vec3 } from "./frames.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,10 +16,6 @@ type N = any;
 
 /** The star's angular radius used where a view does not give one: the Sun's from Earth (fudge register, "Shadows in True"). */
 export const STAR_FALLBACK = 0.00465;
-/** The wind a sea's glint is spread by where the view has no surface wind for the world: Earth's mean over its oceans (fudge register). */
-export const GLINT_WIND_FALLBACK = 7;
-/** Water's refractive index, for a liquid the view has none for. */
-export const WATER_INDEX = 1.333;
 
 /** The share of a unit disc covered by a disc of radius r at d (eclipse.ts `discCover`), as a node. */
 const discCover = Fn(([r0, d0]: [N, N]) => {
@@ -52,7 +48,7 @@ const blank = () => {
 /** One world's shadow uniforms, shared by its surface, cloud and ring materials. */
 export interface ShadeState {
   /** Set from the item each frame: where it is drawn, how big, the way to its star and what stands in the way. */
-  set(o: { rel: Vec3; radius: number; toStar: Vec3; shade?: Shade; rings?: { normal: Vec3; inner: number; outer: number; tex: DataTexture } | null; glint?: { wind_m_s?: number; index?: number } | null }): void;
+  set(o: { rel: Vec3; radius: number; toStar: Vec3; shade?: Shade; rings?: { normal: Vec3; inner: number; outer: number; tex: DataTexture } | null; glint?: { slope_variance?: number; normal_reflectance?: number } | null }): void;
   /** Give a lit material this world's shadows (and, with `wet`, its glint where `wet` is above zero). Once per material. */
   wear(m: NodeMaterial, wet?: N): void;
   /** The ring material's light: the world's shadow across it, times `scale` (the ring's own lighting). */
@@ -71,11 +67,12 @@ export function makeShade(): ShadeState {
   const uRingIn = uniform(1);
   const uRingOut = uniform(1);
   const uRingOn = uniform(0);
-  // The rings' profile: the item's own texture, set before its materials first compile (gpu.ts sets the shade first),
-  // since a texture swapped into a compiled node is not rebound on WebGL2.
+  // The rings' profile: the item's own texture, set before its materials first compile (gpu.ts sets the shade first):
+  // the 1-pixel placeholder swapped for the profile after compiling was not rebound on WebGL2. A later profile (a new
+  // ring key, another width) swapped in by value is read at once (checked in the browser, EC2).
   let ringTex: DataTexture = blank();
-  const uSigma2 = uniform(slopeVariance(GLINT_WIND_FALLBACK));
-  const uIndex = uniform(WATER_INDEX);
+  const uSigma2 = uniform(GLINT_FALLBACK.slope_variance);
+  const uF0 = uniform(GLINT_FALLBACK.normal_reflectance);
   const uGlint = uniform(0);
   const uRingScale = uniform(1);
   const ringNodes: N[] = [];
@@ -132,8 +129,7 @@ export function makeShade(): ShadeState {
       const cb2 = cb.mul(cb);
       const tan2 = float(1).sub(cb2).div(cb2);
       const pdf = exp(tan2.div(uSigma2).negate()).div(uSigma2.mul(Math.PI));
-      const f0 = uIndex.sub(1).div(uIndex.add(1)).pow(2);
-      const fres = f0.add(float(1).sub(f0).mul(pow(float(1).sub(max(dot(v, h), 0)), 5)));
+      const fres = uF0.add(float(1).sub(uF0).mul(pow(float(1).sub(max(dot(v, h), 0)), 5)));
       const brdf = fres.mul(pdf).div(max(mu0, 1e-3).mul(mu).mul(cb2).mul(cb2).mul(4));
       args.reflectedLight.directSpecular.addAssign(lightColor.mul(mu0).mul(brdf).mul(this.wet).mul(uGlint));
     }
@@ -166,8 +162,8 @@ export function makeShade(): ShadeState {
       }
       uGlint.value = o.glint ? 1 : 0;
       if (o.glint) {
-        uSigma2.value = slopeVariance(o.glint.wind_m_s ?? GLINT_WIND_FALLBACK);
-        uIndex.value = o.glint.index ?? WATER_INDEX;
+        uSigma2.value = o.glint.slope_variance ?? GLINT_FALLBACK.slope_variance;
+        uF0.value = o.glint.normal_reflectance ?? GLINT_FALLBACK.normal_reflectance;
       }
     },
     wear(m, wet) {

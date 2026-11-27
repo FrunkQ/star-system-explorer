@@ -41,13 +41,15 @@
   const tracks = $derived(chart.tracks);
   // Names beside the tracks that last, in the lower part of the chart, staggered where tracks run close.
   const names = $derived.by(() => {
-    const tl = Math.pow(10, Math.log10(chart.t_top) + 0.72 * (Math.log10(chart.t_bottom) - Math.log10(chart.t_top)));
+    // Low on the chart, or, when the chart runs on to the star's end, just above now.
+    const tl = chart.fate ? chart.now / 12 : Math.pow(10, Math.log10(chart.t_top) + 0.72 * (Math.log10(chart.t_bottom) - Math.log10(chart.t_top)));
     const out: { id: string; x: number; y: number; text: string }[] = [];
-    const lasting = tracks.filter((k) => k.end.how === "lasts").sort((a, b) => a.end.a - b.end.a);
+    const aAt = (k: (typeof tracks)[number]) => k.segs.find((g) => g.t1 >= tl)?.a1 ?? k.end.a;
+    const lasting = tracks.filter((k) => k.end.how === "lasts" || k.end.how === "engulfed").sort((a, b) => aAt(a) - aAt(b));
     // Greedy rows: each name takes the first row where it clears the name before it.
     const rowsEnd: number[] = [];
     for (const k of lasting) {
-      const x = X(k.end.a) + massWidth(k.m_end) / 2 + 4;
+      const x = X(aAt(k)) + massWidth(k.m_end) / 2 + 4;
       const width = 8 * k.label.length + 6;
       let row = rowsEnd.findIndex((end) => end < x);
       if (row < 0) row = rowsEnd.length;
@@ -107,7 +109,7 @@
 
 <div class="fchart" bind:clientWidth={w} bind:clientHeight={h}>
   <!-- svelte-ignore a11y_no_static_element_interactions (pointer drag moves the slice; its handle takes the keys) -->
-  <svg width={w} height={h} viewBox="0 0 {w} {h}" role="img" aria-label="How this system formed: distance from the star across, time down the page. {tracks.filter((k) => k.end.how === 'lasts').length} worlds last to now." onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} class:dragging>
+  <svg width={w} height={h} viewBox="0 0 {w} {h}" role="img" aria-label="How this system formed: distance from the star across, time down the page. {tracks.filter((k) => k.end.how === 'lasts' || k.end.how === 'engulfed').length} worlds last to now." onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} class:dragging>
     <defs>
       <clipPath id={clip}><rect x={L} y={T} width={pw} height={ph} /></clipPath>
       <pattern id="{clip}-gas" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="hatch-gas" /></pattern>
@@ -142,6 +144,15 @@
         <text class="note up-t" x={L + 6} y={Math.max(Y(chart.upheaval.from) + 11, Y(chart.upheaval.to) - 5)}>Upheaval · {chartTime(chart.upheaval.from)} to {chartTime(chart.upheaval.to)}</text>
       {/if}
 
+      <!-- The star's end, once the look-ahead has answered: what comes after now is one plausible future. -->
+      {#if chart.fate}
+        <rect class="future" x={L} y={Y(chart.now)} width={pw} height={Math.max(0, T + ph - Y(chart.now))} data-future />
+        <line class="now" x1={L} x2={L + pw} y1={Y(chart.now)} y2={Y(chart.now)} />
+        <text class="note now-t" x={L + 6} y={Y(chart.now) + 12}>below now: one plausible future</text>
+        <rect class="dies" x={L} y={Y(chart.fate.ms_end)} width={pw} height={Math.max(3, Y(chart.fate.end) - Y(chart.fate.ms_end))} data-star-end><title>{chart.fate.text}</title></rect>
+        <text class="note dies-t" x={L + 6} y={Math.min(T + ph - 4, Y(chart.fate.end) + 12)}>The star swells and dies, {chartTime(chart.fate.ms_end)} to {chartTime(chart.fate.end)}: then a {chart.fate.remnant}</text>
+      {/if}
+
       <!-- Belts and clouds left over. -->
       {#each chart.belts as b, i (i)}
         {#if !b.sphere}
@@ -162,8 +173,8 @@
 
       <!-- The tracks. -->
       {#each tracks as k (k.id)}
-        <g class="track" class:giant={k.giant} class:selected={k.id === selected} class:lost={k.end.how !== "lasts"} data-track={k.id} data-track-end={k.end.how}>
-          <title>{k.label}: born {chartTime(k.born.t)} at {chartAu(k.born.a)}; {k.end.how === "lasts" ? `now ${chartAu(k.end.a)}` : k.end.how === "merged" ? `merged at ${chartTime(k.end.t)}` : k.end.how === "ejected" ? `thrown out at ${chartTime(k.end.t)}` : `shattered at ${chartTime(k.end.t)}`}</title>
+        <g class="track" class:giant={k.giant} class:selected={k.id === selected} class:lost={k.end.how !== "lasts" && k.end.how !== "engulfed"} data-track={k.id} data-track-end={k.end.how}>
+          <title>{k.label}: born {chartTime(k.born.t)} at {chartAu(k.born.a)}; {k.end.how === "lasts" ? `now ${chartAu(k.end.a)}` : k.end.how === "merged" ? `merged at ${chartTime(k.end.t)}` : k.end.how === "ejected" ? `thrown out at ${chartTime(k.end.t)}` : k.end.how === "engulfed" ? `now ${chartAu(k.segs.find((g) => g.t1 >= chart.now * (1 - 1e-9))?.a1 ?? k.end.a)}, swallowed by the star at ${chartTime(k.end.t)}` : `shattered at ${chartTime(k.end.t)}`}</title>
           {#each k.segs as g, i (i)}
             <line x1={X(g.a0)} y1={Y(g.t0)} x2={X(g.a1)} y2={Y(g.t1)} stroke-width={massWidth(g.m)} />
           {/each}
@@ -171,11 +182,13 @@
             <line class="join" x1={X(k.end.a)} y1={Y(k.end.t)} x2={X(k.end.into_a)} y2={Y(k.end.t)} />
           {:else if k.end.how === "ejected"}
             <line class="thrown" x1={X(k.end.a)} y1={Y(k.end.t)} x2={L + pw - 2} y2={Y(k.end.t)} marker-end="url(#{clip}-arrow)" />
+          {:else if k.end.how === "engulfed"}
+            <path class="engulfed" d="M{X(k.end.a) - 4} {Y(k.end.t) - 4}l8 8m0 -8l-8 8" />
           {:else if k.end.how === "shattered"}
             <path class="shatter" d="M{X(k.end.a) - 4} {Y(k.end.t) - 4}l8 8m0 -8l-8 8" />
           {/if}
           <!-- A wide, clear stroke over the track so a thin one is easy to press. -->
-          <polyline class="hit" points={[k.born, ...k.segs.map((g) => ({ t: g.t1, a: g.a1 }))].map((p) => `${X(p.a)},${Y(p.t)}`).join(" ")} role="button" tabindex={k.end.how === "lasts" ? 0 : -1} aria-label={k.label} onclick={() => onpick(k.id)} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onpick(k.id))} />
+          <polyline class="hit" points={[k.born, ...k.segs.map((g) => ({ t: g.t1, a: g.a1 }))].map((p) => `${X(p.a)},${Y(p.t)}`).join(" ")} role="button" tabindex={k.end.how === "lasts" || k.end.how === "engulfed" ? 0 : -1} aria-label={k.label} onclick={() => onpick(k.id)} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onpick(k.id))} />
         </g>
       {/each}
       {#each names as n (n.id)}
@@ -272,6 +285,23 @@
   }
   .gas-t {
     fill: var(--sse-zone-ink);
+  }
+  .future {
+    fill: color-mix(in srgb, var(--sse-ink) 4%, transparent);
+  }
+  .now {
+    stroke: var(--sse-ink);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+  }
+  .dies {
+    fill: color-mix(in srgb, var(--sse-accent) 22%, transparent);
+    stroke: var(--sse-accent);
+    stroke-width: 1;
+  }
+  .engulfed {
+    stroke: var(--sse-accent-ink);
+    stroke-width: 2;
   }
   .upheaval {
     fill: var(--sse-accent);
