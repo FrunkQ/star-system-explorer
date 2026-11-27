@@ -18,6 +18,8 @@ A chart world's deep-time history held today's heat flow for the world's whole l
 
 The catalogued Earth now has 6 heat epochs (0, 1240, 1840, 2500, 3260, 4200 Myr; 0.23 down to 0.073 W/m²). On the correct-tilt loader (patch `open-sol-radians`), seed "home", every kernel life test passes, land included. Archean production is 1.9e15 g C a year. Oxygen photosynthesis comes at 2105 Myr, complex cells at 2300, multicellular life at 2490, large bodies at 2495 and land at 2920.
 
+**These dates stand on F1** (`docs/fudges.md`): the air box buries a share of the ocean's light ceiling, not of what it makes. The tests passing are not evidence the air is right. The fix is package L2-feed (`packages/L2-feed-plan.md`).
+
 ## What it found, not fixed here
 
 1. **Two doors for "now".** Today's heat (`heat_flow_w_m2`, the present-day biosphere) is read from the envelope's regime timeline: radiogenic plus tidal, 0.039 W/m² for Earth. The thermal history gives 0.073 W/m² at 4200 Myr (the real Earth loses about 0.087). So the history's last epoch and today's biosphere use different heats. Recommendation: read "now" from the same door once the heat-flow thread publishes `heat_lost`. This package leaves "now" alone, as planned.
