@@ -4,10 +4,11 @@
 // closed and open lines in the two field inks, the bubble and both axes; the words name the field and its stand-off;
 // every legend entry opens its why; Science depth names the model and its stand-ins. Mars says it has no field facts
 // yet. The Night chart inks the lines too. On a phone nothing runs off the side. Nothing is written.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { depth, go, more, view } from "./nav.mjs";
+import { depth, go, more, view, pinClock } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -28,7 +29,7 @@ const shot = async (page, n) => {
 
 try {
   for (const [vp, viewport] of [["desk", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
-    const browser = await chromium.launch();
+    const browser = pinClock(await chromium.launch());
     const gm = await (await browser.newContext({ viewport })).newPage();
     const errors = [];
     gm.on("pageerror", (e) => errors.push(e.message));

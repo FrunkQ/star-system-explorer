@@ -11,6 +11,7 @@
 // validated and accepted. V3: screens opened from the campaign's documents
 // and from a file, a bad one refused, and a composed screen handed to the
 // players page, which also loads a report by name.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

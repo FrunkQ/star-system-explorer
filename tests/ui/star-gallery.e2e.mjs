@@ -1,6 +1,7 @@
 // The star class gallery (SC1): Reference › Classes › "What kind of star is this?" draws every star kind live in True
 // through one GPU canvas; Same size and Actual size; a star opened shows large with its cells in words; a remnant with
 // no picture yet says so. Then Make a system › Grow a new system › Choose the star: the gallery as the picker.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -371,7 +371,12 @@ MOTION_SRC = {"vsop87a": "bretagnon-francou1988", "elpmpp02": "chapront-francou2
 # Universe seconds count TT; J2000.0 (2000 January 1, 12:00 TT) is at this second, the anchor the Sol today pack's
 # calendar uses (its 1 January 2000 00:00 is 43,200 s earlier).
 J2000_S = 63115200000
+# Which way a body faces at a date (RW17 part 3): the spin model the kernel reads it by
+# (packs/base-sol/motion/earth-orientation.json: the Earth rotation angle, GMST, precession and Delta T).
+SPIN = {"earth": "earth-orientation"}
 MOTION_SOURCES = [
+    {"id": "iers2010", "text": "Petit, G. and Luzum, B. (eds.) 2010, IERS Conventions (2010), IERS Technical Note 36, chapter 5: the Earth rotation angle and Greenwich mean sidereal time",
+     "status": "unverified", "url": "https://iers-conventions.obspm.fr/"},
     {"id": "bretagnon-francou1988", "text": "Bretagnon, P. and Francou, G. 1988, A&A 202, 309: Planetary theories in rectangular and spherical variables. VSOP 87 solutions (VizieR VI/81)",
      "status": "verified", "url": "https://ui.adsabs.harvard.edu/abs/1988A&A...202..309B"},
     {"id": "chapront-francou2003", "text": "Chapront, J. and Francou, G. 2003, A&A 404, 735: The lunar theory ELP revisited. Introduction of new planetary perturbations (ELP/MPP02)",
@@ -385,8 +390,12 @@ def motion_facts(pid):
     if pid not in MOTION:
         return {}
     m = MOTION[pid]
-    return {"orbit.motion": val(m, "model", MOTION_SRC[m.split(".")[0]],
-                                note="where it is comes from this published series inside its span (packs/base-sol/motion/%s.json)" % m)}
+    out = {"orbit.motion": val(m, "model", MOTION_SRC[m.split(".")[0]],
+                               note="where it is comes from this published series inside its span (packs/base-sol/motion/%s.json)" % m)}
+    if pid in SPIN:
+        out["spin.model"] = val(SPIN[pid], "model", "iers2010",
+                                note="which way it faces at a date comes from this model (packs/base-sol/motion/%s.json)" % SPIN[pid])
+    return out
 
 
 def interior_facts(pid):

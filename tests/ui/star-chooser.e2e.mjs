@@ -4,10 +4,11 @@
 // walls, the life bar marks the Sun's age, and the Kinds offer what can exist at 4.57 billion years (no blue giant).
 // On Build, Red giant is one change: the card says what was set, the Sun's light changes, and Undo puts it back. On
 // Explore, a kind is a try (TM4): the what-if opens by itself and the main line does not move.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { desk } from "./nav.mjs";
+import { desk, pinClock } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -25,7 +26,7 @@ const shot = async (page, n) => {
 
 try {
   for (const [vp, viewport] of [["desk", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
-    const browser = await chromium.launch();
+    const browser = pinClock(await chromium.launch());
     const gm = await (await browser.newContext({ viewport })).newPage();
     const errors = [];
     gm.on("pageerror", (e) => errors.push(e.message));

@@ -587,6 +587,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         half_km: Option<f64>,
+        /// `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+        #[serde(default)]
+        #[ts(optional)]
+        span_days: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
@@ -2770,6 +2774,16 @@ pub enum Request {
         #[ts(optional)]
         limit: Option<u32>,
     },
+    /// TP4 (time design sections 6 and 9): the pace ladder. Every process
+    /// the stack declares (`provides.other.processes`, base-time) with its
+    /// shape (line, stream, march), anchor, own time `tau_s` worked out at
+    /// each reference subject from its block or Equation and the sheet in
+    /// force (a march driven by another process follows its driver's; the
+    /// campaign's record is paced by its own marks and has none), the
+    /// marks it can publish, a march's grid, and the ops that read it;
+    /// ordered fastest first. Declarations whose form is wrong are listed
+    /// under `refused` with why. Read-only; needs no universe.
+    PaceLadder,
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -3005,6 +3019,7 @@ impl Request {
             Request::PackReports { .. } => "pack_reports",
             Request::AtmosphereAdvice { .. } => "atmosphere_advice",
             Request::ReadCatalogue { .. } => "read_catalogue",
+            Request::PaceLadder => "pace_ladder",
         }
     }
 }
@@ -3569,6 +3584,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_catalogue",
             Cost::Light,
             "linear in the rows above the cut (a packed file is decoded only to the cut); one SHA-256 per block read; read only",
+        ),
+        o(
+            "pace_ladder",
+            Cost::Trivial,
+            "one block or Equation run per declared subject; read only",
         ),
     ]
 }
@@ -4584,6 +4604,12 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         spec: Option<serde_json::Value>,
+        /// The universe second the system was born (time design section 4,
+        /// `system.birth_s`): a screen counting time from the star's birth
+        /// draws universe second `birth_s + age`. Absent with no spec.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        birth_s: Option<i64>,
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
@@ -4879,6 +4905,15 @@ pub enum Response {
     CatalogueRead {
         #[ts(type = "unknown")]
         preview: serde_json::Value,
+    },
+    /// `pace_ladder`: `{processes, rungs ([{id, says, shape, anchor,
+    /// subject, tau_s, tau_from, why, marks, grid, ops, how, pack}]),
+    /// refused ([{pack, id, why}])}`. `tau_s` is null for a process paced
+    /// by its own marks, or (with `why`) one whose own time could not be
+    /// worked out.
+    PaceLadder {
+        #[ts(type = "unknown")]
+        ladder: serde_json::Value,
     },
 }
 

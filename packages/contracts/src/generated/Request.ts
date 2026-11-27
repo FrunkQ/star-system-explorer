@@ -72,7 +72,11 @@ fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: 
 /**
  * `want: "patch"`: half the patch's width, km, round `lat`, `lon`.
  */
-half_km?: number, pins?: unknown[], 
+half_km?: number, 
+/**
+ * `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+ */
+span_days?: number, pins?: unknown[], 
 /**
  * Smoke, ash and smog sources (volcanoes, eruptions, impacts,
  * fires, industry), `sse_weather::aerosols::Sources`.
@@ -253,4 +257,4 @@ parent?: string,
 /**
  * Facts as words, for forms that read them (`colour`: `red`).
  */
-facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, } | { "op": "pack_reports", pack?: string, } | { "op": "atmosphere_advice", body: string, at_s?: bigint, facts?: Record<string, unknown>, } | { "op": "read_catalogue", text?: string, packed_b64?: string, min_size?: number, rank?: number, limit?: number, };
+facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, } | { "op": "pack_reports", pack?: string, } | { "op": "atmosphere_advice", body: string, at_s?: bigint, facts?: Record<string, unknown>, } | { "op": "read_catalogue", text?: string, packed_b64?: string, min_size?: number, rank?: number, limit?: number, } | { "op": "pace_ladder" };

@@ -4,6 +4,7 @@
 // time starts from the latest choice made anywhere; coming back to a desk brings back what it had; a reload keeps it.
 // The ruler opens on each desk's own span (top-level 12.1) and keeps the span chosen on that desk.
 // The start sheet lands a new visitor on Explore, Carry on keeps the desk, and a verb lands where what it opens is.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

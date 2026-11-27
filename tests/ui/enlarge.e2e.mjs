@@ -2,6 +2,7 @@
 // it in Chromium on WebGL2 and, where the browser has it, WebGPU, and checks that a hard edge enlarged four times comes
 // out narrower than plain bilinear, that sharpening narrows it further, and that neither rings past the picture's range;
 // and that the shared finish's running mean at rest (VP5 part 2) softens a slanted edge's steps.
+import "./chart-first.mjs";
 import { build } from "vite";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

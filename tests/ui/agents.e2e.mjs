@@ -5,6 +5,7 @@
 // Link a provider (a local mock with a key), check it, link Support, and ask
 // Tars: the answer arrives with its cost. The key travels only to that
 // provider and is stored only in its own entry, never in the settings; the state hash never moves.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -4,6 +4,7 @@
 // arrow keys alone, or a link on the page. Seen by builds the book from that audience's own scene, so the table's
 // book has no more pages than the GM's and its figures are its own. Reading the Atlas never changes the state hash.
 // On a phone the contents fold into a button and nothing runs off the side. Both chart modes.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

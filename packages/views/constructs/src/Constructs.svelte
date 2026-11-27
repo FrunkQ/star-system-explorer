@@ -95,7 +95,7 @@
   let logOpen = $state(false);
   let logBtn = $state<HTMLElement | null>(null);
   let log = $state<ShipLogEntry[]>([]);
-  const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar, ws.birth_s ?? null) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   // A place's name as this card knows it: the system, a construct in the list, or a body of the scene.
   const placeName = (a: string) => (a === scene.system ? scene.title : listed.find((x) => x.address === a) ? nameOf(listed.find((x) => x.address === a)!) : (scene.subjects.find((x) => x.address === a)?.label ?? farName(a)));
   // A place outside this system (the party flew to another star): the star's short name, or the place's own last word.

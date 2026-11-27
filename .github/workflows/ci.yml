@@ -172,6 +172,7 @@ jobs:
       - run: node tests/ui/aurora.e2e.mjs --screens ui-screens
       - run: node tests/ui/composite.e2e.mjs --screens ui-screens
       - run: node tests/ui/hazard.e2e.mjs --screens ui-screens
+      - run: node tests/ui/black-hole.e2e.mjs --screens ui-screens
       # The landing run-through (track LR): GM and a joined player, Earth to Mars, orbit, Land, the ground, take-off.
       - run: node tests/ui/run-through.e2e.mjs
       # The Formation screen (F10a): how a grown system was made, read from its record; the slice moves the ruler.

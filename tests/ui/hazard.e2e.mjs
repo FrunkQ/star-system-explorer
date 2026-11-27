@@ -5,11 +5,12 @@
 // out, the moons' lanes are marked, Park and Dive are drawn and said, Io reads deadly and Callisto clear. Over the poles
 // the belts' row folds into the quiet line. The Sun at system scale: heat and the climb set the marks. Reading writes
 // nothing; a phone gets the same strip.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { go } from "./nav.mjs";
+import { go, pinClock } from "./nav.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -26,7 +27,7 @@ const shot = async (page, n) => {
 
 try {
   for (const [vp, viewport] of [["desk", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
-    const browser = await chromium.launch();
+    const browser = pinClock(await chromium.launch());
     const gm = await (await browser.newContext({ viewport })).newPage();
     const errors = [];
     gm.on("pageerror", (e) => errors.push(e.message));

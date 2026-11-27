@@ -4,6 +4,7 @@
 // Checks: the five player views draw the kernel's live scenes for the
 // everyone audience before and after the GM's Scanned tap (stand-in control); unknown facts keep their placeholders; selection is shared; the
 // table sorts; keyboard reaches the chart; no sideways scroll on a phone.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

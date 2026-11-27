@@ -22,7 +22,7 @@ export interface OrbitPlaced {
   /** The motion model it follows and its span (universe seconds), or why the one it names is not used. */
   motion?: { model: string; from_s?: number; to_s?: number; unused?: string };
   /** `motion`: "measured" inside the model's span, "plausible" outside it (a plain orbit fitted at its edge). */
-  at?: { at_s: number; r_m: [number, number, number]; phase_deg: number; motion?: "measured" | "plausible" }[];
+  at?: { at_s: number; r_m: [number, number, number]; phase_deg: number; motion?: "measured" | "plausible"; axes?: [[number, number, number], [number, number, number]] }[];
 }
 
 const factValue = (s: SceneSubject, field: string): number | undefined => {
@@ -103,6 +103,19 @@ export function placesFrom(bodies: readonly OrbitPlaced[]): Map<string, [number,
   return out;
 }
 
+/**
+ * Each body's own axes at the reply's first time, where it has a spin model (RW17 part 3): x toward longitude 0 on its
+ * equator and z its north pole, in the frame of `r_m`. The drawing turns the world by them.
+ */
+export function axesFrom(bodies: readonly OrbitPlaced[]): Map<string, [[number, number, number], [number, number, number]]> {
+  const out = new Map<string, [[number, number, number], [number, number, number]]>();
+  for (const b of bodies) {
+    const a = b.placed ? b.at?.[0]?.axes : undefined;
+    if (a && a.length === 2 && a.every((v) => v.length === 3 && v.every((x) => Number.isFinite(x)))) out.set(b.address, [a[0], a[1]]);
+  }
+  return out;
+}
+
 /** Seconds between the two times the shell asks for, so each body's velocity is its move between them. */
 export const MOTION_STEP_S = 60;
 
@@ -126,9 +139,9 @@ export function motionsFrom(bodies: readonly OrbitPlaced[]): Map<string, [number
  * The scene with each body moved to its phase (and its place and velocity, when given); bodies the kernel could not
  * place keep theirs. Given `clock` (the clock time the phases are for, seconds since the campaign's epoch, and each
  * body's period), each orbit carries them, so a view can run the body on smoothly between answers (picture-clock.ts
- * `phaseAt`, CLK1).
+ * `phaseAt`, CLK1). Given `axes`, a world with a spin model carries its own axes at that time (RW17 part 3).
  */
-export function withPhases(scene: SystemScene, phases: ReadonlyMap<string, number> | null, places?: ReadonlyMap<string, [number, number, number]> | null, motions?: ReadonlyMap<string, [number, number, number]> | null, clock?: { at_s: number; periods: ReadonlyMap<string, number> } | null): SystemScene {
+export function withPhases(scene: SystemScene, phases: ReadonlyMap<string, number> | null, places?: ReadonlyMap<string, [number, number, number]> | null, motions?: ReadonlyMap<string, [number, number, number]> | null, clock?: { at_s: number; periods: ReadonlyMap<string, number> } | null, axes?: ReadonlyMap<string, [[number, number, number], [number, number, number]]> | null): SystemScene {
   if (!phases || !phases.size) return scene;
   let moved = false;
   const subjects = scene.subjects.map((s) => {
@@ -136,9 +149,10 @@ export function withPhases(scene: SystemScene, phases: ReadonlyMap<string, numbe
     const r = s.orbit ? places?.get(s.address) : undefined;
     const v = s.orbit ? motions?.get(s.address) : undefined;
     const period_s = clock?.periods.get(s.address);
-    if (p === undefined || !s.orbit || (p === s.orbit.phase_deg && !r && period_s === undefined)) return s;
+    const ax = s.orbit ? axes?.get(s.address) : undefined;
+    if (p === undefined || !s.orbit || (p === s.orbit.phase_deg && !r && period_s === undefined && !ax)) return s;
     moved = true;
-    return { ...s, orbit: { ...s.orbit, phase_deg: p, ...(r ? { r_m: r } : {}), ...(v ? { v_m_s: v } : {}), ...(period_s !== undefined && clock ? { period_s, at_s: clock.at_s } : {}) } };
+    return { ...s, orbit: { ...s.orbit, phase_deg: p, ...(r ? { r_m: r } : {}), ...(v ? { v_m_s: v } : {}), ...(period_s !== undefined && clock ? { period_s, at_s: clock.at_s } : {}), ...(ax ? { axes: ax } : {}) } };
   });
   return moved ? { ...scene, subjects } : scene;
 }

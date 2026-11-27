@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `renderer/src/light-path.ts`, `gpu-light-path.ts` physics copy (XO4) | The picture repeats the kernel's disc temperature, `sse.light.disc_shift` and the landing rule in TypeScript and on the GPU, checked against the kernel's traced points to 10⁻⁹; an edit to those blocks would not change the picture | The first picture needed a per-pixel pass, and the kernel hands over only the bend table | The kernel bakes a table of the disc's seen temperature and shift over the picture plane (impact parameter and angle, each image order) at the viewer's tilt; the GPU only reads it, keeping geometry and lookups (the next PR after XO4) | planned shortcut, XO4 |

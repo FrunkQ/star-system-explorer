@@ -1941,6 +1941,20 @@
         "range": null
       },
       {
+        "description": "how fast a pair's separation changes",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "binary.separation_rate",
+        "range": null
+      },
+      {
         "description": "mass a star gives its partner each second",
         "dim": [
           0,
@@ -5626,6 +5640,20 @@
         "range": null
       },
       {
+        "description": "downslope creep driven by wind, per pascal of surface air (m² s⁻¹ Pa⁻¹)",
+        "dim": [
+          3,
+          -1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.air_creep_diffusivity",
+        "range": null
+      },
+      {
         "description": "a formation material's summed CI weight over its riders, bound oxygen included",
         "dim": [
           0,
@@ -5637,6 +5665,20 @@
           0
         ],
         "id": "material.ci_weight",
+        "range": null
+      },
+      {
+        "description": "a ground's downslope creep under one process, as a topographic diffusivity (m² s⁻¹)",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.creep_diffusivity",
         "range": null
       },
       {
@@ -8797,6 +8839,20 @@
         "range": null
       },
       {
+        "description": "mass of a star's convective outer layer",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.envelope_mass",
+        "range": null
+      },
+      {
         "description": "bolometric luminosity, typical for the star's mass on the main sequence",
         "dim": [
           2,
@@ -8909,6 +8965,34 @@
         "range": null
       },
       {
+        "description": "spin angular momentum a star's wind carries off each second",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spin_down_torque",
+        "range": null
+      },
+      {
+        "description": "how fast a star turns, radians a second",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.spin_rate",
+        "range": null
+      },
+      {
         "description": "a spot group's peak area, millionths of a hemisphere",
         "dim": [
           0,
@@ -8990,6 +9074,20 @@
           0
         ],
         "id": "star.xray_luminosity",
+        "range": null
+      },
+      {
+        "description": "how fast loose ground creeps downslope, as a topographic diffusivity (m² s⁻¹)",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.creep_diffusivity",
         "range": null
       },
       {
@@ -9102,6 +9200,20 @@
           0
         ],
         "id": "surface.weathering_factor_650",
+        "range": null
+      },
+      {
+        "description": "share of the time ground had liquid water on it, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wet_share",
         "range": null
       },
       {
@@ -9326,6 +9438,230 @@
           0
         ],
         "id": "time.step",
+        "range": null
+      },
+      {
+        "description": "a band's own vorticity where an eddy sits, signed as the eddy's turning (s⁻¹)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.band_vorticity",
+        "range": null
+      },
+      {
+        "description": "an eddy's or storm's own core vorticity (s⁻¹)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.core_vorticity",
+        "range": null
+      },
+      {
+        "description": "pressure inside a cloud deck (Pa)",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deck_pressure",
+        "range": null
+      },
+      {
+        "description": "a cloud deck's thickness (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deck_thickness",
+        "range": null
+      },
+      {
+        "description": "the deformation radius N H / f, where a giant's air stops behaving as a flat sheet (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deformation_radius",
+        "range": null
+      },
+      {
+        "description": "power fed to the eddies per kilogram of the weather layer (W/kg)",
+        "dim": [
+          2,
+          0,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.eddy_power",
+        "range": null
+      },
+      {
+        "description": "how fast an eddy's winds run at its edge (m/s)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.eddy_speed",
+        "range": null
+      },
+      {
+        "description": "an eddy's width (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.eddy_width",
+        "range": null
+      },
+      {
+        "description": "how fast a cloud's particles fall through the air (m/s)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.fall_speed",
+        "range": null
+      },
+      {
+        "description": "heat a world's air sends to space, from inside plus absorbed sunlight, averaged over the sphere (W/m²)",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.heat_out",
+        "range": null
+      },
+      {
+        "description": "pressure at the base of a giant's weather layer, where its eddies are fed (Pa)",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.layer_pressure",
+        "range": null
+      },
+      {
+        "description": "tall storms rising from inside a giant, alive at once",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.plume_count",
+        "range": null
+      },
+      {
+        "description": "how long a cloud deck takes to fall out and be made anew (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.renewal_time",
+        "range": null
+      },
+      {
+        "description": "how long a torn eddy lasts: one shear time, 0 when it holds (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.tear_time",
+        "range": null
+      },
+      {
+        "description": "1 when a band's shear tears an eddy apart, 0 when it holds a steady shape",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.torn",
+        "range": null
+      },
+      {
+        "description": "a vortex's steady length along the wind over its width",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.vortex_aspect",
         "range": null
       },
       {

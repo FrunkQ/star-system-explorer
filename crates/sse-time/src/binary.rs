@@ -35,6 +35,10 @@ pub struct BinaryRules {
     /// 0.695 (Hurley, Tout and Pols 2002, section 2.6.1).
     pub q_crit_low_mass_main_sequence: f64,
     pub q_crit_gap: f64,
+    /// BX3: a main-sequence donor feeding a white dwarf, neutron star or black
+    /// hole: 1.0 (Claeys et al. 2014, table 2, from memory).
+    #[serde(default = "one")]
+    pub q_crit_main_sequence_onto_degenerate: f64,
     /// Exponent x in HTP02 eq. 57 for giant donors.
     pub giant_x: f64,
     pub alpha_ce: f64,
@@ -49,12 +53,17 @@ impl Default for BinaryRules {
             q_crit_main_sequence: 3.0,
             q_crit_low_mass_main_sequence: 0.695,
             q_crit_gap: 4.0,
+            q_crit_main_sequence_onto_degenerate: 1.0,
             giant_x: 0.30,
             alpha_ce: 1.0,
             lambda_ce: 0.5,
             search_steps: 600,
         }
     }
+}
+
+fn one() -> f64 {
+    1.0
 }
 
 /// Eggleton 1983: Roche lobe radius over separation, for mass ratio q = M_donor / M_accretor.

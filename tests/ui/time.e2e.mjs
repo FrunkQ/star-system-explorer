@@ -7,6 +7,7 @@
 // campaign's now survives a reload. On a phone the ruler fits its width.
 // On the Run desk the clock takes the ruler's place (three desks design 7.3): it shows the same now, says what is due
 // (nothing until the kernel's happenings op), and "Jump to a date…" says where it lands before it moves the campaign.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

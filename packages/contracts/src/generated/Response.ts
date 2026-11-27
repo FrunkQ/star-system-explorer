@@ -84,7 +84,13 @@ logged: Array<string>, event_id: string, state_hash: string, } | { "type": "cons
  * The date read, seconds; absent for "latest" (no date given and no
  * `system.now_year`).
  */
-at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], clouds?: unknown[], 
+at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, 
+/**
+ * The universe second the system was born (time design section 4,
+ * `system.birth_s`): a screen counting time from the star's birth
+ * draws universe second `birth_s + age`. Absent with no spec.
+ */
+birth_s?: bigint, surfaces: unknown[], tiles: unknown[], refused: unknown[], clouds?: unknown[], 
 /**
  * The system's frame in the galaxy: `{pole_l_deg, pole_b_deg,
  * zero_l_deg, zero_b_deg, node_l_deg, to_galactic (3x3 rows),
@@ -99,4 +105,4 @@ routes?: unknown[],
 /**
  * With `apply` and routes: the record's hash after the links.
  */
-record_hash?: string, } | { "type": "profile_rolled", program: string, body: string, steps: unknown[], events: Array<string>, state_hash?: string, } | { "type": "sector_export", text: string, written: number, skipped: Array<string>, } | { "type": "sector_mapped", sheet: string, worlds: unknown[], skipped: Array<string>, } | { "type": "error", code: string, message: string, } | { "type": "home_galaxy", home: unknown, } | { "type": "home_set", home: unknown, event_id: string, state_hash: string, } | { "type": "halo_celled", cell: unknown, } | { "type": "matter_budgeted", budget: unknown, } | { "type": "star_celled", cell: unknown, } | { "type": "sky", sky: unknown, } | { "type": "sky_glowed", glow: unknown, } | { "type": "voyage_planned", voyage: unknown, } | { "type": "campaign_tags_listed", pack: unknown, } | { "type": "dressed", scope: string, candidates: unknown[], orphans: unknown[], } | { "type": "matter", value: unknown, } | { "type": "pack_reports", reports: unknown, } | { "type": "names", value: unknown, } | { "type": "reach", constant: string, real: number, in_force: number, proposed?: number, follows: unknown[], estimated: unknown[], cannot_follow: unknown[], } | { "type": "dressing_held", candidate: string, held: boolean, event_id: string, } | { "type": "star_promoted", address: string, already: boolean, event_id?: string, description: unknown, state_hash: string, } | { "type": "atmosphere_advised", advice: unknown, } | { "type": "catalogue_read", preview: unknown, };
+record_hash?: string, } | { "type": "profile_rolled", program: string, body: string, steps: unknown[], events: Array<string>, state_hash?: string, } | { "type": "sector_export", text: string, written: number, skipped: Array<string>, } | { "type": "sector_mapped", sheet: string, worlds: unknown[], skipped: Array<string>, } | { "type": "error", code: string, message: string, } | { "type": "home_galaxy", home: unknown, } | { "type": "home_set", home: unknown, event_id: string, state_hash: string, } | { "type": "halo_celled", cell: unknown, } | { "type": "matter_budgeted", budget: unknown, } | { "type": "star_celled", cell: unknown, } | { "type": "sky", sky: unknown, } | { "type": "sky_glowed", glow: unknown, } | { "type": "voyage_planned", voyage: unknown, } | { "type": "campaign_tags_listed", pack: unknown, } | { "type": "dressed", scope: string, candidates: unknown[], orphans: unknown[], } | { "type": "matter", value: unknown, } | { "type": "pack_reports", reports: unknown, } | { "type": "names", value: unknown, } | { "type": "reach", constant: string, real: number, in_force: number, proposed?: number, follows: unknown[], estimated: unknown[], cannot_follow: unknown[], } | { "type": "dressing_held", candidate: string, held: boolean, event_id: string, } | { "type": "star_promoted", address: string, already: boolean, event_id?: string, description: unknown, state_hash: string, } | { "type": "atmosphere_advised", advice: unknown, } | { "type": "catalogue_read", preview: unknown, } | { "type": "pace_ladder", ladder: unknown, };

@@ -529,3 +529,50 @@ fn slope_relaxation_on_a_small_body_is_cheap() {
     );
     assert_eq!(got.sweeps, got.steps as u64);
 }
+
+/// The creep rates reach the settings from the data sheet: the measured lunar
+/// rate and the fudge register's wet and wind rates, in SI.
+#[test]
+fn creep_rates_come_from_the_sheet() {
+    let s = settings();
+    let myr = crate::creep::MYR_S;
+    assert!(
+        (s.creep.dry_m2_s * myr - 5.5).abs() < 1e-9,
+        "{}",
+        s.creep.dry_m2_s
+    );
+    assert!((s.creep.wet_m2_s * myr - 5.0e4).abs() < 1e-6);
+    assert!((s.creep.air_m2_s_pa * 1.0e5 * myr - 100.0).abs() < 1e-9);
+    let k = |w: f64, p: f64| crate::creep::diffusivity(&s.creep, w, p) * crate::creep::YR_S;
+    // Airless ground creeps a few millionths of a m² a year; wet ground hundreds of
+    // thousands of times faster; Mars's thin air adds little.
+    assert!(k(0.0, 0.0) < 1.0e-5, "{}", k(0.0, 0.0));
+    assert!(
+        k(1.0, 1.0e5) > 0.01 && k(1.0, 1.0e5) < 0.1,
+        "{}",
+        k(1.0, 1.0e5)
+    );
+    assert!(k(0.0, 600.0) < 2.0 * k(0.0, 0.0));
+}
+
+/// A dry airless world keeps the relief its impacts gave it: four billion
+/// years of regolith creep, even at the grid's effective rate, leave cell-scale
+/// roughness on Vesta nine-tenths standing (measured 0.97). One coarse-grid
+/// rate for every world, as before, left 0.02 of it.
+#[test]
+fn a_dry_airless_world_keeps_its_relief() {
+    let s = settings();
+    let (b, e) = env_of(&s, "Vesta");
+    let n = 16;
+    let nc = Grid::new(n).len();
+    let h0 = rough(nc, "vesta-relief");
+    let water = WaterHistory::steady(0.0, 0.0, b.age_gyr);
+    let cl = wet(&s, &b, &e, &water, 5.34);
+    let w = wear(&s, &e, n, &h0, &water, &cl, 0.0, 4000.0, false);
+    let rms = |h: &[f64]| {
+        let mean = h.iter().sum::<f64>() / h.len() as f64;
+        (h.iter().map(|x| (x - mean) * (x - mean)).sum::<f64>() / h.len() as f64).sqrt()
+    };
+    let kept = rms(&w.heights) / rms(&h0);
+    assert!(kept > 0.9, "relief kept {kept}");
+}

@@ -4,6 +4,7 @@
 // screen at the same place: the kit's look and palette on the page, the Atlas part in the kit's edition, and every
 // control drawn in the kit's control set (Hauler's `[P]RINT`, Corporate's pills, Deck's caps, the Guide's keys). A
 // palette chosen on the card recolours the screen. Desktop and phone sizes.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

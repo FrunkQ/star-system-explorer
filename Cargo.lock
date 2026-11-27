@@ -706,6 +706,7 @@ dependencies = [
  "sse-field",
  "sse-flow",
  "sse-formation",
+ "sse-formula",
  "sse-gravity",
  "sse-hazard",
  "sse-import-v3",
@@ -986,6 +987,7 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -1057,6 +1059,7 @@ dependencies = [
  "sse-climate",
  "sse-core",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-surface",
 ]
