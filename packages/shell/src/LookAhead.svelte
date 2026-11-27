@@ -4,6 +4,8 @@
   look-ahead's events go on the ruler as future events. Nothing moves the
   main line until the GM keeps it (as history, or moving "now" too).
   Ages past the predictability horizon are one plausible future and say so.
+  On Explore a look-ahead can be looked at and thrown away; keeping it is a Build act (three desks design 7.1), so
+  Explore's button reads "Keep on Build…": it switches desk with the look-ahead still open, and Build offers the keeps.
 -->
 <script lang="ts">
   import { KIND_WORDS, fmtAge, specFromScene, subjectNames, type LookedAhead, type SystemScene, type SystemSpec, type ViewSession } from "../../ui-contract/src/index.ts";
@@ -16,7 +18,21 @@
     onkept,
     given = null,
     writeBack = false,
-  }: { session: ViewSession; scene: SystemScene; ahead?: LookedAhead | null; at?: number; onkept: (note: string, now_myr: number | null, state_hash: string) => void; given?: SystemSpec | null; writeBack?: boolean } = $props();
+    canKeep = true,
+    onbuild,
+  }: {
+    session: ViewSession;
+    scene: SystemScene;
+    ahead?: LookedAhead | null;
+    at?: number;
+    onkept: (note: string, now_myr: number | null, state_hash: string) => void;
+    given?: SystemSpec | null;
+    writeBack?: boolean;
+    /** False on a desk that only looks (Explore): the keeps give way to "Keep on Build…". */
+    canKeep?: boolean;
+    /** Switch to the Build desk, leaving this look-ahead open there. */
+    onbuild?: () => void;
+  } = $props();
 
   let open = $state(false);
   let busy = $state(false);
@@ -105,8 +121,12 @@
         </ol>
         <div class="row actions">
           <button type="button" class="linkbtn" onclick={drop}>Throw away</button>
-          <button type="button" class="linkbtn" onclick={() => keep(false)} title="The future events join the chronicle; now stays where it is">Keep as history</button>
-          <button type="button" class="linkbtn" onclick={() => keep(true)} title="Keep it and move the system's now to the age shown">Keep and move now to {fmtAge(snap.age_myr)}</button>
+          {#if canKeep}
+            <button type="button" class="linkbtn" onclick={() => keep(false)} title="The future events join the chronicle; now stays where it is">Keep as history</button>
+            <button type="button" class="linkbtn" onclick={() => keep(true)} title="Keep it and move the system's now to the age shown">Keep and move now to {fmtAge(snap.age_myr)}</button>
+          {:else}
+            <button type="button" class="linkbtn" data-keep-on-build onclick={() => onbuild?.()} title="Keeping changes the campaign, which is done on the Build desk: this switches to Build with the look-ahead still open">Keep on Build…</button>
+          {/if}
         </div>
       {/if}
     </div>

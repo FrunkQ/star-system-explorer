@@ -217,10 +217,71 @@ pub(crate) fn galaxies_seen(
         a.0.total_cmp(&b.0)
             .then_with(|| a.1["address"].as_str().cmp(&b.1["address"].as_str()))
     });
-    Ok((
-        out,
-        serde_json::json!({"cells": cells, "haloes": haloes, "reach_mpc": reach, "home_mpc": home, "satellites": sat_walk}),
-    ))
+    let mut walk = serde_json::json!({"cells": cells, "haloes": haloes, "reach_mpc": reach, "home_mpc": home, "satellites": sat_walk});
+    // The edge needs the sheet's Sun (no stack, no sheet: left out).
+    if let (true, Some(m_sun)) = (ask.paths, sse_physics::constant("M_sun")) {
+        let host_msun = walk["satellites"]["host_mass_msun"].as_f64().unwrap_or(0.0);
+        walk["group_edge"] = group_edge(host_msun, m_sun, &out, t_obs_gyr)?;
+    }
+    Ok((out, walk))
+}
+
+/// The block that finds a group's edge (Sandage 1986), reading G through Look up.
+pub(crate) const ZERO_VELOCITY_BLOCK: &str = "sse.gravity.zero_velocity_radius";
+
+/// GZ6 (design 7.2): the edge of our group, the zero-velocity sphere round
+/// home of the mass inside it. It is widened until it holds what it needs:
+/// home's halo, then each galaxy's halo inside it, nearest first, which
+/// widens it again (it only grows, so it settles in a few steps). Satellites
+/// are inside home's halo already, so are not counted twice.
+fn group_edge(
+    home_halo_msun: f64,
+    m_sun: f64,
+    seen: &[(f64, serde_json::Value)],
+    t_gyr: f64,
+) -> Result<serde_json::Value, Response> {
+    use sse_flow::Atom as _;
+    // Through the physics in force (ER1): the block from its library, read
+    // once here, and the Sun's mass from the sheet in force (`m_sun`). The
+    // block has no settings, so none are shipped defaults.
+    let physics = sse_physics::now().ok_or_else(|| err("eval", "no physics in force"))?;
+    let block = physics
+        .blocks()
+        .iter()
+        .find(|a| a.decl().id == ZERO_VELOCITY_BLOCK)
+        .ok_or_else(|| err("eval", format!("{ZERO_VELOCITY_BLOCK} is not loaded")))?;
+    let t_s = t_gyr * 1.0e9 * sse_core::quantity::consts::JULIAN_YEAR;
+    let radius_mpc = |msun: f64| -> Result<f64, Response> {
+        let kg = msun.max(0.0) * m_sun;
+        let r = block
+            .eval(&[kg, t_s], &[])
+            .map_err(|x| err("eval", format!("{ZERO_VELOCITY_BLOCK}: {}", x.0)))?;
+        Ok(r.first().copied().unwrap_or(0.0) / MPC_M)
+    };
+    let mut others: Vec<(f64, f64, &str)> = seen
+        .iter()
+        .filter(|(_, v)| v["satellite"].as_bool() != Some(true))
+        .map(|(_, v)| {
+            (
+                v["distance_mpc"].as_f64().unwrap_or(f64::INFINITY),
+                v["halo_mass_msun"].as_f64().unwrap_or(0.0),
+                v["address"].as_str().unwrap_or(""),
+            )
+        })
+        .collect();
+    others.sort_by(|a, b| a.0.total_cmp(&b.0).then_with(|| a.2.cmp(b.2)));
+    let mut mass = home_halo_msun;
+    let mut r = radius_mpc(mass)?;
+    let mut n = 0;
+    while n < others.len() && others[n].0 <= r {
+        mass += others[n].1;
+        n += 1;
+        r = radius_mpc(mass)?;
+    }
+    Ok(serde_json::json!({
+        "radius_mpc": r, "mass_msun": mass, "members": n, "t_gyr": t_gyr,
+        "block": ZERO_VELOCITY_BLOCK,
+    }))
 }
 
 #[allow(clippy::too_many_arguments)]

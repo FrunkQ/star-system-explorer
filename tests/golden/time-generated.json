@@ -1,6 +1,6 @@
 [
   {
-    "digest": "159d2bb67b198c15d030f12409394b39cca2081abff620af185442fbdcc8b584",
+    "digest": "c2e667ee3a90a61f935a122e77951d89b636f842896c18f4e20a3e6262d2100f",
     "story": [
       {
         "age_myr": 0.0,
@@ -28,12 +28,7 @@
         "kind": "star.leaves_main_sequence"
       },
       {
-        "age_myr": 759144.1150701437,
-        "from": "formation",
-        "kind": "star.giant"
-      },
-      {
-        "age_myr": 834230.4834552628,
+        "age_myr": 751559.6334150812,
         "from": "formation",
         "kind": "star.end"
       }
@@ -41,7 +36,7 @@
     "system": "u:g0/patch:9:solar/cohort:0/sys:0"
   },
   {
-    "digest": "f271f6c29ac226c2a5844a597b4839baee8e9175a7e33123061685f1b402785d",
+    "digest": "90247fdc0df98c17279737b5f9479e2a462d2c75eb8e7bf899f90fd103b4ed1f",
     "story": [
       {
         "age_myr": 0.0,
@@ -69,12 +64,7 @@
         "kind": "star.leaves_main_sequence"
       },
       {
-        "age_myr": 1142190.4123977502,
-        "from": "formation",
-        "kind": "star.giant"
-      },
-      {
-        "age_myr": 1254982.8133243122,
+        "age_myr": 1128845.137036117,
         "from": "formation",
         "kind": "star.end"
       }
@@ -82,7 +72,7 @@
     "system": "u:g0/patch:9:solar/cohort:0/sys:1"
   },
   {
-    "digest": "110e77558e65fbbc063f7415c5daa388bd0af8fb704e6eb6bf63fec8eefaeb47",
+    "digest": "50f995acf294d2d28319799439bf5ed7273e6a79aac0abe15c55cbd5e013d50d",
     "story": [
       {
         "age_myr": 0.0,
@@ -175,12 +165,7 @@
         "kind": "star.leaves_main_sequence"
       },
       {
-        "age_myr": 1015887.2417369243,
-        "from": "formation",
-        "kind": "star.giant"
-      },
-      {
-        "age_myr": 1114602.007137825,
+        "age_myr": 988020.2980022749,
         "from": "formation",
         "kind": "star.end"
       }

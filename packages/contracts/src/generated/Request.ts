@@ -198,7 +198,8 @@ galaxies?: boolean,
 stars?: boolean, 
 /**
  * GZ6: with the galaxies, every one of home's satellites' paths
- * since infall, in `galaxy_walk.satellites.paths` (default false).
+ * since infall, in `galaxy_walk.satellites.paths`, and the group's
+ * edge in `galaxy_walk.group_edge` (default false).
  */
 satellite_paths?: boolean, } | { "op": "sky_glow", position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, nside?: bigint, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
 /**
