@@ -6,9 +6,10 @@
 import { constant } from "../../ui-contract/src/index.ts";
 import type { Abilities, Fitted } from "./ship-abilities.ts";
 import type { SkinSpec } from "./ship-mesh.ts";
+import { ringPoints, type PortMark } from "./compound-layout.ts";
 import { driveFacts, plumeShape, tanksOf, type DriveFacts, type Propellants, type ShipRecord, type TankNeed } from "./ship.ts";
 
-export type SystemKind = "sensors" | "crew" | "cargo" | "tanks" | "radiators" | "drive" | "spine" | "plume" | "shield" | "wings" | "legs" | "chute" | "scoop";
+export type SystemKind = "sensors" | "crew" | "cargo" | "tanks" | "radiators" | "drive" | "spine" | "plume" | "shield" | "wings" | "legs" | "chute" | "scoop" | "bay" | "tether" | "port";
 
 /** A ship as the designer reads it: the NAV record plus the fields the travel thread is adding. */
 export interface DesignShip extends ShipRecord {
@@ -18,6 +19,17 @@ export interface DesignShip extends ShipRecord {
   waste_per_jet?: number;
   /** How it refuels (base-nav): "scoop" draws an intake. */
   refuel?: string[];
+  /** Bays (compound ships, CM7): room inside the ship for what it carries, sized by `sizeBays` in compound-layout.ts
+   * from what each holds, or from the kernel's typed `part.<id>.bay_length_m` and `bay_radius_m`. */
+  bays?: DesignBay[];
+}
+
+/** A bay as the designer lays it: a hollow body of this length and inner radius, named by its part id. */
+export interface DesignBay {
+  id: string;
+  length_m: number;
+  radius_m: number;
+  label: string;
 }
 
 /** base-ships `ship_design`. */
@@ -104,6 +116,14 @@ export interface Piece {
   span?: number;
   sweep?: number;
   label?: string;
+  /** A panel's plane turned about its root line (compound ships, CM7): its span runs along (cos roll, -sin roll) in
+   * (y, z) and its face along (sin roll, cos roll). Missing is 0, flat in the x-y plane. Bodies need none: their axis
+   * stays parallel to x whichever way a construct is turned. */
+  roll_deg?: number;
+  /** The part id, for a bay. */
+  part?: string;
+  /** In a compound, which construct the piece belongs to (its address). */
+  member?: string;
 }
 
 export interface ShipLayout {
@@ -180,7 +200,11 @@ export function designShip(s: DesignShip, store: Propellants, rules: DesignRules
     pieces.push({ system, shape: "body", x0: x - len, x1: x, r0: aft, r1: fore, y, z, ...(label ? { label } : {}) });
   };
   let radiatorSlot: [number, number] | null = null;
-  for (const sys of style.order) {
+  // Bays go where the style puts them, or straight after the hold (a style written before bays existed).
+  const bays = s.bays ?? [];
+  const order: SystemKind[] = !bays.length || style.order.includes("bay") ? style.order : style.order.flatMap((k) => (k === "cargo" ? [k, "bay"] : [k]));
+  if (bays.length && !order.includes("bay")) order.unshift("bay");
+  for (const sys of order) {
     if (sys === "sensors") {
       const len = skin ? noseR * R : style.sensor_r * big;
       body("sensors", len, skin ? 0 : style.sensor_r * big * 0.6, skin ? R : style.sensor_r * big * 0.6, 0, 0, "sensors");
@@ -193,6 +217,12 @@ export function designShip(s: DesignShip, store: Propellants, rules: DesignRules
       const len = n.cargo_m3 / (Math.PI * cargoR * cargoR);
       body("cargo", len, cargoR, cargoR, 0, 0, "cargo hold");
       x -= len;
+    } else if (sys === "bay") {
+      for (const b of bays) {
+        const r = Math.max(b.radius_m, skin ? R : 0);
+        pieces.push({ system: "bay", shape: "body", x0: x - b.length_m, x1: x, r0: r, r1: r, y: 0, z: 0, label: b.label, part: b.id });
+        x -= b.length_m;
+      }
     } else if (sys === "tanks") {
       for (const t of n.tanks) {
         const len = t.volume_m3 / (cluster * Math.PI * tankR * tankR);
@@ -320,7 +350,7 @@ export interface ShipView {
 
 /** Side view (looking along +y: x across, z up) and top view (looking down: x across, y up), at one scale that fits
  * both in frames of `size` pixels with room above and below for call-outs. The drive's plume is drawn behind the stern. */
-export function shipViews(l: ShipLayout, size: [number, number], fit: "all" | "hull" = "all"): { side: ShipView; top: ShipView; scale: number; plume_m: number; clipped: boolean } {
+export function shipViews(l: ShipLayout & { ports?: readonly PortMark[] }, size: [number, number], fit: "all" | "hull" = "all"): { side: ShipView; top: ShipView; scale: number; plume_m: number; clipped: boolean } {
   const [W, H] = size;
   const big = Math.max(...l.pieces.filter((p) => p.shape === "body" && p.system !== "spine").map((p) => Math.max(p.r0, p.r1) + Math.hypot(p.y, p.z)));
   const plume_m = plumeShape(l.needs.drive).length_r * big;
@@ -346,6 +376,18 @@ export function shipViews(l: ShipLayout, size: [number, number], fit: "all" | "h
         const c = lat === "y" ? p.y : p.z;
         d = `M${f(X(p.x0))} ${f(Y(c + p.r0))} L${f(X(p.x1))} ${f(Y(c + p.r1))} L${f(X(p.x1))} ${f(Y(c - p.r1))} L${f(X(p.x0))} ${f(Y(c - p.r0))} Z`;
         at = [X((p.x0 + p.x1) / 2), Y(c)];
+      } else if (p.roll_deg) {
+        // A turned panel (a construct on a hull, CM7): its span seen foreshortened in each view, edge on when it
+        // points straight at the viewer.
+        const a = (p.roll_deg * Math.PI) / 180;
+        const k = lat === "y" ? Math.cos(a) : -Math.sin(a);
+        const c = lat === "y" ? p.y : p.z;
+        const s = (p.span ?? 0) * k;
+        const t = Math.max(0.6 / scale, 0.02 * big);
+        const sw = p.sweep ?? 0;
+        const [lo, hi] = Math.abs(s) > t ? [c, c + s] : [c - t, c + t];
+        d = `M${f(X(p.x0))} ${f(Y(lo))} L${f(X(p.x1))} ${f(Y(lo))} L${f(X(p.x1 - sw))} ${f(Y(hi))} L${f(X(p.x0 - sw))} ${f(Y(hi))} Z`;
+        at = [X((p.x0 + p.x1) / 2 - sw / 2), Y((lo + hi) / 2)];
       } else if (lat === "y") {
         const s = p.span ?? 0;
         const sw = p.sweep ?? 0;
@@ -362,6 +404,11 @@ export function shipViews(l: ShipLayout, size: [number, number], fit: "all" | "h
       at = [Math.min(W - 4, Math.max(4, at[0])), Math.min(cy + (H * band) / 2, Math.max(cy - (H * band) / 2, at[1]))];
       if (p.label && !anchors.has(p.system)) anchors.set(p.system, { at, text: p.label });
       else if (p.label && p.system === "tanks") anchors.set(`tanks:${p.label}` as SystemKind, { at, text: p.label });
+    }
+    // Ports (a compound's, CM7): each ring seen at its slant, an ellipse.
+    for (const port of l.ports ?? []) {
+      const pts = ringPoints(port);
+      paths.push({ system: "port", d: pts.map(([x, y, z], i) => `${i ? "L" : "M"}${f(X(x))} ${f(Y(lat === "y" ? y : z))}`).join(" ") + " Z" });
     }
     // The plume, from the drive's exit.
     const drive = l.pieces.find((p) => p.system === "drive");
@@ -396,7 +443,7 @@ export function shipViews(l: ShipLayout, size: [number, number], fit: "all" | "h
       }));
     };
     // Draw order: plume, spine and radiators behind the bodies.
-    const rank = (s: SystemKind) => (s === "plume" ? 0 : s === "spine" ? 1 : s === "radiators" || s === "wings" ? 2 : 3);
+    const rank = (s: SystemKind) => (s === "plume" ? 0 : s === "spine" || s === "tether" ? 1 : s === "radiators" || s === "wings" ? 2 : 3);
     paths.sort((p, q) => rank(p.system) - rank(q.system));
     return { paths, callouts: [...place(up, true), ...place(down, false)] };
   };

@@ -1,0 +1,1 @@
+{"key": "bally2016", "citation": "Bally 2016, section 3", "doi": [], "arxiv": [], "marks": [], "golden": true, "in_code": true, "earlier": "textbook (docs/citations/light-reference.md)", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-nebula/src/outflow.rs"], "claims": ["/// degrees: Bally 2016, section 3)."], "tier": 2}

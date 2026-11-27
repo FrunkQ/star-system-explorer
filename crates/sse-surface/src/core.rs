@@ -27,7 +27,7 @@ pub const CORE_VERSION: &str = "core-history-v1";
 
 use sse_core::sheet::{M_EARTH, R_EARTH_MEAN as R_EARTH, R_GAS};
 
-pub const REFS: [&str; 9] = [
+pub const REFS: [&str; 11] = [
     "Stevenson, D. J., Spohn, T. and Schubert, G. 1983, Icarus 54, 466: magnetism and thermal evolution of the terrestrial planets. doi:10.1016/0019-1035(83)90241-5",
     "Driscoll, P. and Bercovici, D. 2014, Physics of the Earth and Planetary Interiors 236, 36: on the thermal and magnetic histories of Earth and Venus (lower-mantle viscosity jump, local critical Rayleigh number). doi:10.1016/j.pepi.2014.08.004",
     "Solomatov, V. S. and Moresi, L.-N. 2000, JGR 105, 21795: scaling of time-dependent stagnant lid convection. doi:10.1029/2000JB900197",
@@ -36,6 +36,8 @@ pub const REFS: [&str; 9] = [
     "O'Rourke, J. G. and Stevenson, D. J. 2016, Nature 529, 387: powering Earth's dynamo with magnesium precipitation from the core. doi:10.1038/nature16495",
     "Masters, G. and Gubbins, D. 2003, Physics of the Earth and Planetary Interiors 140, 159: on the resolution of density within the Earth (inner core boundary density jump). doi:10.1016/j.pepi.2003.07.008",
     "Christensen, U. R. 2010, Space Science Reviews 152, 565: dynamo scaling laws (the field from the convected buoyancy flux). doi:10.1007/s11214-009-9553-2",
+    "Hirschmann, M. M. 2000, Geochemistry, Geophysics, Geosystems 1, 1042: mantle solidus, experimental constraints and the effects of peridotite composition (the dry solidus fit). doi:10.1029/2000GC000070",
+    "Moore, W. B. and Webb, A. A. G. 2013, Nature 501, 501: heat-pipe Earth (volcanism carrying a lid world's heat). doi:10.1038/nature12473",
     "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164: a simple analytical model for rocky planet interiors (core radius about the square root of the core mass fraction). doi:10.3847/1538-4357/aa6266",
 ];
 
@@ -101,8 +103,17 @@ pub struct CoreSettings {
     /// temperature at the core's top, none is left in solution to come out.
     pub mg_floor_k: f64,
     /// Mantle potential temperature above which melting vents the excess heat
-    /// as volcanism (a cap standing in for a melt model).
+    /// as volcanism under moving plates (a cap standing in for a melt model).
     pub t_mantle_max_k: f64,
+    /// The mantle's solidus, T = a P² + b P + c in K with P in GPa, for dry
+    /// peridotite (Hirschmann 2000's °C fit, valid 0 to 10 GPa, with c
+    /// moved to kelvin: 1120.661 °C = 1393.811 K). Under a lid that
+    /// does not move, a mantle hotter than this at the lid's base melts, and
+    /// the melt carries the excess heat up through the lid as volcanism (a
+    /// heat pipe, Moore and Webb 2013), so the mantle cannot warm past it.
+    pub mantle_solidus_c: [f64; 3],
+    /// The pressure range the solidus fit holds over, GPa.
+    pub mantle_solidus_p_max_gpa: f64,
     /// Iron's equation of state (Vinet, hcp iron; Dewaele et al. 2006):
     /// density at no pressure, kg/m³, bulk modulus, GPa, and its slope.
     pub iron_rho0: f64,
@@ -156,6 +167,8 @@ impl Default for CoreSettings {
             mantle_liquidus_c: 1.9,
             mg_floor_k: 3000.0,
             t_mantle_max_k: 2200.0,
+            mantle_solidus_c: [-5.104, 132.899, 1393.811],
+            mantle_solidus_p_max_gpa: 10.0,
             iron_rho0: 8268.0,
             iron_k0_gpa: 163.4,
             iron_k0_prime: 5.38,
@@ -417,17 +430,57 @@ pub fn core_history(
     let mut on_prev = false;
     let mut first = true;
     let mut why_now;
-    loop {
-        // Fluxes at this state.
+    // Heat melting carried out through the lid over the last step, W.
+    let mut vented = 0.0;
+    let solidus = |p_pa: f64| {
+        let p = (p_pa / 1e9).clamp(0.0, s.mantle_solidus_p_max_gpa);
+        let [a, b, c] = s.mantle_solidus_c;
+        a * p * p + b * p + c
+    };
+    // Heat out of the mantle's top, W/m², for a mantle at `t_u`: moving
+    // plates, or a stagnant lid (Solomatov and Moresi 2000).
+    let top = |t_u: f64, mobile: bool, wet: f64| {
         let dtm = (t_u - t_s).max(0.0);
         let ra = s.alpha_mantle * rho_m * g_s * dtm * d * d * d / (s.kappa_mantle * eta(t_u, wet));
-        let mobile = mobile_at(t);
-        let q_top = if mobile {
+        if mobile {
             s.k_mantle * dtm / d * m::cbrt((ra / s.ra_critical).max(0.0))
         } else {
             let theta = s.activation_j_mol * dtm / (R_GAS * t_u * t_u);
             0.53 * s.k_mantle * dtm / d * m::pow(theta.max(1.0), -4.0 / 3.0) * m::cbrt(ra.max(0.0))
+        }
+    };
+    // The hottest the mantle can be. Under moving plates, the cap. Under a
+    // lid, the solidus at the lid's base, the lid as thick as the rock that
+    // conducts what the mantle's top loses: a hotter mantle loses more, so
+    // its lid is thinner and its base melts sooner. The temperature that is
+    // its own lid's solidus, by bisection.
+    let hottest = |mobile: bool, wet: f64| {
+        let max = s.t_mantle_max_k.max(t_s);
+        if mobile {
+            return max;
+        }
+        let over = |t_u: f64| {
+            let lid = (s.k_mantle * (t_u - t_s) / top(t_u, false, wet).max(1e-12)).clamp(0.0, d);
+            t_u - solidus(rho_m * g_s * lid)
         };
+        if over(max) <= 0.0 {
+            return max;
+        }
+        let (mut lo, mut hi) = (t_s, max);
+        for _ in 0..50 {
+            let mid = 0.5 * (lo + hi);
+            if over(mid) > 0.0 {
+                hi = mid;
+            } else {
+                lo = mid;
+            }
+        }
+        lo
+    };
+    loop {
+        // Fluxes at this state.
+        let mobile = mobile_at(t);
+        let q_top = top(t_u, mobile, wet);
         let t_l = t_u * adiabat_ratio;
         let dtc = t_c - t_l;
         let q_cmb = if dtc > 0.0 {
@@ -589,7 +642,7 @@ pub fn core_history(
             t_mantle_k: t_u,
             t_cmb_k: t_c,
             q_core_tw: qc / 1e12,
-            q_surface_tw: qs / 1e12,
+            q_surface_tw: (qs + vented) / 1e12,
             q_cmb_w_m2: q_cmb,
             q_adiabat_w_m2: q_ad,
             q_dynamo_w_m2: q_dyn.max(0.0),
@@ -607,7 +660,15 @@ pub fn core_history(
         let h = dt_gyr.min(age - t);
         t_c -= cool_c * h * sec;
         t_u -= cool_m * h * sec;
-        t_u = t_u.clamp(t_s, s.t_mantle_max_k.max(t_s));
+        // Melting carries out whatever would lift the mantle past the
+        // hottest it can be, as volcanism through the lid.
+        let cap = hottest(mobile, wet);
+        vented = if t_u > cap {
+            (t_u - cap) * mm * s.cp_mantle * eps_m / (h * sec)
+        } else {
+            0.0
+        };
+        t_u = t_u.clamp(t_s, cap);
         // Water: lost to volcanism under a lid, carried back down by plates.
         let relax = 1.0 - m::exp(-h / s.degas_gyr.max(1e-6));
         wet += ((if mobile { 1.0 } else { 0.0 }) - wet) * relax;

@@ -137,8 +137,9 @@ try {
       await shot(gm, `globes-${look}-${name}`);
     }
     if (!(await cmp2.locator("[data-no-globes]").count())) {
-      await cmp2.getByRole("button", { name: "True pace" }).click();
-      assert.match(await cmp2.locator("[data-pace]").innerText(), /True pace: one second is .* of turning; .*, the quickest/);
+      // On the clock (CLK1): each globe at its own real spin on the campaign's clock, still while the clock is stopped.
+      await cmp2.getByRole("button", { name: "On the clock" }).click();
+      assert.match(await cmp2.locator("[data-pace]").innerText(), /On the campaign's clock, stopped: each body turns at its own real speed, so with the clock stopped they stand still/);
       await gm.getByRole("group", { name: "Seen from" }).getByRole("button", { name: "Above", exact: true }).click();
       await gm.waitForTimeout(500);
       await shot(gm, `globes-above-${name}`);

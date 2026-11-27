@@ -19,6 +19,8 @@ mod caves;
 mod class_sample_tests;
 mod clock;
 mod composition;
+#[cfg(test)]
+mod conservation_tests;
 pub mod contract;
 mod conventions;
 #[cfg(test)]
@@ -53,6 +55,8 @@ mod life;
 mod life_tests;
 #[cfg(test)]
 mod matter_tests;
+#[cfg(test)]
+mod mount_log_tests;
 #[cfg(test)]
 mod mount_tests;
 mod names;
@@ -2310,6 +2314,12 @@ impl Kernel {
                 );
                 continue;
             };
+            // A star class is drawn from the life line (describe_star with the
+            // class's sample star), not placed as a world.
+            if class.scheme == "star" {
+                refused.push(serde_json::json!({"class": id, "why": "a star class: draw it with describe_star from its first example's star.sample_mass_msun, star.sample_age_yr and star.sample_feh"}));
+                continue;
+            }
             let best = class
                 .examples
                 .iter()
@@ -4205,6 +4215,56 @@ impl Kernel {
                     rank,
                     r_au,
                 )?
+            }
+            Request::RingStructure {
+                system,
+                cloud,
+                ask,
+                variant,
+                samples,
+                window,
+            } => {
+                let u = self.universe()?;
+                let ask = match (ask, system, cloud) {
+                    (Some(a), None, None) => {
+                        let mut a: sse_small::ring::RingAsk = serde_json::from_value(a)
+                            .map_err(|e| err("bad_request", format!("ring ask: {e}")))?;
+                        if let Some(v) = variant {
+                            a.variant = v;
+                        }
+                        if samples.is_some() {
+                            a.samples = samples.map(|n| n as usize);
+                        }
+                        if window.is_some() {
+                            a.window = window;
+                        }
+                        a
+                    }
+                    (None, Some(system), Some(cloud)) => {
+                        let sa = in_universe(&u.root, &system)?;
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &sa) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        small::ring_ask_from_run(
+                            u.runs.get(&system),
+                            &cloud,
+                            variant.unwrap_or(0),
+                            samples.map(|n| n as usize),
+                            window,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give an ask, or a system and its ring's cloud",
+                        ))
+                    }
+                };
+                let seed = u.seed;
+                small::ring_structure(&ask, &seed, &self.observe.reference)?
             }
             Request::MakeSmallBody {
                 system,
@@ -6569,12 +6629,29 @@ impl Kernel {
                 bond,
                 lines,
                 push_m_s,
+                authored,
+                fixture,
+                nav,
+                system,
                 at_s,
             } => {
                 let u = self.universe()?;
                 let a = in_universe(&u.root, &address)?;
                 let h = in_universe(&u.root, &on)?;
                 let at = UniverseTime::seconds(at_s);
+                let eph = ephemeris(u, fixture.as_deref(), nav.as_ref(), system.as_deref())?;
+                let mut log_notes = vec![];
+                flights::check_capture(
+                    &u.record,
+                    &u.root,
+                    &h,
+                    &a,
+                    at_s,
+                    eph.as_ref()
+                        .map(|s| s as &dyn sse_nav::flightlog::Ephemeris),
+                    authored.unwrap_or(false),
+                    &mut log_notes,
+                )?;
                 let d = sse_trigger::mount::mount(
                     &mut u.chronicle,
                     &u.root,
@@ -6596,12 +6673,27 @@ impl Kernel {
                     &Publisher::new("gm", "mount", "1"),
                 )
                 .map_err(|e| err("mount_refused", e))?;
+                let root = u.root.clone();
+                let logged = flights::on_capture(
+                    &mut u.record,
+                    &root,
+                    &h,
+                    &a,
+                    d.mount.place.word(),
+                    d.mount.port.as_deref(),
+                    at_s,
+                )?;
                 let st = u.chronicle.state_at(at);
+                let mut notes = d.notes;
+                if !logged.is_empty() {
+                    notes.extend(log_notes);
+                }
                 Response::ConstructMounted {
                     address: a.to_string(),
                     mount: d.mount.to_json(),
                     compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
-                    notes: d.notes,
+                    notes,
+                    logged,
                     event_id: d.event.hex(),
                     state_hash: latest_hash(&u.chronicle),
                 }
@@ -6610,9 +6702,13 @@ impl Kernel {
                 address,
                 from,
                 push_m_s,
+                fixture,
+                nav,
+                system,
                 at_s,
             } => {
                 let u = self.universe()?;
+                let eph = ephemeris(u, fixture.as_deref(), nav.as_ref(), system.as_deref())?;
                 let a = in_universe(&u.root, &address)?;
                 let from = from.map(|f| in_universe(&u.root, &f)).transpose()?;
                 let at = UniverseTime::seconds(at_s);
@@ -6626,12 +6722,37 @@ impl Kernel {
                     &Publisher::new("gm", "release", "1"),
                 )
                 .map_err(|e| err("release_refused", e))?;
+                let root = u.root.clone();
+                let carrier: Address = d
+                    .mount
+                    .on
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let (logged, log_notes) = flights::on_release(
+                    &mut u.record,
+                    &root,
+                    &carrier,
+                    &a,
+                    d.mount.place.word(),
+                    d.mount.push_m_s,
+                    at_s,
+                    eph.as_ref()
+                        .map(|s| s as &dyn sse_nav::flightlog::Ephemeris),
+                )?;
                 let st = u.chronicle.state_at(at);
+                let mut notes = d.notes;
+                if logged.is_empty() {
+                    notes.extend(log_notes.into_iter().filter(|n| n.contains("give it")));
+                } else {
+                    notes.retain(|n| !n.contains("the flight log uses the pack's"));
+                    notes.extend(log_notes);
+                }
                 Response::ConstructReleased {
                     address: a.to_string(),
                     mount: d.mount.to_json(),
                     compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
-                    notes: d.notes,
+                    notes,
+                    logged,
                     event_id: d.event.hex(),
                     state_hash: latest_hash(&u.chronicle),
                 }
@@ -6972,7 +7093,7 @@ impl Kernel {
                                 return Ok(Response::FlightLogIs {
                                     log: serde_json::to_value(&log).expect("plain"),
                                     entries: es.iter().map(flights::entry_json).collect(),
-                                    at: Some(flights::where_at(&log, t, &s)),
+                                    at: Some(flights::where_at(&u.record, &u.root, &log, t, &s)),
                                 });
                             }
                             _ => {
@@ -6983,7 +7104,7 @@ impl Kernel {
                             }
                         };
                         let (s, _) = nav::nav_system(source)?;
-                        Some(flights::where_at(&log, t, &s))
+                        Some(flights::where_at(&u.record, &u.root, &log, t, &s))
                     }
                 };
                 Response::FlightLogIs {
@@ -8141,4 +8262,46 @@ fn estimated_laws(atoms: &[String]) -> Option<Vec<String>> {
         .collect();
     out.dedup();
     (!out.is_empty()).then_some(out)
+}
+
+/// The system a flight log is read in: a NAV fixture, an inline NAV system,
+/// or an adopted universe system (formed once and kept); none when no
+/// source is given. Two sources at once are refused.
+fn ephemeris(
+    u: &mut Universe,
+    fixture: Option<&str>,
+    inline: Option<&serde_json::Value>,
+    system: Option<&str>,
+) -> Result<Option<sse_nav::NavSystem>, Response> {
+    let source = match (fixture, inline, system) {
+        (None, None, None) => return Ok(None),
+        (Some(f), None, None) => nav::Source::Fixture(f),
+        (None, Some(n), None) => nav::Source::Inline(n),
+        (None, None, Some(sys)) => {
+            let a = in_universe(&u.root, sys)?;
+            if !u.runs.contains_key(sys) {
+                if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                    let (_, run, _) = systems::form(req.into())?;
+                    u.runs.insert(sys.to_string(), run);
+                }
+            }
+            let (s, _) = nav::nav_system(nav::Source::System {
+                ch: &u.chronicle,
+                system: &a,
+                at_s: None,
+                run: u.runs.get(sys),
+                ports: &[],
+                air: false,
+            })?;
+            return Ok(Some(s));
+        }
+        _ => {
+            return Err(err(
+                "bad_request",
+                "give one of a fixture, a nav system or a universe system",
+            ))
+        }
+    };
+    let (s, _) = nav::nav_system(source)?;
+    Ok(Some(s))
 }

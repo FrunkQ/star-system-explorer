@@ -18,8 +18,8 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { bodySeconds, globeFrame, graticule, liveFace, nearSide, readLiveStar, readTrueFace, readTrueShape, ringEdge, spinAt, startGpu, STAR_SECONDS_PER_SECOND, trueLook, type AirFlow, type FaceReader, type ShapeReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type StarReader, type Vec3 } from "../../../renderer/src/index.ts";
-  import { reachKm, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { bodySeconds, globeFrame, graticule, liveFace, nearSide, readLiveStar, readTrueFace, readTrueShape, ringEdge, spinAt, startGpu, trueLook, type AirFlow, type FaceReader, type ShapeReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type StarReader, type Vec3 } from "../../../renderer/src/index.ts";
+  import { clockAt, cycleAt, reachKm, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
     ctx,
@@ -45,7 +45,9 @@
     base: number;
     look: "3d" | "true" | "wireframe";
     view: LineupView;
-    pace: "same" | "true";
+    /** "same": each globe one turn in SECONDS_PER_TURN of watching (a labelled aid for comparing). "clock": each turns at
+     * its own real spin on the picture's clock (CLK1), so a stopped clock stands them still. */
+    pace: "same" | "clock";
     /** The item's colour as the chart draws it (CSS). */
     colour: (i: CompareItem) => string;
     /** Whether the item is one of this system's own bodies (its surface can be read). */
@@ -144,11 +146,17 @@
     );
   });
 
-  // The watch: seconds since the globes appeared, on the page's own clock (presentation only). Still under reduced motion.
+  // Two times. `t`: seconds watched since the globes appeared, the "same" pace's aid (presentation only, still under
+  // reduced motion). `clockT`: the picture's clock (CLK1), seconds since the campaign's epoch, for the "clock" pace and
+  // every True star's face: it runs only while the campaign's clock runs.
   let t = $state(0);
+  const clock = $derived(ctx.workspace.clock ?? null);
+  let clockT = $state(0);
+  // Where the clock stood when the faces were read: a giant's winds carry its face on from there.
+  let readAt: number | null = null;
   const still = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   $effect(() => {
-    if (!ready || still) return;
+    if (!ready || still || pace !== "same") return;
     let raf = 0;
     const t0 = performance.now() - untrack(() => t) * 1000;
     const tick = (now: number) => {
@@ -158,7 +166,27 @@
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   });
-  const quickest = $derived(Math.min(...placed.map((p) => Math.abs(p.item.day_h ?? Infinity))));
+  $effect(() => {
+    const c = clock;
+    if (!ready || !c) return;
+    clockT = clockAt(c, performance.now());
+    if (readAt === null) readAt = clockT;
+    if (!(c.rate > 0)) return;
+    let raf = 0;
+    const tick = (now: number) => {
+      clockT = clockAt(c, now);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  });
+  // Each globe's turn: on the clock its own day (hours, the sign its way round) at the clock's time; at the same pace
+  // one turn in SECONDS_PER_TURN of watching.
+  const turnAngle = (day_h: number | undefined) => (pace === "clock" ? (day_h && Number.isFinite(day_h) ? Math.sign(day_h) * 2 * Math.PI * cycleAt(Math.abs(day_h) * 3600, clockT) : 0) : spinAt(day_h, t, "same", 24));
+  const bodyDt = (day_h: number | undefined) => (pace === "clock" ? clockT - (readAt ?? clockT) : bodySeconds(day_h, t, "same", 24));
+  const starRate = $derived(clock?.rate ?? 0);
+  // A star's face ten pictures a second.
+  const starT = $derived(starRate > 0 ? Math.floor(clockT / (starRate / 10)) * (starRate / 10) : clockT);
 
   $effect(() => {
     if (!ready || !gpu || !canvas) return;
@@ -174,16 +202,17 @@
       const reach = (reachKm(i) / i.radius_km) * p.r;
       deepest = Math.max(deepest, reach + 10);
       const c: Vec3 = [p.x - width / 2, height / 2 - (base - p.r), 0];
-      const f = globeFrame(i.tilt_rad, view, spinAt(i.day_h, t, pace, Number.isFinite(quickest) ? quickest : 24));
+      const f = globeFrame(i.tilt_rad, view, turnAngle(i.day_h));
       if (look !== "wireframe") {
         // True: the body's face from the one door every True view uses (true-body.ts), so each new look shows here too.
         // A world not read is the plain grey of the system's True; 3D keeps the chart's colour.
-        // A live star's face at its own clock (six hours a second, a picture every tenth of a second).
+        // A live star's face on the picture's clock (CLK1): its age at the campaign's epoch plus the clock's seconds,
+        // a picture every tenth of a second while the clock runs, still while it is stopped.
         const live = look === "true" && i.kind === "star" ? stars.get(i.key) : undefined;
-        const starFace = live ? liveFace(`${system}|${i.key}`, live, { t: live.age_s + (Math.floor(t * 10) / 10) * STAR_SECONDS_PER_SECOND, clock: STAR_SECONDS_PER_SECOND, span: STAR_SECONDS_PER_SECOND / 10, calm: still, px: 2 * p.r * dpr }).face : undefined;
+        const starFace = live ? liveFace(`${system}|${i.key}`, live, { t: live.age_s + starT, clock: starRate, span: starRate / 10, calm: still, px: 2 * p.r * dpr }).face : undefined;
         const face =
           look === "true"
-            ? trueLook({ ...(starFace ? { face: starFace } : {}), key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(flats.has(`${system}|${i.key}`) ? { flatten: flats.get(`${system}|${i.key}`)! } : {}), ...(flows.has(`${system}|${i.key}`) ? { flow: { flow: flows.get(`${system}|${i.key}`)!, dt_s: bodySeconds(i.day_h, t, pace, Number.isFinite(quickest) ? quickest : 24) } } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
+            ? trueLook({ ...(starFace ? { face: starFace } : {}), key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(flats.has(`${system}|${i.key}`) ? { flatten: flats.get(`${system}|${i.key}`)! } : {}), ...(flows.has(`${system}|${i.key}`) ? { flow: { flow: flows.get(`${system}|${i.key}`)!, dt_s: bodyDt(i.day_h) } } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
             : { colour: rgb(colour(i)), ...(i.kind === "star" ? { shines: true } : {}) };
         items.push({ id: i.key, rel: c, radius: p.r, frame: f, ...face });
       }

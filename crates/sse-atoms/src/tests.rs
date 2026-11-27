@@ -6,6 +6,7 @@
 use super::*;
 use sse_core::math as m;
 use sse_core::quantity::consts::*;
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 const M_SUN: f64 = GM_SUN / G;
@@ -107,10 +108,88 @@ fn every_atom_is_cited_explained_and_versioned() {
             );
         }
     }
-    assert_eq!(
-        n, 185,
-        "first-wave atom count changed: update handover/packages/P1.md"
+    // The count is derived from the declarations themselves, so two pull
+    // requests that each add an atom never edit the same line (it was a
+    // hand-kept number, and every addition conflicted with every other).
+    let declared = declared_atom_ids();
+    let registered: BTreeSet<String> = reg.decls().map(|d| d.id.clone()).collect();
+    let unregistered: Vec<&String> = declared
+        .iter()
+        .filter(|id| !registered.contains(*id))
+        .collect();
+    let undeclared: Vec<&String> = registered
+        .iter()
+        .filter(|id| !declared.contains(*id))
+        .collect();
+    assert!(
+        unregistered.is_empty() && undeclared.is_empty(),
+        "declared but not in atoms(): {unregistered:?}; in atoms() but not found as a declaration: {undeclared:?}"
     );
+    assert_eq!(
+        atoms().len(),
+        n,
+        "two atoms share an id (the registry keeps only one of them)"
+    );
+    assert_eq!(declared.len(), n);
+    // A floor, not a count: additions never touch it. It catches an atom lost
+    // by accident (a dropped block in a merge). Lower it only when an atom is
+    // removed on purpose, and say so in the package log.
+    const ATOM_FLOOR: usize = 183;
+    assert!(
+        n >= ATOM_FLOOR,
+        "{n} atoms, fewer than the floor {ATOM_FLOOR}: an atom was lost (lower the floor only for a removal on purpose)"
+    );
+}
+
+/// Every atom id declared in the sources: each `id: "sse.…"` in the Rust atom
+/// modules and each entry of each formula file in `packs/base-physics/formulas/`.
+/// Fails on a formula file that `formulas::FILES` does not read, and on an id
+/// declared twice.
+fn declared_atom_ids() -> BTreeSet<String> {
+    let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let mut ids: Vec<String> = vec![];
+    let mut rust: Vec<PathBuf> = std::fs::read_dir(crate_dir.join("src"))
+        .expect("src")
+        .map(|e| e.expect("entry").path())
+        .filter(|p| p.extension().is_some_and(|x| x == "rs"))
+        .filter(|p| p.file_name().is_some_and(|f| f != "tests.rs"))
+        .collect();
+    rust.sort();
+    for p in &rust {
+        let text = std::fs::read_to_string(p).expect("read atom module");
+        for line in text.lines() {
+            if let Some(rest) = line.trim_start().strip_prefix("id: \"sse.") {
+                let end = rest.find('"').expect("closing quote");
+                ids.push(format!("sse.{}", &rest[..end]));
+            }
+        }
+    }
+    let dir = crate_dir.join("../../packs/base-physics/formulas");
+    let mut on_disk: Vec<String> = std::fs::read_dir(&dir)
+        .expect("formulas dir")
+        .map(|e| e.expect("entry").path())
+        .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .map(|p| p.file_stem().expect("stem").to_string_lossy().into_owned())
+        .collect();
+    on_disk.sort();
+    let mut read: Vec<String> = formulas::FILES.iter().map(|(f, _)| f.to_string()).collect();
+    read.sort();
+    assert_eq!(
+        on_disk, read,
+        "every formula file in packs/base-physics/formulas/ must be listed in formulas::FILES"
+    );
+    for family in &on_disk {
+        let text =
+            std::fs::read_to_string(dir.join(format!("{family}.json"))).expect("formula file");
+        let doc: serde_json::Value = serde_json::from_str(&text).expect("formula json");
+        for a in doc["atoms"].as_array().into_iter().flatten() {
+            ids.push(a["id"].as_str().expect("formula atom id").to_string());
+        }
+    }
+    let total = ids.len();
+    let set: BTreeSet<String> = ids.into_iter().collect();
+    assert_eq!(set.len(), total, "an atom id is declared twice");
+    set
 }
 
 #[test]
@@ -392,6 +471,31 @@ fn io_tidal_heating() {
         &[M_JUP, 1.8216e6, 4.217e8, 0.0041],
     )[0];
     close(p, 0.93e14, 0.2, "Io heating");
+}
+
+#[test]
+fn maxwell_response_limits() {
+    // HF4a: a uniform Maxwell body. Stiff and cold, it is elastic, k2 =
+    // 3/2 / (1 + 19μ/2ρgR) with no lag; runny, it is a fluid, k2 = 3/2
+    // with no lag; between, Im k2 peaks at ωη/μ = 1/(1 + A) at
+    // (3/2) A / (2 (1 + A)). Io: μ 6.5e10 Pa, ρ 3530, g 1.796, R 1821.6 km.
+    let (mu, rho, g, r, w) = (6.5e10, 3530.0, 1.796, 1.8216e6, 4.11e-5);
+    let a = 19.0 * mu / (2.0 * rho * g * r);
+    let at = |eta: f64| run("sse.tides.maxwell_response", &[mu, eta, rho, g, r, w]);
+    let stiff = at(1e30);
+    close(stiff[1], 1.5 / (1.0 + a), 1e-6, "elastic Re k2");
+    assert!(stiff[0] < 1e-9, "elastic Im k2 {}", stiff[0]);
+    let runny = at(1e3);
+    close(runny[1], 1.5, 1e-6, "fluid Re k2");
+    assert!(runny[0] < 1e-9, "fluid Im k2 {}", runny[0]);
+    let peak = at(mu / (w * (1.0 + a)));
+    close(peak[0], 0.75 * a / (1.0 + a), 1e-9, "peak Im k2");
+    // Io's solid k2 is about 0.03 (absolute, not a ratio).
+    assert!(
+        stiff[1] > 0.02 && stiff[1] < 0.04,
+        "Io elastic k2 {}",
+        stiff[1]
+    );
 }
 
 #[test]

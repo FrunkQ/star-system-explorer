@@ -1,0 +1,1 @@
+{"key": "doi:10.1051/0004-6361:20020749", "citation": "10.1051/0004-6361:20020749", "doi": ["10.1051/0004-6361:20020749"], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-atoms/src/star.rs"], "claims": ["/// doi:10.1051/0004-6361:20020749), in seconds."], "tier": 3}
