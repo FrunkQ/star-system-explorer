@@ -101,7 +101,7 @@ test("a world with a spin model carries its axes into the scene the drawing read
   const m = axesFrom([b("earth", ax), b("mars")]);
   assert.deepEqual([...m.keys()], ["earth"]);
   const scene = { subjects: [{ address: "earth", label: "Earth", orbit: { a_au: 1, phase_deg: 0 } }, { address: "mars", label: "Mars", orbit: { a_au: 1.5, phase_deg: 0 } }] } as unknown as import("../src/scene.ts").SystemScene;
-  const t = withPhases(scene, new Map([["earth", 0], ["mars", 0]]), null, null, m);
+  const t = withPhases(scene, new Map([["earth", 0], ["mars", 0]]), null, null, null, m);
   assert.deepEqual(t.subjects[0]!.orbit!.axes, ax);
   assert.equal(t.subjects[1]!.orbit!.axes, undefined);
 });
