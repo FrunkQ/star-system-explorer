@@ -22,6 +22,9 @@ use crate::ledger::EnergyLedger;
 use crate::*;
 use sse_core::math as m;
 
+/// A day in seconds (a unit; units never move).
+const DAY_S: f64 = sse_core::sheet::DAY;
+
 /// `life_history.spread` (LE4, and LE5's links).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct SpreadParams {
@@ -75,7 +78,7 @@ pub fn growth_rate(
     population_gc: f64,
 ) -> (f64, &'static str) {
     let k_ev = 8.617_333e-5;
-    let r_max = sp.r_max_per_day / 86_400.0
+    let r_max = sp.r_max_per_day / DAY_S
         * m::exp(-hp.activation_ev / k_ev * (1.0 / t_k - 1.0 / hp.reference_k));
     if surplus_w <= 0.0 || population_gc <= 0.0 {
         return (0.0, "none");
