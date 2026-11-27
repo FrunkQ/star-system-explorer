@@ -1,0 +1,1 @@
+{"key": "hess1980", "citation": "Hess et al. 1980", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-climate/src/exchange_tests.rs"], "claims": ["/// southern winter (Viking: 25 to 30 %, Hess et al. 1980; the review's test)."], "tier": 3}

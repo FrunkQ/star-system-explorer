@@ -68,9 +68,13 @@ pub fn conditions(
             d.obliquity_deg
         }
     });
+    // A moon's own orbit is round its planet: its sunlight is read at the
+    // planet's distance from the star (HV2c; before, a moon at 0.0026 AU from
+    // Earth got 150,000 times Earth's sunlight).
     let flux = x.flux_w_m2.unwrap_or_else(|| {
         assumed.push("sunlight from a sun-like star at the orbit".into());
-        sse_core::sheet::S_SUN / (a_au * a_au)
+        let d = b.star_au.unwrap_or(a_au);
+        sse_core::sheet::S_SUN / (d * d)
     });
     let gases = x.gases.clone().unwrap_or_else(|| {
         if b.deep_envelope && !d.giant_gases.is_empty() {

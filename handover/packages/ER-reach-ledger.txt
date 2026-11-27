@@ -15,12 +15,12 @@ quiet holdings_in # lists what a holder holds
 quiet join_constructs # docks or merges constructs in the record
 still light_through_gas
 still make_small_body
-quiet mount_construct # writes a mount between constructs in the record
+still mount_construct # with a system, reads its orbits to check a capture (the NAV fixture or the universe system, not the stack)
 still preview_tree
 quiet read_catalogue # reads a catalogue file as published
 still read_scattering
 still rehost
-quiet release_construct # ends a mount in the record
+still release_construct # with a system, reads its orbits to seed the released log (the NAV fixture or the universe system, not the stack)
 quiet set_authored_batch # writes authored facts to the record
 quiet set_tech # records a tech level
 still small_body
@@ -59,7 +59,7 @@ untested explain
 untested export_chronicle
 untested export_sector
 untested fix_names
-untested flight_log
+still flight_log
 untested fog_of_war
 untested galaxy_chart
 untested grant
@@ -76,7 +76,7 @@ untested jump_map
 untested known_in
 untested known_to
 untested life_view
-untested log_flight
+quiet log_flight # writes a flight-log entry to the record
 untested look_ahead
 untested manifest
 untested matter_budget
@@ -91,7 +91,6 @@ untested plan_voyage
 untested programs
 untested programs_step
 untested promote_star
-untested read_activity
 untested read_air_optics
 untested read_bows
 untested read_composition

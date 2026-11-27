@@ -1,0 +1,1 @@
+{"key": "catling2014", "citation": "Catling 2014", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/cover.rs"], "claims": ["/// and Catling 2014). Below the datum (giants) the adiabat continues."], "tier": 3}

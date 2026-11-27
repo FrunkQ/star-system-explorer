@@ -1,0 +1,1 @@
+{"key": "myr2012", "citation": "Myr, Maoz and Mannucci 2012", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/rings.rs"], "claims": ["//!   distribution proportional to 1/t from 40 Myr, Maoz and Mannucci 2012);"], "tier": 3}

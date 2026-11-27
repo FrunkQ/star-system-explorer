@@ -26,7 +26,7 @@ Nothing moves at a mount or a release: every construct keeps its own mass, parts
 
 ## Left for the next packages
 
-- The separation push has no default here: the mount keeps `push_m_s` when given, and the release reply notes when none was. The pack value (design 4.1, 0.5 m/s, unverified) is read by CM2 when it seeds the released construct's flight log.
+- The separation push has no default here: the mount keeps `push_m_s` when given, and the release reply notes when none was. The pack value (design 4.1, 0.5 m/s, unverified) is read by CM2 when it seeds the released construct's flight log (done, `packages/CM2-flight-log-join-up.md`).
 - Capture here is authored (the GM says it happened). Reach and speed (`capture.reach_m`, `capture.speed_m_s`) against both flight logs, and the rendezvous offer, are CM2.
 - Lines are declared, not used: transfers across them are CM3.
 - Compound templates (making a stack and its mounts in one event) are CM11.

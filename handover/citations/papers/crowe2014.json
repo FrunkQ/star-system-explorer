@@ -1,0 +1,1 @@
+{"key": "crowe2014", "citation": "Crowe et al. 2014", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/scenario.rs"], "claims": ["/// sulfate (under 2.5 micromolar; Crowe et al. 2014)."], "tier": 3}

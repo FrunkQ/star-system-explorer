@@ -1,0 +1,1 @@
+{"key": "bloecker1995", "citation": "Bloecker 1995 tracks reach 1-2 × 10⁵ K", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-nebula/src/lib.rs"], "claims": ["/// white dwarf track are about 10⁵ K; Bloecker 1995 tracks reach 1-2 × 10⁵ K)."], "tier": 3}

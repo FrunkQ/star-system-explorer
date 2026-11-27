@@ -1,0 +1,1 @@
+{"key": "kliore1991", "citation": "Kliore and Luhmann 1991", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-field/src/tests.rs"], "claims": ["/// maximum, Brace and Kliore 1991 with Kliore and Luhmann 1991; Mars 300 to 800 km);"], "tier": 3}

@@ -610,6 +610,551 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.activity.surface_field",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "ro",
+     "letter": "Ro"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "field",
+     "letter": "B"
+    }
+   ],
+   "models": {
+    "gauss": {
+     "value": 0.0001,
+     "grade": "derived",
+     "source": "one gauss is 10⁻⁴ tesla"
+    }
+   },
+   "params": [
+    {
+     "param": "b_fast_g",
+     "letter": "Bf",
+     "default": 2050.0,
+     "range": [
+      500.0,
+      8000.0
+     ],
+     "description": "field of a saturated star at Ro = 1 on its fast branch, gauss (Reiners 2022: 2050)"
+    },
+    {
+     "param": "slope_fast",
+     "letter": "sf",
+     "default": -0.11,
+     "range": [
+      -1.0,
+      0.0
+     ],
+     "description": "slope of the fast branch (−0.11 ± 0.03)"
+    },
+    {
+     "param": "b_slow_g",
+     "letter": "Bs",
+     "default": 199.0,
+     "range": [
+      20.0,
+      1000.0
+     ],
+     "description": "field at Ro = 1 on the slow branch, gauss (199)"
+    },
+    {
+     "param": "slope_slow",
+     "letter": "ss",
+     "default": -1.26,
+     "range": [
+      -3.0,
+      0.0
+     ],
+     "description": "slope of the slow branch (−1.26 ± 0.10)"
+    },
+    {
+     "param": "ro_sat",
+     "letter": "Ro_sat",
+     "default": 0.13,
+     "range": [
+      0.01,
+      1.0
+     ],
+     "description": "Rossby number where the branches meet (the X-ray saturation point)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "ro",
+     "says": "Rossby number"
+    }
+   ],
+   "references": [
+    "Reiners, A., Shulyak, D., Käpylä, P. J. et al. 2022, Magnetism, rotation, and nonthermal emission in cool stars: average magnetic field measurements in 292 M dwarfs, A&A 662, A41: mean surface field ⟨B⟩ = 199 G Ro^(−1.26 ± 0.10) for slow rotators and 2050 G Ro^(−0.11 ± 0.03) for fast (saturated) rotators. https://arxiv.org/abs/2204.00342"
+   ],
+   "shown": "⟨B⟩ = 2050 G Ro^−0.11 (Ro ≤ 0.13); 199 G Ro^−1.26 above",
+   "equation": {
+    "name": "How strong a star's surface magnetism is for its spin",
+    "formula": "B = (if Ro <= Ro_sat then Bf * Ro ^ sf else Bs * Ro ^ ss) * gauss",
+    "inputs": {
+     "Ro": {
+      "kind": "star.rossby_number",
+      "unit": "1",
+      "name": "spin over churning (Rossby number)"
+     },
+     "gauss": {
+      "kind": "model.gauss",
+      "unit": "T",
+      "name": "one gauss"
+     },
+     "Bf": {
+      "kind": "model.field_fast_branch",
+      "unit": "1",
+      "name": "fast branch field at Ro = 1, gauss"
+     },
+     "sf": {
+      "kind": "model.field_fast_slope",
+      "unit": "1",
+      "name": "fast branch slope"
+     },
+     "Bs": {
+      "kind": "model.field_slow_branch",
+      "unit": "1",
+      "name": "slow branch field at Ro = 1, gauss"
+     },
+     "ss": {
+      "kind": "model.field_slow_slope",
+      "unit": "1",
+      "name": "slow branch slope"
+     },
+     "Ro_sat": {
+      "kind": "model.ro_sat",
+      "unit": "1",
+      "name": "Rossby number where activity saturates"
+     }
+    },
+    "outputs": {
+     "B": {
+      "kind": "star.surface_field",
+      "unit": "T",
+      "name": "mean field over the star's surface"
+     }
+    },
+    "source": {
+     "text": "Reiners, A. et al. 2022, A&A 662, A41",
+     "url": "https://arxiv.org/abs/2204.00342",
+     "where": "the two branches of mean field against Rossby number"
+    },
+    "explain": {
+     "curious": "A star's magnetism is stirred by its spin. The Sun's field averages about a hundred gauss over its surface; a young red dwarf spinning in a day carries thousands, enough to hold up huge clouds of gas.",
+     "science": "Zeeman-broadening measurements of the mean surface field against Rossby number: a steep power law for slow rotators and a nearly flat one once activity saturates. Fitted on M dwarfs; used for every cool star with a churning outer layer (unverified until the paper search returns)."
+    },
+    "examples": [
+     {
+      "Ro": 1.8,
+      "B": 0.009488765633724213
+     },
+     {
+      "Ro": 0.05,
+      "B": 0.28501463482953704
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.corona_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "lx",
+     "letter": "Lx"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "t_corona",
+     "letter": "Tc"
+    }
+   ],
+   "models": {
+    "cgs_flux": {
+     "value": 1000.0,
+     "grade": "derived",
+     "source": "1 W m⁻² is 1000 erg s⁻¹ cm⁻²"
+    },
+    "MK": {
+     "value": 1000000.0,
+     "grade": "derived",
+     "source": "a million kelvin"
+    }
+   },
+   "params": [
+    {
+     "param": "k",
+     "letter": "k",
+     "default": 0.11,
+     "range": [
+      0.01,
+      1.0
+     ],
+     "description": "coronal temperature in MK at unit X-ray surface flux (cgs) (Johnstone and Güdel 2015: 0.11)"
+    },
+    {
+     "param": "n",
+     "letter": "n",
+     "default": 0.26,
+     "range": [
+      0.1,
+      0.5
+     ],
+     "description": "index on the X-ray surface flux (0.26)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Johnstone, C. P. and Güdel, M. 2015, The coronal temperatures of low-mass main-sequence stars, A&A 578, A129: mean coronal temperature T̄_cor ≈ 0.11 F_X^0.26 MK, F_X the X-ray surface flux in erg s⁻¹ cm⁻². https://arxiv.org/abs/1505.00643"
+   ],
+   "shown": "T̄_cor = 0.11 F_X^0.26 MK,  F_X = L_X / 4πR²",
+   "equation": {
+    "name": "How hot a star's corona is",
+    "formula": "Fx = max(Lx, 0) / (4 * pi * R * R) * cgs_flux\nTc = k * Fx ^ n * MK",
+    "inputs": {
+     "Lx": {
+      "kind": "star.xray_luminosity",
+      "unit": "W",
+      "name": "X-ray light of the star"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "cgs_flux": {
+      "kind": "model.cgs_flux",
+      "unit": "s3 kg-1",
+      "name": "one W m⁻² counted in erg s⁻¹ cm⁻²"
+     },
+     "MK": {
+      "kind": "model.megakelvin",
+      "unit": "K",
+      "name": "a million kelvin"
+     },
+     "k": {
+      "kind": "model.corona_t_scale",
+      "unit": "1",
+      "name": "temperature scale, MK"
+     },
+     "n": {
+      "kind": "model.corona_t_index",
+      "unit": "1",
+      "name": "index on the X-ray flux"
+     }
+    },
+    "outputs": {
+     "Tc": {
+      "kind": "star.corona_temperature",
+      "unit": "K",
+      "name": "mean temperature of the corona"
+     }
+    },
+    "source": {
+     "text": "Johnstone, C. P. and Güdel, M. 2015, A&A 578, A129",
+     "url": "https://arxiv.org/abs/1505.00643",
+     "where": "mean coronal temperature against X-ray surface flux"
+    },
+    "explain": {
+     "curious": "Above a star's surface the thin gas is far hotter than the surface itself: about two million degrees over the Sun, ten million or more over an active young star.",
+     "science": "An empirical fit of emission-measure-weighted coronal temperature to X-ray surface flux across low-mass main-sequence stars (unverified until the paper search returns)."
+    },
+    "examples": [
+     {
+      "Lx": 2.2e+20,
+      "R": 700000000.0,
+      "Tc": 1679488.508838445
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.corona_base_density",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "lx",
+     "letter": "Lx"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "t_corona",
+     "letter": "Tc"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "density",
+     "letter": "n"
+    }
+   ],
+   "constants": {
+    "k_B": "sheet/k_B",
+    "m_u": "sheet/m_u"
+   },
+   "params": [
+    {
+     "param": "loss",
+     "letter": "Lam",
+     "default": 1.2e-35,
+     "range": [
+      1e-36,
+      1e-34
+     ],
+     "description": "radiative loss of coronal gas per electron and ion pair, W m³ (Rosner, Tucker and Vaiana 1978 near 1 to 2 MK: about 10⁻²² erg cm³ s⁻¹)"
+    },
+    {
+     "param": "mu",
+     "letter": "mu",
+     "default": 0.6,
+     "range": [
+      0.5,
+      1.3
+     ],
+     "description": "mean mass per particle of fully ionised coronal gas, in atomic mass units"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "t_corona",
+     "says": "corona temperature"
+    },
+    {
+     "port": "gravity",
+     "says": "gravity"
+    }
+   ],
+   "references": [
+    "Rosner, R., Tucker, W. H. and Vaiana, G. S. 1978, Dynamics of the quiescent solar corona, ApJ 220, 643: optically thin radiative loss function of coronal gas, about 10⁻²² erg cm³ s⁻¹ near 1 to 2 million kelvin. doi:10.1086/155949"
+   ],
+   "shown": "n = √(L_X / (Λ 4πR² H)),  H = k T / (μ m_u g)",
+   "equation": {
+    "name": "How dense the gas at the foot of a star's corona is",
+    "formula": "H = k_B * Tc / (mu * m_u * g)\nn = sqrt(max(Lx, 0) / (Lam * 4 * pi * R * R * H))",
+    "inputs": {
+     "Lx": {
+      "kind": "star.xray_luminosity",
+      "unit": "W",
+      "name": "X-ray light of the star"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "Tc": {
+      "kind": "star.corona_temperature",
+      "unit": "K",
+      "name": "temperature of the corona"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the surface"
+     },
+     "k_B": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann's constant"
+     },
+     "m_u": {
+      "kind": "constant.m_u",
+      "unit": "kg",
+      "name": "atomic mass unit"
+     },
+     "Lam": {
+      "kind": "model.radiative_loss",
+      "unit": "W m3",
+      "name": "radiative loss of hot gas"
+     },
+     "mu": {
+      "kind": "model.corona_mean_mass",
+      "unit": "1",
+      "name": "mean mass per particle"
+     }
+    },
+    "outputs": {
+     "n": {
+      "kind": "star.corona_base_density",
+      "unit": "m-3",
+      "name": "particles per cubic metre at the corona's foot"
+     }
+    },
+    "source": {
+     "text": "Rosner, R., Tucker, W. H. and Vaiana, G. S. 1978, ApJ 220, 643",
+     "doi": "10.1086/155949",
+     "where": "the radiative loss function of coronal gas"
+    },
+    "explain": {
+     "curious": "A star's X-rays are the glow of its corona, so how brightly it shines says how much hot gas it holds. Cool gas caught in the field, the prominences, sits in this gas a hundred times denser and colder.",
+     "science": "The corona taken as one hydrostatic layer of one scale height over the whole star, glowing optically thin: L_X = n² Λ(T) 4πR² H. The loss function is held at one value for 1 to 2 MK, a stand-in for its full temperature dependence."
+    },
+    "examples": [
+     {
+      "Lx": 2.2e+20,
+      "R": 700000000.0,
+      "Tc": 1679488.508838445,
+      "g": 274.0,
+      "n": 187224655868947.16
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.closed_corona_radius",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "field",
+     "letter": "B"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "extent",
+     "letter": "rc"
+    }
+   ],
+   "models": {
+    "gauss": {
+     "value": 0.0001,
+     "grade": "derived",
+     "source": "one gauss is 10⁻⁴ tesla"
+    }
+   },
+   "params": [
+    {
+     "param": "r_ref",
+     "letter": "r0",
+     "default": 2.5,
+     "range": [
+      1.5,
+      10.0
+     ],
+     "description": "closed field's reach for a star with the reference field, stellar radii (the Sun's source surface, 2.5)"
+    },
+    {
+     "param": "b_ref_g",
+     "letter": "B0",
+     "default": 95.0,
+     "range": [
+      1.0,
+      1000.0
+     ],
+     "description": "reference field, gauss (the Sun's from the surface field block at Ro 1.8)"
+    },
+    {
+     "param": "index",
+     "letter": "x",
+     "default": 0.3333333333333333,
+     "range": [
+      0.1,
+      1.0
+     ],
+     "description": "growth with field: 1/3 for a dipole held off by an even pressure"
+    }
+   ],
+   "positive": [
+    {
+     "port": "field",
+     "says": "field"
+    }
+   ],
+   "references": [
+    "Schatten, K. H., Wilcox, J. M. and Ness, N. F. 1969, A model of interplanetary and coronal magnetic fields, Solar Physics 6, 442: the Sun's field is closed out to a source surface near 2.5 solar radii (later potential-field models keep 2.5). doi:10.1007/BF00146478",
+    "Jardine, M. and Collier Cameron, A. 2019, Slingshot prominences: nature's wind gauges, MNRAS 482, 2853: prominences form at and beyond the co-rotation radius when it lies inside the closed corona. https://arxiv.org/abs/1810.09319"
+   ],
+   "shown": "r_c = 2.5 (B / B☉)^(1/3) stellar radii, at least 1",
+   "equation": {
+    "name": "How far out a star's field stays closed",
+    "formula": "rc = max(r0 * (B / (B0 * gauss)) ^ x, 1)",
+    "inputs": {
+     "B": {
+      "kind": "star.surface_field",
+      "unit": "T",
+      "name": "mean field over the star's surface"
+     },
+     "gauss": {
+      "kind": "model.gauss",
+      "unit": "T",
+      "name": "one gauss"
+     },
+     "r0": {
+      "kind": "model.source_surface_ref",
+      "unit": "1",
+      "name": "reach for the reference field, stellar radii"
+     },
+     "B0": {
+      "kind": "model.source_surface_field",
+      "unit": "1",
+      "name": "reference field, gauss"
+     },
+     "x": {
+      "kind": "model.source_surface_index",
+      "unit": "1",
+      "name": "growth with field"
+     }
+    },
+    "outputs": {
+     "rc": {
+      "kind": "star.closed_corona_extent",
+      "unit": "1",
+      "name": "reach of the closed field, stellar radii"
+     }
+    },
+    "source": {
+     "text": "Schatten, K. H., Wilcox, J. M. and Ness, N. F. 1969, Solar Physics 6, 442",
+     "doi": "10.1007/BF00146478",
+     "where": "the source surface at 2.5 solar radii"
+    },
+    "explain": {
+     "curious": "Near the star its field lines loop back to the surface and can hold gas up; further out the wind drags them open. A stronger field keeps its loops closed further out.",
+     "science": "The Sun's source surface at 2.5 radii, scaled to other stars as a dipole (falling as r⁻³) balanced against an even outside pressure, which grows as the cube root of the field. A stand-in for a real wind and field model (fudge register)."
+    },
+    "examples": [
+     {
+      "B": 0.009488765633724213,
+      "rc": 2.4990141405576205
+     },
+     {
+      "B": 0.28501463482953704,
+      "rc": 7.768214226989075
+     }
+    ]
+   }
   }
  ]
 }

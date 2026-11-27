@@ -2,7 +2,8 @@
 // (scripts/build-shell.sh first). Usage: node tests/ui/heat.e2e.mjs [chromium firefox webkit] [--screens <dir>]
 // Open the Solar System from the start sheet, pick Earth, open the Body screen and "Energy flow": the flow is drawn from the
 // kernel's core history, the words say how much heat it loses, sliding back to its youth shows more heat lost and
-// changes nothing in the campaign, and "Back to now" returns. The Moon, under a lid, carries its honesty mark. On a
+// changes nothing in the campaign, and "Back to now" returns. Above it, the outside half: sunlight in, the share
+// reflected as a bar, what is given off, and life's share as a ladder (LE2). The Moon, under a lid, carries its honesty mark. On a
 // phone the open panel never scrolls sideways.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -27,11 +28,11 @@ const shot = async (page, n, loc) => {
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${screens}/${n}.png` });
 };
-/** Watts from the figure the panel prints ("34.7 TW", "279 GW"). */
+/** Watts from the first figure the panel prints ("12.9 PW", "34.7 TW", "279 GW"). */
 const watts = (s) => {
-  const m = /([\d,.]+)\s*(TW|GW|MW|kW|W)\b/.exec(s);
+  const m = /([\d,.]+)\s*(PW|TW|GW|MW|kW|W)\b/.exec(s);
   assert.ok(m, `a power in: ${s}`);
-  return Number(m[1].replace(/,/g, "")) * { TW: 1e12, GW: 1e9, MW: 1e6, kW: 1e3, W: 1 }[m[2]];
+  return Number(m[1].replace(/,/g, "")) * { PW: 1e15, TW: 1e12, GW: 1e9, MW: 1e6, kW: 1e3, W: 1 }[m[2]];
 };
 
 async function sol(page) {
@@ -67,7 +68,15 @@ try {
 
     const heat = await openHeat(gm, "Earth");
     assert.equal(await heat.locator("[data-heat-when]").innerText().then((t) => t.startsWith("Now")), true);
-    assert.ok((await heat.locator("[data-flow] [data-band]").count()) >= 2, "the flow draws the kernel's bands");
+    assert.ok((await heat.locator("[data-heat-inside] [data-flow] [data-band]").count()) >= 2, "the flow draws the kernel's bands");
+    // The outside half: the climate's sunlight books, reflected share as a bar, and how it compares with the inside.
+    assert.ok((await heat.locator("[data-heat-outside] [data-flow] [data-band]").count()) >= 3, "sunlight in, reflected, given off");
+    assert.match(await heat.locator("[data-heat-albedo]").getAttribute("aria-label"), /^\d+% of the sunlight reflected/);
+    assert.match(await heat.locator("[data-heat-sun-why]").innerText(), /reflects \d+% straight back to space[\s\S]*sunlight, not its inside, sets how warm/);
+    // Life's share from the kernel's ledger (LE2): a ladder under the sunlight, and words.
+    await heat.locator("[data-heat-life-why], [data-heat-life-none]").first().waitFor();
+    assert.ok((await heat.locator("[data-heat-life] [data-rung]").count()) >= 3, "the ladder has its rungs");
+    assert.match(await heat.locator("[data-heat-life-why]").innerText(), /Life catches/);
     const nowWhy = await heat.locator("[data-heat-why]").innerText();
     assert.match(nowWhy, /loses .* of heat from inside through its surface/);
     const nowW = watts(nowWhy);
@@ -81,6 +90,7 @@ try {
     await gm.waitForSelector("[data-heat-line]");
     assert.equal(await heat.locator("[data-heat-line] svg").count(), 2, "temperature and heat lines");
     await shot(gm, `heat-earth-now-${name}`, heat);
+    await shot(gm, `heat-earth-life-${name}`, heat.locator("[data-heat-life]"));
 
     // Slide to its youth: more heat lost, and the campaign is untouched.
     const slider = heat.locator("[data-heat-slider]");
@@ -89,6 +99,7 @@ try {
     const thenWhy = await heat.locator("[data-heat-why]").innerText();
     assert.match(thenWhy, /ago, Earth .*lost/);
     assert.ok(watts(thenWhy) > nowW, "young Earth lost more heat than today");
+    assert.equal(await heat.locator("[data-heat-today]").count(), 1, "the sunlight half says it is today's");
     await shot(gm, `heat-earth-young-${name}`, heat);
     await heat.locator("[data-heat-now]").click();
     assert.ok((await heat.locator("[data-heat-when]").innerText()).startsWith("Now"));
@@ -98,6 +109,10 @@ try {
     const moon = await openHeat(gm, "Moon");
     await moon.locator("[data-heat-caveats] summary").click();
     assert.equal(await moon.locator('[data-heat-caveat="lid-hot"]').count(), 1);
+    // A moon's sunlight is its planet's distance from the Sun (HV2c): about Earth's per square metre, on a smaller world.
+    const moonWhy = await moon.locator("[data-heat-sun-why]").innerText();
+    const moonSun = watts(moonWhy);
+    assert.ok(moonSun > 5e15 && moonSun < 3e16, `the Moon gets ${moonSun} W of sunlight`);
     await shot(gm, `heat-moon-${name}`, moon);
 
     // Phone: the open panel fits.
@@ -105,7 +120,7 @@ try {
     phone.on("pageerror", (e) => errors.push(e.message));
     await sol(phone);
     const ph = await openHeat(phone, "Earth");
-    assert.equal(await ph.locator("[data-flow]").getAttribute("data-vertical"), "true", "the flow runs top to bottom on a phone");
+    for (const f of await ph.locator("[data-flow]").all()) assert.equal(await f.getAttribute("data-vertical"), "true", "each flow runs top to bottom on a phone");
     const wide = await phone.evaluate(() => document.documentElement.scrollWidth);
     assert.ok(wide <= 390, `no sideways scroll on a phone: ${wide}`);
     await shot(phone, `heat-earth-phone-${name}`, ph);
