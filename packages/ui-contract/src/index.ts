@@ -46,6 +46,8 @@ export * from "./composite.ts";
 export * from "./part-controls.ts";
 export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey } from "./desk.ts";
 export type { DeskDoc, DeskWrites, DeskTime, OnDesks, ShellPart, DeskLevel, DeskMemory } from "./desk.ts";
+export { NO_HAPPENINGS, byDate, dueAhead, passedWords, checkHappenings } from "./due.ts";
+export type { TimeMark, Summarised, Happenings, DueTick } from "./due.ts";
 export * from "./layouts.ts";
 export * from "./picker.ts";
 export * from "./system-summary.ts";
@@ -137,6 +139,8 @@ export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.
 export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";
 export * from "./orbits.ts";
 export { climateBelts, isExtrapolation, regimeWords } from "./climate.ts";
+export { HEAT_BOOK_FIELDS, HEAT_COLUMNS, HEAT_NODES, booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatStepAt, heatWatts, heatWhen, heatWhy, surfaceArea } from "./heat-flow.ts";
+export type { HeatBooks, HeatCaveat, HeatEnvelope, HeatEvent, HeatHistory, HeatStep } from "./heat-flow.ts";
 export type { ClimateBelt, ClimateSummary } from "./climate.ts";
 export { bandWords, replayAt, replayClock, replayModel } from "./replay.ts";
 export type { ReplayBody, ReplayCloud, ReplayEvent, ReplayFrame, ReplayModel, ReplayStage } from "./replay.ts";
