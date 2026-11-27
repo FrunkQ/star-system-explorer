@@ -136,6 +136,10 @@ pub const FILES: &[(&str, &str)] = &[
         include_str!("../../../packs/base-physics/formulas/stability.json"),
     ),
     (
+        "coorbital",
+        include_str!("../../../packs/base-physics/formulas/coorbital.json"),
+    ),
+    (
         "shape",
         include_str!("../../../packs/base-physics/formulas/shape.json"),
     ),

@@ -7,8 +7,7 @@
 //
 // The class list is the base atlas's "star" scheme (thread "Classify every star and remnant"): families with a child
 // per spectral letter, each class's first example carrying its sample as `star.sample_mass_msun`, `star.sample_age_yr`
-// and `star.sample_feh`. Until that scheme is on the stack, STAND_IN lists a star per family, aged to the middle of
-// the phase that makes it that family.
+// and `star.sample_feh`. A class the life line makes no star of today says so, with no stand-in.
 import { constant, roundTo, sayNumber, type AtlasClass, type AtlasScheme, type Json, type StarDescription, type StarPhase } from "../../../ui-contract/src/index.ts";
 import { bigCellContrast, type LiveStar } from "../../../renderer/src/index.ts";
 
@@ -29,7 +28,7 @@ export interface StarTile {
   family: StarFamily | string;
   summary?: string;
   /** Where the life line gives a star of this class; null with `why` where it cannot. */
-  sample: StarSampleAsk | { mass_msun: number; phase: StarPhase } | null;
+  sample: StarSampleAsk | null;
   why?: string;
 }
 
@@ -43,30 +42,6 @@ export const NOT_DRAWN: Partial<Record<StarPhase, string>> = {
 export const DRAWN_WITHOUT: Partial<Record<StarPhase, string>> = {
   "brown-dwarf": "Drawn as a glowing ball at its temperature: a brown dwarf this cool has cloud bands and weather of its own, which are not drawn yet.",
 };
-
-/**
- * A star per family, until the base atlas's star scheme lands: a mass and the phase it should be in, aged by
- * `sampleAge` to the middle of that phase on the life line, so each really is what its tile says.
- */
-export const STAND_IN: readonly StarTile[] = [
-  { id: "stand-in/pre-main-sequence", name: "Young star still contracting", family: "pre-main-sequence", sample: { mass_msun: 1, phase: "pre-main-sequence" } },
-  { id: "stand-in/main-sequence/O", name: "O main-sequence star", family: "main-sequence", sample: { mass_msun: 40, phase: "main-sequence" } },
-  { id: "stand-in/main-sequence/B", name: "B main-sequence star", family: "main-sequence", sample: { mass_msun: 6, phase: "main-sequence" } },
-  { id: "stand-in/main-sequence/A", name: "A main-sequence star", family: "main-sequence", sample: { mass_msun: 2, phase: "main-sequence" } },
-  { id: "stand-in/main-sequence/F", name: "F main-sequence star", family: "main-sequence", sample: { mass_msun: 1.3, phase: "main-sequence" } },
-  { id: "stand-in/main-sequence/G", name: "G main-sequence star", family: "main-sequence", sample: { mass_msun: 1, phase: "main-sequence" } },
-  { id: "stand-in/main-sequence/K", name: "K main-sequence star", family: "main-sequence", sample: { mass_msun: 0.75, phase: "main-sequence" } },
-  { id: "stand-in/main-sequence/M", name: "M main-sequence star (red dwarf)", family: "main-sequence", sample: { mass_msun: 0.3, phase: "main-sequence" } },
-  { id: "stand-in/subgiant", name: "Star leaving the main sequence", family: "subgiant", sample: { mass_msun: 1.5, phase: "hertzsprung-gap" } },
-  { id: "stand-in/giant/K", name: "Red giant (Sun-like, old)", family: "giant", sample: { mass_msun: 1, phase: "giant" } },
-  { id: "stand-in/giant/G", name: "Giant (intermediate mass)", family: "giant", sample: { mass_msun: 3, phase: "giant" } },
-  { id: "stand-in/giant/K-late", name: "Red giant near its tip", family: "giant", sample: { mass_msun: 1, age_yr: 1.23e10 } },
-  { id: "stand-in/supergiant/M", name: "Red supergiant", family: "supergiant", sample: { mass_msun: 20, age_yr: 9e6 } },
-  { id: "stand-in/brown-dwarf", name: "Brown dwarf", family: "brown-dwarf", sample: { mass_msun: 0.05, age_yr: 1e9 } },
-  { id: "stand-in/white-dwarf", name: "White dwarf", family: "white-dwarf", sample: { mass_msun: 3, phase: "white-dwarf" } },
-  { id: "stand-in/neutron-star", name: "Neutron star", family: "neutron-star", sample: { mass_msun: 15, phase: "neutron-star" } },
-  { id: "stand-in/black-hole", name: "Black hole", family: "black-hole", sample: { mass_msun: 40, phase: "black-hole" } },
-];
 
 const num = (v: Json | undefined): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
@@ -97,25 +72,6 @@ export function tilesFromScheme(scheme: Pick<AtlasScheme, "classes">, nameOf: (c
 }
 
 type Describe = (mass_msun: number, age_yr: number, feh?: number) => Promise<{ ok: true; star: StarDescription } | { ok: false; code: string; message: string }>;
-
-const SUN_AGE_YR = 4.6e9;
-
-/** A tile's age: given, or the middle of the phase it should show (in log time for a phase that lasts, a remnant's first billion years). */
-export async function sampleAge(describe: Describe, s: NonNullable<StarTile["sample"]>): Promise<StarSampleAsk | string> {
-  if ("age_yr" in s) return s;
-  const r = await describe(s.mass_msun, 1e6);
-  if (!r.ok) return r.message;
-  const span = r.star.phases.find((p) => p.phase === s.phase);
-  // The middle of the phase, but no older than the Sun where the phase allows (a red dwarf's main sequence outlasts the
-  // universe): a star of this kind as one might meet it now.
-  if (span && span.to_yr !== null) {
-    const mid = (span.from_yr + span.to_yr) / 2;
-    return { mass_msun: s.mass_msun, age_yr: span.from_yr < SUN_AGE_YR && SUN_AGE_YR < mid ? SUN_AGE_YR : mid };
-  }
-  if (span) return { mass_msun: s.mass_msun, age_yr: span.from_yr + Math.max(1e8, span.from_yr * 0.05) };
-  if (r.star.remnant.phase === s.phase && r.star.remnant.from_yr !== null) return { mass_msun: s.mass_msun, age_yr: r.star.remnant.from_yr + 1e8 };
-  return `the life line gives a ${s.mass_msun} solar-mass star no ${s.phase.replace(/-/g, " ")} phase`;
-}
 
 /** What the gallery knows of one tile's star once read. */
 export interface GalleryStar {
@@ -161,8 +117,7 @@ const STILL_STAR_CLOCK = DAY / 4;
 export async function readGalleryStar(session: Reader, tile: StarTile): Promise<GalleryStar | string> {
   if (!session.describeStar) return "this seat cannot read the life line";
   if (!tile.sample) return tile.why ?? "the life line makes no star of this class";
-  const ask = await sampleAge(session.describeStar.bind(session), tile.sample);
-  if (typeof ask === "string") return ask;
+  const ask = tile.sample;
   const r = await session.describeStar(ask.mass_msun, ask.age_yr, ask.feh);
   if (!r.ok) return r.message;
   const desc = r.star;

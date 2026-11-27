@@ -98,7 +98,18 @@ system?: string, at_s?: bigint, } | { "op": "read_composition", system: string, 
  * SB4: distance from the star for an icy body's activity, AU
  * (perihelion when left out).
  */
-r_au?: number, } | { "op": "ring_structure", system?: string, cloud?: string, ask?: unknown, variant?: bigint, samples?: number, window?: [number, number], } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
+r_au?: number, } | { "op": "ring_structure", system?: string, cloud?: string, ask?: unknown, variant?: bigint, samples?: number, window?: [number, number], } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, 
+/**
+ * RW16a, the small-body designer's pins (each optional; left out,
+ * the field decides): `pair` single, contact or separated; `makeup`
+ * mass shares of metal, rock, carbon and ice; `structure`
+ * rubble-pile, monolith or relaxed; one turn in `spin_hours`;
+ * `battered` 0 to 1 within its structure's relief range; a pair's
+ * `size_ratio`. A pin is never refused: the answer's `takes` says
+ * what an implausible one would need. In a system with no
+ * formation record the body is made of a designed field.
+ */
+pair?: string, makeup?: Array<number>, structure?: string, spin_hours?: number, battered?: number, size_ratio?: number, } | { "op": "small_shape", system: string, address: string, diameter_km?: number, mass_kg?: number, ice?: number, spin_hours?: number, a_au?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
 /**
  * Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
  * dusty shells (O3b).
@@ -197,7 +208,7 @@ route_audience?: unknown,
 /**
  * The routes' "Known to" rung (as `set_link`'s `tier`).
  */
-route_tier?: string, at_s: bigint, } | { "op": "roll_profile", program: string, body: string, reroll: boolean, apply: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "matter_budget", cell?: [bigint, bigint, bigint], } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
+route_tier?: string, at_s: bigint, } | { "op": "roll_profile", program: string, body: string, reroll: boolean, apply: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "home_galaxy" } | { "op": "set_home", halo?: string, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "matter_budget", cell?: [bigint, bigint, bigint], } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
 /**
  * Most stars listed, brightest first (default 20,000, the phone
  * tier of ruling 12; desktops ask 200,000). A cut list says

@@ -232,13 +232,55 @@ pub fn tree(
 /// Today's mass of a median halo that had `m_infall` at `z_infall`: the
 /// progenitor as a halo of its own (its growth stops being its own at
 /// infall; this is the growth it would have had).
+///
+/// The fixed-point iteration settles for most progenitors. For one that fell
+/// in very early (z above about 12) it can run away: the inverted growth asks
+/// for an enormous halo, whose Correa shape is degenerate, and the answer was
+/// NaN, which then poisoned the host's whole fed history (found by GZ12 on a
+/// catalogued early-forming host). When the iteration does not land on a root,
+/// the root is found by a scan in log mass and bisection instead; with no
+/// root (no median halo was ever that big that early), the halo that comes
+/// nearest is taken.
 pub fn mass_today_for(c: &Cosmology, m_infall: f64, z_infall: f64) -> f64 {
+    let at = |m0: f64| {
+        let (al, be) = crate::haloes::correa(c, m0, 0.0);
+        m0 * m::pow(1.0 + z_infall, al) * m::exp(be * z_infall)
+    };
     let mut m0 = m_infall;
     for _ in 0..12 {
         let (al, be) = crate::haloes::correa(c, m0, 0.0);
         m0 = m_infall / (m::pow(1.0 + z_infall, al) * m::exp(be * z_infall));
     }
-    m0
+    if m0.is_finite() && m0 >= m_infall && ((at(m0) - m_infall) / m_infall).abs() < 1.0e-6 {
+        return m0;
+    }
+    // Scan upward from the infall mass in 0.05 dex steps to 1e16 solar
+    // masses for the first crossing, then bisect it.
+    let lo0 = m::log10(m_infall);
+    let steps = m::ceil((16.0 - lo0).max(0.0) / 0.05) as u32;
+    let mut best = (lo0, at(m_infall));
+    let mut prev = lo0;
+    for i in 1..=steps {
+        let x = (lo0 + 0.05 * f64::from(i)).min(16.0);
+        let g = at(m::pow(10.0, x));
+        if g.is_finite() && g > best.1 {
+            best = (x, g);
+        }
+        if g.is_finite() && g >= m_infall {
+            let (mut a, mut b) = (prev, x);
+            for _ in 0..60 {
+                let mid = 0.5 * (a + b);
+                if at(m::pow(10.0, mid)) >= m_infall {
+                    b = mid;
+                } else {
+                    a = mid;
+                }
+            }
+            return m::pow(10.0, 0.5 * (a + b));
+        }
+        prev = x;
+    }
+    m::pow(10.0, best.0)
 }
 
 #[cfg(test)]

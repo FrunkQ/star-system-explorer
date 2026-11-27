@@ -136,6 +136,22 @@ export interface AtomInfo {
   explain: { curious?: string; science?: string; formula?: string };
 }
 
+/** RW16a: what the small-body designer pins (kernel `make_small_body`); everything left out the field decides. */
+export interface SmallDesign {
+  kind: "asteroid" | "comet-nucleus" | "contact-binary" | "binary-pair";
+  diameter_km?: number;
+  mass_kg?: number;
+  a_au: number;
+  e?: number;
+  pair?: "single" | "contact" | "separated";
+  /** Mass shares of metal, rock, carbon and ice. */
+  makeup?: [number, number, number, number];
+  structure?: "rubble-pile" | "monolith" | "relaxed";
+  spin_hours?: number;
+  battered?: number;
+  size_ratio?: number;
+}
+
 export interface ViewSession {
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
@@ -253,6 +269,10 @@ export interface ViewSession {
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
   /** What a ship's sensor sees from beside a body (V8 Window, kernel `window_view`). Read only; any seat, on the system it knows. */
   windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }>;
+  /** The universe's home galaxy, one of the web's own (GZ12, kernel `home_galaxy`). Read only; GM only. */
+  homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
+  /** "Make this home" (GZ12, kernel `set_home`): a catalogued halo's address, or null for the web's own choice. GM only. */
+  setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
   /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
   haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
   /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
@@ -318,6 +338,11 @@ export interface ViewSession {
    * or `cloud` and `rank` (1 the largest); with neither, the notable bodies formation made. `r_au` sets where an icy
    * body's activity is worked out (perihelion when left out). Nothing is stored; the same body comes back every time. */
   smallBody(ask: { system: string; member?: string; cloud?: string; rank?: number; r_au?: number }): Promise<{ ok: true; body: Json | null; notables: Json[] } | { ok: false; code: string; message: string }>;
+  /** RW16a: a small body made by hand (kernel `make_small_body`), with the designer's pins; its answer's `takes` says
+   * what an implausible design would need. Works in a system with no formation record (a designed field). */
+  makeSmallBody(ask: SmallDesign & { system: string; address: string }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }>;
+  /** RW16a: the lump of any body below the round size, from its address (kernel `small_shape`), with `round`. */
+  smallShape(ask: { system: string; address: string; diameter_km?: number; mass_kg?: number; ice?: number; spin_hours?: number; a_au?: number }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }>;
   /** VP-R3: one ring, whole (kernel `ring_structure`): its zones, the marks its moons leave, optical depth across it
    * and its grains' colour. Give `ask` (sse-small RingAsk), or `system` and `cloud` for a ring formation made. Read only. */
   ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }>;
@@ -976,6 +1001,18 @@ export class Session implements ViewSession {
     return r.type === "small_body_is" ? { ok: true, body: o.body ?? null, notables: o.notables ?? [] } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async makeSmallBody(ask: SmallDesign & { system: string; address: string }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "make_small_body", ...ask } as Json);
+    const o = r as unknown as { body?: Json };
+    return r.type === "small_body_is" && o.body ? { ok: true, body: o.body } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async smallShape(ask: { system: string; address: string; diameter_km?: number; mass_kg?: number; ice?: number; spin_hours?: number; a_au?: number }): Promise<{ ok: true; body: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "small_shape", ...ask } as Json);
+    const o = r as unknown as { body?: Json };
+    return r.type === "small_body_is" && o.body ? { ok: true, body: o.body } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async ringStructure(ask: { ask?: Json; system?: string; cloud?: string; variant?: number; samples?: number; window?: [number, number] }): Promise<{ ok: true; ring: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "ring_structure", ...ask } as Json);
     return r.type === "ring_structure_is" ? { ok: true, ring: (r as unknown as { ring: Json }).ring } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
@@ -1022,6 +1059,18 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the galaxy's history is the game master's chart; players see it through data views" };
     const r = await this.#call({ op: "galaxy_chart", ...ask });
     return r.type === "galaxy_charted" ? { ok: true, chart: (r as unknown as { chart: import("./galaxy.ts").GalaxyChart }).chart } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the universe's galaxies are charted on the game master's machine" };
+    const r = await this.#call({ op: "home_galaxy" });
+    return r.type === "home_galaxy" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master chooses the universe's home" };
+    const r = await this.#call(halo ? { op: "set_home", halo } : { op: "set_home" });
+    return r.type === "home_set" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }> {
