@@ -240,15 +240,10 @@ fn group_edge(
     seen: &[(f64, serde_json::Value)],
     t_gyr: f64,
 ) -> Result<serde_json::Value, Response> {
-    use sse_flow::Atom as _;
     // Through the physics in force (ER1): the block from its library, read
-    // once here, and the Sun's mass from the sheet in force (`m_sun`). The
+    // once here (ER2: the block door), and the Sun's mass from the sheet in force (`m_sun`). The
     // block has no settings, so none are shipped defaults.
-    let physics = sse_physics::now().ok_or_else(|| err("eval", "no physics in force"))?;
-    let block = physics
-        .blocks()
-        .iter()
-        .find(|a| a.decl().id == ZERO_VELOCITY_BLOCK)
+    let block = sse_physics::block(ZERO_VELOCITY_BLOCK)
         .ok_or_else(|| err("eval", format!("{ZERO_VELOCITY_BLOCK} is not loaded")))?;
     let t_s = t_gyr * 1.0e9 * sse_core::quantity::consts::JULIAN_YEAR;
     let radius_mpc = |msun: f64| -> Result<f64, Response> {
