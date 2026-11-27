@@ -7,36 +7,50 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat } from "../src/seat.ts";
 import { nodeKernel } from "./node-kernel.ts";
-import { radiiOnPage, readGalleryStar, shareWords, STAND_IN, tilesFromScheme } from "../../views/reference/src/star-gallery.ts";
+import { classesOnStack, className } from "../src/index.ts";
+import { radiiOnPage, readGalleryStar, shareWords, tilesFromScheme } from "../../views/reference/src/star-gallery.ts";
 
 const root = new URL("../../../", import.meta.url);
 const text = (p: string) => readFileSync(new URL(p, root), "utf8");
 const packs = [JSON.parse(text("packs/base-physics/pack.json")), JSON.parse(text("packs/base-time/pack.json"))];
 
-test("every stand-in kind is the kind its tile says, and the universe does not move", async () => {
+test("every class in the base atlas's star scheme with a sample draws as that class; the rest say why, and the universe does not move", async () => {
+  const scheme = classesOnStack([JSON.parse(text("packs/base-atlas/pack.json"))]).schemes.find((x) => x.id === "star");
+  assert.ok(scheme, "the base atlas carries the star scheme");
+  const tiles = tilesFromScheme(scheme, (c) => className(c));
   const k = nodeKernel();
   try {
     const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, packs);
     const before = await s.stateHash();
-    const phase: Record<string, string> = { "pre-main-sequence": "pre-main-sequence", "main-sequence": "main-sequence", subgiant: "hertzsprung-gap", giant: "giant", supergiant: "giant", "brown-dwarf": "brown-dwarf", "white-dwarf": "white-dwarf", "neutron-star": "neutron-star", "black-hole": "black-hole" };
-    const got = new Map<string, Awaited<ReturnType<typeof readGalleryStar>>>();
-    for (const t of STAND_IN) {
+    type Got = Exclude<Awaited<ReturnType<typeof readGalleryStar>>, string>;
+    const got = new Map<string, Got>();
+    let sampled = 0;
+    for (const t of tiles) {
       const g = await readGalleryStar(s, t);
+      if (!t.sample) {
+        // A class the life line makes no star of today (a G supergiant, a supermassive black hole) says so; no stand-in.
+        assert.equal(typeof g, "string", t.id);
+        continue;
+      }
+      sampled++;
       assert.ok(typeof g !== "string", `${t.id}: ${g}`);
-      assert.equal(g.desc.now.phase, phase[t.family], t.id);
-      got.set(t.id, g);
+      // Its sample star is read back as its own class by describe_star's classifier: family and kind.
+      const c = (g.desc.now as { class?: { family?: string; kind?: string } }).class;
+      assert.ok(t.id === `star/${c?.family}/${c?.kind}` || t.id === `star/${c?.family}`, `${t.id} reads back as ${JSON.stringify(c)}`);
       // Remnants still to be drawn by the exotic objects renderer are never given a stand-in disc.
       if (t.family === "neutron-star" || t.family === "black-hole") assert.ok(g.live === null && g.why, t.id);
       else assert.ok(g.live, `${t.id} is drawn`);
       assert.ok(g.desc.age_yr <= 1.4e10, `${t.id} is no older than the universe`);
+      got.set(t.id, g);
     }
-    const rsg = got.get("stand-in/supergiant/M") as Exclude<Awaited<ReturnType<typeof readGalleryStar>>, string>;
-    const sun = got.get("stand-in/main-sequence/G") as typeof rsg;
-    // The supergiant's cells are few and huge (low gravity, a tall scale height); the Sun's are a thousand across.
+    assert.ok(sampled >= 35, `most classes have a sample (${sampled} of ${tiles.length})`);
+    const rsg = got.get("star/supergiant/M")!;
+    const sun = got.get("star/main-sequence/G")!;
+    // The supergiant's cells are few and huge (low gravity, a tall scale height); a Sun-like star's are a thousand across.
     assert.ok(rsg.cells && rsg.cells.across < 40 && rsg.cells.big && rsg.cells.big.count < 10, JSON.stringify(rsg.cells));
     assert.ok(sun.cells && sun.cells.across > 500, JSON.stringify(sun.cells));
     // A hot star has no cells: it turns on its own clock instead.
-    const o = got.get("stand-in/main-sequence/O") as typeof rsg;
+    const o = got.get("star/main-sequence/O")!;
     assert.equal(o.cells, null);
     assert.match(o.clockWhy, /turn/);
     assert.equal(await s.stateHash(), before, "looking never changes the universe");
