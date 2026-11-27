@@ -11,7 +11,7 @@
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
-  import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
+  import { clearStored, download, fullSave, pruneKeptPacks, readStored, setAside, slimSave, writeStored } from "./campaign-store.ts";
   import YourData from "./YourData.svelte";
   import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
@@ -422,7 +422,9 @@
       keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign given.`;
       return null;
     }
-    const { save, problem } = readStored(ROOT);
+    const stored = readStored(ROOT);
+    // Big packs are kept beside the save (CM0): put them back before anything reads it.
+    const { save, problem } = stored.save ? await fullSave(stored.save) : stored;
     if (problem) {
       setAside();
       recovery = true;
@@ -501,9 +503,9 @@
     saveTimer = setTimeout(async () => {
       const save = await currentSave();
       if (!save) return;
-      const bad = writeStored(save);
+      const bad = writeStored(await slimSave(save));
       saveProblem = bad ? `Not kept in this browser: ${bad}. Use Save campaign to download it.` : null;
-      if (!bad) savedAt = save.saved_at;
+      if (!bad) (savedAt = save.saved_at), void pruneKeptPacks();
     }, 600);
   });
   async function saveFile() {
@@ -607,9 +609,9 @@
     await offerFile(name, r.bytes, r.listing);
     openCampaign();
   }
-  function reopenOffered() {
+  async function reopenOffered() {
     if (!offered?.save) return;
-    const bad = writeStored(offered.save);
+    const bad = writeStored(await slimSave(offered.save));
     if (bad) return void (offered = { ...offered, problems: [`it could not be kept to reopen: ${bad}`], save: null });
     location.reload();
   }

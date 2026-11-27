@@ -2,12 +2,17 @@
 // folder is served from store-packs/sol-today as the front door's `?spaceflight=` folder would be on Explorers: the
 // address opens the Solar System in Roll call, which is on the rail too, opens on a day with people up, takes a typed date, steps by day and by event, says an empty day
 // in words, and fits a phone. No figure from a book is pinned here: only that the page agrees with the look-up.
+// Then the same pack as one file through the Open door, like any pack (CM0): added to the campaign, Roll call reads it
+// from the stack with no folder anywhere, and it is still there after a reload, kept beside the save in IndexedDB
+// because it is too big for local storage.
 // Usage: node tests/ui/rollcall.e2e.mjs [chromium firefox] [--screens DIR]   (SSE_SHOTS=<dir> for screenshots)
-import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { go, more } from "./nav.mjs";
 
 const pw = createRequire(import.meta.url)("playwright");
 const PACK = "store-packs/sol-today";
@@ -159,6 +164,67 @@ try {
     assert.deepEqual(errors, [], `page errors in ${engine}`);
     await browser.close();
     console.log(`rollcall e2e: ${engine} ok`);
+  }
+
+  // CM0: Sol today as one file, through the one Open door, into a campaign.
+  const bundle = join(tmpdir(), `sol-today-${port}.json`);
+  execFileSync(process.execPath, ["scripts/bundle-pack.mjs", PACK, bundle], { stdio: "pipe" });
+  try {
+    for (const engine of engines) {
+      const browser = await pw[engine].launch();
+      const errors = [];
+      const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: shots ? 2 : 1 });
+      page.on("pageerror", (e) => errors.push(e.message));
+      const folderAsked = [];
+      page.on("request", (r) => new URL(r.url()).pathname.startsWith("/sol-today/") && folderAsked.push(r.url()));
+      const ready = () => page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
+      await page.goto(`http://localhost:${port}/#chart`);
+      await ready();
+
+      await more(page, "Campaign…");
+      const od = page.getByRole("dialog", { name: "Campaign" });
+      await od.getByLabel("File", { exact: true }).setInputFiles(bundle);
+      await od.locator("[data-opened='pack']").waitFor({ timeout: 60000 });
+      await od.locator("[data-pack-check]").waitFor({ timeout: 120000 });
+      await shot(page, `desk-open-sol-today-${engine}`);
+      await od.getByRole("button", { name: "Add it to this campaign" }).click();
+      await od.getByText(/^Added\./).waitFor({ timeout: 120000 });
+      await od.getByRole("button", { name: "Close", exact: true }).click();
+
+      // Roll call reads the pack from the stack: the Gregorian calendar, the people, and their craft's logs.
+      const rollFromStack = async () => {
+        await go(page, "rollcall");
+        const panel = page.locator("[data-rollcall]");
+        await panel.waitFor({ timeout: 60000 });
+        await panel.locator("[data-rollcall-date]").click();
+        await panel.locator("[data-rollcall-type]").fill("20 July 1969");
+        await panel.locator("[data-rollcall-type]").press("Enter");
+        await page.waitForFunction(() => document.querySelector("[data-rollcall-date]")?.textContent?.trim() === "20 July 1969", null, { timeout: 30000 });
+        await page.waitForFunction(() => /in space, aboard/.test(document.querySelector("[data-rollcall-sentence]")?.textContent ?? "") && !!document.querySelector("[data-rollcall-place]"), null, { timeout: 30000 });
+        assert.ok((await panel.locator("[data-rollcall-person]").count()) >= 3, "Apollo 11's crew at least");
+        return panel;
+      };
+      await rollFromStack();
+      await shot(page, `desk-roll-call-installed-${engine}`);
+
+      // Kept: the save names the pack by its hash, and is small enough for local storage.
+      await page.waitForFunction(() => (localStorage.getItem("sse4.campaign") ?? "").includes('"sse.pack.kept/1"'), null, { timeout: 30000 });
+      const kept = await page.evaluate(() => localStorage.getItem("sse4.campaign").length);
+      assert.ok(kept < 1e6, `the kept save is ${kept} characters`);
+
+      // Reopened: the pack is put back from IndexedDB and Roll call reads it again.
+      await page.reload();
+      await ready();
+      await page.waitForFunction(() => /Reopened the campaign/.test(document.body.textContent ?? ""), null, { timeout: 60000 });
+      await rollFromStack();
+
+      assert.deepEqual(folderAsked, [], "no folder is fetched: everything comes from the pack in the stack");
+      assert.deepEqual(errors, [], `page errors in ${engine}`);
+      await browser.close();
+      console.log(`rollcall e2e: ${engine} Sol today opened as a file, added, read and reopened`);
+    }
+  } finally {
+    rmSync(bundle, { force: true });
   }
 } catch (e) {
   failed = true;
