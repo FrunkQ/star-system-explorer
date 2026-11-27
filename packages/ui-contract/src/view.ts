@@ -97,6 +97,13 @@ export interface Workspace {
   campaign_now_yr?: number;
   /** Where the campaign's calendar starts (day 1 of year 1) on this system's time: its present when the campaign opened. */
   campaign_epoch_yr?: number;
+  /**
+   * The picture's clock (CLK1, picture-clock.ts): what every moving thing on screen reads its time from, and how fast
+   * time is passing (0 while stopped). Follows `now_yr`; the ruler's play and the Run desk's clock set its rate.
+   */
+  clock?: import("./picture-clock.ts").PictureClock;
+  /** Set how fast time passes on screen, clock seconds per real second (0 stops it). */
+  setRate?(rate: number): void;
   /** The top pack's calendar, when a pack gives one (kernel `calendar`); the ruler counts dates in it. */
   pack_calendar?: PackCalendar | null;
   mode: "edit" | "view";
@@ -104,6 +111,10 @@ export interface Workspace {
   desk?: "explore" | "build" | "run";
   /** Players' screens connected now (the share's count): while any are, a reveal is held two seconds (SV2). */
   players_online?: number;
+  /** What the time ruler opens on for this desk at this level (TM6, top-level 12.1); `key` changes on a desk or level switch. */
+  ruler_opens?: { key: string; span: number | string | null };
+  /** The GM chose a ruler span: a length of time, or null for the whole history; the shell keeps it for this desk and level. */
+  setRulerSpan?(span: number | null): void;
   /** True once the campaign has been shared with players: secrecy has become relevant (SV2). */
   shared?: boolean;
   /**

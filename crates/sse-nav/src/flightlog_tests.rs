@@ -194,3 +194,42 @@ fn voyager_2_rewinds_through_four_flybys() {
     let d = norm(out.r_m.unwrap()) / AU;
     assert!(d > 100.0 && d < 140.0, "{d} au");
 }
+
+/// CM2: a state turned into elements and back is the same state, for an
+/// ellipse, a circle, an equatorial orbit, a retrograde one and a hyperbola.
+#[test]
+fn elements_from_a_state_give_the_state_back() {
+    use crate::flightlog::{elements_from_state, OrbitElements};
+    let mu = 3.986004418e14;
+    let cases = [
+        (7.0e6, 0.1, 28.5, 40.0, Some(60.0), Some(10.0)),
+        (6.778e6, 0.0, 51.6, 300.0, None, None),
+        (4.2164e7, 0.01, 0.0, 0.0, Some(90.0), Some(200.0)),
+        (8.0e6, 0.2, 150.0, 10.0, Some(250.0), Some(300.0)),
+        (-2.0e7, 1.5, 20.0, 70.0, Some(30.0), Some(15.0)),
+    ];
+    for (a, e, i, node, peri, m0) in cases {
+        let el = OrbitElements {
+            a_m: a,
+            e,
+            i_deg: i,
+            node_deg: node,
+            peri_deg: peri,
+            m0_deg: m0,
+            varpi_deg: None,
+            mean_longitude_deg: None,
+            epoch_s: 0,
+        };
+        let (r, v) = el.state(mu, 1234.0);
+        let back = elements_from_state(r, v, mu, 1234).expect("not parabolic");
+        assert!((back.a_m - a).abs() < 1e-6 * a.abs(), "{back:?}");
+        assert!((back.e - e).abs() < 1e-9, "{back:?}");
+        for dt in [0.0, 600.0, 5000.0] {
+            let (r1, v1) = el.state(mu, 1234.0 + dt);
+            let (r2, v2) = back.state(mu, dt);
+            let d = norm([r1[0] - r2[0], r1[1] - r2[1], r1[2] - r2[2]]);
+            let dv = norm([v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]]);
+            assert!(d < 1e-3 && dv < 1e-6, "{a} {e} {i}: {d} m, {dv} m/s off");
+        }
+    }
+}

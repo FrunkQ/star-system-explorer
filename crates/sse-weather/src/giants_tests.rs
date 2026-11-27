@@ -589,3 +589,155 @@ fn deck_bases_sit_where_their_vapour_saturates() {
     assert!(cell.layers[2].base_m > cell.layers[1].base_m);
     assert!(cell.layers[2].top_m > cell.layers[2].base_m);
 }
+
+#[test]
+fn sheared_ovals_follow_the_steady_patch_relation() {
+    let gs = base_settings();
+    let c = fixture("Jupiter");
+    let l = layout(&gs, &c);
+    let a = c.radius_m;
+    let mut seen = 0;
+    for k in 0..40 {
+        let p = prepare(
+            &gs,
+            &c,
+            Date {
+                day: 250.0 * k as f64,
+            },
+        );
+        for s in p.systems.iter().filter(|s| s.kind == "oval") {
+            seen += 1;
+            // The relation, back from the aspect: ζ / ω = λ (λ - 1) / (λ + 1).
+            let lam = s.aspect;
+            let h = if s.lat_deg >= 0.0 { 1.0 } else { -1.0 };
+            let omega = -h * 2.0 * m::exp(0.5) * s.strength / (0.5 * s.size_km * 1000.0);
+            let q = zonal_vorticity(&gs, &l, a, s.lat_deg) / omega;
+            let back = lam * (lam - 1.0) / (lam + 1.0);
+            assert!(
+                (back - q).abs() < 1e-9 || (lam - (m::sqrt(2.0) - 1.0)).abs() < 1e-12,
+                "{}: λ {lam} gives {back}, ζ/ω {q}",
+                s.id
+            );
+            assert!(lam > 0.0);
+        }
+    }
+    assert!(seen > 0, "no oval in forty dates");
+    // Absolute: an anticyclone in anticyclonic shear of a third its own vorticity: λ² - (4/3)λ - 1/3 = 0.
+    let want = (4.0 / 3.0 + m::sqrt(16.0 / 9.0 + 4.0 / 3.0)) / 2.0;
+    let q = 1.0 / 3.0;
+    assert!((want * (want - 1.0) / (want + 1.0) - q).abs() < 1e-12);
+    assert!((want - 1.548_583_770_354_863_5).abs() < 1e-9);
+}
+
+#[test]
+fn an_oval_is_longer_along_the_wind() {
+    let gs = base_settings();
+    let c = fixture("Jupiter");
+    let mut p = prepare(&gs, &c, Date { day: 0.0 });
+    // One oval alone, 2.0 times longer east-west, at 20°N.
+    p.systems = vec![WeatherSystem {
+        id: "test".into(),
+        kind: "oval".into(),
+        lat_deg: 20.0,
+        lon_deg: 0.0,
+        track: vec![],
+        size_km: 10000.0,
+        strength: 100.0,
+        born: 0.0,
+        ends: 1e9,
+        aspect: 2.0,
+        count: 0,
+        why: String::new(),
+        evidence: "rule".into(),
+    }];
+    let a = c.radius_m;
+    let deg = |km: f64| km * 1000.0 / a * 180.0 / m::PI;
+    // 5000 km east and 2500 km north are both on the same contour (r = 5000 / (5000 √2) √2... equal elliptical radius).
+    let east = giant_cell(
+        &gs,
+        &c,
+        &p,
+        20.0,
+        deg(5000.0 * m::sqrt(2.0)) / m::cos(20.0 * m::PI / 180.0),
+    );
+    let north = giant_cell(&gs, &c, &p, 20.0 + deg(5000.0 / m::sqrt(2.0)), 0.0);
+    // The storm's own share: the deck with it over the deck without it, at the same place.
+    let mut bare = p.clone();
+    bare.systems.clear();
+    let gain = |x: &Cell| {
+        x.layers[2].optical_depth
+            - giant_cell(&gs, &c, &bare, x.lat_deg, x.lon_deg).layers[2].optical_depth
+    };
+    assert!(
+        (gain(&east) - gain(&north)).abs() < 0.02,
+        "east {} north {}",
+        gain(&east),
+        gain(&north)
+    );
+    assert!(gain(&east) > 0.5);
+    // And the same distance north is further out than east.
+    let n2 = giant_cell(&gs, &c, &p, 20.0 + deg(5000.0 * m::sqrt(2.0)), 0.0);
+    assert!(gain(&n2) < 0.5 * gain(&east));
+}
+
+#[test]
+fn a_backwards_spinner_mirrors_its_winds_and_vortices() {
+    let gs = base_settings();
+    let fwd = fixture("Jupiter");
+    let mut back = fwd.clone();
+    back.rotation_hours = -fwd.rotation_hours;
+    let (lf, lb) = (layout(&gs, &fwd), layout(&gs, &back));
+    assert!(lb.retrograde && !lf.retrograde);
+    for lat in [-60.0, -20.0, 0.0, 15.0, 45.0] {
+        let (u, v) = (
+            zonal_wind(&gs, &lf, fwd.radius_m, lat),
+            zonal_wind(&gs, &lb, back.radius_m, lat),
+        );
+        assert!((u + v).abs() < 1e-9, "{lat}: {u} vs {v}");
+    }
+    // The north polar vortex's winds go round the other way.
+    let pf = prepare(&gs, &fwd, Date { day: 0.0 });
+    let pb = prepare(&gs, &back, Date { day: 0.0 });
+    let s = pf
+        .systems
+        .iter()
+        .find(|s| s.lat_deg > 80.0 && s.kind == "cyclone")
+        .expect("a polar cyclone");
+    let lat = s.lat_deg - 0.3 * (0.5 * s.size_km) * 1000.0 / fwd.radius_m * 180.0 / m::PI;
+    let cf = giant_cell(&gs, &fwd, &pf, lat, s.lon_deg);
+    let cb = giant_cell(&gs, &back, &pb, lat, s.lon_deg);
+    let (wf, wb) = (cf.layers[2].wind_m_s[0], cb.layers[2].wind_m_s[0]);
+    assert!(wf * wb < 0.0, "{wf} vs {wb}");
+}
+
+#[test]
+fn a_patch_reads_the_same_cells_closer() {
+    let gs = base_settings();
+    let c = fixture("Saturn");
+    let block = crate::scenario::block();
+    let date = Date { day: 0.0 };
+    let pt = block.patch(&c, date, 90.0, 0.0, 20000.0, 24, &[]);
+    assert_eq!(pt.cells.len(), 24 * 24);
+    // Each cell is the giant's own cell at its place.
+    let p = prepare(&gs, &c, date);
+    for k in [0usize, 100, 300, 575] {
+        let x = &pt.cells[k];
+        let want = giant_cell(&gs, &c, &p, x.lat_deg, x.lon_deg);
+        assert_eq!(x.layers[2].optical_depth, want.layers[2].optical_depth);
+    }
+    // The hexagon: cells inside its edge have the thinner high deck, cells just outside the thicker one, on a vertex
+    // ray and a mid-side ray alike, though the edge sits nearer the pole along the mid-side ray.
+    let l = layout(&gs, &c);
+    let q = l.poles.iter().find(|q| q.north).unwrap();
+    assert_eq!(q.polygon_sides, 6);
+    let r_jet = (90.0 - l.polar_jet_lat_deg) / (180.0 / m::PI) * c.radius_m / 1000.0;
+    let mid = polygon_edge_km(r_jet, 6, q.orient_lon_deg, q.orient_lon_deg + 30.0);
+    assert!((mid - r_jet * m::cos(m::PI / 6.0)).abs() < 1e-6);
+    // Directions round the centre: patch_dir at a pole gives the bearing's longitude.
+    let d = crate::rules::patch_dir(c.radius_m, 90.0, 0.0, 1000.0, 0.0);
+    let (lat, lon) = crate::rules::lat_lon(d);
+    assert!((lon - 90.0).abs() < 1e-6 && lat < 90.0 && lat > 89.0);
+    let d = crate::rules::patch_dir(c.radius_m, 0.0, 30.0, 0.0, 1000.0);
+    let (lat, lon) = crate::rules::lat_lon(d);
+    assert!(lat > 0.0 && (lon - 30.0).abs() < 1e-9);
+}

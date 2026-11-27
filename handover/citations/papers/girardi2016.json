@@ -1,0 +1,1 @@
+{"key": "girardi2016", "citation": "Girardi 2016", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/stars.rs"], "claims": ["/// about 50 L☉ at 4,500 to 4,800 K (Girardi 2016,"], "tier": 3}

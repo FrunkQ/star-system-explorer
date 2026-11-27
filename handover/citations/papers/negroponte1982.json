@@ -1,0 +1,1 @@
+{"key": "negroponte1982", "citation": "Negroponte 1982", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/galaxy.rs"], "claims": ["//!   Negroponte 1982). Morphology is a classification rule over these numbers."], "tier": 3}

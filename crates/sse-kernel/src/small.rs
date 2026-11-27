@@ -401,3 +401,118 @@ pub(crate) fn shape(
         notables: None,
     })
 }
+
+/// `ring_structure` from a system's formation: the ring cloud at `cloud`, its
+/// world, that world's moons and the ring's own largest members as the
+/// sculptors (members big enough clear gaps; Cloud::resolve, the one method).
+pub(crate) fn ring_ask_from_run(
+    run: Option<&SystemRun>,
+    cloud: &str,
+    variant: u64,
+    samples: Option<usize>,
+    window: Option<[f64; 2]>,
+) -> Result<sse_small::ring::RingAsk, Response> {
+    use sse_small::ring::{RingAsk, RingHost, RingIn, Sculptor};
+    let run = run.ok_or_else(|| {
+        err(
+            "no_formation",
+            "this system has no formation run, so its rings have no makeup to read",
+        )
+    })?;
+    let l = run
+        .leftovers
+        .as_ref()
+        .ok_or_else(|| err("no_formation", "this system's formation made no rings"))?;
+    let c = l
+        .clouds
+        .iter()
+        .find(|c| c.address.to_string() == cloud && c.kind == "ring")
+        .ok_or_else(|| err("not_found", format!("no ring {cloud} in this system")))?;
+    let around = c.around.clone().unwrap_or_default();
+    let w = l.worlds.iter().find(|w| w.id == around).ok_or_else(|| {
+        err(
+            "not_found",
+            format!("the world {around} that ring {cloud} goes round is gone"),
+        )
+    })?;
+    let au = sse_core::sheet::AU;
+    // Earth's mass and radius from the physics in force (the formation's worlds are in Earth units); a stack loaded
+    // without a sheet (tests, toy stacks) reads the shipped one, as `ring_structure` does.
+    let earth = |id: &str| {
+        sse_physics::constant(id)
+            .or_else(|| sse_reference::Reference::base().constant(id))
+            .ok_or_else(|| err("eval", format!("no {id} on the data sheet")))
+    };
+    let (me, re) = (earth("M_earth")?, earth("R_earth_mean")?);
+    let radius_m = w.radius_earth() * re;
+    let mut sculptors: Vec<Sculptor> = l
+        .moons
+        .iter()
+        .filter(|mo| mo.parent == around)
+        .map(|mo| Sculptor {
+            id: mo.address.to_string(),
+            name: mo.address.to_string(),
+            a_m: mo.a_planet_radii * radius_m,
+            mass_kg: mo.mass_earth() * me,
+        })
+        .collect();
+    let seed = seed_of(run);
+    for k in 1..=3u64 {
+        let b = c.resolve(&seed, k);
+        sculptors.push(Sculptor {
+            id: b.address.to_string(),
+            name: b.address.to_string(),
+            a_m: b.a_au * au,
+            mass_kg: b.mass_kg,
+        });
+    }
+    let s = c.solid.map(|x| x as f64);
+    let t: f64 = s.iter().sum();
+    let makeup = (t > 0.0).then(|| sse_small::Makeup {
+        metal: s[0] / t,
+        rock: s[1] / t,
+        carbon: s[2] / t,
+        ice: (s[3] + s[4] + s[5]) / t,
+    });
+    Ok(RingAsk {
+        key: cloud.to_string(),
+        variant,
+        host: RingHost {
+            mass_kg: w.mass_earth() * me,
+            radius_m,
+            ..Default::default()
+        },
+        sculptors,
+        ring: RingIn {
+            inner_m: c.a_min_au * au,
+            outer_m: c.a_max_au * au,
+            mass_kg: Some(c.mass_earth() * me),
+            makeup,
+            ..Default::default()
+        },
+        samples,
+        window,
+    })
+}
+
+/// `ring_structure`: one ring, whole (sse-small ring.rs).
+pub(crate) fn ring_structure(
+    ask: &sse_small::ring::RingAsk,
+    seed: &Seed,
+    sheet: &sse_reference::Reference,
+) -> Result<Response, Response> {
+    let s = settings();
+    // The stack's sheet; a stack loaded without one (tests, toy stacks) reads the shipped sheet, as the settings do.
+    let base;
+    let sheet = if sheet.row("substances", &s.rings.ice).is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    let r = sse_small::ring::structure(ask, &s.rings, &s.makeup.grain_density_kg_m3, seed, sheet)
+        .map_err(|e| err("bad_request", e))?;
+    Ok(Response::RingStructureIs {
+        ring: serde_json::to_value(r).expect("plain"),
+    })
+}

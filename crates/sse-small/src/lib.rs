@@ -23,6 +23,7 @@
 pub mod comet;
 pub mod figure;
 mod member;
+pub mod ring;
 pub mod settings;
 pub mod takes;
 
@@ -43,6 +44,8 @@ use std::collections::BTreeMap;
 mod comet_tests;
 #[cfg(test)]
 mod design_tests;
+#[cfg(test)]
+mod ring_tests;
 #[cfg(test)]
 mod tests;
 

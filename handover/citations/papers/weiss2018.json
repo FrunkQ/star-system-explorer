@@ -1,0 +1,1 @@
+{"key": "weiss2018", "citation": "Weiss et al. 2018, AJ 155, 48", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/violent_tests.rs"], "claims": ["// 20 (Pu and Wu 2015, ApJ 807, 44; Weiss et al. 2018, AJ 155, 48); this sample"], "tier": 3}

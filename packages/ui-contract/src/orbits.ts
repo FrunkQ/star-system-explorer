@@ -82,6 +82,13 @@ export function phasesFrom(bodies: readonly OrbitPlaced[]): Map<string, number> 
   return out;
 }
 
+/** Each placed body's period from the kernel's reply (seconds), for running it on between answers (CLK1). */
+export function periodsFrom(bodies: readonly OrbitPlaced[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const b of bodies) if (b.placed && typeof b.period_s === "number" && Number.isFinite(b.period_s) && b.period_s > 0) out.set(b.address, b.period_s);
+  return out;
+}
+
 /** Each placed body's place from its host's centre at the reply's first time (metres): eclipses need the third axis. */
 export function placesFrom(bodies: readonly OrbitPlaced[]): Map<string, [number, number, number]> {
   const out = new Map<string, [number, number, number]>();
@@ -111,17 +118,23 @@ export function motionsFrom(bodies: readonly OrbitPlaced[]): Map<string, [number
   return out;
 }
 
-/** The scene with each body moved to its phase (and its place and velocity, when given); bodies the kernel could not place keep theirs. */
-export function withPhases(scene: SystemScene, phases: ReadonlyMap<string, number> | null, places?: ReadonlyMap<string, [number, number, number]> | null, motions?: ReadonlyMap<string, [number, number, number]> | null): SystemScene {
+/**
+ * The scene with each body moved to its phase (and its place and velocity, when given); bodies the kernel could not
+ * place keep theirs. Given `clock` (the clock time the phases are for, seconds since the campaign's epoch, and each
+ * body's period), each orbit carries them, so a view can run the body on smoothly between answers (picture-clock.ts
+ * `phaseAt`, CLK1).
+ */
+export function withPhases(scene: SystemScene, phases: ReadonlyMap<string, number> | null, places?: ReadonlyMap<string, [number, number, number]> | null, motions?: ReadonlyMap<string, [number, number, number]> | null, clock?: { at_s: number; periods: ReadonlyMap<string, number> } | null): SystemScene {
   if (!phases || !phases.size) return scene;
   let moved = false;
   const subjects = scene.subjects.map((s) => {
     const p = s.orbit ? phases.get(s.address) : undefined;
     const r = s.orbit ? places?.get(s.address) : undefined;
     const v = s.orbit ? motions?.get(s.address) : undefined;
-    if (p === undefined || !s.orbit || (p === s.orbit.phase_deg && !r)) return s;
+    const period_s = clock?.periods.get(s.address);
+    if (p === undefined || !s.orbit || (p === s.orbit.phase_deg && !r && period_s === undefined)) return s;
     moved = true;
-    return { ...s, orbit: { ...s.orbit, phase_deg: p, ...(r ? { r_m: r } : {}), ...(v ? { v_m_s: v } : {}) } };
+    return { ...s, orbit: { ...s.orbit, phase_deg: p, ...(r ? { r_m: r } : {}), ...(v ? { v_m_s: v } : {}), ...(period_s !== undefined && clock ? { period_s, at_s: clock.at_s } : {}) } };
   });
   return moved ? { ...scene, subjects } : scene;
 }

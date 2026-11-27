@@ -10,7 +10,7 @@ use sse_core::cbor::Value;
 use std::collections::BTreeMap;
 
 const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../");
-const SCHEMES: [&str; 4] = ["physical", "surface", "air", "habitability"];
+const SCHEMES: [&str; 5] = ["physical", "surface", "air", "habitability", "star"];
 
 fn fixture(name: &str) -> Vec<serde_json::Value> {
     let p = format!("{ROOT}tests/fixtures/classify/{name}");
@@ -38,7 +38,7 @@ fn modifiers(a: &Atlas, scheme: &str, s: &Subject) -> Vec<String> {
 fn base_atlas_is_valid_and_every_class_has_a_passing_example() {
     let a = base_atlas();
     a.validate().unwrap();
-    assert_eq!(a.schemes.len(), 4);
+    assert_eq!(a.schemes.len(), 5);
     for c in &a.classes {
         assert!(SCHEMES.contains(&c.scheme.as_str()), "{}", c.id);
         assert!(!c.learn.summary.is_empty(), "{} has no learn text", c.id);
@@ -156,4 +156,38 @@ fn every_scheme_has_bases_and_modifiers_where_the_design_says() {
     assert!(count("physical", ClassKind::Modifier) >= 15);
     assert_eq!(count("habitability", ClassKind::Modifier), 0);
     assert_eq!(count("air", ClassKind::Modifier), 8);
+}
+
+/// The star scheme reads the kernel's star class (sse_formation::spectral):
+/// every family is a base class with its kinds beneath, and a star with the
+/// Sun's published class lands in "a G main-sequence star".
+#[test]
+fn the_star_scheme_reads_the_kernels_star_class() {
+    let a = base_atlas();
+    let star = |fam: &str, kind: &str| {
+        let mut f = BTreeMap::new();
+        f.insert("star.class_family".to_string(), Value::Text(fam.into()));
+        f.insert("star.class_kind".to_string(), Value::Text(kind.into()));
+        Subject::new(f)
+    };
+    for (fam, kind, want) in [
+        ("main-sequence", "G", "star/main-sequence/G"),
+        ("supergiant", "M", "star/supergiant/M"),
+        ("brown-dwarf", "T", "star/brown-dwarf/T"),
+        ("white-dwarf", "DC", "star/white-dwarf/DC"),
+        ("neutron-star", "NS", "star/neutron-star"),
+        ("black-hole", "BH", "star/black-hole/BH"),
+    ] {
+        assert_eq!(
+            base(&a, "star", &star(fam, kind)).as_deref(),
+            Some(want),
+            "{fam} {kind}"
+        );
+    }
+    // A world has no star class.
+    let earth = fixture("solar-system.json")
+        .into_iter()
+        .find(|b| b["name"] == "Earth")
+        .unwrap();
+    assert_eq!(base(&a, "star", &subject(&earth)), None);
 }

@@ -4,7 +4,8 @@ import { profileShare, checkLayer, detailLine, discScale, LADDER_LAYERS, ladderA
 import { cell, curl, NUM, WRAP, simplex, type V3 } from "../src/ladder-noise.ts";
 
 // A Jupiter-like giant's curl figures (round numbers, for the mechanism only).
-const JUPITER = { rhines_scale_m: 1.0e7, deformation_radius_m: 2.5e6, jet_shear_m_s: 60, jet_speed_m_s: 120, eddy_speed_m_s: 30 };
+// curl_share is the eddy speed over the eddy speed plus the band's shear (giant-detail.ts `curlFacts`): 30 / (30 + 30).
+const JUPITER = { rhines_scale_m: 1.0e7, deformation_radius_m: 2.5e6, curl_share: 0.5, jet_speed_m_s: 120, eddy_speed_m_s: 30 };
 const R_JUP = 6.9911e7;
 const curls = () => resolveLayer(ladderLayer("giant.curls")!, JUPITER) as ResolvedLayer;
 
@@ -20,7 +21,7 @@ test("every starter declaration is sound and binds its sizes, amplitude and spee
 test("a missing kernel value means nothing is drawn, and the HUD says which value", () => {
   const r = resolveLayer(ladderLayer("giant.curls")!, { rhines_scale_m: 1e7, jet_speed_m_s: 120, eddy_speed_m_s: 30 });
   assert.equal(r.drawn, false);
-  if (!r.drawn) assert.match(r.why, /no jet_shear_m_s/);
+  if (!r.drawn) assert.match(r.why, /no curl_share/);
   // A ratio whose divisor is missing names the divisor.
   const s = resolveLayer(ladderLayer("giant.curls")!, { ...JUPITER, deformation_radius_m: undefined });
   assert.equal(s.drawn, false);
@@ -202,17 +203,17 @@ test("the HUD's detail line names where facts end in the body's own units", () =
 });
 
 test("per-latitude profiles (the weather op's jets): resolved at their peak, shares per band for the caller", () => {
-  const jets = { rhines_scale_m: [4e6, 1e7, 6e6], deformation_radius_m: [2e6, 2.5e6, 3e6], jet_speed_m_s: [-40, 150, 60], jet_shear_m_s: [20, 75, null], eddy_speed_m_s: [10, 35, 20] };
+  const jets = { rhines_scale_m: [4e6, 1e7, 6e6], deformation_radius_m: [2e6, 2.5e6, 3e6], jet_speed_m_s: [-40, 150, 60], curl_share: [0.5, 0.5, null], eddy_speed_m_s: [10, 35, 20] };
   const r = resolveLayer(ladderLayer("giant.curls")!, jets) as ResolvedLayer;
   assert.equal(r.drawn, true);
   assert.equal(r.largest_m, 1e7);
   assert.equal(r.speed_m_s, 35);
-  // Shear over speed, element by element: 0.5, 0.5, missing.
+  // The eddies' share, element by element: 0.5, 0.5, missing.
   assert.equal(r.amplitude, 0.5);
   assert.equal(r.stretch, 4);
   assert.deepEqual(profileShare(ladderLayer("giant.curls")!.amplitude, jets), [1, 1, 0]);
   assert.deepEqual(profileShare({ fact: "jet_speed_m_s" }, jets), [40 / 150, 1, 60 / 150]);
   assert.deepEqual(profileShare({ fact: "x" }, { x: 3 }), [1]);
   // A profile with nothing in it cuts the layer.
-  assert.equal(resolveLayer(ladderLayer("giant.curls")!, { ...jets, jet_shear_m_s: [null, null, null] }).drawn, false);
+  assert.equal(resolveLayer(ladderLayer("giant.curls")!, { ...jets, curl_share: [null, null, null] }).drawn, false);
 });

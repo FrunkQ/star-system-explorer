@@ -1,0 +1,1 @@
+{"key": "jiang2015", "citation": "Jiang, Cole, Sawala and Frenk 2015, MNRAS 448, 1674", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-cosmos/src/infall.rs"], "claims": ["/// (Jiang, Cole, Sawala and Frenk 2015, MNRAS 448, 1674: the"], "tier": 3}

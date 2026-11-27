@@ -57,6 +57,7 @@ test("the shell's parts say which desks each is on now", () => {
   // The eyes are Build's and Run's (the SV ruling); the depth dial and the Workshop door are off Run (TM2b) and the rail
   // folds there (TM2c, design 3.1).
   assert.deepEqual(SHELL_PARTS.filter((p) => p.desks).map((p) => [p.id, p.desks]), [
+    ["stepper", ["run"]],
     ["depth", ["explore", "build"]],
     ["rail-open", ["explore", "build"]],
     ["workshop-door", ["explore", "build"]],
@@ -64,6 +65,7 @@ test("the shell's parts say which desks each is on now", () => {
     ["ruler", ["explore", "build"]],
     ["clock", ["run"]],
     ["light", ["explore", "build"]],
+    ["fill-screen", ["run"]],
   ]);
   // The stage's edit tools are Build's; Select and Keyboard shortcuts are off Run; the ruler is on every desk until TM3.
   assert.deepEqual(DESKS.filter((d) => partShows("tools", d, "cut")), ["build"]);
@@ -75,7 +77,7 @@ test("the shell's parts say which desks each is on now", () => {
   // On Run the status line says whether the campaign is kept, without the seat or the engine's numbers.
   assert.deepEqual(["seat", "kept", "engine"].map((c) => partShows("status-line", "run", c)), [false, true, false]);
   assert.ok(["seat", "kept", "engine"].every((c) => partShows("status-line", "explore", c) && partShows("status-line", "build", c)));
-  assert.throws(() => shellPart("stepper"), /no shell part stepper/);
+  assert.throws(() => shellPart("teleporter"), /no shell part teleporter/);
   assert.throws(() => partShows("tools", "run", "measure"), /no control measure/);
   // The eyes read their desks from the part, as they did by name.
   assert.deepEqual(DESKS.map((d) => eyesShow(d, true)), [false, true, true]);
@@ -113,4 +115,33 @@ test("each desk remembers its view and ruler span per level, and its depth per d
   assert.throws(() => deskMemoryKey("run", "depth", "world"), /per desk/);
   // The keys never collide with the device's existing desk keys ("desk", "desk-lens").
   assert.ok(!["desk", "desk-lens"].includes(deskMemoryKey("explore", "depth")));
+});
+
+test("remembered per desk (TM6): a desk's own value first, else the latest anywhere; kept under both keys", async () => {
+  const { deskLevelOf, recallForDesk, keepForDesk } = await import("../src/desk.ts");
+  assert.equal(deskLevelOf("system"), "system");
+  assert.equal(deskLevelOf("workshop"), null);
+  const store = new Map<string, string>([["view", "latest"], ["desk.run.system.view", "run-system"], ["depth", "science"]]);
+  const load = (k: string) => store.get(k) ?? null;
+  assert.deepEqual(recallForDesk(load, "run", "view", "system"), { value: "run-system", own: true });
+  assert.deepEqual(recallForDesk(load, "run", "view", "world"), { value: "latest", own: false });
+  assert.deepEqual(recallForDesk(load, "build", "view", "system"), { value: "latest", own: false });
+  assert.deepEqual(recallForDesk(load, "run", "view", null), { value: "latest", own: false }, "the Workshop has no level: the plain key");
+  assert.deepEqual(recallForDesk(load, "explore", "depth"), { value: "science", own: false });
+  assert.deepEqual(keepForDesk("run", "view", "world"), ["desk.run.world.view", "view"]);
+  assert.deepEqual(keepForDesk("run", "view", null), ["view"]);
+  assert.deepEqual(keepForDesk("build", "depth"), ["desk.build.depth", "depth"]);
+});
+
+test("the ruler opens by desk and level (top-level 12.1), and keeps the GM's span", async () => {
+  const { rulerOpens, keepRulerSpan } = await import("../src/desk.ts");
+  assert.equal(rulerOpens("explore", "system", null), "week", "Explore at a system: human time");
+  assert.equal(rulerOpens("explore", "world", null), "week");
+  assert.equal(rulerOpens("explore", "galaxy", null), null, "Explore above the system: the whole history");
+  assert.equal(rulerOpens("build", "system", null), null, "Build: the full ruler");
+  assert.equal(rulerOpens("explore", null, null), null, "the Workshop: the whole history");
+  assert.equal(rulerOpens("build", "system", keepRulerSpan(1000)), 1000, "a kept span comes back");
+  assert.equal(rulerOpens("explore", "system", keepRulerSpan(null)), null, "a kept whole history comes back");
+  assert.equal(rulerOpens("explore", "system", "nonsense"), "week", "an odd kept value falls back to the default");
+  assert.equal(keepRulerSpan(Infinity), "whole");
 });

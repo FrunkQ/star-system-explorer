@@ -180,6 +180,75 @@ pub struct Recipe {
     pub citation: String,
 }
 
+/// Ring structure (`rings`): one ring per world, its zones, marks and profile (ring.rs).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingStructureSettings {
+    pub scale_m: f64,
+    pub octaves: u32,
+    pub hurst: f64,
+    pub ln_amplitude: f64,
+    pub tau_half: f64,
+    pub range_sigmas: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingGeneratedSettings {
+    pub zones_min: u64,
+    pub zones_max: u64,
+    pub ln_sigma: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingWaveSettings {
+    pub max_amplitude: f64,
+    pub edge_wave_coefficient: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingPhaseSettings {
+    pub back_g: f64,
+    pub forward_g: f64,
+    pub surge_b0: f64,
+    pub surge_width_deg: f64,
+    pub dusty_below_tau: f64,
+    pub clean_above_tau: f64,
+    pub dust_share_clean: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingSettings {
+    /// The ring's collective kinematic viscosity from grain collisions (a ring dynamics number, not a substance
+    /// property, so not a sheet row).
+    pub collisional_nu_m2_s: f64,
+    pub resonance_f: f64,
+    pub gap_per_root_mu: f64,
+    pub gap_min_hill_radii: f64,
+    pub edge_slack: f64,
+    pub m_max: u32,
+    pub min_ratio: f64,
+    pub grain_radius_m: f64,
+    pub grain_porosity: f64,
+    /// The data sheet's id for the dark matter that dirties ring ice (a mixture with a reflectance table, or a substance with a condensed colour).
+    pub contaminant: String,
+    /// Size of the contaminant's grains, m (Hapke's equivalent slab: light crosses about this much of it).
+    pub contaminant_grain_m: f64,
+    /// Red, green and blue, nm.
+    pub bands_nm: [f64; 3],
+    /// The sheet's id for the ice.
+    pub ice: String,
+    pub fallback_tau: f64,
+    pub fallback_albedo: f64,
+    pub structure: RingStructureSettings,
+    pub generated: RingGeneratedSettings,
+    pub waves: RingWaveSettings,
+    pub phase: RingPhaseSettings,
+    pub samples_default: usize,
+    pub samples_max: usize,
+    /// Newton's G, read from the sheet.
+    #[serde(skip)]
+    pub g: f64,
+}
+
 /// Everything the resolve reads. Unknown keys such as `about` are ignored.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Settings {
@@ -195,6 +264,7 @@ pub struct Settings {
     pub strength: StrengthSettings,
     pub weathering: WeatheringSettings,
     pub comet: CometSettings,
+    pub rings: RingSettings,
     pub recipes: Vec<Recipe>,
 }
 
@@ -265,6 +335,7 @@ impl Settings {
         c.gm_sun = k("GM_sun")?;
         c.au_m = k("au")?;
         c.day_s = k("day")?;
+        out.rings.g = k("G")?;
         for v in &mut c.volatiles {
             v.molar_kg_mol = sheet
                 .molar_mass_kg_mol(&v.id)

@@ -38,7 +38,8 @@
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
-  import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readSmallSample, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
+  import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readRings, readSmallSample, type RingReader, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
+  import type { KernelRing } from "../../../renderer/src/index.ts";
   import { readSeaGlint, readUmbras, type GlintReader, type SeaGlint, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
@@ -695,10 +696,37 @@
       })(),
     );
   });
+  // One ring per world (VP-R3): each ringed world's ring asked of the kernel whole, once per system and its rings, in
+  // True only (system-3d ring-read.ts). Until it answers, a ring is drawn from its bands as before.
+  let kernelRings = $state<{ key: string; list: Map<string, KernelRing> } | null>(null);
+  const ringsKept = new Map<string, Map<string, KernelRing>>();
+  let ringsAsking = "";
+  const ringKey = $derived(`${scene.system}|${JSON.stringify(scene.subjects.filter((s) => s.ring).map((s) => [s.address, s.parent, s.ring]))}`);
+  $effect(() => {
+    const key = ringKey;
+    if (!looksTrue || dims !== "3d" || kernelRings?.key === key || ringsAsking === key) return;
+    const plain = untrack(() => fromSystemScene(scene, ctx.mark));
+    if (!plain.some((b) => b.rings?.length)) return;
+    ringsAsking = key;
+    untrack(() =>
+      void (async () => {
+        const list = ringsKept.get(key) ?? (await readRings(ctx.session as unknown as RingReader, plain, () => ringKey === key && looksTrue));
+        ringsAsking = "";
+        if (ringKey !== key || !looksTrue) return;
+        ringsKept.set(key, list);
+        kernelRings = { key, list };
+      })(),
+    );
+  });
   const bodies3d = $derived.by(() => {
     if (dims !== "3d") return [];
     const shaped = looksTrue && lumps?.key === scene.system ? lumps.map : null;
-    const out = fromSystemScene(scene, ctx.mark).map((b) => (shaped?.get(b.id) ? { ...b, figure: shaped.get(b.id)! } : b));
+    const kr = looksTrue && kernelRings?.key === ringKey ? kernelRings.list : null;
+    const out = fromSystemScene(scene, ctx.mark).map((b) => {
+      const f = shaped?.get(b.id);
+      const r = kr?.get(b.id);
+      return f || r ? { ...b, ...(f ? { figure: f } : {}), ...(r ? { ring_kernel: r } : {}) } : b;
+    });
     const star = out.find((b) => b.parent === null)?.id;
     return looksTrue && star && smalls?.key === scene.system ? [...out, ...smalls.list.map((s) => fromSmallSample(s, star))] : out;
   });
@@ -773,7 +801,7 @@
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined} data-true-read={reading ? `${reading.done}/${reading.of}` : undefined}>
   {#if dims === "3d"}
     {#snippet in3d(band: string, base: boolean)}
-      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {umbras} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} />
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {umbras} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} clock={ctx.workspace.clock ?? null} />
     {/snippet}
     {#if viewed.composite}
       <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->
