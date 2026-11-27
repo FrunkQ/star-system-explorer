@@ -68,7 +68,7 @@ test("entered as catalogued facts, Sol reads back whole, with its spec", async (
     const yr = BigInt(constant("yr_julian"));
     assert.equal(spec.birth_year, Number(anchor / yr) - Math.round(spec.age_myr * 1e6));
     assert.equal(BigInt(r.result.birth_s!), BigInt(spec.birth_year) * yr);
-    assert.equal(drawnSecond(BigInt(r.result.birth_s!), scene.now_yr) - anchor, 0n, "at its own age, Sol is drawn at J2000.0");
+    assert.equal(drawnSecond(BigInt(r.result.birth_s!), spec.age_myr * 1e6) - anchor, 0n, "at its own age, Sol is drawn at J2000.0");
     assert.equal(r.result.evidence?.[earth.address]?.["body.mass"]?.evidence, "catalogued");
   } finally {
     await k.close();
