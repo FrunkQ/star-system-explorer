@@ -17,7 +17,7 @@
 -->
 <script lang="ts">
   import { onDestroy, tick, untrack } from "svelte";
-  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
+  import { closeMin, outlineRadius, haloReachDeg, FACE_STEPS, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, beltAt, beltParticles, drawStarNow, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
   import { clockAt, constant, motionWords, phaseAt, pictureSpan, SEEN_ELEVATION, thermalColour, tooFast, type PictureClock, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
@@ -203,11 +203,13 @@
     lastScale = r;
   });
   // Real scale lets the camera come much closer: the worlds are small. True lets it come down to a grazing orbit over
-  // the world at the centre (close-up, Alex 25 Nov): a few km over its ground (renderer close-up.ts).
+  // the world at the centre (close-up, Alex 25 Nov): a few km over its ground (renderer close-up.ts). A star at the
+  // centre lets it come to half a radius over its surface, its limb and what stands over it filling the view.
   const centreBody = $derived(lay?.centre);
-  const centreR = $derived(!centreBody || centreBody.parent === null ? 0 : realScale ? (lay ? lay.dist(centreBody.radius_m ?? 0) : 0) : 0.55);
+  const centreStar = $derived(!!centreBody && centreBody.parent === null);
+  const centreR = $derived(!centreBody ? 0 : realScale ? (lay ? lay.dist(centreBody.radius_m ?? 0) : 0) : 0.55);
   const closeUp = $derived(isTrue && centreR > 0 && pan[0] === 0 && pan[1] === 0);
-  const MIN = $derived(closeUp ? closeMin(centreR, centreBody?.radius_m) : realScale ? 0.3 : 4);
+  const MIN = $derived(closeUp ? closeMin(centreR, centreBody?.radius_m, centreStar) : realScale ? 0.3 : 4);
   const MAX = 60;
   let w = $state(0);
   let h = $state(0);
@@ -229,7 +231,7 @@
   let groundSent: string | null = null;
   $effect(() => {
     if (!onground) return;
-    const g = closeUp && centreBody ? groundUnder(centreBody.id, cam.eye, [0, 0, 0], centreR, centreBody.radius_m, cam.fovY, cam.height) : null;
+    const g = closeUp && centreBody && !centreStar ? groundUnder(centreBody.id, cam.eye, [0, 0, 0], centreR, centreBody.radius_m, cam.fovY, cam.height) : null;
     const now = performance.now();
     const k = g ? `${g.body}|${g.toward.join(",")}|${g.m_per_px}` : "";
     if (k === groundSent || (g && groundSent && now - groundAt < 200)) return;
@@ -357,6 +359,12 @@
     frame = byId(centreId)?.parent && byId(centreId)!.parent !== root ? byId(centreId)!.parent : null;
     dist = 26;
     onselect(back);
+  }
+  // At the nearest the camera may come, with nothing chosen to enter, Zoom in has nothing left to do.
+  const atFloor = $derived(dist <= MIN * (1 + 1e-9) && !canEnterNow());
+  function canEnterNow(): boolean {
+    const sel = byId(selection);
+    return !!sel && sel.id !== centreId && hasChildren(bodies, sel.id);
   }
   // Rule 4: zoom past what the frame carries hands over to the chosen body's frame, or back up.
   function zoomBy(f: number) {
@@ -554,8 +562,8 @@
   let starNow = $state<StarNow | null>(null);
   const flaringNow = $derived(starNow ? starNow.shown.length : 0);
   const calm = reducedMotion();
-  // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom.
-  const FACE_STEPS = [16, 32, 64, 128, 256];
+  // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom
+  // (renderer star-now.ts FACE_STEPS, up to 512 for the star close-up).
   const FACE_DISC = 0.92;
   const XRAY_DISC = 0.6;
   let faceBuf: { width: number; data: Uint8ClampedArray } | null = null;
@@ -567,21 +575,28 @@
     const d = Math.hypot(r[0], r[1], r[2]);
     const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
     const px = ((radius / Math.max(1e-6, d)) * (h / 2)) / Math.tan(cam.fovY / 2) * 2 * dpr / FACE_DISC;
-    const width = FACE_STEPS.find((n) => n >= px) ?? 256;
+    const width = FACE_STEPS.find((n) => n >= px) ?? FACE_STEPS[FACE_STEPS.length - 1]!;
     if (!faceBuf || faceBuf.width !== width) faceBuf = { width, data: new Uint8ClampedArray(width * width * 4) };
     const xray = trueBand === "xray";
     // In X-rays the corona reaches past the disc: the disc takes less of the square.
     const disc = xray ? XRAY_DISC : FACE_DISC;
     // The glow round the star (star-glow.ts) is an angle on the screen: the disc's angular radius sets its shape.
+    // `radius` is the outline's (outlineRadius), so this is the sphere's true angular radius, asin(r/d).
     const discDeg = (Math.atan(radius / Math.max(1e-9, d)) * 180) / Math.PI;
-    if (!haloBuf) haloBuf = { width: HALO_PX, data: new Uint8ClampedArray(HALO_PX * HALO_PX * 4) };
-    starNow = drawStarNow(faceBuf, xray ? null : haloBuf, s, { t: starT, clock: starRate, span: starRate / STAR_PICTURES_PER_S, calm, light: xray ? "xray" : "visible", disc, lat_deg: 7, disc_deg: discDeg });
+    // Seen large, the halo reaches further past the limb (haloReachDeg) and is drawn finer, in steps by its size on
+    // the screen, so what stands over the limb keeps its shape in the close-up.
+    const reachDeg = haloReachDeg(discDeg);
+    const haloSpan = d * Math.tan((reachDeg * Math.PI) / 180);
+    const haloPx = ((haloSpan / Math.max(1e-6, d)) * h) / Math.tan(cam.fovY / 2) * dpr;
+    const haloWidth = HALO_STEPS.find((n) => n >= haloPx) ?? HALO_STEPS[HALO_STEPS.length - 1]!;
+    if (!haloBuf || haloBuf.width !== haloWidth) haloBuf = { width: haloWidth, data: new Uint8ClampedArray(haloWidth * haloWidth * 4) };
+    starNow = drawStarNow(faceBuf, xray ? null : haloBuf, s, { t: starT, clock: starRate, span: starRate / STAR_PICTURES_PER_S, calm, light: xray ? "xray" : "visible", disc, lat_deg: 7, disc_deg: discDeg, reach_deg: reachDeg });
     const version = ++faceVersion;
-    halo = xray ? null : { key: `star-glow:${b.id}`, version, texture: haloBuf, rel: r, radius: d * Math.tan((GLOW_REACH_DEG * Math.PI) / 180) };
+    halo = xray ? null : { key: `star-glow:${b.id}`, version, texture: haloBuf, rel: r, radius: haloSpan };
     return { key: `star:${b.id}:${xray ? "x" : "v"}`, version, width, data: faceBuf.data, disc };
   }
   // The halo: the eye's glare round the star and any mass ejection leaving it, added to the scene as light.
-  const HALO_PX = 160;
+  const HALO_STEPS = [160, 320, 640];
   let haloBuf: { width: number; data: Uint8ClampedArray } | null = null;
   let halo: GpuGlow | null = null;
 
@@ -731,10 +746,14 @@
         const items = shown.map((b) => {
             const t = tex(b);
             const isStar = b.parent === null;
-            const radius = sizeOf(b, b === lay!.centre);
+            const drawnR = sizeOf(b, b === lay!.centre);
+            // The star's face is a flat picture facing the camera: up close it is drawn at the sphere's outline.
+            const outline = isStar ? outlineRadius(drawnR, Math.hypot(...relOf(b.id))) : drawnR;
             // Infrared draws every body by its own heat, the star included; X-ray draws the star's corona and leaves
             // the worlds dark (they give off almost none).
-            const face = isStar && !mag && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
+            const face = isStar && !mag && trueBand !== "infrared" ? faceFor(b, outline) : undefined;
+            // A face picture stands at the outline; a sphere (Mag, Infrared) at the body's own radius.
+            const radius = face ? outline : drawnR;
             // Mag: the worlds dark under their fields, the star a dim grey (its own field is not drawn yet).
             const emit = mag ? (isStar ? 0.35 : magShapes.has(b.id) ? 0.18 : 0.08) : trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
             // The body's face from the one door every True view uses (renderer true-body.ts): surface, rings, and
@@ -1037,7 +1056,7 @@
     {#if canEnter}<button type="button" onclick={() => enter(canEnter.id)}>Moons of {canEnter.name} ›</button>{/if}
   </div>
   <div class="zoom" role="group" aria-label="Zoom">
-    <button type="button" aria-label="Zoom in" onclick={() => zoomBy(1 / 1.25)}>+</button>
+    <button type="button" aria-label="Zoom in" disabled={atFloor} onclick={() => zoomBy(1 / 1.25)}>+</button>
     <button type="button" aria-label="Zoom out" onclick={() => zoomBy(1.25)}>−</button>
   </div>
   <p class="note">

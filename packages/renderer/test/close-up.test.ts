@@ -2,7 +2,7 @@
 // ground under it for the detail ladder.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CLOSE_FLOOR_M, CLOSE_REACH, closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear } from "../src/close-up.ts";
+import { CLOSE_FLOOR_M, CLOSE_REACH, STAR_CLOSE_SHARE, closeMin, grazeLook, outlineRadius, groundUnder, orbitEye, orbitOf, zoomNear } from "../src/close-up.ts";
 
 test("the camera comes down to a few km over a big world, a small share of the radius over a small one", () => {
   const earth = 6.371e6;
@@ -53,4 +53,14 @@ test("the orbit camera goes to a postcard's camera and back", () => {
   const back = orbitOf(e.dir, e.radii, 0.55);
   for (const k of ["yaw", "pitch", "dist"] as const) assert.ok(Math.abs(back[k] - o[k]) < 1e-12, k);
   assert.equal(orbitEye(o, 0), null);
+});
+
+test("over a star the camera stops half a radius up, where a flat face still matches the sphere's outline", () => {
+  assert.equal(closeMin(2, 6.96e8, true), 2 * (1 + STAR_CLOSE_SHARE));
+  // Far off the outline is the radius; at the floor the sphere fills asin(1/1.5) = 41.8 degrees, so a picture at its
+  // centre must be 1.34 radii across its half-width to cover it.
+  assert.ok(Math.abs(outlineRadius(1, 1e6) - 1) < 1e-9);
+  const r = outlineRadius(1, 1 + STAR_CLOSE_SHARE);
+  assert.ok(Math.abs(Math.atan(r / 1.5) - Math.asin(1 / 1.5)) < 1e-12, `${r}`);
+  assert.ok(r > 1.3 && r < 1.4, `${r}`);
 });

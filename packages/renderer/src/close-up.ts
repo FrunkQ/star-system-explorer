@@ -9,13 +9,30 @@ import type { Vec3 } from "./frames.ts";
 export const CLOSE_FLOOR_M = 3000;
 /** ...but never under this share of the radius, so a giant keeps a little of its curve in view (14 km over Jupiter). */
 export const CLOSE_FLOOR_SHARE = 2e-4;
+/**
+ * Over a star the camera stops this share of the radius above the surface (the star close-up). The star's face and
+ * glow are flat pictures facing the camera (gpu.ts sprites), which hold their shape only while the disc is well inside
+ * a hemisphere of the view; at half a radius up the limb is 42 degrees from the centre and the prominences still
+ * stand clear of it (fudge register).
+ */
+export const STAR_CLOSE_SHARE = 0.5;
 /** Within this many radii of the centre a zoom step scales the height over the ground, and the view starts to tip. */
 export const CLOSE_REACH = 4;
 
 /** The nearest the camera's distance from the world's centre may come, in the drawing's units (`r` its drawn radius). */
-export function closeMin(r: number, radius_m?: number | null): number {
+export function closeMin(r: number, radius_m?: number | null, star = false): number {
+  if (star) return r * (1 + STAR_CLOSE_SHARE);
   const share = radius_m && radius_m > 0 ? Math.max(CLOSE_FLOOR_SHARE, CLOSE_FLOOR_M / radius_m) : 0.01;
   return r * (1 + share);
+}
+
+/**
+ * The radius of a sphere's outline as a flat picture at its centre facing the camera: a sphere of radius `r` seen from
+ * `d` away fills asin(r/d) of the view, which at its centre's distance is r/sqrt(1 - (r/d)^2), more than r up close.
+ */
+export function outlineRadius(r: number, d: number): number {
+  const q = d > 0 ? Math.min(0.999, r / d) : 0;
+  return r / Math.sqrt(1 - q * q);
 }
 
 /** One zoom step by `f` (below 1 nearer): far out it scales the distance, near the world the height over the ground. */
