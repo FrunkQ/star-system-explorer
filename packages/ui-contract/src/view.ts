@@ -99,9 +99,11 @@ export interface Workspace {
   campaign_epoch_yr?: number;
   /**
    * The picture's clock (CLK1, picture-clock.ts): what every moving thing on screen reads its time from, and how fast
-   * time is passing (0 while stopped). Follows `now_yr`; the ruler's play and the Run desk's clock set its rate.
+   * time is passing (0 while stopped). Follows the time in view; the ruler's play and the Run desk's clock set its rate.
    */
   clock?: import("./picture-clock.ts").PictureClock;
+  /** Bring the picture's clock to the time in view (a step, a bookmark, a save opened, a moved epoch): reactive on that time. */
+  followClock?(): void;
   /** Set how fast time passes on screen, clock seconds per real second (0 stops it). */
   setRate?(rate: number): void;
   /** The top pack's calendar, when a pack gives one (kernel `calendar`); the ruler counts dates in it. */
