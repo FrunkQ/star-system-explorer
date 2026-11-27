@@ -527,6 +527,7 @@ fn golden() -> serde_json::Value {
             let s1 = giant_systems(&gs, c, Date { day: 1000.0 });
             let s2 = giant_systems(&gs, c, Date { day: 9000.0 });
             let t = giant_tile(&gs, c, Date { day: 1000.0 }, key, 8);
+            let flow = crate::eddies::flow_table(&gs, c, 1000.0, 5.0);
             serde_json::json!({
                 "world": c.label,
                 "jets": l.jets,
@@ -542,6 +543,9 @@ fn golden() -> serde_json::Value {
                 "layout": digest(&l),
                 "systems": digest(&(s1, s2)),
                 "field": digest(&t),
+                "flow": digest(&flow),
+                "eddies_day_1000_span_5": flow.eddies.len(),
+                "eddy_power_w_kg": flow.facts.eddy_power_w_kg,
             })
         })
         .collect();

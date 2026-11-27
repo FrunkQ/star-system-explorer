@@ -35,8 +35,8 @@ use std::collections::BTreeMap;
 const G: f64 = sse_core::sheet::G;
 const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const DAY_S: f64 = sse_core::sheet::DAY;
-const YEAR_D: f64 = sse_core::sheet::YR_JULIAN / sse_core::sheet::DAY;
-const DEG: f64 = 180.0 / m::PI;
+pub(crate) const YEAR_D: f64 = sse_core::sheet::YR_JULIAN / sse_core::sheet::DAY;
+pub(crate) const DEG: f64 = 180.0 / m::PI;
 
 /// Keyed stream for storms (ovals, strings, dark spots, outbreaks).
 pub const STORMS_STREAM: &str = "weather.giants.storms.v1";
@@ -235,7 +235,22 @@ pub struct GiantSettings {
     pub dark_spots: Family,
     pub outbreaks: Outbreaks,
     pub clouds: GiantClouds,
+    pub stirring: Stirring,
     pub references: Vec<Reference>,
+}
+
+/// How a giant's eddies are drawn (WS2, `weather_giants.stirring`). Their speed comes from the blocks
+/// `sse.weather.eddy_power` and `sse.weather.cascade_speed`, their fate in shear from `sse.weather.torn_by_shear`.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Stirring {
+    /// Pressure at the base of the weather layer, bar: the layer whose mass the heat stirs.
+    pub weather_layer_bar: f64,
+    /// Share of a band's area covered by eddies of each doubling of size.
+    pub eddy_area_share_per_octave: f64,
+    /// How many of its own turns an eddy that the shear does not tear lives.
+    pub eddy_life_turns: f64,
+    pub source: String,
 }
 
 impl GiantSettings {
@@ -344,7 +359,7 @@ fn is_false(b: &bool) -> bool {
 
 /// +1 for a world spinning forwards, -1 backwards: the sign of f = 2Ω sin φ
 /// in the northern hemisphere, which every wind and vortex sense follows.
-fn spin_sign(l: &GiantLayout) -> f64 {
+pub(crate) fn spin_sign(l: &GiantLayout) -> f64 {
     if l.retrograde {
         -1.0
     } else {
@@ -352,7 +367,7 @@ fn spin_sign(l: &GiantLayout) -> f64 {
     }
 }
 
-fn draws(c: &Conditions, stream: &str) -> Draws {
+pub(crate) fn draws(c: &Conditions, stream: &str) -> Draws {
     Draws::new(
         Seed::from_text(&c.address.to_string()),
         c.address.clone(),
@@ -666,12 +681,7 @@ pub fn sheared_aspect(
     let h = if lat >= 0.0 { 1.0 } else { -1.0 };
     let sense = if cyclonic { 1.0 } else { -1.0 };
     let omega = sense * h * spin_sign(l) * 2.0 * m::exp(0.5) * strength / r;
-    let q = zonal_vorticity(gs, l, a_m, lat) / omega;
-    let disc = q * q + 6.0 * q + 1.0;
-    if q < 0.0 && disc < 0.0 {
-        return m::sqrt(2.0) - 1.0;
-    }
-    ((1.0 + q) + m::sqrt(disc.max(0.0))) / 2.0
+    crate::eddies::torn_by_shear(zonal_vorticity(gs, l, a_m, lat), omega).aspect
 }
 
 /// The jets by latitude, for drawing the curls and drift (visual polish
@@ -829,7 +839,7 @@ pub fn drift_lon(u: f64, a_m: f64, lat: f64, lon0: f64, born: f64, day: f64) -> 
     wrap(lon0 + u * (day - born) * DAY_S / r * DEG)
 }
 
-fn wrap(lon: f64) -> f64 {
+pub(crate) fn wrap(lon: f64) -> f64 {
     let x = m::fmod(lon + 180.0, 360.0);
     (if x < 0.0 { x + 360.0 } else { x }) - 180.0
 }

@@ -259,6 +259,18 @@ impl RuleBlock {
         FieldTile { key, n, cells }
     }
 
+    /// What moves a giant's cloud from `date` over `span_days` (WS2, `want: "flow"`); `None` for a world that is
+    /// not a giant.
+    pub fn flow(
+        &self,
+        c: &Conditions,
+        date: Date,
+        span_days: f64,
+    ) -> Option<crate::eddies::FlowTable> {
+        let p = self.prepare(c, date);
+        Self::is_giant(&p).then(|| crate::eddies::flow_table(&self.giants, c, date.day, span_days))
+    }
+
     /// The field over a patch round a place (`FieldPatch`), cell by cell as
     /// the tiles are: a closer look at a storm or a pole.
     #[allow(clippy::too_many_arguments)]

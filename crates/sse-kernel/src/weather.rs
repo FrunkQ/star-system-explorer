@@ -25,6 +25,7 @@ pub(crate) struct Ask {
     pub lat: f64,
     pub lon: f64,
     pub half_km: Option<f64>,
+    pub span_days: f64,
     pub pins: Vec<serde_json::Value>,
     pub sources: Option<serde_json::Value>,
     pub block: Option<serde_json::Value>,
@@ -136,6 +137,16 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             })?;
             let n = a.n.unwrap_or(16).clamp(1, 64);
             to_json(&chosen.field(&c, date, key, n, &pins))
+        }
+        "flow" => {
+            rule_only("flow")?;
+            let t = block.flow(&c, date, a.span_days).ok_or_else(|| {
+                err(
+                    "not_a_giant",
+                    "the flow table is a giant's: its jets, storms and eddies",
+                )
+            })?;
+            to_json(&t)
         }
         "patch" => {
             rule_only("patch")?;

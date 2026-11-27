@@ -7971,6 +7971,146 @@
         "range": null
       },
       {
+        "description": "a band's own vorticity where an eddy sits, signed as the eddy's turning (s⁻¹)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.band_vorticity",
+        "range": null
+      },
+      {
+        "description": "an eddy's or storm's own core vorticity (s⁻¹)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.core_vorticity",
+        "range": null
+      },
+      {
+        "description": "power fed to the eddies per kilogram of the weather layer (W/kg)",
+        "dim": [
+          2,
+          0,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.eddy_power",
+        "range": null
+      },
+      {
+        "description": "how fast an eddy's winds run at its edge (m/s)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.eddy_speed",
+        "range": null
+      },
+      {
+        "description": "an eddy's width (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.eddy_width",
+        "range": null
+      },
+      {
+        "description": "heat a world's air sends to space, from inside plus absorbed sunlight, averaged over the sphere (W/m²)",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.heat_out",
+        "range": null
+      },
+      {
+        "description": "pressure at the base of a giant's weather layer, where its eddies are fed (Pa)",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.layer_pressure",
+        "range": null
+      },
+      {
+        "description": "how long a torn eddy lasts: one shear time, 0 when it holds (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.tear_time",
+        "range": null
+      },
+      {
+        "description": "1 when a band's shear tears an eddy apart, 0 when it holds a steady shape",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.torn",
+        "range": null
+      },
+      {
+        "description": "a vortex's steady length along the wind over its width",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.vortex_aspect",
+        "range": null
+      },
+      {
         "description": "wind speed ten metres above the ground or water",
         "dim": [
           1,
