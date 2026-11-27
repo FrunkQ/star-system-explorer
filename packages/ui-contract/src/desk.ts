@@ -276,3 +276,13 @@ export function rulerOpens(desk: Desk, level: DeskLevel | null, kept: string | n
 export function keepRulerSpan(span: number | null): string {
   return span === null || !(span > 0) || !Number.isFinite(span) ? "whole" : String(span);
 }
+
+/**
+ * The desk to open something on from outside the desks (the start sheet, TM9c): the desk in front if it shows the
+ * thing, else the first desk in the switch's order that does (Explore before Build before Run), else the desk in front.
+ * So a verb such as "Follow life" pressed while Run was last used lands where Life is, while "Carry on" keeps the desk.
+ */
+export function deskFor(desk: Desk, onDesk: (d: Desk) => boolean): Desk {
+  if (onDesk(desk)) return desk;
+  return DESKS.find(onDesk) ?? desk;
+}
