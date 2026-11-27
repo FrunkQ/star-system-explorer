@@ -1,0 +1,1 @@
+{"key": "whipple1999", "citation": "Whipple and Tucker 1999", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/wear.rs"], "claims": ["// (steady state, Whipple and Tucker 1999): rivers carry the load"], "tier": 3}

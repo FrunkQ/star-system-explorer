@@ -11,7 +11,7 @@ Track HF (heat flow), owner thread "Fix low heat flow in worlds". Design: `hando
   - tides: `sse.tides.andrade_response` (HF4a's Maxwell block is its creep-off case, checked to 1e-12), `sse.tides.host_power_ceiling` (Io with Jupiter's k2/Q: 1.2e14 W).
 - Rock numbers are block inputs, fed from the sheet rows by the packages that read them. A block's own parameter is only a setting the design names (a_rh 2.24, the melt-fraction exponent 1, the Andrade switch, the rigidity floor 0.05, the erupted share 0.2).
 - Tests (sse-atoms): `andrade_response_is_maxwell_with_creep_off` (also absolute: a stiff Io at 1e19 Pa s has Maxwell Im k2 below 1e-5 and Andrade above 1e-4), `lid_conduction_without_burial_is_plain_conduction` (and the advected heat balance with burial), `melt_heat_split_adds_up`. The worked examples are the first gate: any change to a formula without its example goes red at load, and did while the Andrade equation was over the 64-operation limit.
-- Atom count 183 to 197 (P1 log). Fudge register: the erupted share, the turnover length, the linear rigidity law.
+- Fourteen new atoms (the count is derived since PR 698). Fudge register: the erupted share, the turnover length, the linear rigidity law.
 
 ## Not in this package, and why
 

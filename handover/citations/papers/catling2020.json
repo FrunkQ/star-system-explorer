@@ -1,0 +1,1 @@
+{"key": "catling2020", "citation": "Catling and Zahnle 2020 round values", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/disequilibrium_tests.rs"], "claims": ["// (Catling and Zahnle 2020 round values)."], "tier": 3}
