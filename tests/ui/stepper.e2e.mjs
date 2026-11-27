@@ -3,6 +3,7 @@
 // On Run the place line draws every level; a level not visited reads as its word. Out and In sit at its end, with Page Up
 // and Page Down: In goes onto the body selected, Out up a level, and a world the trail remembers stays pencilled with
 // its name. On Explore the place line is as it was, without Out and In.
+// Fill the screen (F) on Run: the picture alone, the bar back at the top edge, Esc brings everything back.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -67,6 +68,33 @@ try {
     await shot("3-galaxy");
     await page.locator("[data-step-in]").click();
     await atScale("system");
+
+    // Fill the screen (TM9a, design question 11): F on Run leaves the picture alone; the bar comes back at the top edge;
+    // Esc brings everything back. On Explore F does nothing.
+    const app = page.locator(".app");
+    await page.locator("body").press("f");
+    await page.waitForSelector(".app[data-filled]");
+    assert.ok(!(await page.locator("[data-campaign-clock]").isVisible()), "no clock");
+    assert.ok(!(await page.locator(".viewbar").isVisible()), "no view controls");
+    await page.mouse.move(700, 400);
+    await page.waitForFunction(() => (document.querySelector("header.bar")?.getBoundingClientRect().bottom ?? 1) <= 1);
+    // The picture takes the whole window (the stage must not slide into the bar's empty grid row).
+    const pic = await page.locator(".area-chart").boundingBox();
+    assert.ok(pic && pic.y <= 1 && pic.height >= 890, `the picture fills the window: ${JSON.stringify(pic)}`);
+    await shot("4-filled");
+    await page.mouse.move(700, 2);
+    await page.waitForSelector(".app[data-peek]");
+    await page.waitForFunction(() => (document.querySelector("header.bar")?.getBoundingClientRect().top ?? -1) >= 0);
+    await shot("5-peek");
+    await page.mouse.move(700, 400);
+    await page.waitForSelector(".app:not([data-peek])");
+    await page.locator("body").press("Escape");
+    await page.waitForSelector(".app:not([data-filled])");
+    assert.ok(await page.locator("[data-campaign-clock]").isVisible(), "the clock is back");
+    await desk(page, "Explore");
+    await page.locator("body").press("f");
+    await page.waitForTimeout(300);
+    assert.equal(await app.getAttribute("data-filled"), null, "F does nothing on Explore");
 
     assert.deepEqual(errors, []);
     await browser.close();

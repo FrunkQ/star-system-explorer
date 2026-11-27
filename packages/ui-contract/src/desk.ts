@@ -182,6 +182,8 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "clock", words: "The campaign clock: the date, step chips and Run ▸", desks: ["run"] },
   { id: "light", words: "Light (on Run, the Band control)", desks: ["explore", "build"] },
   { id: "sound", words: "Sound" },
+  // F on the Run desk (design question 11, TM9a): the picture alone; the bar comes back at the top edge.
+  { id: "fill-screen", words: "Fill the screen (F): the picture alone, the bar back at the top edge", desks: ["run"] },
   {
     id: "status-line",
     words: "The status line",

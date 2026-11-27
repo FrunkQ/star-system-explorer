@@ -1149,6 +1149,36 @@
     if (i > 0 && railScale !== "system") toScale(PLACE_SCALES[i - 1]!);
   }
   const recentElsewhere = $derived(place ? recent.filter((r) => !samePlace(r, place)) : recent);
+  // Fill the screen (TM9a, three desks design question 11): on the Run desk F leaves the picture alone, full screen when
+  // the browser allows. The bar comes back while the pointer is at the top edge; F or Esc brings everything back.
+  let filled = $state(false);
+  let peek = $state(false);
+  let fillNote = $state(false);
+  let fillTimer: ReturnType<typeof setTimeout> | undefined;
+  const canFill = $derived(partShows("fill-screen", desk));
+  function setFilled(on: boolean) {
+    if (on === filled) return;
+    filled = on;
+    peek = false;
+    clearTimeout(fillTimer);
+    fillNote = on;
+    if (on) fillTimer = setTimeout(() => (fillNote = false), 3000);
+    try {
+      if (on) void document.documentElement.requestFullscreen?.()?.catch(() => {});
+      else if (document.fullscreenElement) void document.exitFullscreen?.()?.catch(() => {});
+    } catch {
+      /* a browser without full screen: the picture alone in the window is still the picture alone */
+    }
+  }
+  $effect(() => {
+    if (!canFill) untrack(() => setFilled(false));
+  });
+  // Leaving full screen the browser's own way (its Esc) brings the bar back too.
+  $effect(() => {
+    const sync = () => !document.fullscreenElement && filled && setFilled(false);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  });
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
@@ -1758,9 +1788,10 @@
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
       b: () => document.querySelector<HTMLElement>("[data-bookmarks] > button")?.click(),
+      f: () => canFill && setFilled(!filled),
       "?": () => openHelp("keys"),
       // Esc clears the selection, then goes up a step.
-      Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
+      Escape: () => (filled ? setFilled(false) : ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
     };
     const f = keys[e.key];
     if (f) {
@@ -1773,8 +1804,14 @@
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
-  <header class="bar">
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-filled={filled ? "" : undefined} data-peek={filled && peek ? "" : undefined} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+  {#if filled}
+    <!-- The top edge: the pointer there brings the bar back over the picture. -->
+    <div class="fill-edge" aria-hidden="true" onpointerenter={() => (peek = true)}></div>
+    {#if fillNote}<p class="fill-note" role="status" data-fill-note>The picture alone. F or Esc brings everything back; the bar is at the top edge.</p>{/if}
+  {/if}
+  <!-- svelte-ignore a11y_no_static_element_interactions (the pointer leaving the bar only hides it again in Fill the screen) -->
+  <header class="bar" onpointerleave={() => (peek = false)}>
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <PlaceLine
       {railScale}
@@ -2138,6 +2175,62 @@
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+  }
+  /* Fill the screen (TM9a): the picture alone. The bar waits above the top edge and slides in while the pointer is there. */
+  .app[data-filled] {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  /* The bar is out of the flow and the ruler and status are gone, so the stage takes the one row. */
+  .app[data-filled] > .middle,
+  .app[data-filled] > .problem {
+    grid-row: 1;
+  }
+  .app[data-filled] > .bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    z-index: 40;
+    transform: translateY(-100%);
+    transition: transform var(--sse-motion-short, 160ms) ease-out;
+  }
+  .app[data-filled][data-peek] > .bar {
+    transform: none;
+  }
+  .app[data-filled] > .area-ruler,
+  .app[data-filled] > .status,
+  .app[data-filled] :global([data-chart-overlay]),
+  .app[data-filled] :global(.area-card) {
+    display: none;
+  }
+  .fill-edge {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    z-index: 39;
+  }
+  .fill-note {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 38;
+    margin: 0;
+    padding: 6px 12px;
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    font-size: 13px;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app[data-filled] > .bar {
+      transition: none;
+    }
   }
   .bar {
     display: flex;
