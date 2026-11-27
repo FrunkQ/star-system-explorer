@@ -980,6 +980,10 @@ pub struct Calendar {
     /// The month (0-based) that gains the leap day; needed when months and leap are both set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub leap_month: Option<usize>,
+    /// A line for people on how the calendar reads (e.g. Sol today's note
+    /// on UTC days counted on TT); carried, never read by the kernel.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
