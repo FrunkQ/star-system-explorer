@@ -4,6 +4,7 @@
 // typing searches a flat list that says where each match is; kind chips add together and keep the path to a match;
 // Escape clears the search, then closes and gives the chip the keyboard; arrows and Enter pick. Typing also finds
 // things elsewhere in the campaign, and picking one goes there. Moving about writes nothing.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

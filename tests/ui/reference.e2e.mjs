@@ -7,6 +7,7 @@
 // worked out from the sheet). Night chart keeps the marks; on a phone nothing runs off the side, rows wrap to two
 // lines and the card rises from the foot. Names and Classes (the class gallery) read the shipped packs. Reading writes
 // nothing.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

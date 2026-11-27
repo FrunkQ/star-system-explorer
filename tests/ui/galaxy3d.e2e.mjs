@@ -3,6 +3,7 @@
 // Open the galaxy chart; the view controls offer 3D and True. 3D turns the disc as a diagram; True draws it in light
 // on the GPU tier, and every band says what it maps; Seen from Edge-on shows the disc's bend; HUD off leaves the
 // picture alone. The Chart style still carries the scars and the edge-on strip. Nothing is written.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

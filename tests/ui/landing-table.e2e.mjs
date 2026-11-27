@@ -3,6 +3,7 @@
 // The GM shares, opens the Solar System, picks Earth and a site on Land, and presses "Send this view": the players'
 // screen changes to the Landing screen and judges the same site the same way, on its own kernel. The GM lands: the
 // player flies too; the GM skips to the ground and walks: the player follows the GM's pose. Screens off ends it.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

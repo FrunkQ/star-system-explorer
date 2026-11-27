@@ -5,6 +5,7 @@
 // rumour on body 4 is found; turning a sifter off removes its hits; a pasted
 // sifter of the GM's own adds hits; a hit picks its subject and shows a
 // brief. Night chart and phone too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

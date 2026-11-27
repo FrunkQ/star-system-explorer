@@ -6,6 +6,7 @@
 // ledger (what died here, conditions, the green verdict). Another ring, a
 // layer, an earlier time and the dwarf galaxy all redraw. Night chart and
 // phone (no sideways scroll) too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

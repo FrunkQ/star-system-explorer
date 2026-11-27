@@ -3,6 +3,7 @@
 // its landmarks; pressing one plans a descent with its verdict and dangers; Land plays the flown descent with the
 // kernel's log beside it; Skip puts the camera on the ground; walking moves it; True, 3D and Wireframe all draw
 // (Chart draws the ground as 3D's diagram); Take off returns to choosing. The Moon with a capsule is offered, failing, not refused.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -4,6 +4,7 @@
 // sits on the map where its save puts it, the grown one and the campaign's own system are listed as not placed yet.
 // Resting on a system shows what it holds (stars, planets, moons...) without opening it; pressing one opens it.
 // Night chart and phone (no sideways scroll) too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
