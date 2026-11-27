@@ -47,6 +47,8 @@
     },
     "air_reductant_mol_yr_per_w": 0.064,
     "reducing_above_h2": 0.1,
+    "heat_epoch_step": 0.2,
+    "heat_epoch_cap": 8,
     "sources": {
      "band_edges_deg": "Five bands of latitude, tropics to 30 degrees and poles from 60: enough to separate a world's warm and cold lands without the 18 bands of the climate grid",
      "crust_depth_m": "A continental crust about 30 to 40 km thick (Christensen and Mooney 1995); the deep-crust habitat only reads its top 5 km",
@@ -63,6 +65,8 @@
      "anoxic_below_o2": "Below this O2 mixing ratio the ocean is taken as anoxic and keeps its dissolved iron (the Archean ocean, Lyons et al. 2014)",
      "vents_above_w_m2": "Hydrothermal vents need an interior hot enough to drive water through rock; a sketch threshold between Mars (about 0.02 W/m², no vents today) and Europa (about 0.05 W/m², tidal heat)",
      "recycling_gyr": "How long a surface lasts: about 0.8 Gyr under plate tectonics (the L1d fixture's Earth), about 50 Myr for an active ice shell (Europa's surface age, Zahnle et al. 2003); none for a stagnant lid",
+     "heat_epoch_step": "L3-heat: a chart world's deep-time history starts a new epoch where its interior's heat flow (the core history's heat out of the top) has moved by more than a fifth since the last; vents, their hydrogen and iron, and the crust's warmth follow it. A judgement on resolution, not physics: each epoch costs a habitat graph and its budgets",
+     "heat_epoch_cap": "At most eight heat epochs per history (the step is widened until they fit), to keep the history's budget cache small",
      "reducing_above_h2": "Air with a tenth or more hydrogen is reducing: methane is what its carbon becomes without life (a giant's air), so methane there is no sign of anything (Krissansen-Totton et al. 2018, Science Advances 4, eaao5747)",
      "air_reductant_mol_yr_per_w": "The air box's volcanic reducing gases, 3e12 mol O2-equivalent a year (life_feedback) over Earth's 47 TW: a world's volcanism scales with its heat"
     }

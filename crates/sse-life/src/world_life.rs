@@ -61,6 +61,10 @@ pub struct FromWorldParams {
     pub air_reductant_mol_yr_per_w: f64,
     /// Above this H2 mixing ratio the air is reducing (a giant's).
     pub reducing_above_h2: f64,
+    /// L3-heat: a new history epoch where the interior's heat has moved by
+    /// more than this share since the last, and at most `heat_epoch_cap`.
+    pub heat_epoch_step: f64,
+    pub heat_epoch_cap: usize,
     #[serde(default)]
     pub sources: BTreeMap<String, String>,
 }
@@ -109,6 +113,78 @@ pub struct WorldReading {
     pub has_water: bool,
     /// Universe year the world formed (dates the biosphere's guilds).
     pub birth_year: i64,
+    /// Heat flowing out at each age, from the interior's own thermal history
+    /// (L3-heat). Empty: the history holds `heat_flow_w_m2` throughout.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub heat_history: Vec<HeatSample>,
+}
+
+/// Heat flowing out of a world at one age.
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+pub struct HeatSample {
+    /// Myr since the world formed.
+    pub at_myr: f64,
+    pub heat_flow_w_m2: f64,
+}
+
+/// The history's epochs by heat: (from Myr, heat flow) at each age where the
+/// heat has moved by more than `step` (a share) since the last epoch, from
+/// `from_myr` to `to_myr`, at most `cap` of them (the step widened until they
+/// fit). Each epoch takes the heat at its own start, so none reads a later
+/// age. With no history, one epoch at today's heat.
+pub fn heat_epochs(r: &WorldReading, step: f64, cap: usize) -> Vec<(f64, f64)> {
+    let from = r.habitable_from_myr.max(0.0);
+    epochs_by_heat(
+        &r.heat_history,
+        from,
+        r.age_myr.max(from),
+        r.heat_flow_w_m2,
+        step,
+        cap,
+    )
+}
+
+/// [`heat_epochs`] on bare samples: `today` is used when there are none.
+pub fn epochs_by_heat(
+    samples: &[HeatSample],
+    from: f64,
+    to: f64,
+    today: f64,
+    step: f64,
+    cap: usize,
+) -> Vec<(f64, f64)> {
+    let mut h: Vec<HeatSample> = samples
+        .iter()
+        .copied()
+        .filter(|x| x.at_myr.is_finite() && x.heat_flow_w_m2.is_finite())
+        .collect();
+    h.sort_by(|a, b| a.at_myr.total_cmp(&b.at_myr));
+    // The heat at an age: the last sample at or before it (the first if none).
+    let at = |t: f64| {
+        h.iter()
+            .rev()
+            .find(|x| x.at_myr <= t)
+            .or(h.first())
+            .map(|x| x.heat_flow_w_m2.max(0.0))
+    };
+    let Some(first) = at(from) else {
+        return vec![(from, today)];
+    };
+    let mut share = step;
+    loop {
+        let mut out = vec![(from, first)];
+        for x in h.iter().filter(|x| x.at_myr > from && x.at_myr < to) {
+            let last = out.last().map_or(first, |e| e.1);
+            let q = x.heat_flow_w_m2.max(0.0);
+            if (q - last).abs() > share * last.max(1e-12) {
+                out.push((x.at_myr, q));
+            }
+        }
+        if out.len() <= cap.max(1) {
+            return out;
+        }
+        share *= 2.0;
+    }
 }
 
 /// One world's life, every stage kept.
@@ -560,29 +636,48 @@ pub fn life(
             graph_while: vec![],
         });
     }
-    // Today's air may hold oxygen life made: the history does not read it.
-    // While its own air box is still without oxygen, the ocean keeps the
-    // iron its vents bring (an anoxic ocean), whatever today's air says.
-    let mut graph_while = vec![];
-    if gas(c, "o2") >= p.anoxic_below_o2 {
-        let (ws_anoxic, _) = stack_ocean(r, &p, cs, true);
-        let g = HabitatGraph::derive(&ws_anoxic, &rules).map_err(|e| format!("{e:?}"))?;
-        if g != graph {
-            graph_while.push(GraphWhile {
-                fact: "o2_fraction".into(),
-                below: p.anoxic_below_o2,
-                graph: g,
-                why: "an ocean without oxygen keeps the iron its vents bring".into(),
-            });
-        }
+    // The interior's heat at each age (L3-heat): vents, their hydrogen and
+    // iron, and the crust's warmth follow it; climate and air stay today's.
+    let by_heat = heat_epochs(r, p.heat_epoch_step, p.heat_epoch_cap);
+    if !r.heat_history.is_empty() {
+        held.retain(|x| !x.starts_with("today's climate, air and heat"));
+        held.push(format!("today's climate and air are held through the whole history (the young star's faintness and the world's own catastrophes are not yet inputs); the interior's heat follows its own history in {} epochs", by_heat.len()));
     }
-    epochs.push(Epoch {
-        id: format!("{}.today-held", r.name),
-        from_myr: r.habitable_from_myr.max(0.0),
-        graph: Some(graph.clone()),
-        facts: o2(0.0),
-        graph_while,
-    });
+    for (from, heat) in by_heat {
+        let mut then = r.clone();
+        then.heat_flow_w_m2 = heat;
+        let (ws_then, _) = stack(&then, &p, cs);
+        let g_then = HabitatGraph::derive(&ws_then, &rules).map_err(|e| format!("{e:?}"))?;
+        // Today's air may hold oxygen life made: the history does not read
+        // it. While its own air box is still without oxygen, the ocean keeps
+        // the iron its vents bring (an anoxic ocean), whatever today's air
+        // says (L3-air).
+        let mut graph_while = vec![];
+        if gas(c, "o2") >= p.anoxic_below_o2 {
+            let (ws_anoxic, _) = stack_ocean(&then, &p, cs, true);
+            let g = HabitatGraph::derive(&ws_anoxic, &rules).map_err(|e| format!("{e:?}"))?;
+            if g != g_then {
+                graph_while.push(GraphWhile {
+                    fact: "o2_fraction".into(),
+                    below: p.anoxic_below_o2,
+                    graph: g,
+                    why: "an ocean without oxygen keeps the iron its vents bring".into(),
+                });
+            }
+        }
+        let id = if r.heat_history.is_empty() {
+            format!("{}.today-held", r.name)
+        } else {
+            format!("{}.heat@{:.0}", r.name, from)
+        };
+        epochs.push(Epoch {
+            id,
+            from_myr: from,
+            graph: Some(g_then),
+            facts: o2(0.0),
+            graph_while,
+        });
+    }
     let world = WorldTimeline {
         body: graph.body.clone(),
         end_myr: r.age_myr.max(r.habitable_from_myr),

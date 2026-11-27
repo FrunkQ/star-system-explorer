@@ -256,6 +256,8 @@ mod history_air_tests;
 #[cfg(test)]
 mod history_e2_tests;
 #[cfg(test)]
+mod history_heat_tests;
+#[cfg(test)]
 mod history_tests;
 #[cfg(test)]
 mod ledger_tests;
