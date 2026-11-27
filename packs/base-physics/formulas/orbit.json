@@ -758,6 +758,126 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.orbit.gw_decay",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass_a",
+     "letter": "m1"
+    },
+    {
+     "port": "mass_b",
+     "letter": "m2"
+    },
+    {
+     "port": "separation",
+     "letter": "a"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "rate",
+     "letter": "adot"
+    }
+   ],
+   "constants": {
+    "G": "constants/G",
+    "c": "constants/c"
+   },
+   "models": {
+    "k": {
+     "value": 12.8,
+     "grade": "derived",
+     "source": "Peters 1964 eq. 5.6 (64/5)"
+    }
+   },
+   "positive": [
+    {
+     "port": "mass_a",
+     "says": "mass"
+    },
+    {
+     "port": "mass_b",
+     "says": "mass"
+    },
+    {
+     "port": "separation",
+     "says": "separation"
+    }
+   ],
+   "references": [
+    "Peters, P. C. 1964, Gravitational radiation and the motion of two point masses, Phys. Rev. 136, B1224: a circular orbit shrinks at da/dt = -(64/5) G^3 m1 m2 (m1 + m2) / (c^5 a^3). doi:10.1103/PhysRev.136.B1224"
+   ],
+   "shown": "ȧ = −(64/5) G³ m₁ m₂ (m₁ + m₂) / (c⁵ a³)",
+   "equation": {
+    "name": "How fast gravitational waves pull two stars together",
+    "formula": "c5 = c * c * c * c * c\nadot = -k * G * G * G * m1 * m2 * (m1 + m2) / (c5 * a * a * a)",
+    "inputs": {
+     "m1": {
+      "kind": "star.mass",
+      "unit": "kg",
+      "name": "mass of one star"
+     },
+     "m2": {
+      "kind": "star.mass",
+      "unit": "kg",
+      "name": "mass of its partner"
+     },
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "separation of the two"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m s-1",
+      "name": "speed of light"
+     },
+     "k": {
+      "kind": "model.gw_decay_factor",
+      "unit": "1",
+      "name": "Peters' factor, 64/5"
+     }
+    },
+    "outputs": {
+     "adot": {
+      "kind": "binary.separation_rate",
+      "unit": "m s-1",
+      "name": "how fast the separation changes (negative: shrinking)"
+     }
+    },
+    "source": {
+     "text": "Peters, P. C. 1964, Phys. Rev. 136, B1224",
+     "url": "https://doi.org/10.1103/PhysRev.136.B1224",
+     "where": "eq. 5.6"
+    },
+    "explain": {
+     "curious": "Two stars circling close shake space itself; the ripples carry energy away and the pair spirals slowly in.",
+     "science": "General relativity's quadrupole loss for a circular orbit. It brings the tightest pairs (white dwarfs and neutron stars a few hours apart, and cataclysmic variables below a two-hour period) into contact. Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "m1": 1.98840987e+30,
+      "m2": 1.98840987e+30,
+      "a": 695700000.0,
+      "adot": -7.338466942260854e-08
+     },
+     {
+      "m1": 1.193045922e+30,
+      "m2": 3.97681974e+29,
+      "a": 347850000.0,
+      "adot": -2.817971305828168e-08
+     }
+    ]
+   }
   }
  ]
 }

@@ -26,3 +26,22 @@ pub fn overflow_rate(mass_kg: f64, fill: f64, cap_msun: f64) -> f64 {
 pub fn thermal_timescale(mass: f64, core: f64, radius: f64, lum: f64, share: f64) -> f64 {
     share * G * mass * (mass - core).max(0.0) / (radius * lum)
 }
+
+/// BX3: Peters 1964: m/s at which a circular orbit of separation `a` shrinks
+/// by gravitational waves (negative), masses in kg.
+pub fn gw_decay(m1: f64, m2: f64, a: f64, k: f64) -> f64 {
+    let c = C;
+    let c5 = c * c * c * c * c;
+    -k * G * G * G * m1 * m2 * (m1 + m2) / (c5 * a * a * a)
+}
+
+/// BX3: Hurley, Tout and Pols 2002 eq. 50 (after Rappaport, Verbunt and Joss
+/// 1983): kg m² s⁻² of spin carried off by a magnetised wind (negative), for
+/// a star of `mass` with `envelope` of it convective, radius `radius` m,
+/// turning at `omega` rad/s.
+pub fn magnetic_braking(mass: f64, envelope: f64, radius: f64, omega: f64, k: f64) -> f64 {
+    let msun = sse_core::sheet::M_SUN;
+    let yr = JULIAN_YEAR;
+    let rw = radius / R_SUN * omega * yr;
+    -k * (envelope / mass) * rw * rw * rw * msun * R_SUN * R_SUN / (yr * yr)
+}

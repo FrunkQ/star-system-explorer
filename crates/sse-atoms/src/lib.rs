@@ -493,6 +493,10 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("binary.roche_lobe_radius", "radius of the sphere with the volume of a star's Roche lobe"),
     ("binary.lobe_fill", "a star's radius over its Roche lobe's"),
     ("binary.transfer_rate", "mass a star gives its partner each second"),
+    ("binary.separation_rate", "how fast a pair's separation changes"),
+    ("star.envelope_mass", "mass of a star's convective outer layer"),
+    ("star.spin_rate", "how fast a star turns, radians a second"),
+    ("star.spin_down_torque", "spin angular momentum a star's wind carries off each second"),
     // what stops a wind (MF6)
     ("body.ionopause_altitude", "height above the ground at which a body's air holds off the stellar wind"),
     ("magnetosphere.flaring", "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)"),
