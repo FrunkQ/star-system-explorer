@@ -358,6 +358,14 @@ pub(crate) fn home_galaxy(
     };
     let h = home_of(&hs, &cp, chosen)?;
     let mut v = home_json(&h, &cp.home);
+    // What the home is, from the physics in force: its size and circular
+    // speed today (R_200, V_200) and when it had half its mass. The choice
+    // of halo is a draw that a small edit rarely changes; these follow it.
+    let (r200, v200) = cp.galaxy.virial(&c, h.halo.mass, 1.0);
+    let z_half = h.halo.z_half;
+    v["r200_kpc"] = serde_json::json!(r200);
+    v["v200_kms"] = serde_json::json!(v200);
+    v["half_mass_z"] = serde_json::json!(z_half);
     v["model"] = serde_json::json!([
         "home: the catalogued halo (G2) nearest the middle of the wished mass range among those that meet every wish, in the first shell of halo cells round the origin cell that holds one; with none in the searched shells, the one nearest the wished mass, marked fits_wish false (GZ12)",
         "the GM may choose another catalogued halo (set_home); it is a fact in the record, and clearing it returns to the web's choice",

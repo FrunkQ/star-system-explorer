@@ -266,6 +266,10 @@ export interface HomeGalaxy {
   by: "web" | "gm";
   fits_wish: boolean;
   why: string[];
+  /** From `home_galaxy` (not the chart's copy): size (R_200) and circular speed (V_200) today, and the redshift it had half its mass by. */
+  r200_kpc?: number;
+  v200_kms?: number;
+  half_mass_z?: number;
 }
 
 // GZ12: "home" is the universe's own home galaxy, one of the web's catalogued haloes chosen by the kernel (or the GM);
