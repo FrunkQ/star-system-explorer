@@ -239,7 +239,8 @@ def build_small_bodies(cache, got, out, min_size):
         x = supplement.get(r["pdes"])
         if x is None or num(r["diameter"]) is not None:
             continue
-        if norm(x["name"]) != norm(r["name"]):
+        # An unnamed body is checked by its designation in JPL's full name.
+        if norm(x["name"]) != norm(r["name"]) and norm(x["name"]) not in norm(r["full_name"]):
             raise SystemExit("sol-measured-sizes: %s is %r at JPL, %r in the file" % (r["pdes"], r["name"], x["name"]))
         r["diameter"], r["_dsrc"] = x["diameter_km"], x["src"]
         if num(r["albedo"]) is None:
