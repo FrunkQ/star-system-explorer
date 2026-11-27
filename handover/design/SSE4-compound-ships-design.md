@@ -1,6 +1,6 @@
 # SSE4: compound ships that separate and rejoin (track CM)
 
-Status: **PROPOSED**, 27 Nov 2026 (section 8A added the same night from Alex's 00:23 follow-up). Design only (Fable); nothing here is built. CM is a code only and is never shown in the product.
+Status: **PROPOSED**, 27 Nov 2026 (section 8A added the same night from Alex's 00:23 follow-up). Questions 17 and 18 answered yes at 00:31 UTC; the rest wait on Alex. His note on the look: "If we can get the right shader this could look so cool", so CM14's paint, decals, lights and wear are drawn by the renderer's physically based ship shader, with the coating's real absorptance and emittance setting how it reads in each band. Design only (Fable); nothing here is built. CM is a code only and is never shown in the product.
 
 Alex's ask (27 Nov 2026, 00:02 to 00:05 UTC, thread "Design compound ships that separate and rejoin"):
 
@@ -454,8 +454,8 @@ Order: CM0 can start now and does not wait for the rest. Then CM1, CM2 and CM7 (
 14. **A depot is a construct with propellant lines; refuelling is a transfer, with boil-off as a small cited block.** Recommended: yes.
 15. **The builder is the 2D picture and 3D designer made editable on the Edit desk**, one recipe in two views (3D freely rotated, parts clipping at connection points, painted with a real coating), not a second designer, with primitives that become parts or constructs by whether they can fly alone, and tanks split into N with real costs. Recommended: yes, in 4.0 after CM8, since it is mostly the designer's own layout plus a palette.
 16. **Parts by decade:** every primitive carries its first-flight year; future decades are predicted from the flown series bent toward the future-tech ceilings, marked `predicted`. Recommended: yes; it is the bridge from tin cans to far-future ships with no hand-typed future figures.
-17. **Name and logo on the hull,** the name kept in step with the construct's name and a logo from the starter set, the civilisation or the GM's own pictures. Recommended: yes, in CM14.
-18. **The extra ideas:** markings read from the record (registry, flag, first-flight date), wear from the ship's own history (shield darkening per entry, sun fading), and lights driven by who is aboard and the power ledger. Recommended: yes to markings and lights in CM14; wear later, after the renderer's merged drawing path, and never in the real pack where the record does not show it.
+17. **ANSWERED yes, 27 Nov 00:31 UTC ("Yes on all! If we can get the right shader this could look so cool").** **Name and logo on the hull,** the name kept in step with the construct's name and a logo from the starter set, the civilisation or the GM's own pictures. Recommended: yes, in CM14.
+18. **ANSWERED yes, same message.** **The extra ideas:** markings read from the record (registry, flag, first-flight date), wear from the ship's own history (shield darkening per entry, sun fading), and lights driven by who is aboard and the power ledger. Recommended: yes to markings and lights in CM14; wear later, after the renderer's merged drawing path, and never in the real pack where the record does not show it.
 
 ## 15. Not in this design
 
