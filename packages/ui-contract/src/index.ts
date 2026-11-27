@@ -47,6 +47,8 @@ export * from "./part-controls.ts";
 export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan } from "./desk.ts";
 export type { DeskDoc, DeskWrites, DeskTime, OnDesks, ShellPart, DeskLevel, DeskMemory } from "./desk.ts";
 export { NO_HAPPENINGS, byDate, dueAhead, passedWords, checkHappenings } from "./due.ts";
+export { stepperLine, stepOut, stepIn } from "./stepper.ts";
+export type { StepperStep } from "./stepper.ts";
 export type { TimeMark, Summarised, Happenings, DueTick } from "./due.ts";
 export * from "./layouts.ts";
 export * from "./picker.ts";

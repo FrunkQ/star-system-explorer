@@ -1795,6 +1795,7 @@
       {goTo}
       {toScale}
       switchSystem={(sys) => (showSystem(sys), toSystem())}
+      stepper={partShows("stepper", desk)}
     />
     <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
     {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker" class:gone={kickerW < 140} bind:clientWidth={kickerW} title="{scene.subtitle} · {formatYears(ws.now_yr)}">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
