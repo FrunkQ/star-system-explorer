@@ -76,6 +76,15 @@ SKIP_PATHS = [
 BLOCK = re.compile(
     r"\bformulas::(loaded|atoms)\(|\bsse_atoms::(registry|atoms)\(|\.params\.iter\(\)\.map\(\|\w+\| \w+\.default\)"
 )
+# Exact exceptions to the `block` kind: (path, the line's code, why). Each is
+# a line that matches the pattern but is not a side door.
+BLOCK_EXCEPTIONS = [
+    (
+        "crates/sse-flow/src/flow.rs",
+        "let mut params: Vec<f64> = decl.params.iter().map(|p| p.default).collect();",
+        "the flow compiler starts from the registry it is handed, which is the blocks in force (ER2)",
+    ),
+]
 SHEET_PATH = re.compile(r"(?<![\w:])(?:sse_core::)?sheet::((?:[a-z_]+::)*)([A-Za-z_][A-Za-z0-9_]*)")
 SHEET_MENTION = re.compile(r"\bsse_core::sheet\b")
 SETTINGS = re.compile(
@@ -159,7 +168,9 @@ def scan(root):
             text = f.read()
         sheet_lines, names_used = [], set()
         for n, line in code_lines(text):
-            if BLOCK.search(line):
+            if BLOCK.search(line) and not any(
+                rel == p and line.strip() == code for p, code, _ in BLOCK_EXCEPTIONS
+            ):
                 out.setdefault(("block", rel), []).append(n)
             if SETTINGS.search(line) and not DEFINES.search(line):
                 out.setdefault(("settings", rel), []).append(n)
