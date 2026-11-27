@@ -16,7 +16,10 @@ A JSON number is first the nearest double, as in a browser; then, integral and b
 - `cbor::tests::json_numbers_decode_by_value_as_javascript_writes_them`: now says the browser digits of a double past 2^53 read as that double's integer, and that 2^63 - 1 (which a browser cannot hold) is a float.
 
 ## Goldens
-None moved, core included: no fixture pack holds such a number in a free-form field (TP4 had already written its two as a browser writes them).
+The core golden did not move. Two moved on purpose, each by its stack or pack hash only:
+- `tests/golden/areas/time.jsonl`, both `stack_loaded` lines: TP4's base-time carries the Hubble example as `456056396909749800` (written as a browser writes it), which is now read as the double it stands for, 456056396909749824.
+- `tests/golden/time.json`, the base-time `manifest` hash, for the same number.
+Every ladder rung, event, window, chronicle head and run digest is unchanged.
 
 ## What must stay exact, checked (27 Nov)
 The rule only touches free-form JSON numbers: `cbor::Value` read from JSON (authored values, program and sifter values) and the untyped parts of a pack. It rounds nothing that a browser had not already rounded, because a browser holds every JSON number as a double before the kernel sees it.
