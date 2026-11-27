@@ -53,6 +53,8 @@ mod life;
 mod life_tests;
 #[cfg(test)]
 mod matter_tests;
+#[cfg(test)]
+mod mount_tests;
 mod names;
 #[cfg(test)]
 mod names_tests;
@@ -6515,6 +6517,86 @@ impl Kernel {
                         .and_then(|v| v.as_str().map(str::to_string))
                         .unwrap_or_default(),
                     event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::MountConstruct {
+                address,
+                on,
+                place,
+                port,
+                own_port,
+                bay,
+                along_m,
+                clock_deg,
+                stand_off_m,
+                bond,
+                lines,
+                push_m_s,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let h = in_universe(&u.root, &on)?;
+                let at = UniverseTime::seconds(at_s);
+                let d = sse_trigger::mount::mount(
+                    &mut u.chronicle,
+                    &u.root,
+                    &sse_trigger::mount::MountAsk {
+                        carried: &a,
+                        carrier: &h,
+                        place: Some(place),
+                        port: port.as_deref(),
+                        own_port: own_port.as_deref(),
+                        bay: bay.as_deref(),
+                        along_m,
+                        clock_deg,
+                        stand_off_m,
+                        bond,
+                        lines: lines.as_deref().unwrap_or(&[]),
+                        push_m_s,
+                        at,
+                    },
+                    &Publisher::new("gm", "mount", "1"),
+                )
+                .map_err(|e| err("mount_refused", e))?;
+                let st = u.chronicle.state_at(at);
+                Response::ConstructMounted {
+                    address: a.to_string(),
+                    mount: d.mount.to_json(),
+                    compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
+                    notes: d.notes,
+                    event_id: d.event.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::ReleaseConstruct {
+                address,
+                from,
+                push_m_s,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let from = from.map(|f| in_universe(&u.root, &f)).transpose()?;
+                let at = UniverseTime::seconds(at_s);
+                let d = sse_trigger::mount::release(
+                    &mut u.chronicle,
+                    &u.root,
+                    &a,
+                    from.as_ref(),
+                    push_m_s,
+                    at,
+                    &Publisher::new("gm", "release", "1"),
+                )
+                .map_err(|e| err("release_refused", e))?;
+                let st = u.chronicle.state_at(at);
+                Response::ConstructReleased {
+                    address: a.to_string(),
+                    mount: d.mount.to_json(),
+                    compound: sse_trigger::mount::compound(&st, &d.root).to_json(),
+                    notes: d.notes,
+                    event_id: d.event.hex(),
                     state_hash: latest_hash(&u.chronicle),
                 }
             }
