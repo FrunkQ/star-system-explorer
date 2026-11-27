@@ -188,7 +188,7 @@ export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";
 export { wattsText, powerWords, nowhereWords } from "./power.ts";
 export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";
-export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX, PICTURE_MAX, PICTURE_SIDE, checkPicture, picturesOf, shownOf, designOf, fitSide, type PictureShown } from "./picture.ts";
+export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX, PICTURE_MAX, PICTURE_SIDE, checkPicture, picturesOf, shownOf, designOf, buildOf, fitSide, type PictureShown } from "./picture.ts";
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
 // One units engine (ED1a): every figure said and read back the same way.
@@ -245,5 +245,5 @@ export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Scul
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
 export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";
-export { clips, flownBy, partWarnings, shapeArea, shapeVolume, stretchPart } from "./parts.ts";
-export type { ConnectionPoint, FigureMark, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";
+export { clips, eraOf, flownBy, paletteByEra, partWarnings, shapeArea, shapeVolume, stretchPart } from "./parts.ts";
+export type { ConnectionPoint, Era, FigureMark, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";
