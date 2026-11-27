@@ -66,6 +66,7 @@ export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
 export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
 export { addProminences, narrateProminences, PROMINENCE_REFERENCES, PROMINENCE_SCALE, prominenceColour, prominencePoints, prominenceShown, prominencesAt } from "./star-prominences.ts";
 export type { Prominence, ProminenceNow } from "./star-prominences.ts";
+export { rateShareOf, regionLon, regionShare, spotsFromRegions, type Region, type Regions } from "./star-regions.ts";
 export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, drawnCellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, plateCellAngle, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";

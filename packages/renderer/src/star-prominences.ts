@@ -10,6 +10,7 @@
 // disc they are dark threads in hydrogen light and invisible in white light.
 import { sayNumber } from "../../ui-contract/src/index.ts";
 import { rateShare, turnAt, type LiveStar } from "./live-star.ts";
+import { rateShareOf } from "./star-regions.ts";
 import { nebulaColour, type NebulaShape } from "./star-shells.ts";
 
 export interface Prominence {
@@ -84,7 +85,7 @@ export function prominencesAt(s: LiveStar, t: number, reach: number, calm = fals
     if (k <= 0) continue;
     // Carried round at its latitude's own rate from where it was born (drifting against the equator, whose turn
     // `turnAt` follows), then seen against the star's turn now.
-    const drift = period > 0 ? (rateShare(p.lat_deg) - 1) * 360 * ((at - p.born_s) / period) : 0;
+    const drift = period > 0 ? ((s.regions ? rateShareOf(s.regions.differential, p.lat_deg) : rateShare(p.lat_deg)) - 1) * 360 * ((at - p.born_s) / period) : 0;
     const lon = p.lon_deg + drift - turnAt(s, at);
     out.push({ p, k, lat_deg: p.lat_deg, lon_deg: ((((lon + 180) % 360) + 360) % 360) - 180, h, half_rad: Math.min(Math.PI / 2, p.length_m / (2 * s.radius)), erupting });
   }
