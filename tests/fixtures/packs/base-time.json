@@ -234,6 +234,8 @@
        "preview_tree",
        "split_construct",
        "join_constructs",
+     "mount_construct",
+     "release_construct",
        "intent_decide",
        "programs",
        "attach_program",
