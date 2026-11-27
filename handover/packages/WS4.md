@@ -31,6 +31,13 @@ Design: `handover/design/SSE4-stirred-clouds-design.md` section 3.6, checks in s
 3. **Eddies are round.** Their steady ellipse is what the shear does to a round vortex, so giving them that shape as well would count the shear twice.
 4. **Stretch as a power of two, and area as a running product.** The stirring is chaotic: Jupiter's cloud at the mean age is stretched 2^30 to 2^54. Finite differences between whole paths separate across the planet, and the product's own determinant cancels away. Per-step Jacobians keep area within 1e-4 over two renewals.
 
+5. **Vortices end without a seam, and steps halve where the strain is strong.** These were found when main gave Sol's Jupiter its measured light (CS1), and its eddies grew faster.
+   - Eddies and storms stopped dead at three radii, where a Gaussian vortex still blows at about 5% of its peak. Neighbours either side of that circle saw different winds, and area drifted by 1.6% in a cell beside a 5,000 km oval.
+   - Each vortex's stream function now tapers to nothing between 2.5 and 3 radii (quintic smoothstep). `giant_cell` keeps its plain cut, so no golden moves.
+   - Each step also halves itself, up to 8 times, while it changes the local map by more than 5 per cent.
+   - The eddy search window is sized by the cosine at the poleward edge of where an eddy in reach can be.
+   - Area now holds within 1e-3 on Sol's Jupiter.
+
 ## Findings for the owner (numbers unverified)
 
 - **The renewal time decides whether the picture shows anything.**

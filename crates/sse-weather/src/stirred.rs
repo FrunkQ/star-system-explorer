@@ -26,8 +26,7 @@ use crate::contract::WeatherSystem;
 use crate::eddies::{bands, eddies_between, renewal_s, Eddy};
 use crate::giants::{
     band_rho_km, band_wind_at, draws, giant_systems, polygon_hold, spin_sense, spin_sign,
-    storm_r_at, storm_wind, wrap, zonal_vorticity, zonal_wind, GiantLayout, GiantSettings, Vortex,
-    DEG,
+    storm_r_at, wrap, zonal_vorticity, zonal_wind, GiantLayout, GiantSettings, Vortex, DEG,
 };
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -45,6 +44,10 @@ const TIERS: usize = 12;
 const STORM_STEP_D: f64 = 30.0;
 /// The offset, m, of the neighbours whose one-step paths give each step's Jacobian.
 const NUDGE_M: f64 = 1.0;
+/// A step is halved while it changes the local map by more than this (each entry of its Jacobian from the identity).
+const STEP_STRAIN: f64 = 0.05;
+/// At most this many halvings of a step.
+const MAX_HALVINGS: u32 = 8;
 /// The Jacobian is scaled down by 2^RESCALE whenever an entry passes 2^RESCALE.
 const RESCALE: i32 = 64;
 
@@ -349,7 +352,7 @@ impl<'a> Carrier<'a> {
         let mut own = [0.0f64; 2];
         for s in &self.storms {
             if let Some(v) = s.at(day) {
-                if let Some(sw) = storm_wind(a, &v, self.turn, s.sense, lat, lon) {
+                if let Some(sw) = tapered_storm_wind(a, &v, self.turn, s.sense, lat, lon) {
                     own[0] += sw[0];
                     own[1] += sw[1];
                 }
@@ -463,7 +466,6 @@ impl<'a> Carrier<'a> {
         }
         let bin = bin as usize;
         let km = a / 1000.0;
-        let cosp = m::cos(lat / DEG).max(1e-6);
         for (b, reach) in self.group_reach_km.iter().enumerate() {
             let reach = *reach;
             if reach <= 0.0 {
@@ -485,7 +487,20 @@ impl<'a> Carrier<'a> {
             if list.is_empty() {
                 continue;
             }
-            let half = (reach / (km * cosp) * DEG + self.slack[k]).min(180.0);
+            // An eddy nearer the pole than here reaches further in longitude: size the window by the cosine at
+            // the poleward edge of where an eddy in reach can be, or its winds would stop at the window's edge.
+            let far = lo
+                .abs()
+                .max(hi.abs())
+                .max(lat.abs() + reach / km * DEG)
+                .min(90.0);
+            let cos_far = m::cos(far / DEG);
+            let half = if cos_far < 1e-6 {
+                180.0
+            } else {
+                (m::asin((m::sin(reach / km).min(1.0) / cos_far).min(1.0)) * DEG + self.slack[k])
+                    .min(180.0)
+            };
             let mut visit = |x: &(f64, u32)| {
                 let ed = &self.eddies[x.1 as usize];
                 let s = ed.strength_at(day);
@@ -503,12 +518,15 @@ impl<'a> Carrier<'a> {
                 let h = if ed.lat_deg >= 0.0 { 1.0 } else { -1.0 };
                 let q = ed.sense * h * self.turn * s * r;
                 let ex = m::exp(0.5 * (1.0 - x2));
-                psi += -q * ex;
+                let x = d / r;
+                let (w, dw) = taper(x);
+                psi += -q * ex * w;
                 let sn = m::sin(sigma);
                 if sn < 1e-12 {
                     return;
                 }
-                let dphi = q * d / (r * r) * ex;
+                // d(Ψ w)/dd = (q e / R)(x w − w').
+                let dphi = q * ex / r * (x * w - dw);
                 let u = dphi * dot(n, c) / sn;
                 let v = -dphi * dot(e, c) / sn;
                 for i in 0..3 {
@@ -557,31 +575,78 @@ impl<'a> Carrier<'a> {
 
     /// Follow the wind backwards from `p` on `day` for `days`.
     pub fn back(&self, p: [f64; 3], day: f64, days: f64) -> [f64; 3] {
-        if days <= 0.0 {
-            return p;
-        }
-        let (lat, _) = lat_lon(p);
-        let dt = if lat.abs() >= self.poly_lat {
-            self.dt_poly_s
-        } else {
-            self.dt_s
-        };
-        let n = (m::ceil(days * DAY_S / dt) as u64).max(1);
-        let h = days * DAY_S / n as f64;
-        let mut q = p;
-        for k in 0..n {
-            q = self.step(q, day - k as f64 * h / DAY_S, -h);
-        }
-        q
+        self.back_path(
+            Path {
+                p,
+                j: [[1.0, 0.0], [0.0, 1.0]],
+                log2: 0,
+                area_log2: 0.0,
+            },
+            day,
+            days,
+        )
+        .p
     }
 
-    /// Follow the wind backwards as [`Carrier::back`], carrying the map's Jacobian step by step: each step's from
-    /// the one-step paths of two neighbours a metre off, so it holds however chaotic the stirring.
+    /// One step of `h` s back from `p` on day `t`, with its Jacobian (east and north at `p` to east and north at
+    /// the end) from the one-step paths of two neighbours a metre off.
+    fn step_with_jacobian(&self, p: [f64; 3], t: f64, h: f64) -> ([f64; 3], [f64; 2], [f64; 2]) {
+        let a = self.a;
+        let d = NUDGE_M / a;
+        let (la, lo) = lat_lon(p);
+        let (e, nn) = frame(la, lo);
+        let p1 = self.step(p, t, -h);
+        let pe = self.step(norm(axpy(p, d, e)), t, -h);
+        let pn = self.step(norm(axpy(p, d, nn)), t, -h);
+        (
+            p1,
+            tangent(p1, pe, a).map(|v| v / NUDGE_M),
+            tangent(p1, pn, a).map(|v| v / NUDGE_M),
+        )
+    }
+
+    /// Carry `path` back `h` s from day `t`: in one step if that step changes the local map by under
+    /// [`STEP_STRAIN`], else as two halves (down to 2^-[`MAX_HALVINGS`] of the step), so the strongest strain is
+    /// followed as finely as it needs.
+    fn advance(&self, path: &mut Path, t: f64, h: f64, depth: u32) {
+        let (p1, ce, cn) = self.step_with_jacobian(path.p, t, h);
+        let strain = (ce[0] - 1.0)
+            .abs()
+            .max(ce[1].abs())
+            .max(cn[0].abs())
+            .max((cn[1] - 1.0).abs());
+        if strain > STEP_STRAIN && depth < MAX_HALVINGS {
+            self.advance(path, t, 0.5 * h, depth + 1);
+            self.advance(path, t - 0.5 * h / DAY_S, 0.5 * h, depth + 1);
+            return;
+        }
+        path.area_log2 += m::log2((ce[0] * cn[1] - cn[0] * ce[1]).abs());
+        let j = path.j;
+        path.j = [
+            [
+                ce[0] * j[0][0] + cn[0] * j[1][0],
+                ce[0] * j[0][1] + cn[0] * j[1][1],
+            ],
+            [
+                ce[1] * j[0][0] + cn[1] * j[1][0],
+                ce[1] * j[0][1] + cn[1] * j[1][1],
+            ],
+        ];
+        path.p = p1;
+        let big = path.j.iter().flatten().fold(0.0f64, |x, v| x.max(v.abs()));
+        if big > m::pow(2.0, RESCALE as f64) {
+            let f = m::pow(2.0, -(RESCALE as f64));
+            path.j = path.j.map(|r| r.map(|v| v * f));
+            path.log2 += RESCALE;
+        }
+    }
+
+    /// Follow the wind backwards from `path` on `day` for `days`, carrying the map's Jacobian step by step, so it
+    /// holds however chaotic the stirring.
     pub fn back_path(&self, mut path: Path, day: f64, days: f64) -> Path {
         if days <= 0.0 {
             return path;
         }
-        let a = self.a;
         let (lat, _) = lat_lon(path.p);
         let dt = if lat.abs() >= self.poly_lat {
             self.dt_poly_s
@@ -590,36 +655,8 @@ impl<'a> Carrier<'a> {
         };
         let n = (m::ceil(days * DAY_S / dt) as u64).max(1);
         let h = days * DAY_S / n as f64;
-        let d = NUDGE_M / a;
         for k in 0..n {
-            let t = day - k as f64 * h / DAY_S;
-            let p = path.p;
-            let (la, lo) = lat_lon(p);
-            let (e, nn) = frame(la, lo);
-            let p1 = self.step(p, t, -h);
-            let pe = self.step(norm(axpy(p, d, e)), t, -h);
-            let pn = self.step(norm(axpy(p, d, nn)), t, -h);
-            let ce = tangent(p1, pe, a).map(|v| v / NUDGE_M);
-            let cn = tangent(p1, pn, a).map(|v| v / NUDGE_M);
-            path.area_log2 += m::log2((ce[0] * cn[1] - cn[0] * ce[1]).abs());
-            let j = path.j;
-            path.j = [
-                [
-                    ce[0] * j[0][0] + cn[0] * j[1][0],
-                    ce[0] * j[0][1] + cn[0] * j[1][1],
-                ],
-                [
-                    ce[1] * j[0][0] + cn[1] * j[1][0],
-                    ce[1] * j[0][1] + cn[1] * j[1][1],
-                ],
-            ];
-            path.p = p1;
-            let big = path.j.iter().flatten().fold(0.0f64, |x, v| x.max(v.abs()));
-            if big > m::pow(2.0, RESCALE as f64) {
-                let f = m::pow(2.0, -(RESCALE as f64));
-                path.j = path.j.map(|r| r.map(|v| v * f));
-                path.log2 += RESCALE;
-            }
+            self.advance(&mut path, day - k as f64 * h / DAY_S, h, 0);
         }
         path
     }
@@ -679,6 +716,51 @@ fn storm_of(
         day_ref: day,
         drift_deg_d: drift,
     }
+}
+
+/// A vortex's stream function is brought smoothly to nothing between 2.5 and 3 of its radii (the quintic
+/// smoothstep), so its winds end with no seam: neighbours either side of a sharp cut would see different flows.
+/// Returns the factor and its slope in radii.
+fn taper(x: f64) -> (f64, f64) {
+    let t = ((REACH_R - x) / 0.5).clamp(0.0, 1.0);
+    let w = t * t * t * (10.0 + t * (6.0 * t - 15.0));
+    let dwdt = if t > 0.0 && t < 1.0 {
+        30.0 * t * t * (1.0 - t) * (1.0 - t)
+    } else {
+        0.0
+    };
+    (w, -dwdt / 0.5)
+}
+
+/// A storm's own winds as [`crate::giants::storm_wind`] has them, with the stream function tapered to nothing by
+/// three radii ([`taper`]), m/s [east, north]. (`giant_cell` keeps the plain cut; only the carrying needs the
+/// winds to end without a seam.)
+fn tapered_storm_wind(
+    a: f64,
+    s: &Vortex,
+    turn: f64,
+    sense: f64,
+    lat: f64,
+    lon: f64,
+) -> Option<[f64; 2]> {
+    let rr = 0.5 * s.size_km.max(1.0);
+    if storm_r_at(a, s, lat, lon) > REACH_R + 0.01 {
+        return None;
+    }
+    let h = if s.lat_deg >= 0.0 { 1.0 } else { -1.0 };
+    let q = sense * h * turn * s.strength * rr * 1000.0;
+    let phi = |la: f64, lo: f64| {
+        let x = storm_r_at(a, s, la, lo);
+        -q * m::exp(0.5 * (1.0 - x * x)) * taper(x).0
+    };
+    let dd = 1e-5 * rr * 1000.0 / a * DEG;
+    let cp = m::cos(lat / DEG);
+    if cp < 1e-6 {
+        return None;
+    }
+    let dphi = (phi(lat + dd, lon) - phi(lat - dd, lon)) / (2.0 * dd / DEG);
+    let dlam = (phi(lat, lon + dd / cp) - phi(lat, lon - dd / cp)) / (2.0 * dd / cp / DEG);
+    Some([-dphi / a, dlam / (a * cp)])
 }
 
 /// How much of the eddies' flow reaches a place `r` storm radii from a storm's centre: none within its radius,
