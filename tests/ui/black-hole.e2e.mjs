@@ -7,6 +7,8 @@
 // (left) is the brighter. The note says how far visible light was dimmed (the kernel's 3.2 × 10⁴ times the Sun's
 // surface). The starved centre is almost dark in visible light. Every band and Composite draw; reading writes nothing;
 // a phone gets the same geometry.
+// Drives the Solar System chart before leaving it (waits for Jupiter on the flat chart), so it keeps Chart (AF2).
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
