@@ -16,5 +16,6 @@ serde_json.workspace = true
 sse-flow.workspace = true
 sse-pack.workspace = true
 sse-atoms.workspace = true
+sse-physics.workspace = true
 
 [dev-dependencies]
