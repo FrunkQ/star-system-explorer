@@ -76,7 +76,9 @@ test("the picture repeats the kernel: its rays land where the kernel's traced po
   const k = nodeKernel();
   try {
     const base = JSON.parse(readFileSync(new URL("packs/base-physics/pack.json", root), "utf8"));
-    const s = await Session.open(k.client, gmSeat(), { id: "holes", seed: "holes" }, [base]);
+    // The data sheet carries the Sun the dimming note compares with (T_sun).
+    const sheet = JSON.parse(readFileSync(new URL("packs/base-reference/pack.json", root), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "holes", seed: "holes" }, [base, sheet]);
     const r = await s.readLightPaths({ fixture: "black-holes", table: true });
     assert.ok(r.ok, JSON.stringify(r));
     const table = r.bend_table as unknown as BendTable;
