@@ -259,6 +259,22 @@ try {
       assert.deepEqual(errors, [], `page errors in ${engine}`);
       await browser.close();
       console.log(`rollcall e2e: ${engine} Sol today fetched from Explorers into a fresh campaign`);
+
+      // Explorers has no such pack (or is down): the campaign opens as ever and a line says the pack was not fetched.
+      const b2 = await pw[engine].launch();
+      const c2 = await b2.newContext({ viewport: { width: 1440, height: 1000 } });
+      await c2.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
+      await c2.route(`${link}**`, (r) => r.fulfill({ status: 404, body: "", headers: { "access-control-allow-origin": "*" } }));
+      const p2 = await c2.newPage();
+      const e2 = [];
+      p2.on("pageerror", (e) => e2.push(e.message));
+      await p2.goto(`http://localhost:${port}/#chart`);
+      await p2.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
+      await p2.locator("[data-explorers-fetch-note]").getByText(/was not fetched from Explorers, so this campaign opened without it/).waitFor({ timeout: 20000 });
+      assert.ok(!(await p2.evaluate(() => localStorage.getItem("sse4.campaign") ?? "")).includes("sse.sol-today"), "nothing stacked");
+      assert.deepEqual(e2, [], `page errors in ${engine}`);
+      await b2.close();
+      console.log(`rollcall e2e: ${engine} Explorers without the pack: opened without it, and said so`);
     }
   } finally {
     rmSync(bundle, { force: true });

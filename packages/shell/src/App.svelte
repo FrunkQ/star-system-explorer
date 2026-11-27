@@ -609,14 +609,20 @@
   // Packs fetched from Explorers into every fresh campaign (stack.json `from_explorers`). Alex, 27 Nov 2026: Sol today
   // lives on Explorers "BUT also - for now - autoload in SSE - to keep the local executable smaller and still have the
   // decent data set for testing". Each is checked against its listing's sha256 and goes through the same pack check and
-  // stack as a file opened by hand; one that cannot be fetched (offline, not published yet) is skipped and said in the
-  // console. An automated browser (navigator.webdriver: the browser tests) fetches nothing, so tests stay offline.
+  // stack as a file opened by hand. It runs after the chart is up, so the campaign never waits for it: one that is slow
+  // (a time limit on each request), down or not published is skipped, and a line under the chart says so. An automated
+  // browser (navigator.webdriver: the browser tests) fetches nothing, so tests stay offline.
+  let fetchNote = $state<string | null>(null);
+  const EXPLORERS_WAIT_MS = { listing: 15_000, file: 90_000 };
+  const timedFetch: typeof fetch = (u, init) => fetch(u, { ...init, signal: AbortSignal.timeout(String(u).endsWith("/file") ? EXPLORERS_WAIT_MS.file : EXPLORERS_WAIT_MS.listing) });
   async function loadFromExplorers(s: ViewSession) {
     const links = (stackDoc as { from_explorers?: string[] }).from_explorers ?? [];
     if (!links.length || (typeof navigator !== "undefined" && navigator.webdriver)) return;
     for (const raw of links) {
-      const r = await fetchExplorers(raw);
+      const r = await fetchExplorers(raw, timedFetch);
       if (!r.ok) {
+        const name = raw.replace(/\/$/, "").split("/").pop();
+        fetchNote = `${name} was not fetched from Explorers, so this campaign opened without it (the built-in Solar System is all here): ${r.why.replace(/\.$/, "")}. A fresh campaign tries again.`;
         console.warn(`Not loaded from Explorers (${raw}): ${r.why}`);
         continue;
       }
@@ -2015,6 +2021,7 @@
         </span>
       </div>
     </footer>
+    {#if fetchNote}<p class="kept-note" role="status" data-explorers-fetch-note>{fetchNote} <button type="button" class="linkbtn" onclick={() => (fetchNote = null)}>OK</button></p>{/if}
     {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
