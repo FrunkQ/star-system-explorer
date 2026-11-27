@@ -751,7 +751,7 @@ pub fn envelope(s: &SurfaceSettings, b: &Body) -> SurfaceEnvelope {
         events,
         core: None,
     };
-    let heat = |t: f64| cx.radiogenic(t) + cx.tidal_at(t);
+    let heat = |t: f64| (cx.radiogenic(t), cx.tidal_at(t));
     env.core = core::core_history(&s.core, b, &env, &heat);
     env
 }

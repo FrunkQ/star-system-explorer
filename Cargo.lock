@@ -982,6 +982,7 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
 ]
 
