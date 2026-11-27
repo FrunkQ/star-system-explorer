@@ -44,6 +44,13 @@ codegen-units = 1
 
 # The formation suite's population tests run 10,000 systems; optimise it in
 # test builds too (same IEEE arithmetic, no fast-math, so results are unchanged).
+# Measured motion (RW17) sums thousands of series terms for each placed date.
+[profile.dev.package.sse-time]
+opt-level = 2
+
+[profile.dev.package.libm]
+opt-level = 2
+
 [profile.dev.package.sse-formation]
 opt-level = 2
 
@@ -70,5 +77,17 @@ opt-level = 2
 [profile.dev.package.sse-atoms]
 opt-level = 2
 
+# A giant's stirred cloud follows thousands of paths back through its eddies (WS4).
+[profile.dev.package.sse-weather]
+opt-level = 2
+
 [profile.dev.package.sha2]
+opt-level = 2
+
+# The disc trace (XO3) runs a formula block and a bend-table read for each of
+# about a hundred thousand rays, and the bend table is two million RK4 steps.
+[profile.dev.package.sse-gravity]
+opt-level = 2
+
+[profile.dev.package.sse-formula]
 opt-level = 2

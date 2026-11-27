@@ -91,3 +91,26 @@ export async function view(page, group, option, scope = page.locator(".viewbar [
   }
   await g.getByRole("button", { name: option, exact: true }).click();
 }
+
+/**
+ * The date a test's pages read off the device's clock (RW17 part 2: the Solar System's door opens on the device's
+ * present). Pinned so the Solar System lies the same way on every run; time still flows from it. Call once on a
+ * launched browser: every context and page it opens afterwards starts its clock here.
+ */
+export const SKY_DATE_MS = Date.UTC(2026, 10, 26, 12, 0, 0);
+export function pinClock(browser, at = SKY_DATE_MS) {
+  const script = `(() => { const R = Date; const off = ${at} - R.now(); class D extends R { constructor(...a) { if (a.length) super(...a); else super(R.now() + off); } static now() { return R.now() + off; } } globalThis.Date = D; })();`;
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async (o) => {
+    const c = await newContext(o);
+    await c.addInitScript(script);
+    return c;
+  };
+  const newPage = browser.newPage.bind(browser);
+  browser.newPage = async (o) => {
+    const p = await newPage(o);
+    await p.addInitScript(script);
+    return p;
+  };
+  return browser;
+}

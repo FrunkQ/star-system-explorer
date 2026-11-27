@@ -20,7 +20,7 @@ Track CM. Design: `handover/design/SSE4-compound-ships-design.md` sections 8A.4,
 ## What it does not do yet (part 2 and later)
 
 - The tank split blocks (wall mass from the thin-wall pressure vessel, insulation and boil-off from the surface, N^(1/3)), a tank's wall mass and the dish's link budget are kernel Equation blocks; adding them to `packs/base-physics/formulas` needs a check on whether the core golden moves, so they are part 2.
-- Sensors with their band and aperture (the instrument shape, Atomic Rockets plan section 12) and their clear field of view (14A.6); the trend fits between ladder levels, so drives shrink decade by decade (CM15), and sizes for the advance-linked drives from their output.
+- Sensors with their band and aperture (the instrument shape, Atomic Rockets plan section 12) and their clear field of view (14A.6); the trend fits between ladder levels, so drives shrink era by era (CM15; eras, not decades, ruling 14A.8), and sizes for the advance-linked drives from their output.
 - No screen reads the palette yet (the builder, CM14), so the pack is not copied into the shell's public packs.
 - Real engines have no mass (GCAT gives none; listed under `to_read`) and their bells are drawn to fit their stage (fudge register).
 

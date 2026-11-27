@@ -18,11 +18,13 @@ use sse_atoms::activity as act;
 use sse_core::draw::{Draws, Stream};
 use sse_core::math as m;
 use sse_core::quantity::consts::*;
+use sse_core::time::Instant;
 use sse_core::{Address, Seed};
 use sse_flow::Reference;
 use sse_light::{LightDescription, Part};
 
 pub mod prominence;
+pub mod regions;
 #[cfg(test)]
 mod tests;
 
@@ -110,6 +112,8 @@ pub struct Settings {
     pub active_latitude_deg: f64,
     /// Most flares listed in one answer; smaller ones are summarised.
     pub max_flares: usize,
+    /// SG7: active regions.
+    pub regions: regions::RegionSettings,
     /// Surface convection blocks' parameters (`sse.convection.*`).
     pub photosphere_mu: f64,
     pub granule_factor: f64,
@@ -150,6 +154,7 @@ impl Default for Settings {
             cme_half_width_deg: 30.0,
             active_latitude_deg: 30.0,
             max_flares: 2000,
+            regions: regions::RegionSettings::default(),
             photosphere_mu: 1.3,
             granule_factor: 10.0,
             convective_v_sun: 2000.0,
@@ -450,10 +455,18 @@ fn surface_why(c: &Convection, s: &Star) -> String {
     )
 }
 
-/// The activity multiplier at time `t_s` (age): 1 + A sin(2π (t/P + φ)), or 1 without a cycle.
-pub fn cycle_factor(a: &Activity, t_s: f64, set: &Settings) -> f64 {
+/// How far through its cycle the star is at age `t`, in turns [0, 1):
+/// t/P + φ, with t/P formed exactly from the whole-second date (TP1), so
+/// the phase still moves by the second at a star's age.
+fn cycle_turns(c: &Cycle, t: Instant) -> f64 {
+    let turned = t.angle_since(Instant::ORIGIN, m::TAU / c.period_s) / m::TAU;
+    m::fmod(turned + m::fmod(c.phase_offset, 1.0) + 1.0, 1.0)
+}
+
+/// The activity multiplier at age `t`: 1 + A sin(2π (t/P + φ)), or 1 without a cycle.
+pub fn cycle_factor(a: &Activity, t: Instant, set: &Settings) -> f64 {
     match &a.cycle {
-        Some(c) => 1.0 + set.cycle_amplitude * m::sin(m::TAU * (t_s / c.period_s + c.phase_offset)),
+        Some(c) => 1.0 + set.cycle_amplitude * m::sin(m::TAU * cycle_turns(c, t)),
         None => 1.0,
     }
 }
@@ -461,6 +474,9 @@ pub fn cycle_factor(a: &Activity, t_s: f64, set: &Settings) -> f64 {
 /// The star at one moment.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Moment {
+    /// The age read, as a whole-second date.
+    pub at: Instant,
+    /// The same age in seconds as a double, for display only.
     pub at_s: f64,
     pub cycle_phase: Option<f64>,
     pub xray_w: f64,
@@ -470,8 +486,8 @@ pub struct Moment {
     pub flares_per_year_above_1e27_j: f64,
 }
 
-pub fn moment(a: &Activity, t_s: f64, set: &Settings) -> Moment {
-    let f = cycle_factor(a, t_s, set);
+pub fn moment(a: &Activity, t: Instant, set: &Settings) -> Moment {
+    let f = cycle_factor(a, t, set);
     let lx = a.xray_w * f;
     let rate = |e: f64| {
         if a.flares {
@@ -481,11 +497,9 @@ pub fn moment(a: &Activity, t_s: f64, set: &Settings) -> Moment {
         }
     };
     Moment {
-        at_s: t_s,
-        cycle_phase: a
-            .cycle
-            .as_ref()
-            .map(|c| m::fmod(t_s / c.period_s + c.phase_offset, 1.0)),
+        at: t,
+        at_s: t.since(Instant::ORIGIN),
+        cycle_phase: a.cycle.as_ref().map(|c| cycle_turns(c, t)),
         xray_w: lx,
         spot_coverage: (a.spot_coverage * f).min(set.max_spot_coverage),
         flares_per_year_above_1e25_j: rate(1e25),
@@ -507,8 +521,12 @@ pub struct Target {
 }
 
 impl Target {
-    fn direction(&self, t: f64) -> [f64; 3] {
-        let a = self.phase_rad + self.period_s.map_or(0.0, |p| m::TAU * m::fmod(t / p, 1.0));
+    /// Where the target is seen from the star at age `t`.
+    pub fn direction(&self, t: Instant) -> [f64; 3] {
+        let a = self.phase_rad
+            + self
+                .period_s
+                .map_or(0.0, |p| t.angle_since(Instant::ORIGIN, m::TAU / p));
         [m::cos(a), m::sin(a), 0.0]
     }
 }
@@ -516,7 +534,9 @@ impl Target {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Hit {
     pub target: String,
-    /// When the ejection arrives (age, s).
+    /// When the ejection arrives (age), as a whole-second date.
+    pub arrives: Instant,
+    /// The same in seconds as a double, for display only.
     pub arrives_s: f64,
     /// Warning: the flare's light arrives this long before the particles.
     pub warning_s: f64,
@@ -536,7 +556,9 @@ pub struct Ejection {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Flare {
     pub address: String,
-    /// Peak time (age, s).
+    /// Peak time (age), as a whole-second date.
+    pub at: Instant,
+    /// The same in seconds as a double, for display only.
     pub at_s: f64,
     pub energy_j: f64,
     pub rise_s: f64,
@@ -546,11 +568,18 @@ pub struct Flare {
     pub light: LightDescription,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ejection: Option<Ejection>,
+    /// SG7: where on the star it goes off (its active region), in the star's frame at its peak.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site: Option<regions::Site>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Flares {
     pub star: String,
+    /// The window asked for (ages), as whole-second dates.
+    pub from: Instant,
+    pub to: Instant,
+    /// The same in seconds as doubles, for display only.
     pub from_s: f64,
     pub to_s: f64,
     /// Lowest energy listed, J (raised above what was asked if the list would be too long).
@@ -599,23 +628,27 @@ fn decade_rate(lx: f64, e_lo: f64, e_hi: f64, set: &Settings) -> f64 {
         - act::flare_rate_above(lx, e_hi, act::FLARE_K, set.flare_alpha)
 }
 
-/// Flares between `from_s` and `to_s` (ages) with at least `min_energy_j`.
+/// Flares between `from` and `to` (ages) with at least `min_energy_j`.
 pub fn flares(
     seed: &Seed,
     a: &Activity,
-    from_s: f64,
-    to_s: f64,
+    from: Instant,
+    to: Instant,
     min_energy_j: f64,
     targets: &[Target],
     set: &Settings,
 ) -> Result<Flares, String> {
-    if !(to_s >= from_s && min_energy_j > 0.0) {
+    if !(to >= from && min_energy_j > 0.0) {
         return Err("the window must not run backwards and the energy must be positive".into());
     }
+    // The window's length is a span, so a double holds it well.
+    let span_s = to.since(from);
     let mut out = Flares {
         star: a.address.clone(),
-        from_s,
-        to_s,
+        from,
+        to,
+        from_s: from.since(Instant::ORIGIN),
+        to_s: to.since(Instant::ORIGIN),
         listed_above_j: min_energy_j,
         flares: vec![],
         summarised_count: 0.0,
@@ -624,7 +657,7 @@ pub fn flares(
         stand_ins: vec![
             format!("flare durations scale as E^{} from {} s at 10²⁵ J; rise is a tenth of decay", set.decay_exponent, set.decay_at_1e25_s),
             format!("flare light is a {} K black body plus {} % extra in soft X-rays; no radio burst yet", set.flare_temperature_k, set.flare_xray_share * 100.0),
-            "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving within 30° of the star's equator; planets on circular orbits in that equator".into(),
+            "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving from over the flare's active region (anywhere within 30° of the equator in a spell with none); planets on circular orbits in that equator".into(),
             format!("largest possible flare {:.0e} J", set.max_flare_j),
         ],
         references: sse_atoms::decl_of("sse.activity.flare_rate_above").references,
@@ -647,6 +680,7 @@ pub fn flares(
     let d_hi = m::ceil(m::log10(set.max_flare_j)) as i32;
     let star = addr(&a.address)?;
     let mut listed_above = min_energy_j;
+    let mut unsited = 0usize;
     // From the largest flares down, so a cap on the list drops the smallest.
     let mut decade = d_hi - 1;
     while decade >= d_lo {
@@ -665,12 +699,11 @@ pub fn flares(
             m::pow(10.0, (decade + 1) as f64).min(set.max_flare_j),
             set,
         );
-        let expected = decade_rate(a.xray_w, e_lo, e_hi, set) * (to_s - from_s);
+        let expected = decade_rate(a.xray_w, e_lo, e_hi, set) * span_s;
         if out.flares.len() as f64 + expected > set.max_flares as f64 {
             // Summarise this decade and everything below.
-            out.summarised_count = decade_rate(a.xray_w, min_energy_j, e_hi, set) * (to_s - from_s);
-            out.summarised_energy_j =
-                energy_between(a.xray_w, min_energy_j, e_hi, set) * (to_s - from_s);
+            out.summarised_count = decade_rate(a.xray_w, min_energy_j, e_hi, set) * span_s;
+            out.summarised_energy_j = energy_between(a.xray_w, min_energy_j, e_hi, set) * span_s;
             listed_above = e_hi;
             break;
         }
@@ -678,7 +711,16 @@ pub fn flares(
         let bin = m::pow(2.0, m::round(m::log2(1.0 / rate_max))).max(60.0);
         let stream = Stream::new(&format!("activity.flares.e{}.v1", decade)).map_err(|e| e.0)?;
         let dr = Draws::new(*seed, star.clone(), stream);
-        let (b0, b1) = (m::floor(from_s / bin) as i64, m::floor(to_s / bin) as i64);
+        // Bins are whole seconds (a power of two, or a minute), so they are
+        // counted in integers from the whole-second dates (TP1).
+        if bin > 4.0e18 {
+            return Err(format!(
+                "flares near {:.0e} J are too rare to place on the time axis",
+                e_lo
+            ));
+        }
+        let bin_s = bin as i64;
+        let (b0, b1) = (from.s.div_euclid(bin_s), to.s.div_euclid(bin_s));
         if rate_max * bin > 60.0 {
             return Err(format!(
                 "flares near {:.0e} J come too often to list one by one: ask for larger flares",
@@ -697,8 +739,15 @@ pub fn flares(
             let n = poisson(rate_max * bin, dr.unit(base + 1023), 126);
             for k in 0..n {
                 let i = base + k * 8;
-                let t = (b as f64 + dr.unit(i)) * bin;
-                if t < from_s || t > to_s {
+                let Ok(t) = b
+                    .checked_mul(bin_s)
+                    .map(Instant::seconds)
+                    .ok_or(())
+                    .and_then(|start| start.after(dr.unit(i) * bin).map_err(|_| ()))
+                else {
+                    continue;
+                };
+                if t < from || t > to {
                     continue;
                 }
                 if dr.unit(i + 1) * peak > cycle_factor(a, t, set) {
@@ -715,14 +764,27 @@ pub fn flares(
                 if e < min_energy_j {
                     continue;
                 }
+                // SG7: it goes off in an active region alive now, picked by its spot area.
+                // Regions still keep double dates, like prominences (TP1 follow-up).
+                let site =
+                    regions::site_at(seed, a, t.since(Instant::ORIGIN), dr.unit(i + 6), set)?
+                        .map(|x| x.0);
+                if site.is_none() {
+                    unsited += 1;
+                }
                 out.flares
-                    .push(flare(a, t, e, &dr, i, targets, set, out.flares.len()));
+                    .push(flare(a, t, e, &dr, i, targets, set, out.flares.len(), site));
             }
         }
         decade -= 1;
     }
     out.listed_above_j = listed_above;
-    out.flares.sort_by(|x, y| x.at_s.total_cmp(&y.at_s));
+    if unsited > 0 {
+        out.why.push(format!(
+            "{unsited} flares came when no active region was alive (a quiet spell): placed anywhere in the active belt."
+        ));
+    }
+    out.flares.sort_by_key(|f| f.at);
     for (n, f) in out.flares.iter_mut().enumerate() {
         f.address = format!("{}/flare:{}", a.address, n);
         f.light.address = f.address.clone();
@@ -731,7 +793,7 @@ pub fn flares(
         "{} flares above {:.1e} J in {:.2} years; ten times the energy comes about a tenth as often.",
         out.flares.len(),
         listed_above,
-        (to_s - from_s) / JULIAN_YEAR
+        span_s / JULIAN_YEAR
     ));
     if out.summarised_count > 0.0 {
         out.why.push(format!(
@@ -745,13 +807,14 @@ pub fn flares(
 #[allow(clippy::too_many_arguments)]
 fn flare(
     a: &Activity,
-    t: f64,
+    t: Instant,
     e: f64,
     dr: &Draws,
     i: u64,
     targets: &[Target],
     set: &Settings,
     n: usize,
+    site: Option<regions::Site>,
 ) -> Flare {
     let decay = set.decay_at_1e25_s * m::pow(e / 1e25, set.decay_exponent);
     let rise = 0.1 * decay;
@@ -785,8 +848,20 @@ fn flare(
             let v = (set.cme_speed_km_s * m::pow(x, set.cme_speed_exponent)).min(set.cme_max_km_s)
                 * 1e3;
             let mass = set.cme_mass_kg * m::pow(x, set.cme_mass_exponent);
-            let lon = dr.uniform(i + 4, 0.0, m::TAU);
-            let lat = dr.uniform(i + 5, -1.0, 1.0) * set.active_latitude_deg * m::PI / 180.0;
+            // From its region: the place on the star turned into the frame fixed
+            // in space at the flare's peak (the star's frame turns once a spin).
+            let (lon, lat) = match &site {
+                Some(p) => (
+                    (p.lon_deg - regions::turn_deg(a.rotation_period_s, t.since(Instant::ORIGIN)))
+                        * m::PI
+                        / 180.0,
+                    p.lat_deg * m::PI / 180.0,
+                ),
+                None => (
+                    dr.uniform(i + 4, 0.0, m::TAU),
+                    dr.uniform(i + 5, -1.0, 1.0) * set.active_latitude_deg * m::PI / 180.0,
+                ),
+            };
             let dir = [
                 m::cos(lat) * m::cos(lon),
                 m::cos(lat) * m::sin(lon),
@@ -797,11 +872,13 @@ fn flare(
             for tg in targets {
                 let travel = tg.distance_m / v;
                 // Aim at where the planet will be when the ejection gets there.
-                let there = tg.direction(t + travel);
+                let arrives = t.after(travel).unwrap_or(t);
+                let there = tg.direction(arrives);
                 if dot(dir, there) >= m::cos(hw) {
                     hits.push(Hit {
                         target: tg.address.clone(),
-                        arrives_s: t + travel,
+                        arrives,
+                        arrives_s: arrives.since(Instant::ORIGIN),
                         warning_s: travel - tg.distance_m / C,
                     });
                 } else {
@@ -822,12 +899,14 @@ fn flare(
     };
     Flare {
         address: String::new(),
-        at_s: t,
+        at: t,
+        at_s: t.since(Instant::ORIGIN),
         energy_j: e,
         rise_s: rise,
         decay_s: decay,
         peak_w,
         light,
         ejection,
+        site,
     }
 }

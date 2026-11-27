@@ -594,6 +594,7 @@ dependencies = [
  "sse-flow",
  "sse-nebula",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-resolve",
 ]
@@ -705,6 +706,7 @@ dependencies = [
  "sse-field",
  "sse-flow",
  "sse-formation",
+ "sse-gravity",
  "sse-hazard",
  "sse-import-v3",
  "sse-life",
@@ -744,6 +746,7 @@ dependencies = [
  "sse-core",
  "sse-observe",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-suite",
  "sse-world",
@@ -758,6 +761,7 @@ dependencies = [
  "sse-atoms",
  "sse-core",
  "sse-flow",
+ "sse-gravity",
  "sse-pack",
  "sse-physics",
  "sse-reference",
@@ -982,6 +986,7 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
 ]
 
@@ -1001,8 +1006,10 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-atoms",
  "sse-chronicle",
  "sse-core",
+ "sse-flow",
  "sse-formation",
  "sse-pack",
 ]
@@ -1051,6 +1058,7 @@ dependencies = [
  "sse-climate",
  "sse-core",
  "sse-pack",
+ "sse-physics",
  "sse-reference",
  "sse-surface",
 ]

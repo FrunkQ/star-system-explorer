@@ -7,6 +7,7 @@
 // campaign's now survives a reload. On a phone the ruler fits its width.
 // On the Run desk the clock takes the ruler's place (three desks design 7.3): it shows the same now, says what is due
 // (nothing until the kernel's happenings op), and "Jump to a date…" says where it lands before it moves the campaign.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -123,6 +124,16 @@ try {
       assert.equal(await ruler.count(), 0, "no ruler on Run");
       const clockDate = () => clock.locator("[data-clock-date]").innerText();
       assert.equal(await clockDate(), before);
+      // On a phone the clock is one row (three desks design section 8): the date, one step and "…" for the rest.
+      const more = clock.locator("[data-clock-more]");
+      assert.equal(await more.isVisible(), vpName === "phone", "… only on a phone");
+      if (vpName === "phone") {
+        assert.deepEqual(await clock.locator("[data-clock-step]").evaluateAll((bs) => bs.filter((b) => b.checkVisibility()).length), 1, "one step chip");
+        assert.ok(!(await clock.locator("[data-clock-jump]").isVisible()), "Jump waits under …");
+        const note = page.locator("[data-kept-note]");
+        if (await note.isVisible()) await note.getByRole("button", { name: "OK" }).click();
+        await more.click();
+      }
       assert.equal(await clock.locator("[data-due-none]").innerText(), "Nothing due");
       await shot("5-run-clock");
 

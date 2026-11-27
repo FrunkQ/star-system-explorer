@@ -228,10 +228,27 @@ export function pickStyle(choice: ViewChoice, style: ViewStyle): ViewChoice {
   return { ...choice, style };
 }
 
-/** A kept choice, read back (a per-viewer convenience: anything odd falls back to the default). */
-export function readViewChoice(json: string | null): ViewChoice {
+/**
+ * What a first visit opens in, before the viewer has chosen. Alpha setting (Alex, 27 Nov 2026: "true everywhere FOR
+ * NOW... during alpha - phones WILL gate later when we have all the performance profiles aligned"): True on every
+ * device. To gate by device again, set TRUE_FIRST_ON to the tiers that open in True (say ["high", "mid"]); a device
+ * not on the list, or not yet measured, opens on Chart.
+ */
+export const TRUE_FIRST_ON: readonly string[] | "every-device" = "every-device";
+export function firstView(tier?: string | null): ViewChoice {
+  const onTrue = TRUE_FIRST_ON === "every-device" || (!!tier && TRUE_FIRST_ON.includes(tier));
+  return { ...DEFAULT_VIEW, style: onTrue ? "true" : DEFAULT_VIEW.style };
+}
+
+/**
+ * A kept choice, read back (a per-viewer convenience: anything odd falls back to the default). Nothing kept gives
+ * `first` (the shell passes firstView()); a kept choice that is not readable still falls back to the default.
+ */
+export function readViewChoice(json: string | null, first: ViewChoice = DEFAULT_VIEW): ViewChoice {
+  if (json === null) return { ...first };
   try {
-    const v = JSON.parse(json ?? "null") as Partial<ViewChoice> | null;
+    const v = JSON.parse(json) as Partial<ViewChoice> | null;
+    if (v === null) return { ...first };
     return {
       style: (VIEW_STYLES as readonly string[]).includes(String(v?.style)) ? (v!.style as ViewStyle) : DEFAULT_VIEW.style,
       seen: (SEEN_FROM as readonly string[]).includes(String(v?.seen)) ? (v!.seen as SeenFrom) : DEFAULT_VIEW.seen,

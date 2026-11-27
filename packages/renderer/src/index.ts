@@ -66,6 +66,7 @@ export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
 export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
 export { addProminences, narrateProminences, PROMINENCE_REFERENCES, PROMINENCE_SCALE, prominenceColour, prominencePoints, prominenceShown, prominencesAt } from "./star-prominences.ts";
 export type { Prominence, ProminenceNow } from "./star-prominences.ts";
+export { rateShareOf, regionLon, regionShare, spotsFromRegions, type Region, type Regions } from "./star-regions.ts";
 export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, drawnCellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, plateCellAngle, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
@@ -88,6 +89,8 @@ export type { Callout, DesignBay, DesignOverrides, DesignRecipe, DesignRules, De
 export { compoundMesh, panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
 export { baysFromFacts, designCompound, mountFromFacts, placeCompound, portsFromFacts, reachOf, ringPoints, sizeBays } from "./compound-layout.ts";
 export type { BayFacts, CompoundLayout, CompoundMember, CompoundRules, MountFacts, MountPlace, PlacedMember, PortFacts, PortMark } from "./compound-layout.ts";
+export { budgets, buildLayout, buildPieces, buildRecord, buildTotals, freePoints, fromLayout, fuelDensity, partAsBuilt, placeBuild } from "./ship-build.ts";
+export type { Budget, BuildPlace, BuildRecipe, BuildTotals, BuiltPart, FreePoint, PlacedPart } from "./ship-build.ts";
 export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
 // GH9: every collision leaves its mark: warps, ripples, rings, lopsided discs, drawn from the kernel's dated marks.
 export { brightnessAt, edgeOnPaths, faceOnPaths, heightAt, markStrengthAt, SCAR_SHAPES, scarsAt, scarWords } from "./galaxy-marks.ts";
@@ -152,7 +155,7 @@ export type { GrainShare, IndexTable } from "./sheet-optics.ts";
 export { readStains, stainFacts, stainHue, stainNote, stainPrepared, stainTiles, STAIN_GRAIN_UM } from "./stain-look.ts";
 export type { StainFact, StainHue, StainReader } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
-export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
+export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh, smallBodyShape } from "./small-body.ts";
 export { COMET_REFERENCES, comaPicture, cometNote, cometTails, hexLinear, ionColour, isActive, linearCss, showing, tailGrains } from "./comet.ts";
 export type { CometActivity } from "./comet.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";

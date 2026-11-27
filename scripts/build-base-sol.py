@@ -254,6 +254,7 @@ def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
     values.update(surface_facts(pid, src))
     values.update(composition_facts(pid, src))
     values.update(interior_facts(pid))
+    values.update(motion_facts(pid))
     if pid in NOTES:
         row["note"] = NOTES[pid]
     return row
@@ -360,6 +361,43 @@ INTERIOR_SOURCES = [
 ]
 
 
+# Measured motion (RW17, real-catalogues design 6A.2): the published series each body follows inside its span, as
+# tables in packs/base-sol/motion (scripts/build-sol-motion.py). Earth's table gives the Earth-Moon barycentre, which
+# is how the kernel places Earth's group. The Sun carries the anchor the tables read universe time by.
+MOTION = {"mercury": "vsop87a.mer", "venus": "vsop87a.ven", "earth": "vsop87a.emb", "mars": "vsop87a.mar",
+          "jupiter": "vsop87a.jup", "saturn": "vsop87a.sat", "uranus": "vsop87a.ura", "neptune": "vsop87a.nep",
+          "moon": "elpmpp02.moon"}
+MOTION_SRC = {"vsop87a": "bretagnon-francou1988", "elpmpp02": "chapront-francou2003"}
+# Universe seconds count TT; J2000.0 (2000 January 1, 12:00 TT) is at this second, the anchor the Sol today pack's
+# calendar uses (its 1 January 2000 00:00 is 43,200 s earlier).
+J2000_S = 63115200000
+# Which way a body faces at a date (RW17 part 3): the spin model the kernel reads it by
+# (packs/base-sol/motion/earth-orientation.json: the Earth rotation angle, GMST, precession and Delta T).
+SPIN = {"earth": "earth-orientation"}
+MOTION_SOURCES = [
+    {"id": "iers2010", "text": "Petit, G. and Luzum, B. (eds.) 2010, IERS Conventions (2010), IERS Technical Note 36, chapter 5: the Earth rotation angle and Greenwich mean sidereal time",
+     "status": "unverified", "url": "https://iers-conventions.obspm.fr/"},
+    {"id": "bretagnon-francou1988", "text": "Bretagnon, P. and Francou, G. 1988, A&A 202, 309: Planetary theories in rectangular and spherical variables. VSOP 87 solutions (VizieR VI/81)",
+     "status": "verified", "url": "https://ui.adsabs.harvard.edu/abs/1988A&A...202..309B"},
+    {"id": "chapront-francou2003", "text": "Chapront, J. and Francou, G. 2003, A&A 404, 735: The lunar theory ELP revisited. Introduction of new planetary perturbations (ELP/MPP02)",
+     "status": "verified", "doi": "10.1051/0004-6361:20030529"},
+    {"id": "sse-sol-clock", "text": "SSE4's Sol clock: universe seconds on TT, J2000.0 at 63,115,200,000 s, as the Sol today pack's calendar counts them (store-packs/sol-today)",
+     "status": "verified", "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/store-packs/sol-today/pack.json"},
+]
+
+
+def motion_facts(pid):
+    if pid not in MOTION:
+        return {}
+    m = MOTION[pid]
+    out = {"orbit.motion": val(m, "model", MOTION_SRC[m.split(".")[0]],
+                               note="where it is comes from this published series inside its span (packs/base-sol/motion/%s.json)" % m)}
+    if pid in SPIN:
+        out["spin.model"] = val(SPIN[pid], "model", "iers2010",
+                                note="which way it faces at a date comes from this model (packs/base-sol/motion/%s.json)" % SPIN[pid])
+    return out
+
+
 def interior_facts(pid):
     if pid not in INTERIOR:
         return {}
@@ -390,8 +428,9 @@ def build():
     }}
     sun["values"].update(sol_extra.SUN_AGE)
     sun["values"].update(sun_frame())
+    sun["values"]["time.j2000_s"] = val(J2000_S, "s", "sse-sol-clock", note="the universe second of J2000.0 (2000 January 1, 12:00 TT): the date the motion tables count from")
     bodies = [sun] + [planet_row(*p) for p in PLANETS] + [moon_row(*x) for x in MOONS] + sol_extra.BODIES
-    sources = sorted(SOURCES + INTERIOR_SOURCES + MOON_SURFACE_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
+    sources = sorted(SOURCES + INTERIOR_SOURCES + MOON_SURFACE_SOURCES + MOTION_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
     regions = sol_extra.regions({b["id"]: b for b in bodies})
     return {
         "format": "sse.pack/1", "id": "sse.base-sol", "version": "0.1.0", "kind": ["base-physics"],
@@ -419,6 +458,9 @@ def validate(pack):
             if k.startswith("atmosphere.composition."):
                 assert k.rsplit(".", 1)[1] in subs, "%s %s: not a substance on the sheet" % (b["id"], k)
                 assert 0.0 < v["v"] <= 1.0, (b["id"], k)
+            if v["unit"] == "model":
+                assert os.path.exists(os.path.join(ROOT, "packs", "base-sol", "motion", v["v"] + ".json")), "%s: no motion table %s" % (b["id"], v["v"])
+                continue
             if v["unit"] == "substance":
                 assert v["v"] in subs, "%s %s: %s is not a substance on the sheet" % (b["id"], k, v["v"])
                 continue

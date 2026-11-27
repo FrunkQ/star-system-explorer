@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `sse-light/src/disc_image.rs` disc brightness (XO3) | Ring temperatures from the Newtonian thin disc (Shakura and Sunyaev 1973) while the rays and shifts are relativistic; the disc is flat, infinitely thin and opaque, and does not light or shadow itself | The Newtonian law is built and close outside about ten gravitational radii; a relativistic profile moves the peak inward and depends on spin | `sse.light.disc_relativistic` (Novikov and Thorne 1973; Page and Thorne 1974) as a swappable block; thick and warped discs as volumes later (XO16) | planned shortcut (design 9), XO3 |

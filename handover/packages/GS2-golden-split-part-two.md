@@ -81,3 +81,10 @@ Areas, one per owning thread (create the file the first time):
 | `orac` | Build Orac, Minerva and Tars |
 | `editing` | Build planet and star editing |
 | `proven-core` | Build SSE4 proven core |
+
+## 27 Nov 2026: the reach lists, one file per block
+`tests/golden/contract-reach.txt` became `tests/golden/reach/<constant>/<block>.txt`, one file per block, holding
+every line unchanged (285 at the split) (moved, not re-blessed; `contract.jsonl` did not move). Every PR that added blocks
+appended to the one sorted list, and neighbouring additions conflicted. `check_reach_golden` fails when a block's
+reach changes, when a block has no file (a new block: bless), and when a file names a block the report no longer
+lists. The mask text in `contract.jsonl` still says `contract-reach.txt`; it changes with the next core golden change.

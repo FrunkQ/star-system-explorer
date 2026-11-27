@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| sse-activity active regions (SG7) | Spot group peak areas drawn evenly in log between 30 and 3000 millionths of a hemisphere (the Sun's; the measured spread is lognormal, Baumann and Solanki 2005), scaled by the square root of the star's coverage over the Sun's; a straight rise over a tenth of the life then a steady decay; at most 200 days; birth rate set so the mean area covered is the star's spot coverage | one list read by spots, flares and prominences, with the coverage the kernel already had | flux-emergence statistics per star (Doppler imaging, spot modelling) | stand-in, values unverified until the paper search returns (1 Dec 2026) |

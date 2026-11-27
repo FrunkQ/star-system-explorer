@@ -6,6 +6,7 @@
 // ledger (what died here, conditions, the green verdict). Another ring, a
 // layer, an earlier time and the dwarf galaxy all redraw. Night chart and
 // phone (no sideways scroll) too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -42,10 +43,11 @@ try {
     await gm.waitForSelector(".gal [data-ring]", { timeout: 30000 });
     {
       const p = await gm.evaluate(() => window.__places.at(-1));
-      assert.deepEqual(p, { scale: "galaxy", id: "milky-way-like", name: "A Milky-Way-like galaxy" }, "the galaxy chart says where it is");
+      assert.deepEqual(p, { scale: "galaxy", id: "home", name: "Our galaxy" }, "the galaxy chart says where it is: our own galaxy first (GZ12)");
     }
     const gal = gm.locator(".gal");
-    assert.match(await gal.getAttribute("data-galaxy"), /halo:milky-way-like$/);
+    // GZ12: home is one of the web's own catalogued haloes, never the median stand-in.
+    assert.match(await gal.getAttribute("data-galaxy"), /\/cell:-?\d+\.-?\d+\.-?\d+\/halo:\d+$/);
     assert.equal(await gal.locator("circle.ring").count(), 24, "24 rings");
     assert.ok((await gal.locator("path.arm").count()) >= 2, "arms");
     assert.equal(await gal.locator("circle.green").count(), 1, "a green band now");

@@ -99,13 +99,20 @@ export interface Workspace {
   campaign_epoch_yr?: number;
   /**
    * The picture's clock (CLK1, picture-clock.ts): what every moving thing on screen reads its time from, and how fast
-   * time is passing (0 while stopped). Follows `now_yr`; the ruler's play and the Run desk's clock set its rate.
+   * time is passing (0 while stopped). Follows the time in view; the ruler's play and the Run desk's clock set its rate.
    */
   clock?: import("./picture-clock.ts").PictureClock;
+  /** Bring the picture's clock to the time in view (a step, a bookmark, a save opened, a moved epoch): reactive on that time. */
+  followClock?(): void;
   /** Set how fast time passes on screen, clock seconds per real second (0 stops it). */
   setRate?(rate: number): void;
-  /** The top pack's calendar, when a pack gives one (kernel `calendar`); the ruler counts dates in it. */
+  /** The top pack's calendar, when a pack gives one (kernel `calendar`), or a real-sky system's own; dates count in it. */
   pack_calendar?: PackCalendar | null;
+  /**
+   * The universe second the viewed system was born (kernel `resolved_system`'s `birth_s`): the screen's years count
+   * from it, so the second drawn is the birth second plus the screen's age (`drawnSecond`). Absent or null for the campaign's own scene.
+   */
+  birth_s?: bigint | null;
   mode: "edit" | "view";
   /** The GM's desk (Explore, Build, Run): the "Known to" eyes show on Build and Run only (SV2). */
   desk?: "explore" | "build" | "run";
@@ -135,6 +142,11 @@ export interface Workspace {
   aim?: import("./pose.ts").Pose | null;
   /** The Playbook (PB3): the GM's presets in chapters, pages and sections, kept with the campaign. */
   playbook?: import("./playbook.ts").Playbook;
+  /**
+   * True while nothing on the stage can be seen or should compete with a door (the start sheet covers it, or a door is
+   * entering a system): views hold their heavy kernel reads (True faces, the sky) until it clears. Set by the shell.
+   */
+  held?: boolean;
   /** Layouts the GM made (PB13): players' screen documents with `mine.` ids, kept with the campaign. */
   layouts?: import("./screen.ts").ScreenDoc[];
   /** The table, for the Switchboard (PB2): the board, roles and screens, and the ways to change what they show. */

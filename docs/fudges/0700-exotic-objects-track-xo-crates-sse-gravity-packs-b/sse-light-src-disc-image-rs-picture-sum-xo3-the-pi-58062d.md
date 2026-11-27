@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `sse-light/src/disc_image.rs` picture sum (XO3) | The picture plane is summed on a fixed grid: 192 angles; impact parameter every 0.04 gravitational radii inside 12, then 48 steps a decade; two image orders (direct with the arch, and the first thin ring); rays beyond 64 gravitational radii straight; pieces binned into 64 seen-temperature bins a decade, each keeping its σT⁴ exactly | A fixed grid gives the same bits everywhere and runs in a third of a second; higher orders are thinner than a pixel; far rays bend by under 6% | None needed for the totals; XO4 traces every pixel on the GPU with the same rule | XO3 |

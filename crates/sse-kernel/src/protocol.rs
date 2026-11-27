@@ -587,6 +587,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         half_km: Option<f64>,
+        /// `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+        #[serde(default)]
+        #[ts(optional)]
+        span_days: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
@@ -612,6 +616,26 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// Light near a mass (XO2, XO3; exotic objects design 3.5): for each body
+    /// and its far viewer, which bender applies, the sizes from the gravity
+    /// blocks, the bend table's hash and layout, the feed (what falls onto
+    /// it, through which flow, where its disc ends), the disc traced point
+    /// by point as that viewer sees it, its light by band, and the viewer's
+    /// clock rate and tide. Each of `bodies` is `sse_light::paths::PathsAsk`;
+    /// `fixture: "black-holes"` reads design 3.4's three (a 10 Sun hole fed
+    /// by a companion, a quasar, a starved galactic centre). `table: true`
+    /// adds the bend table itself (fetch it once, keyed by its hash).
+    ReadLightPaths {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        table: Option<bool>,
     },
     /// Sensing (O9): for each target (light given as `conditions` or a ready
     /// `light`, distance, dust as A_V, bright neighbours with their sky
@@ -665,6 +689,23 @@ pub enum Request {
     ReadBows {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
+    },
+    /// A pair of stars aged together (BX1): `node` is a star `{node: "star",
+    /// address, mass_msun}` or a pair `{node: "pair", a, b, separation_au,
+    /// eccentricity}` of nodes; the answer is its dated line from birth to
+    /// `to_myr` (each star's phase, mass, radius and lobe fill; the orbit; the
+    /// transfer; common envelopes, mergers, strippings; what each planet in
+    /// `planets` `{address, host, semi_major_axis_au}` ends up doing).
+    AgePair {
+        #[ts(type = "unknown")]
+        node: serde_json::Value,
+        to_myr: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planets: Option<Vec<serde_json::Value>>,
     },
     /// Phase tables per kind of particle (K-e): each of `items` is
     /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
@@ -789,9 +830,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         seed: Option<String>,
+        /// A date in seconds: a whole number is read exactly (TP1).
         #[serde(default)]
-        #[ts(optional)]
-        at_s: Option<f64>,
+        #[ts(optional, type = "number")]
+        at_s: Option<sse_core::time::Seconds>,
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         window: Option<serde_json::Value>,
@@ -920,6 +962,58 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         e: Option<f64>,
+        /// RW16a, the small-body designer's pins (each optional; left out,
+        /// the field decides): `pair` single, contact or separated; `makeup`
+        /// mass shares of metal, rock, carbon and ice; `structure`
+        /// rubble-pile, monolith or relaxed; one turn in `spin_hours`;
+        /// `battered` 0 to 1 within its structure's relief range; a pair's
+        /// `size_ratio`. A pin is never refused: the answer's `takes` says
+        /// what an implausible one would need. In a system with no
+        /// formation record the body is made of a designed field.
+        #[serde(default)]
+        #[ts(optional)]
+        pair: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        makeup: Option<Vec<f64>>,
+        #[serde(default)]
+        #[ts(optional)]
+        structure: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        battered: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        size_ratio: Option<f64>,
+    },
+    /// RW16a: the shape of any body below the size at which it pulls itself
+    /// round (a small moon, an imported or catalogued asteroid), from its
+    /// address, so it is the same lump on every device and in every view.
+    /// Give what is known: `diameter_km`, `mass_kg` (with both, the makeup
+    /// follows the bulk density), an `ice` share, `spin_hours`, `a_au`. The
+    /// answer is the body as `make_small_body` makes it (single, never a
+    /// pair) with `round` and `round_km`. Needs no formation record.
+    SmallShape {
+        system: String,
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        diameter_km: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ice: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        spin_hours: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        a_au: Option<f64>,
     },
     /// Natural resource inventory (TG11, MP8b): for each world of `system`
     /// (or `body`), the kilograms of each resource kind in `kinds` (pack
@@ -2259,6 +2353,20 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// GZ12: the universe's home galaxy, one of the web's own catalogued
+    /// haloes: the GM's choice (`set_home`) if made, else the halo that best
+    /// fits the cosmology pack's home wish, searched cell by cell outward
+    /// from the origin cell. Worked out once per universe; read only.
+    HomeGalaxy,
+    /// GZ12 "Make this home": choose another catalogued halo
+    /// (`…/cell:x.y.z/halo:n`) as the universe's home, written as one record
+    /// event; `halo` absent or null returns to the web's own choice. Every
+    /// op that reads the campaign's galaxy follows it. GM machine only.
+    SetHome {
+        #[serde(default)]
+        #[ts(optional)]
+        halo: Option<String>,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -2779,6 +2887,7 @@ impl Request {
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::Weather { .. } => "weather",
             Request::ReadLight { .. } => "read_light",
+            Request::ReadLightPaths { .. } => "read_light_paths",
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
@@ -2787,6 +2896,7 @@ impl Request {
             Request::ReadInventory { .. } => "read_inventory",
             Request::SmallBody { .. } => "small_body",
             Request::MakeSmallBody { .. } => "make_small_body",
+            Request::SmallShape { .. } => "small_shape",
             Request::RingStructure { .. } => "ring_structure",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
@@ -2796,6 +2906,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::AgePair { .. } => "age_pair",
             Request::HazardMap { .. } => "hazard_map",
             Request::ReadScattering { .. } => "read_scattering",
             Request::ReadShadowLight { .. } => "read_shadow_light",
@@ -2874,6 +2985,8 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::RollProfile { .. } => "roll_profile",
             Request::SectorMap { .. } => "sector_map",
+            Request::HomeGalaxy => "home_galaxy",
+            Request::SetHome { .. } => "set_home",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
             Request::StarCell { .. } => "star_cell",
@@ -3038,6 +3151,11 @@ pub fn ops() -> Vec<OpInfo> {
             "per item: one or two formula blocks",
         ),
         o(
+            "age_pair",
+            Cost::Light,
+            "per pair: up to a few thousand steps of both life lines, a few formula blocks each",
+        ),
+        o(
             "read_scattering",
             Cost::Light,
             "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
@@ -3108,6 +3226,11 @@ pub fn ops() -> Vec<OpInfo> {
             "one body: the same as small_body on a one-member field",
         ),
         o(
+            "small_shape",
+            Cost::Trivial,
+            "one body: the same as make_small_body, no formation run needed",
+        ),
+        o(
             "ring_structure",
             Cost::Trivial,
             "one ring: a few hundred resonance solves and four samples per profile pixel (4,096 by default)",
@@ -3131,6 +3254,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_light",
             Cost::Light,
             "per body: one small flow run and about 2,000 Planck evaluations",
+        ),
+        o(
+            "read_light_paths",
+            Cost::Light,
+            "per body: about 100,000 rays, each a bend-table read and one formula block, then band integrals; the bend table is worked out once per process",
         ),
         o(
             "adopt",
@@ -3333,6 +3461,16 @@ pub fn ops() -> Vec<OpInfo> {
             "sector_map",
             Cost::Light,
             "GM machine only; one code reading per mapped system",
+        ),
+        o(
+            "home_galaxy",
+            Cost::Medium,
+            "the first time per universe, searches the halo cells round the origin for the best fit to the home wish (1 to 125 cells of big haloes, about 0.005 to 0.4 s native), then kept; read only",
+        ),
+        o(
+            "set_home",
+            Cost::Medium,
+            "GM machine only; reads the chosen halo's cell to check it, then one record event",
         ),
         o(
             "halo_cell",
@@ -3754,6 +3892,17 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
     },
+    /// `read_light_paths`: each of `paths` is `sse_light::paths::LightPaths`;
+    /// `bend_table`, when asked, is `{ hash, rows, cols, row_length, flat }`
+    /// with `flat` as `sse_gravity::BendTable::flat` lays it out.
+    LightPathsRead {
+        source: String,
+        #[ts(type = "unknown[]")]
+        paths: Vec<serde_json::Value>,
+        #[ts(optional, type = "unknown")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        bend_table: Option<serde_json::Value>,
+    },
     /// `detect`: each of `detections` is `sse_sense::Detection` (target by
     /// sensor, in order); `radar` is `sse_sense::RadarRanges` when asked.
     Detected {
@@ -3773,6 +3922,11 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `age_pair`: `line` is `sse_time::pair::PairLine`.
+    PairAged {
+        #[ts(type = "unknown")]
+        line: serde_json::Value,
     },
     /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
     BowsRead {
@@ -4434,6 +4588,12 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         spec: Option<serde_json::Value>,
+        /// The universe second the system was born (time design section 4,
+        /// `system.birth_s`): a screen counting time from the star's birth
+        /// draws universe second `birth_s + age`. Absent with no spec.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        birth_s: Option<i64>,
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
@@ -4568,6 +4728,20 @@ pub enum Response {
     Error {
         code: String,
         message: String,
+    },
+    /// `home_galaxy`: `{halo, key, cell, mass_msun, position_mpc, neighbour,
+    /// by ("web" or "gm"), fits_wish, why, cells_read, wish, model}`.
+    HomeGalaxy {
+        #[ts(type = "unknown")]
+        home: serde_json::Value,
+    },
+    /// `set_home`: the home now (as `home_galaxy`), the event that chose it
+    /// and the state hash.
+    HomeSet {
+        #[ts(type = "unknown")]
+        home: serde_json::Value,
+        event_id: String,
+        state_hash: String,
     },
     /// `halo_cell`: `{address, index, side_mpc, origin_mpc, delta_l, mass_msun,
     /// halo_mass_msun, total, above_min, haloes: [{address, key, mass_msun,

@@ -30,7 +30,7 @@
     "atmosphere_top_m": 100000.0,
     "crust_depth_m": 30000.0,
     "pore_water_fraction": 0.01,
-    "warming_at_depth_k_per_w_m2": 2000.0,
+    "warming_depth_m": 5000.0,
     "dose_open_msv_yr": 500.0,
     "dose_column_kg_m2": 1760.0,
     "dose_floor_msv_yr": 1.0,
@@ -47,11 +47,14 @@
     },
     "air_reductant_mol_yr_per_w": 0.064,
     "reducing_above_h2": 0.1,
+    "reducing_hill": 4.0,
+    "heat_epoch_step": 0.2,
+    "heat_epoch_cap": 8,
     "sources": {
      "band_edges_deg": "Five bands of latitude, tropics to 30 degrees and poles from 60: enough to separate a world's warm and cold lands without the 18 bands of the climate grid",
      "crust_depth_m": "A continental crust about 30 to 40 km thick (Christensen and Mooney 1995); the deep-crust habitat only reads its top 5 km",
      "pore_water_fraction": "As the Earth fixture: about 1% of the upper crust is water-filled pore space, the deep biosphere's home (Magnabosco et al. 2018)",
-     "warming_at_depth_k_per_w_m2": "5 km of rock with a thermal conductivity of about 2.5 W/m/K: each W/m² of heat flowing out warms the rock 2000 K at 5 km (Turcotte and Schubert 2014)",
+     "warming_depth_m": "The deep-crust habitat's depth: each W/m² of heat flowing out warms the rock there by this depth over the crust rock's thermal conductivity, read from the data sheet (about 2.5 W/m/K, Turcotte and Schubert 2014: 2000 K per W/m² at 5 km)",
      "dose_open_msv_yr": "About 1.37 mSv a day on the Moon's surface (Zhang et al. 2020, Chang'e 4 LND, Science Advances 6, eaaz1334)",
      "dose_column_kg_m2": "Calibrated so Earth's 10,300 kg/m² of air brings the open dose down to its 1.4 mSv/yr of cosmic and terrestrial radiation above the floor (UNSCEAR 2008: 2.4 mSv/yr in all); Mars then reads about 450 mSv/yr, about twice the measured 0.64 mSv a day (Hassler et al. 2014), so this is a sketch within a factor of two",
      "dose_floor_msv_yr": "Radiation from the ground itself, about 1 mSv/yr on Earth (UNSCEAR 2008)",
@@ -60,10 +63,13 @@
      "river_p_share": "Rivers and dust bring the ocean about 3e10 mol of new phosphorus a year (Benitez-Nelson 2000), a fifth of what land weathering releases: a world with no land has no new phosphorus from rivers",
      "vent_h2_mol_yr_per_w": "Hydrothermal hydrogen, about 3e11 mol a year (Kharecha et al. 2005; Sleep and Bird 2007), over Earth's 47 TW of internal heat (Davies and Davies 2010)",
      "anoxic_fe2_mol_yr_per_w": "Ferrous iron from vents into an ocean without oxygen: about 1e15 mol a year in the Archean (Canfield et al. 2006) over about three times today's heat flow",
-     "anoxic_below_o2": "Below this O2 mixing ratio the ocean is taken as anoxic and keeps its dissolved iron (the Archean ocean, Lyons et al. 2014)",
-     "vents_above_w_m2": "Hydrothermal vents need an interior hot enough to drive water through rock; a sketch threshold between Mars (about 0.02 W/m², no vents today) and Europa (about 0.05 W/m², tidal heat)",
+     "anoxic_below_o2": "The O2 mixing ratio at which the sea keeps half its vent iron: the iron supply is graded as 1 / (1 + O2 / this), the same blend the air box uses between oxic and anoxic chemistry (fudge F4); the Archean ocean was anoxic below about this (Lyons et al. 2014). Fudge L3-grades",
+     "vents_above_w_m2": "Hydrothermal vents need an interior hot enough to drive water through rock: a sketch threshold between Mars (about 0.02 W/m², no vents today) and Europa (about 0.05 W/m², tidal heat). Still a switch, not yet graded: fudge L3-vents",
      "recycling_gyr": "How long a surface lasts: about 0.8 Gyr under plate tectonics (the L1d fixture's Earth), about 50 Myr for an active ice shell (Europa's surface age, Zahnle et al. 2003); none for a stagnant lid",
-     "reducing_above_h2": "Air with a tenth or more hydrogen is reducing: methane is what its carbon becomes without life (a giant's air), so methane there is no sign of anything (Krissansen-Totton et al. 2018, Science Advances 4, eaao5747)",
+     "reducing_above_h2": "The H2 mixing ratio at which air counts half as reducing: in hydrogen air methane is what carbon becomes without life (a giant's air), so methane there is no sign of anything (Krissansen-Totton et al. 2018, Science Advances 4, eaao5747). Graded as x^n / (x^n + this^n); methane alone weighs as evidence by its likelihood ratio to the power (1 - that) times nothing-seen's to the power of that. Fudge L3-grades",
+     "reducing_hill": "How sharply air turns reducing with its hydrogen (the n above): 4 puts Earth's half a part per million at nothing and Jupiter's 86% at all but one in five thousand. Authored, fudge L3-grades",
+     "heat_epoch_step": "L3-heat: a chart world's deep-time history starts a new epoch where its interior's heat flow (the core history's heat out of the top) has moved by more than a fifth since the last; vents, their hydrogen and iron, and the crust's warmth follow it. A judgement on resolution, not physics: each epoch costs a habitat graph and its budgets",
+     "heat_epoch_cap": "At most eight heat epochs per history (the step is widened until they fit), to keep the history's budget cache small",
      "air_reductant_mol_yr_per_w": "The air box's volcanic reducing gases, 3e12 mol O2-equivalent a year (life_feedback) over Earth's 47 TW: a world's volcanism scales with its heat"
     }
    },
@@ -470,6 +476,38 @@
       "min_population_cmol": "Smallest population worth calling life: 1e-9 C-mol, about a million cells (a judgement, not a measurement; fudge register)",
       "thinnest_life_gc_m3": "The thinnest living populations counted, about 1e3 cells per cubic centimetre in South Pacific Gyre sediment (D'Hondt, S. et al. 2009, PNAS 106, 11651; Kallmeyer, J. et al. 2012, PNAS 109, 16213), at about 1e-14 g C per cell. Unverified (paper search out until 1 Dec 2026)",
       "surface_layer_m": "A surface habitat has an area and no volume; its living layer is taken as 1 m (soil and canopy). Baseline, refined in 4.1 (fudge register)"
+     }
+    },
+    "sizes": {
+     "about": "Where the energy goes, in numbers (life-from-energy design section 5, LE3): each eating guild's spent power is spread evenly over log body mass from its smallest member to its largest (energy equivalence), and each broad size class is counted at Kleiber's rate b0 M^(3/4), moved with temperature by the history's activation energy. Producers are not counted yet (they need a rate of their own, 4.1). Baseline, broad brush.",
+     "classes": [
+      {"id": "cells", "below_kg": 1e-09},
+      {"id": "insect-sized", "below_kg": 0.01},
+      {"id": "animal-sized", "below_kg": 1000.0},
+      {"id": "tree-sized"}
+     ],
+     "smallest_kg": {
+      "microbial": 1e-15,
+      "protist": 1e-13,
+      "multicellular": 1e-09,
+      "animal": 1e-09,
+      "plant": 1e-09
+     },
+     "b0_w": {
+      "unicell": 0.018,
+      "ectotherm": 0.14,
+      "endotherm": 4.1
+     },
+     "ref_k": 293.15,
+     "endotherm_body_k": 312.15,
+     "cell_below_kg": 1e-09,
+     "endotherm_from_kg": 0.01,
+     "sources": {
+      "rule": "Energy equivalence: each size class of a feeding level takes about the same power, so numbers fall as M^-3/4 (Damuth, J. 1981, Nature 290, 699); individual rate B = b0 M^3/4 (Kleiber, M. 1932, Hilgardia 6, 315) with temperature from the metabolic theory (Gillooly, J. F. et al. 2001, Science 293, 2248). Unverified (paper search out until 1 Dec 2026)",
+      "b0_w": "Hemmingsen, A. M. 1960, Reports of the Steno Memorial Hospital 9, 1: about 4.1 W kg^-3/4 for warm-blooded animals at 39 C, 0.14 for cold-blooded ones and 0.018 for single cells at 20 C (as quoted by Peters 1983, The Ecological Implications of Body Size). Unverified",
+      "classes": "Broad classes for a GM: cells (below a microgram), insect-sized (to 10 g), animal-sized (to a tonne), tree-sized (above). A judgement, not a measurement",
+      "smallest_kg": "A bacterium about 1e-15 kg (1 pg wet); small protists about 1e-13 kg; the smallest animals (mites, rotifers) about 1e-9 kg. Order of magnitude",
+      "endotherm_from_kg": "4.0 has no warm-blooded capability: land animals of 10 g and more are counted warm-blooded, which costs most and so gives the fewest of them (fudge register)"
      }
     },
     "metabolisms": [
@@ -1999,6 +2037,22 @@
     "diversity_floor_gc_yr": 1000000.0,
     "oxidant_fact": "o2_fraction",
     "history_every_myr": 50.0,
+    "spread": {
+     "about": "How fast life spreads (life-from-energy design section 6.1, LE4): a front through one habitat moves at v = 2 sqrt(r D) (Fisher 1937; Skellam 1951), r the smaller of a pioneer cell's best growth rate and what the habitat's surplus pays for, D the medium's mixing. Baseline, broad brush; every mixing value is an order of magnitude (fudge register).",
+     "r_max_per_day": 1.0,
+     "mixing_m2_s": {
+      "liquid": 1000.0,
+      "cloud": 10000.0,
+      "surface": 10.0,
+      "subsurface": 1e-09
+     },
+     "thickness_media": ["subsurface"],
+     "sources": {
+      "r_max_per_day": "A marine bacterium doubles in about a day near 15 C; the metabolic theory scales the most a population can grow as M^-1/4 exp(-E/kT) (Savage, V. M. et al. 2004, American Naturalist 163, 429). Order of magnitude, unverified",
+      "mixing_m2_s": "Ocean: horizontal eddy diffusivity about 1e3 m^2/s (Okubo, A. 1971, Deep-Sea Research 18, 789); clouds: tropospheric eddy mixing about 1e4 m^2/s at large scales; land surface: spores and dust carried by wind, taken as 10 m^2/s (a judgement); rock pores: molecular diffusion in pore water about 1e-9 m^2/s. Orders of magnitude, unverified",
+      "checks": "Microbes cross an ocean in years; postglacial trees moved 100 to 1000 m a year (Clark, J. S. et al. 1998, BioScience 48, 13, Reid's paradox); microbes in rock move centimetres to metres a year"
+     }
+    },
     "metabolic": {
      "base_rate": 0.3,
      "reach_factor": 0.1,

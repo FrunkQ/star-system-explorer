@@ -72,7 +72,11 @@ fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: 
 /**
  * `want: "patch"`: half the patch's width, km, round `lat`, `lon`.
  */
-half_km?: number, pins?: unknown[], 
+half_km?: number, 
+/**
+ * `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+ */
+span_days?: number, pins?: unknown[], 
 /**
  * Smoke, ash and smog sources (volcanoes, eruptions, impacts,
  * fires, industry), `sse_weather::aerosols::Sources`.
@@ -81,12 +85,16 @@ sources?: unknown,
 /**
  * Which weather block, `{id, version, level}`; default the rule block.
  */
-block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
+block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "read_light_paths", fixture?: string, bodies?: unknown[], table?: boolean, } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
 /**
  * The setting's range bands (a measure, RK11): each detection's
  * distance and range are labelled with them.
  */
-range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_bows", items: unknown[], } | { "op": "read_scattering", items: unknown[], } | { "op": "read_shadow_light", items: unknown[], } | { "op": "formation_record", system: string, } | { "op": "describe_star", mass_msun: number, age_yr: number, feh?: number, } | { "op": "fog_of_war", seats: unknown[], } | { "op": "read_limb", discs: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "hazard_map", asks: unknown[], fixture?: string, body?: string, ship?: unknown, line?: string, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, prominences?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
+range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_bows", items: unknown[], } | { "op": "age_pair", node: unknown, to_myr: number, z?: number, planets?: unknown[], } | { "op": "read_scattering", items: unknown[], } | { "op": "read_shadow_light", items: unknown[], } | { "op": "formation_record", system: string, } | { "op": "describe_star", mass_msun: number, age_yr: number, feh?: number, } | { "op": "fog_of_war", seats: unknown[], } | { "op": "read_limb", discs: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "hazard_map", asks: unknown[], fixture?: string, body?: string, ship?: unknown, line?: string, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, 
+/**
+ * A date in seconds: a whole number is read exactly (TP1).
+ */
+at_s?: number, window?: unknown, prominences?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
 /**
  * An adopted system: every planet read from its facts, each with a
  * `glance` (what holds off the wind, bubble size, shielded or not,
@@ -98,7 +106,18 @@ system?: string, at_s?: bigint, } | { "op": "read_composition", system: string, 
  * SB4: distance from the star for an icy body's activity, AU
  * (perihelion when left out).
  */
-r_au?: number, } | { "op": "ring_structure", system?: string, cloud?: string, ask?: unknown, variant?: bigint, samples?: number, window?: [number, number], } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
+r_au?: number, } | { "op": "ring_structure", system?: string, cloud?: string, ask?: unknown, variant?: bigint, samples?: number, window?: [number, number], } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, 
+/**
+ * RW16a, the small-body designer's pins (each optional; left out,
+ * the field decides): `pair` single, contact or separated; `makeup`
+ * mass shares of metal, rock, carbon and ice; `structure`
+ * rubble-pile, monolith or relaxed; one turn in `spin_hours`;
+ * `battered` 0 to 1 within its structure's relief range; a pair's
+ * `size_ratio`. A pin is never refused: the answer's `takes` says
+ * what an implausible one would need. In a system with no
+ * formation record the body is made of a designed field.
+ */
+pair?: string, makeup?: Array<number>, structure?: string, spin_hours?: number, battered?: number, size_ratio?: number, } | { "op": "small_shape", system: string, address: string, diameter_km?: number, mass_kg?: number, ice?: number, spin_hours?: number, a_au?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
 /**
  * Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
  * dusty shells (O3b).
@@ -197,7 +216,7 @@ route_audience?: unknown,
 /**
  * The routes' "Known to" rung (as `set_link`'s `tier`).
  */
-route_tier?: string, at_s: bigint, } | { "op": "roll_profile", program: string, body: string, reroll: boolean, apply: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "matter_budget", cell?: [bigint, bigint, bigint], } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
+route_tier?: string, at_s: bigint, } | { "op": "roll_profile", program: string, body: string, reroll: boolean, apply: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "home_galaxy" } | { "op": "set_home", halo?: string, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "matter_budget", cell?: [bigint, bigint, bigint], } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
 /**
  * Most stars listed, brightest first (default 20,000, the phone
  * tier of ruling 12; desktops ask 200,000). A cut list says

@@ -49,44 +49,14 @@ fn open_sol_with(
     )
     .unwrap();
     let sol = &pack["provides"]["other"]["sol"];
-    let mut addr: Vec<(String, String)> = vec![];
-    let mut n = 0;
-    let mut edits = vec![];
-    for b in sol["bodies"].as_array().unwrap() {
-        let id = b["id"].as_str().unwrap().to_string();
-        let a = match b["host"].as_str() {
-            None => format!("{SOL}/star:0"),
-            Some("sun") => {
-                n += 1;
-                format!("{SOL}/body:{}", n - 1)
-            }
-            Some(h) => {
-                // Each moon its own slot under its host.
-                let ha = &addr.iter().find(|(i, _)| i == h).unwrap().1;
-                let k = addr
-                    .iter()
-                    .filter(|(_, a)| a.rsplit_once('/').is_some_and(|(p, _)| p == ha))
-                    .count();
-                format!("{ha}/body:{k}")
-            }
-        };
-        edits.push(serde_json::json!({"address":a,"field":"name","value":b["name"]}));
-        if let Some(h) = b["host"].as_str() {
-            let ha = addr.iter().find(|(i, _)| i == h).unwrap().1.clone();
-            edits.push(serde_json::json!({"address":a,"field":"orbit.host","value":ha}));
-        }
-        for (f, v) in b["values"].as_object().unwrap() {
-            if f == "system.age_gyr" {
-                let s = v["v"].as_f64().unwrap() * 1e9 * sse_core::sheet::YR_JULIAN;
-                edits.push(serde_json::json!({"address":SOL,"field":"system.age","value":s}));
-            } else {
-                edits.push(serde_json::json!({"address":a,"field":f,"value":v["v"]}));
-            }
-        }
-        for (_, f, v) in extra.iter().filter(|(i, _, _)| *i == id) {
+    // The app's own way in (`reference::sol_batch`, as `ui-contract/src/sol.ts`
+    // builds it): angles printed in degrees become radians. Writing the
+    // sheet's values raw gave Earth a tilt of 23.44 radians (CS1).
+    let (addr, mut edits) = crate::reference::sol_batch(sol, SOL);
+    for (id, a) in &addr {
+        for (_, f, v) in extra.iter().filter(|(i, _, _)| i == id) {
             edits.push(serde_json::json!({"address":a,"field":f,"value":v}));
         }
-        addr.push((id, a));
     }
     let r = send(
         &mut k,
@@ -1328,4 +1298,137 @@ fn icy_moons_take_their_regime_from_their_ice() {
         (t["atmosphere.surface_pressure"].as_f64().unwrap() - 146_700.0).abs() < 1.0,
         "{t}"
     );
+}
+
+/// WS2: the weather op's flow table for a giant of the catalogued Sol: its jets, storms and eddies, the eddies fed
+/// by the heat it sends out; a rocky world has none.
+#[test]
+fn a_giants_flow_table_carries_its_eddies() {
+    let mut k = open_sol(&[]);
+    let j = world(&mut k, "Jupiter");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"flow","system":SOL,"body":j["address"],"day":10.0,"span_days":2.0}),
+    );
+    let t = &w["data"];
+    assert_eq!(t["day0"], 10.0, "{w:.400}");
+    assert_eq!(t["day1"], 12.0);
+    assert_eq!(t["jet_lat_deg"].as_array().unwrap().len(), 721);
+    let eddies = t["eddies"].as_array().unwrap();
+    assert!(eddies.len() > 500, "{} eddies", eddies.len());
+    assert!(t["facts"]["eddy_power_w_kg"].as_f64().unwrap() > 0.0);
+    let earth = world(&mut k, "Earth");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"flow","system":SOL,"body":earth["address"]}),
+    );
+    assert_eq!(e["code"], "not_a_giant", "{e:.300}");
+}
+
+/// CS1: catalogued worlds take the Sun's measured light at their distance
+/// from it (a moon's is its planet's) and their own measured Bond albedo
+/// (NSSDCA: Earth 0.294, Moon 0.11), never a sun-like guess or the pack's
+/// default.
+#[test]
+fn catalogued_worlds_get_their_own_sunlight_and_albedo() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    for (name, albedo) in [("Earth", 0.294), ("Moon", 0.11)] {
+        let addr = r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap();
+        let s = send(
+            &mut k,
+            serde_json::json!({"op":"survey_surface","system":SOL,"body":addr,"limit":0}),
+        );
+        let c = &s["survey"]["climate"];
+        let assumed = c["assumed"].to_string();
+        assert!(!assumed.contains("sun-like"), "{name}: {assumed}");
+        assert!(!assumed.contains("Bond albedo"), "{name}: {assumed}");
+        // About 340 W/m² over the sphere at 1 AU (1361 / 4); the Moon's was
+        // its orbit round the Earth before HV2c, about 10^8 times too much.
+        let arriving = c["sunlight"]["arriving_w_m2"].as_f64().unwrap();
+        assert!((330.0..350.0).contains(&arriving), "{name}: {arriving}");
+        let bond = c["sunlight"]["bond_albedo"].as_f64().unwrap();
+        assert!((bond - albedo).abs() < 0.03, "{name}: albedo {bond}");
+    }
+}
+
+/// The Sol loader turns the sheet's degrees into radians, as the app does:
+/// Earth's tilt is 23.44° (0.409 rad), so its equator is warmer than its
+/// poles. Written raw, the tilt was 23.44 rad and Earth's climate ran
+/// upside down (equator 279 K, poles 305 K).
+#[test]
+fn sol_loads_angles_in_radians_and_earths_equator_is_warmest() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let (addr, earth) = r["facts"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .find(|(_, f)| f["name"] == "Earth")
+        .map(|(a, f)| (a.clone(), f.clone()))
+        .unwrap();
+    let tilt = earth["body.obliquity"].as_f64().unwrap();
+    assert!(
+        (tilt - 23.44 * sse_core::math::PI / 180.0).abs() < 1e-9,
+        "{tilt}"
+    );
+    let s = send(
+        &mut k,
+        serde_json::json!({"op":"survey_surface","system":SOL,"body":addr,"limit":0}),
+    );
+    let t: Vec<f64> = s["survey"]["climate"]["t_k"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|x| x.as_f64().unwrap())
+        .collect();
+    let equator = t[t.len() / 2];
+    // The year and sphere average of the sunlight is S/4, about 340 W/m²
+    // (CERES era); the wrong tilt made it 386 (moved here from CS1's
+    // sunlight test, which needs this loader).
+    let arriving = s["survey"]["climate"]["sunlight"]["arriving_w_m2"]
+        .as_f64()
+        .unwrap();
+    assert!((330.0..350.0).contains(&arriving), "{arriving}");
+    // Measured: about 300 K at the equator, 228 to 255 K at the poles.
+    assert!(equator > t[0] + 30.0, "{t:?}");
+    assert!(equator > t[t.len() - 1] + 30.0, "{t:?}");
+}
+
+#[test]
+fn a_giants_stirred_patch_says_where_its_cloud_came_from() {
+    let mut k = open_sol(&[]);
+    let j = world(&mut k, "Jupiter");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"stirred","system":SOL,"body":j["address"],"day":10.0,"lat":-20.0,"lon":30.0,"half_km":2000.0,"n":2}),
+    );
+    let t = &w["data"];
+    assert!(t["renewal_days"].as_f64().unwrap() > 0.0, "{w:.400}");
+    let cells = t["cells"].as_array().unwrap();
+    assert_eq!(cells.len(), 4);
+    for c in cells {
+        let g = c.as_array().unwrap();
+        let sum = g[0]["weight"].as_f64().unwrap() + g[1]["weight"].as_f64().unwrap();
+        assert!((sum - 1.0).abs() < 1e-12);
+        assert!((g[1]["area"].as_f64().unwrap() - 1.0).abs() < 0.01);
+    }
+    let earth = world(&mut k, "Earth");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"stirred","system":SOL,"body":earth["address"],"half_km":100.0}),
+    );
+    assert_eq!(e["code"], "not_a_giant", "{e:.300}");
 }

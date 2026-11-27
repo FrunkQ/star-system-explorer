@@ -5,6 +5,7 @@
 // again it takes it back. A Read aloud preset shows its words large in the monitor and sends nothing; with "also show on screens" they go on a card over the players' picture. Keep on Live
 // makes a preset from where the GM is. Key 1 fires the first preset. A folded section hides its presets. The Playbook
 // is kept with the campaign: it is all still there after a reload.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

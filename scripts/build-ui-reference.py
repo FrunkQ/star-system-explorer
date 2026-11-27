@@ -62,6 +62,10 @@ def build():
             "view_id": b.get("view_id"), "view": b.get("view"), "recipe": b.get("recipe"),
             "from_m": b["from_m"]["v"] if "from_m" in b else None, "to_m": b["to_m"]["v"] if "to_m" in b else None,
         }.items() if v is not None} for b in pack["provides"]["reference"].get("bands", [])],
+        # Lines the sheet's rows give off (`optical.emission`): id, the row, wavelength in metres (air or vacuum as
+        # `medium` says) and source, for screens that colour by a line (a comet's ion tail).
+        "lines": [{"id": e["id"], "row": sub["id"], "at_m": float(repr(e["lambda_nm"]) + "e-9"), "medium": e["medium"], "src": e["src"]}
+                  for sub in pack["provides"]["reference"]["substances"] for e in (sub.get("optical") or {}).get("emission", [])],
     }
     return json.dumps(doc, indent=1, sort_keys=False, ensure_ascii=False) + "\n"
 

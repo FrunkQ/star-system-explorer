@@ -5,6 +5,7 @@
 // that is not a save is refused in words. Grow: a seed grows a system whose
 // preview has the same number of worlds as Node's run of the same request.
 // Nothing moves the campaign's state hash.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";

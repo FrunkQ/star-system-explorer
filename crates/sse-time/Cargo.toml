@@ -11,5 +11,7 @@ sse-core.workspace = true
 sse-chronicle.workspace = true
 sse-pack.workspace = true
 sse-formation = { path = "../sse-formation" }
+sse-atoms.workspace = true
+sse-flow.workspace = true
 serde.workspace = true
 serde_json.workspace = true

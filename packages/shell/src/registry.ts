@@ -23,7 +23,9 @@ import { RENDER_VIEWS } from "./screens.renderer.ts";
 import { RUN_VIEWS } from "./run/screens.run.ts";
 import { EXOTIC_VIEWS } from "./screens.exotic.ts";
 import { FORMATION_VIEWS } from "./screens.formation.ts";
+import { SMALL_VIEWS } from "./screens.small.ts";
+import { BUILDER_VIEWS } from "./screens.builder.ts";
 import { ATLAS_VIEWS } from "./atlas/screens.atlas.ts";
 import { ROLLCALL_VIEWS } from "./rollcall/screens.rollcall.svelte.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS, ...RUN_VIEWS, ...ATLAS_VIEWS, ...ROLLCALL_VIEWS, ...POSTCARD_VIEWS, ...EXOTIC_VIEWS, ...FORMATION_VIEWS];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS, ...RUN_VIEWS, ...ATLAS_VIEWS, ...ROLLCALL_VIEWS, ...POSTCARD_VIEWS, ...EXOTIC_VIEWS, ...FORMATION_VIEWS, ...SMALL_VIEWS, ...BUILDER_VIEWS];

@@ -2,6 +2,7 @@
 // in Ships and stations opens the Power card. A stock Traveller courier flies on typed figures, so the card says to fit
 // parts; the flow itself is checked against the real kernel in packages/ui-contract/test/flow.test.ts. Phone width fits.
 // Usage: node tests/ui/power.e2e.mjs   (SSE_SHOTS=<dir> for screenshots)
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

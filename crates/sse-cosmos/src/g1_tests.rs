@@ -434,3 +434,22 @@ fn a_volume_moves_matter_into_filaments_by_truncated_zeldovich() {
         "deterministic"
     );
 }
+
+/// The universe's present to the second (time design ruling 12A.1): stated
+/// once, a whole number, and the same 13.8 Julian billion years as `now_gyr`.
+/// An absolute check in integers: whole years of the sheet's Julian year.
+#[test]
+fn present_is_stated_to_the_second() {
+    use crate::scenario::{base_cosmology_pack, CosmologyPack};
+    let j: serde_json::Value =
+        serde_json::from_str(include_str!("../../../packs/base-cosmology/pack.json")).unwrap();
+    let p = &j["provides"]["other"]["cosmology"]["params"];
+    let present = p["present_s"]
+        .as_i64()
+        .expect("present_s is a whole number of seconds");
+    let gyr = p["now_gyr"].as_f64().unwrap();
+    let years = sse_core::math::round(gyr * 1.0e9) as i64;
+    assert_eq!(present, years * sse_core::sheet::YR_JULIAN as i64);
+    // The cosmology still reads its settings with it present.
+    CosmologyPack::from_packs(&[base_cosmology_pack()]).unwrap();
+}
