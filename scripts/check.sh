@@ -20,6 +20,8 @@ python3 scripts/build-base-atlas.py --check
 python3 scripts/build-traveller-pack.py --check
 # The future tech base pack works its figures out from the sheet (FT1).
 python3 scripts/build-base-tech.py --check
+# The parts palette is generated from the Sol today pack's parts and craft (CM13).
+python3 scripts/build-base-parts.py --check
 # The Paper spacecraft store pack is generated from its studies (RK6).
 python3 scripts/build-paper-spacecraft.py --check
 # MP22 closed: no typed constant or material number anywhere outside the sheet.

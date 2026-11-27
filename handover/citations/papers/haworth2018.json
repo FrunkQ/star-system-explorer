@@ -1,0 +1,1 @@
+{"key": "haworth2018", "citation": "Haworth et al. 2018's FRIED grid", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/disc.rs"], "claims": ["// Haworth et al. 2018's FRIED grid), growing with disc size."], "tier": 3}

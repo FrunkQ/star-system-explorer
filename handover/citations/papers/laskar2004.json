@@ -1,0 +1,1 @@
+{"key": "laskar2004", "citation": "Laskar 2004", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-climate/src/forcing_tests.rs"], "claims": ["// About 22.1° to 24.5° (Laskar 2004); secular theory to 5 planets: close."], "tier": 3}

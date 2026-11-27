@@ -9,19 +9,20 @@
   True (V10a): the same frame against black space, each world wrapped in its
   own surface (given in `surfaces`, read from its tiles) and lit by its star,
   the star in its own colour; given `star` (V10c), the star itself as the
-  kernel has it, turning on its spin with its spots and flares, on a clock of
-  its own that runs six hours a second. HUD (every style, Alex 23 Nov): orbit lines,
+  kernel has it, turning on its spin with its spots and flares. Everything that
+  moves (the star, the worlds round their orbits, the belts' members) moves on
+  the campaign's clock (`clock`, CLK1): still while it is stopped. HUD (every style, Alex 23 Nov): orbit lines,
   belts, names and locator rings; off, names show on hover only and True
   looks like a photograph. Scale Real: distances and sizes in proportion.
 -->
 <script lang="ts">
   import { onDestroy, tick, untrack } from "svelte";
-  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
+  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
-  import { constant, SEEN_ELEVATION, thermalColour, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { clockAt, constant, motionWords, phaseAt, pictureSpan, SEEN_ELEVATION, thermalColour, tooFast, type PictureClock, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { rangeRingLines } from "./range-rings.ts";
-  import { bandLines, hasChildren, layout, layoutReal, moonsOf, placedBodies, shellDots, type Band3D, type Body3D } from "./bodies.ts";
+  import { bandLines, hasChildren, layout, layoutReal, placedBodies, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -55,6 +56,7 @@
     aim = null,
     onaimed,
     range = [],
+    clock = null,
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -110,6 +112,8 @@
     onaimed?: () => void;
     /** Range rings (RK12), drawn with the HUD round each holder (a body id) in this frame. */
     range?: readonly { holder: string; rings: readonly RangeRing[] }[];
+    /** The picture's clock (CLK1, ui-contract picture-clock.ts): every motion here reads its time from it; stopped, the picture is still. */
+    clock?: PictureClock | null;
   } = $props();
   const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
@@ -130,9 +134,35 @@
   const root = $derived(bodies.find((b) => b.parent === null)?.id ?? bodies[0]?.id ?? "");
   let frame = $state<string | null>(null);
   const centreId = $derived(frame && bodies.some((b) => b.id === frame) ? frame : root);
-  const lay = $derived(realScale ? layoutReal(bodies, centreId) : layout(bodies, centreId));
+  // The picture's time (CLK1): seconds since the campaign's epoch, from the clock. While it runs, a frame loop moves it
+  // on; stopped, it sits at the time in view and nothing moves. Positions follow every frame (at most thirty a
+  // second); the star's face, drawn on the CPU, ten times a second.
+  const PICTURES_PER_S = 30;
+  const STAR_PICTURES_PER_S = 10;
+  let pictureT = $state(0);
+  let starClockT = $state(0);
+  $effect(() => {
+    const c = clock;
+    if (!c) return;
+    const at = (now: number) => clockAt(c, now);
+    pictureT = starClockT = at(performance.now());
+    if (!(c.rate > 0)) return;
+    let raf = 0;
+    let last = 0;
+    let lastStar = 0;
+    const step = (now: number) => {
+      if (now - last >= 1000 / PICTURES_PER_S - 1) ((last = now), (pictureT = at(now)));
+      if (now - lastStar >= 1000 / STAR_PICTURES_PER_S - 1) ((lastStar = now), (starClockT = at(now)));
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  });
+  // Each body where its orbit has carried it since the kernel's last answer (its own period, mean motion).
+  const moving = $derived(clock ? bodies.map((b) => (b.period_s && b.phase_at_s !== undefined ? { ...b, phase_deg: phaseAt(b.phase_deg, b.phase_at_s, b.period_s, pictureT) } : b)) : bodies);
+  const lay = $derived(realScale ? layoutReal(moving, centreId) : layout(moving, centreId));
   const t = $derived(lay ? tree(lay.nodes) : tree([]));
-  const byId = (id: string | null) => bodies.find((b) => b.id === id);
+  const byId = (id: string | null) => moving.find((b) => b.id === id);
 
   // A body chosen elsewhere opens the frame it is drawn in (a moon: its planet's).
   $effect(() => {
@@ -493,26 +523,12 @@
     return { from: [-Math.cos(a), -Math.sin(a), 0.15] };
   }
 
-  // The living star (V10c): its own clock, six hours of the star's time a second, from the star's present. Ten
-  // pictures a second; each shows any flare that peaked since the last. The universe clock is not moved.
-  let starT = $state(0);
-  $effect(() => {
-    const s = star;
-    if (!s || !isTrue || using !== "gpu") return;
-    const t0 = performance.now();
-    starT = s.age_s;
-    let last = 0;
-    let raf = 0;
-    const step = (now: number) => {
-      if (now - last >= 100) {
-        last = now;
-        starT = s.age_s + ((now - t0) / 1000) * STAR_SECONDS_PER_SECOND;
-      }
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  });
+  // The living star (V10c) on the picture's clock (CLK1): it turns on its own spin, its cells live their own lives and
+  // its flares rise and fade at their own speeds, as fast as the clock runs. Its time is its age at the campaign's
+  // epoch plus the clock's seconds, so the same date always shows the same face. Ten pictures a second; each shows
+  // any flare that peaked since the last, and the cells blur as a picture stands for more of their lives.
+  const starRate = $derived(clock?.rate ?? 0);
+  const starT = $derived(star ? star.age_s + starClockT : 0);
   const starK = $derived(bodies.find((b) => b.parent === null)?.t_k ?? star?.teff ?? constant("T_sun"));
   const bandNote = $derived(
     !isTrue
@@ -559,7 +575,7 @@
     // The glow round the star (star-glow.ts) is an angle on the screen: the disc's angular radius sets its shape.
     const discDeg = (Math.atan(radius / Math.max(1e-9, d)) * 180) / Math.PI;
     if (!haloBuf) haloBuf = { width: HALO_PX, data: new Uint8ClampedArray(HALO_PX * HALO_PX * 4) };
-    starNow = drawStarNow(faceBuf, xray ? null : haloBuf, s, { t: starT, clock: STAR_SECONDS_PER_SECOND, span: STAR_SECONDS_PER_SECOND / 10, calm, light: xray ? "xray" : "visible", disc, lat_deg: 7, disc_deg: discDeg });
+    starNow = drawStarNow(faceBuf, xray ? null : haloBuf, s, { t: starT, clock: starRate, span: starRate / STAR_PICTURES_PER_S, calm, light: xray ? "xray" : "visible", disc, lat_deg: 7, disc_deg: discDeg });
     const version = ++faceVersion;
     halo = xray ? null : { key: `star-glow:${b.id}`, version, texture: haloBuf, rel: r, radius: d * Math.tan((GLOW_REACH_DEG * Math.PI) / 180) };
     return { key: `star:${b.id}:${xray ? "x" : "v"}`, version, width, data: faceBuf.data, disc };
@@ -596,30 +612,36 @@
   // Belts in True: a haze of points between each disc belt's drawn edges, in the star's frame, as faint as starlight
   // on dust allows a screen to show (fudge register: the count is a drawing's, not the belt's).
   const BELT_POINTS = 2400;
-  // Each member keeps its own orbit (made once per belt) and goes round at the Kepler rate on the belts' own clock.
+  // Each member keeps its own orbit (made once per belt) and goes round at the Kepler rate √(GM/a³) on the picture's
+  // clock (CLK1), so the inner edge laps the outer; the same date always puts every member in the same place.
   const beltMembers = $derived(bands.filter((b) => b.shape !== "sphere").map((b) => ({ b, ps: beltParticles(b.a_in_m, b.a_out_m, 0.08, BELT_POINTS) })));
-  let beltT = $state(0);
-  $effect(() => {
-    if (!isTrue || using !== "gpu" || !beltMembers.some((m) => m.b.gm)) return;
-    const still = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (still) return;
-    const t0 = performance.now();
-    let last = 0;
-    let raf = 0;
-    const step = (now: number) => {
-      if (now - last >= 100) ((last = now), (beltT = ((now - t0) / 1000) * BELT_SECONDS_PER_SECOND));
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+  const beltHazes = $derived(lay && centreId === root ? beltMembers.map(({ b, ps }) => ({ b, pts: beltAt(ps, b.gm ? pictureT : 0, b.gm ?? 1, (a) => lay!.dist(a), 11.5) })) : []);
+  // What moves faster than the pictures can show (CLK1, picture-clock.ts `tooFast`): drawn where it truly is at each
+  // picture, never slowed to look smooth, and named in the note. The star's cells blur instead (granuleBlur): a
+  // picture that stands for many of their lives shows their average, as a long exposure would.
+  const fastNames = $derived.by(() => {
+    if (!clock || !(clock.rate > 0) || !lay) return [] as string[];
+    const span = pictureSpan(clock, PICTURES_PER_S);
+    const out = lay.placed.filter((b) => b.period_s && tooFast(b.period_s, span)).map((b) => b.name);
+    const spin = Number(star?.activity.rotation_period_s ?? 0);
+    if (isTrue && star && tooFast(spin, pictureSpan(clock, STAR_PICTURES_PER_S))) out.unshift("the star's spin");
+    const inner = beltMembers.filter(({ b }) => b.gm && tooFast(2 * Math.PI * Math.sqrt(b.a_in_m ** 3 / b.gm), span)).map(({ b }) => `the ${b.name}`);
+    return [...out, ...(isTrue && centreId === root ? inner : [])];
   });
-  const beltHazes = $derived(lay && centreId === root ? beltMembers.map(({ b, ps }) => ({ b, pts: beltAt(ps, b.gm ? beltT : 0, b.gm ?? 1, (a) => lay!.dist(a), 11.5) })) : []);
+  // Said while the clock runs, and in True while it is stopped (where a still star could look broken).
+  const motionNote = $derived(clock && (clock.rate > 0 || (isTrue && using === "gpu")) ? motionWords(clock, fastNames) : "");
   const ringed = $derived(shown.filter((b) => b.rings?.length).map((b) => b.name));
-  const ringsAssumed = $derived(shown.some((b) => b.rings?.some((r) => r.tau === null || r.albedo === null)));
+  const ringsAssumed = $derived(shown.some((b) => !b.ring_kernel && b.rings?.some((r) => r.tau === null || r.albedo === null)));
+  // The kernel's rings (VP-R3): what it says about the one in the middle of the frame, else a line for all of them.
+  const kernelRinged = $derived(shown.filter((b) => b.ring_kernel));
+  const ringWhy = $derived(kernelRinged.find((b) => b.id === centreId)?.ring_kernel?.why.slice(0, 3).join("; ") ?? "");
   const ringNote = $derived(
     [
-      ringed.length ? `Rings of ${ringed.join(", ")} from their edges, optical depth and albedo${ringsAssumed ? " (a ring with none on record is drawn as a middling one)" : ""}, in the world's equator.` : "",
-      beltHazes.length ? "Belts are a haze of points between their edges going round at the Kepler rate on their own clock, thirty days a second: a drawing, not their real numbers." : "",
+      kernelRinged.length
+        ? `Rings of ${kernelRinged.map((b) => b.name).join(", ")} as the kernel works them out: bands, gaps and waves placed by the moons, depth varying across each band, grains coloured by what they are made of, lit from each side with the opposition surge and backlit dust.${ringWhy ? ` ${ringWhy[0]!.toUpperCase()}${ringWhy.slice(1)}.` : ""}`
+        : "",
+      ringed.length > kernelRinged.length ? `Rings of ${shown.filter((b) => b.rings?.length && !b.ring_kernel).map((b) => b.name).join(", ")} from their edges, optical depth and albedo${ringsAssumed ? " (a ring with none on record is drawn as a middling one)" : ""}, in the world's equator.` : "",
+      beltHazes.length ? "Belts are a haze of points between their edges, each going round at the Kepler rate on the campaign's clock (the inner edge laps the outer): their number is a drawing's, not the belt's." : "",
     ]
       .filter(Boolean)
       .join(" "),
@@ -722,7 +744,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(a?.sea ? { sea: a.sea } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });
@@ -1027,7 +1049,8 @@
     {#if isTrue && using === "gpu" && smallNote && trueBand === "visible" && !mag}<span data-true-small={smallShown.length} data-true-comets={cometLooks.length}>{smallNote}</span>{/if}
     {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
     {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
-    {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)} data-star-ejections={starNow?.ejections.length ?? 0} data-star-calm={calm ? "yes" : "no"}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}. {(starNow?.words ?? []).join(" ")}</span>{/if}
+    {#if motionNote}<span data-clock-rate={clock?.rate ?? 0} data-clock-fast={fastNames.length}>{motionNote}</span>{/if}
+    {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)} data-star-ejections={starNow?.ejections.length ?? 0} data-star-calm={calm ? "yes" : "no"}>The star turns on its own spin, its spots go round with it and its cells live their own lives, on the campaign's clock{flaringNow ? "; it is flaring now" : ""}. {(starNow?.words ?? []).join(" ")}</span>{/if}
   </p>
 </div>
 
@@ -1126,6 +1149,9 @@
     left: 50%;
     transform: translateX(-50%);
     bottom: 64px;
+    /* Over the note: in True the note can run to more lines than the gap below the bar, and it must never cover
+       the way back out of a close-up. */
+    z-index: 2;
     display: flex;
     gap: 10px;
     align-items: center;

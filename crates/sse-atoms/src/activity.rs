@@ -46,3 +46,52 @@ pub fn cycle_period(p_rot_s: f64, a: f64, n: f64) -> f64 {
 pub fn flare_rate_above(lx: f64, e: f64, k: f64, alpha: f64) -> f64 {
     k * lx / E_REF_J * m::pow(e / E_REF_J, 1.0 - alpha)
 }
+
+// SG6 prominences: the star's field, its corona, and where gas can be held
+// up. Each sum is an Equation in `packs/base-physics/formulas/activity.json`
+// (a test holds the two together).
+
+/// Mean surface field, T, from the Rossby number (Reiners et al. 2022): a
+/// steep slow branch and a nearly flat fast one, meeting at `ro_sat`.
+/// Fields in gauss at Ro = 1: `b_fast_g`, `b_slow_g`.
+pub fn surface_field(
+    ro: f64,
+    b_fast_g: f64,
+    slope_fast: f64,
+    b_slow_g: f64,
+    slope_slow: f64,
+    ro_sat: f64,
+) -> f64 {
+    let g = if ro <= ro_sat {
+        b_fast_g * m::pow(ro, slope_fast)
+    } else {
+        b_slow_g * m::pow(ro, slope_slow)
+    };
+    g * 1e-4
+}
+
+/// Mean coronal temperature, K, from the X-ray power and radius (Johnstone
+/// and Güdel 2015): 0.11 F_X^0.26 MK, F_X in erg s⁻¹ cm⁻².
+pub fn corona_temperature(lx_w: f64, radius_m: f64, k: f64, n: f64) -> f64 {
+    let fx = lx_w.max(0.0) / (4.0 * m::PI * radius_m * radius_m) * 1000.0;
+    k * m::pow(fx, n) * 1e6
+}
+
+/// Particles per m³ at the corona's foot: one hydrostatic scale height over
+/// the whole star glowing optically thin, L_X = n² Λ 4πR² H.
+pub fn corona_base_density(lx_w: f64, radius_m: f64, t_k: f64, g: f64, loss: f64, mu: f64) -> f64 {
+    let h = sse_core::sheet::K_B * t_k / (mu * sse_core::sheet::M_U * g);
+    m::sqrt(lx_w.max(0.0) / (loss * 4.0 * m::PI * radius_m * radius_m * h))
+}
+
+/// Co-rotation radius, m: where a Kepler orbit keeps pace with the spin (the
+/// `sse.orbit.semi_major_axis_from_period` block with the star's spin period).
+pub fn corotation_radius(mass_kg: f64, period_s: f64) -> f64 {
+    m::cbrt(G * mass_kg * period_s * period_s / (4.0 * m::PI * m::PI))
+}
+
+/// Reach of the closed field, stellar radii: the Sun's source surface
+/// `r_ref` at field `b_ref_g` gauss, growing as `index` power of the field.
+pub fn closed_corona_radius(field_t: f64, r_ref: f64, b_ref_g: f64, index: f64) -> f64 {
+    (r_ref * m::pow(field_t / (b_ref_g * 1e-4), index)).max(1.0)
+}
