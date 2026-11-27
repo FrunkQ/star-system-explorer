@@ -1,9 +1,9 @@
 # Status: store packs (track SP)
 
 Owner thread: "Design store packs" (Fable, design only, 27 Nov 2026) for the note. No builder thread yet.
-Design: `design/SSE4-store-packs-design.md`, **ACCEPTED by Alex 27 Nov 2026 12:02 UTC ("Otherwise yes to all"), except question 1**, which waits for his word; his rulings are in the note's section 13A. SP1 (question 1) may not start yet. Builders may take the others in order.
+Design: `design/SSE4-store-packs-design.md`, **ACCEPTED by Alex 27 Nov 2026 12:02 to 12:05 UTC**; his rulings are in the note's section 13A (question 1 changed: kind is a label read from the contents, nothing refused). Builders may take the packages in order.
 
-What it is, in one line: one way to make, find, stack, update and publish a pack. Kind becomes a permission the kernel checks; the shelf is read from the contents; one `about` block; prerequisites fetched from Explorers on one "this needs" sheet and checked by fingerprint; one layering rule for data as for flows; campaigns pin exact versions and updates are offered, never applied unasked; Make a pack and Publish from the Packs screen; V3 items marked and opened through the importer.
+What it is, in one line: one way to make, find, stack, update and publish a pack. Kind becomes a label worked out from the contents; the shelf is read from the contents; one `about` block; prerequisites fetched from Explorers on one "this needs" sheet and checked by fingerprint; one layering rule for data as for flows; campaigns pin exact versions and updates are offered, never applied unasked; Make a pack and Publish from the Packs screen; V3 items marked and opened through the importer.
 
 It builds on, and does not replace: paid packs (PP, PK), compound ships' parts packs (CM16 to CM18), detail expansion packs (RW8), the Open door, and Explorers D-98 and D-99.
 
@@ -11,7 +11,7 @@ Only the owner thread edits this file. Build threads update their rows in the sa
 
 | Package | State | Log |
 |---|---|---|
-| SP1 kind as a permission; shipped packs refiled | waits for question 1 | |
+| SP1 kind as a label worked out from contents | accepted, not started | |
 | SP2 one layering rule for data | accepted, not started | |
 | SP3 the `about` block, `suggests`, `changes` | accepted, not started | |
 | SP4 resolve route and the "this needs" sheet | accepted, not started | |

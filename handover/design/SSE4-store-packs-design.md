@@ -1,6 +1,6 @@
 # SSE4 store packs: one way to make, find, stack, update and publish a pack
 
-Status: **ACCEPTED by Alex 27 Nov 2026 12:02 UTC ("Otherwise yes to all"), except question 1**, which he asked to have explained and which waits for his word; question 10 was answered at 12:04 (section 13A). His rulings are in section 13A and win where the text differs. Nothing here is built. Written by the thread "Design store packs" (Fable, design only) at Alex's request of 27 Nov 11:47 UTC: "a short design effort to rationalise 'store packs' - how they categorise, manifest and appear, layer and can load prerequisites securely (advantage of OUR store)... labelling the old v3 ones. How do we 'save them' and upload them - a smooth workflow as connected." Track code **SP**, a code only, never shown in the product.
+Status: **ACCEPTED by Alex 27 Nov 2026 12:02 to 12:05 UTC** ("Otherwise yes to all"; question 10 answered 12:04; question 1 answered 12:05, changed from the recommendation: kind is a label read from the contents, not a permission that refuses). His rulings are in section 13A and win where the text differs. Nothing here is built. Written by the thread "Design store packs" (Fable, design only) at Alex's request of 27 Nov 11:47 UTC: "a short design effort to rationalise 'store packs' - how they categorise, manifest and appear, layer and can load prerequisites securely (advantage of OUR store)... labelling the old v3 ones. How do we 'save them' and upload them - a smooth workflow as connected." Track code **SP**, a code only, never shown in the product.
 
 Read with: `SSE4-explorers-paid-packs.md` (money, accepted 21 Nov; nothing here changes it), `SSE4-example-packs.md` section 2 (shelves), `SSE4-compound-ships-design.md` section 8B.3 (parts packs, CM18), `SSE4-real-catalogues-design.md` sections 5.2 to 5.3A (downloaded data, detail expansion packs, RW8), `SSE4-edits-reach-design.md` (block edits). On the Explorers side: `docs/decisions.md` D-98 and D-99 in `FrunkQ/starsystemx-creator-hub`.
 
@@ -8,20 +8,20 @@ Read with: `SSE4-explorers-paid-packs.md` (money, accepted 21 Nov; nothing here 
 
 1. **The hard parts exist.** One format (`sse.pack/1`), one door (Open, drop, an Explorers link), a store that keeps each published version unchanged for ever, gives each pack id to its first publisher and serves the exact bytes with their fingerprint. This note adds no second format and no second door.
 2. **Six things are loose, and each gets one rule:**
-   - A pack's `kind` means nothing today (the shipped ship list is filed as `base-physics`; Sol today and Paper spacecraft are both `universe`). **Kind becomes a permission**: what the pack is allowed to change. The shelf is worked out from what the pack contains.
+   - A pack's `kind` means nothing today (the shipped ship list is filed as `base-physics`; Sol today and Paper spacecraft are both `universe`). **Kind becomes an honest label**, read from what the pack contains, so the user always knows what it will touch. The shelf is worked out the same way.
    - Title, maker and credits are written three different ways. **One `about` block.**
    - A pack can say what it needs, and nothing fetches it. **One "this needs" sheet**, filled by the store, checked by fingerprint.
    - Flows need an explicit `replaces` to override; data (engines, parts, ships) silently lets the later pack win. **One layering rule for everything.**
    - An installed pack cannot be updated at all (the app refuses "already in the stack"), which is why a kept campaign never gets a newer Sol. **Campaigns pin exact versions; updates are offered, previewed and never applied unasked.**
    - There is no way to make a pack, or publish one, from inside the app. **"Make a pack" and "Publish" on the Packs screen**, using the device pairing the store already has.
-3. **Secure means five plain things** (section 6): a pack is data and never code; its bytes are proved by fingerprint; only our store is fetched from automatically; its kind limits what it may touch; and every change it would make is shown before it is added.
+3. **Secure means five plain things** (section 6): a pack is data and never code; its bytes are proved by fingerprint; only our store is fetched from automatically; its card says truthfully what it touches, whatever its author wrote; and every change it would make is shown before it is added.
 4. **V3 gets a label, a door and no conversion of rules** (section 10): every V3 item on the store says V3 and opens in SSE4 through the importer; V3 custom definitions do not come across and the report says so.
 
 ## 2. What exists today, and what is new
 
 | Need | Today | New in this note |
 |---|---|---|
-| Format and checking | `sse.pack/1`; `crates/sse-pack` resolves a stack: ids, versions, kernel range, `requires` present lower in the stack, one publisher per quantity, explicit `replaces` for flows and blocks, reproduction checks run on load | kind as a permission; the `about` block; one layering rule for data |
+| Format and checking | `sse.pack/1`; `crates/sse-pack` resolves a stack: ids, versions, kernel range, `requires` present lower in the stack, one publisher per quantity, explicit `replaces` for flows and blocks, reproduction checks run on load | kind as a label worked out from contents; the `about` block; one layering rule for data |
 | A pack kept as a folder | `store-packs/<name>/`, made one file by `scripts/bundle-pack.mjs` (CM0) | one script that also checks and previews the listing (SP9) |
 | The door | Open, drop and `?explorers=` take a pack, show how many values it would change, and add it (`open-file.ts`, U5) | the "this needs" sheet; update in place |
 | The store | Explorers `v4_items`: shelves, a "contains" filter read from the pack, one owner per id, versions never change, bytes stored by sha256 and served with `x-sse-sha256`, fan-work field, holds and reports (D-98, D-99) | a resolve route; V3 marks; a draft state (needs Alex, question 6) |
@@ -37,19 +37,23 @@ Three findings worth knowing:
 - **F2.** A campaign published to Explorers still carries whole copies of every added pack (`stack.added`); the site strips the GM record and undo history, not the packs. The paid-packs ruling 9 says a shared campaign names packs and does not carry them. Not built (it is PK1's neighbour). Section 7.2 settles it.
 - **F3.** Sol today's `about` uses `label`; the store reads `about.title`; Traveller's `about` is a plain string. So titles on the store fall back to the id unless typed in by hand.
 
-## 3. Kind is a permission; the shelf is read from the contents
+## 3. Kind is a label read from the contents; so is the shelf
 
-The six kinds stay as they are in the format. What changes is that the kernel holds a pack to its kind when the stack loads, and says the permission in words on every pack card.
+**Ruled by Alex, 27 Nov 12:05 UTC:** "label the pack kind - physics may travel with other stuff... user just has to know what it will impact - so sneaking physics in is fine - it will ALSO be categorised as physics." This replaces the first draft, which had the kernel refuse content outside a pack's kind.
 
-| Kind | Words on the card | May carry | May not |
-|---|---|---|---|
-| `presentation`, `suite` | "Changes how things look. Changes no numbers." | looks, themes, view styles, overlays, tours, vocabulary, name schemes, class labels | anything below |
-| `universe` | "Adds things. Changes no physics." | parts, ships, stations, engines as data, settings, templates, dressing rules, tags, catalogues, calendars, units | flows, boxes, block edits, `replaces` of physics, reference data |
-| `game-system` | "Reads game codes off the physics. Never feeds it." | code sheets, rules, sifters, difficulty, plus anything `universe` may | the same as `universe` |
-| `physics` | "Changes physics. Everything it touches is marked." | flows, boxes, block edits, quantity kinds, reference data | nothing more, but each override names what it replaces |
-| `base-physics` | (ours) | the shipped base | published by anyone but the app's own account |
+The six kinds stay as they are in the format. What changes is that a pack's kinds are **worked out from what it carries**, by the kernel when the stack loads and by the store when it is listed, and nothing is refused for its kind. A ship pack that also carries a physics change is a universe pack **and** a physics pack: it shows both lines on its card, sits on both shelves, and its physics is marked like any other. What the author wrote in `kind` is a hint; where it leaves something out, the worked-out kinds win and the card says so.
 
-A pack with more than one kind has the union and the card says both lines. The shipped packs are refiled to fit (`base-ships`, `base-parts`, `base-starters`, `base-names` and the like become `universe` or `presentation`); that moves their content hashes once, on purpose (SP1).
+The table reads as "carrying this makes a pack that kind":
+
+| Kind | Words on the card | Carrying any of these makes it this kind |
+|---|---|---|
+| `presentation`, `suite` | "Changes how things look. Changes no numbers." | looks, themes, view styles, overlays, tours, vocabulary, name schemes, class labels |
+| `universe` | "Adds things. Changes no physics." | parts, ships, stations, engines as data, settings, templates, dressing rules, tags, catalogues, calendars, units |
+| `game-system` | "Reads game codes off the physics. Never feeds it." | code sheets, rules, sifters, difficulty |
+| `physics` | "Changes physics. Everything it touches is marked." | flows, boxes, block edits, quantity kinds, reference data; each override still names what it replaces |
+| `base-physics` | (ours) | the shipped base; the store takes this kind only from the app's own account |
+
+A pack of more than one kind shows every line that applies. The shipped packs' written kinds are wrong today (`base-ships` says `base-physics`); because kinds are now worked out, nothing has to be refiled and no golden moves. Their written kinds are corrected whenever a pack is next edited for another reason.
 
 **Shelves** are for people and are read from the contents, as the store already does for tag sets. The author may name a shelf in `about.shelf`; the store refuses a shelf the contents do not support and otherwise takes the first that fits:
 
@@ -122,7 +126,7 @@ This is the advantage of our own store, said as rules a builder can test.
 1. **A pack is data, never code.** JSON only. Formulas are the kernel's own formula blocks, run by the kernel within its limits. No script, no HTML, no address the app fetches on a pack's behalf. Pictures and shapes are data inside the pack, of listed types. A link in a credit is text until the user presses it.
 2. **Integrity.** Three-way sha256 on every fetch (exists). The campaign pins the kernel content hash, so a pack that changed is seen even if it arrives by another road.
 3. **Provenance.** Only `explorers.starsystemx.com` is fetched from without the user choosing a file (exists). A pack id has one owner; a published version never changes. The card says where a pack came from: "From Explorers, published by (handle)", or "From a file: nobody vouches for it". A file is still opened.
-4. **Permission.** The kind limits what a pack may touch (section 3), checked by the kernel, not by the store alone, so it holds for a file from anywhere.
+4. **An honest label.** A pack's kinds are worked out from its contents by the kernel (section 3), not taken from what its author wrote, so a file from anywhere says truthfully what it will touch. Physics inside any pack is named as physics on the card and on the shelf.
 5. **Its own names only.** Everything a pack defines has an id under the pack's own id. Touching another pack's thing takes an explicit `replaces` naming it (section 7.1).
 6. **Shown first.** Every value a pack would change is listed before Add (exists), and marked after.
 7. **Limits.** The store's size limit (50 MB, 200 MB for supporters, existing gates); the app shows the size before fetching; at most 32 packs and 8 levels of needs in one plan; nothing is fetched without a press, except the app's own starter set (section 8.3).
@@ -175,7 +179,7 @@ PR 707 names an old Sol by a special check. With pins it is the general case: So
 
 Three parts, no new tab:
 
-- **In this campaign**: the stack in order, each pack's card (title, maker, version, the permission line, licence, size, marks, needs, what it changed), update marks, drag to reorder, remove.
+- **In this campaign**: the stack in order, each pack's card (title, maker, version, what it touches in words, licence, size, marks, needs, what it changed), update marks, drag to reorder, remove.
 - **On this device**: the library, including "yours, not published".
 - **On Explorers**: the shelves, read from the public `/api/v4`, with the contains filter. Add is one press and goes through the "this needs" sheet. A priced pack shows "Buy on Explorers" (PK2).
 
@@ -234,7 +238,7 @@ Small, in order. Owners are proposed. Explorers packages add only; any migration
 
 | Id | Package | Repo | Needs | Checks |
 |---|---|---|---|---|
-| **SP1** | Kind as a permission: the kernel refuses content a pack's kind may not carry, with the reason in words; shipped packs refiled; the permission line on the card | SSE4 kernel, packs | none | a `universe` pack with a flow is refused; core golden moves once (stack hashes), reason logged |
+| **SP1** | Kind as a label: the kernel and the store work a pack's kinds out from its contents (one shared table and test files); the lines on the card; a pack on every shelf its kinds give it. Nothing refused | SSE4 kernel, UI, Explorers | none | a pack written as `universe` that carries a flow shows as physics too, on both shelves; no golden moves |
 | **SP2** | One layering rule: own-id names and explicit `replaces` for data; clashes shown; one-at-a-time things chosen by the campaign; old ids as aliases. Warnings first | SSE4 kernel, UI | SP1 | two packs defining one engine id: warned, then refused; an old save opens |
 | **SP3** | The `about` block, `suggests`, `changes`; readers take old and new; store reads it (fixes F3) | SSE4, Explorers | none | Sol today shows its title on the store untyped |
 | **SP4** | Resolve route on Explorers and the "this needs" sheet in the app, with limits | Explorers, SSE4 UI | SP3 | a ship pack brings its parts pack; a wrong sha stops one file and says which |
@@ -262,11 +266,11 @@ Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued value
 - 12:02 UTC: "Otherwise yes to all": questions 3, 4, 5, 6, 8, 9 and 11 stand as recommended. Question 6 still needs its one database change shown to him and run by him.
 - 12:04 UTC, question 10 answered: "we will need to build a scanner on the store for copyright content IF the pack is being sold. Gonna turn a blind eye to fan content for now - we have the disclaimer for that in place." So free fan content is left to the existing disclaimer, with no name checking; a pack offered **for sale** is scanned by the store for other people's names, brands and content before its first sale, and what the scanner finds goes to the moderator who already looks at every first paid version (paid packs section 7.4). The scanner informs a person; the person decides (SP13).
 - 12:04 UTC, the same point said outright: "the store CAN list TV/film ones - fan content... we will deal with issues as they arrive. If they charge - different case." So users may publish film and TV ships and settings free, as fan content; the earlier "no named ships from film, TV or games" ruling is read as covering what we ourselves ship and feature (the thread's reading).
-- Question 1: he asked what it meant; explained in the thread at 12:03 UTC; **not yet ruled**. SP1 does not start until it is.
+- 12:05 UTC, question 1 answered, not as recommended: kind is a label, physics may travel with other things and the pack is also categorised as physics; the user only has to know what it will impact (section 3). No pack is refused for its kind and no golden moves.
 
 ## 13. Questions as put
 
-1. **Kind as a permission, enforced by the kernel, with shipped packs refiled (one planned move of the core golden)?** Recommended: yes.
+1. **Kind as a permission, enforced by the kernel, with shipped packs refiled (one planned move of the core golden)?** Recommended: yes. *Answered 12:05 UTC, not as recommended: a label, nothing refused, no golden move (section 13A).*
 2. **One new shelf, Constructs and parts, worked out from contents?** *Answered by Alex, 27 Nov 11:57 UTC: yes, and it holds all constructs and their constituent parts. Real data as a shelf was dropped the same minute; it is a filter and a mark.*
 3. **One layering rule: own-id names, explicit `replaces` for data as for flows, the GM's choice saved when two packs clash?** Recommended: yes, warnings for one release before refusing.
 4. **Campaigns pin exact versions; updates are offered and previewed, never applied unasked?** Recommended: yes. It is what keeps two devices on the same universe.
