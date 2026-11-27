@@ -2049,6 +2049,23 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         push_m_s: Option<f64>,
+        /// CM2: write it `authored` when the flight logs have the two craft
+        /// further apart than a capture allows (it is then made, with a note).
+        #[serde(default)]
+        #[ts(optional)]
+        authored: Option<bool>,
+        /// CM2: the system the flight logs are read in (a NAV `fixture`, an
+        /// inline `nav` system or an adopted universe `system`), to check
+        /// the capture's reach; without one it is not checked.
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
         at_s: i64,
     },
     /// CM1: release. `address` leaves what carries it at `at_s` (`from`,
@@ -2062,6 +2079,18 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         push_m_s: Option<f64>,
+        /// CM2: the system the released construct's first flight-log piece
+        /// is worked out in (as for `mount_construct`); without one the
+        /// carrier's orbit is copied and the push only noted.
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
         at_s: i64,
     },
     /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
@@ -4169,7 +4198,8 @@ pub enum Response {
     /// clock_deg?, stand_off_m?, push_m_s?, docked?}`), the compound the
     /// carrier is in after the event (`{root, members: [{address, depth,
     /// mount?, mass_kg?}], mass_kg, mass_unknown}`), and notes on what could
-    /// not be checked.
+    /// not be checked. When either construct has a flight log, the release
+    /// or capture is written there too (CM2): `logged` lists the entries.
     ConstructMounted {
         address: String,
         #[ts(type = "unknown")]
@@ -4177,6 +4207,8 @@ pub enum Response {
         #[ts(type = "unknown")]
         compound: serde_json::Value,
         notes: Vec<String>,
+        /// CM2: the flight-log entries written (the carrier's split or join event, the carried construct's piece).
+        logged: Vec<String>,
         event_id: String,
         state_hash: String,
     },
@@ -4187,6 +4219,8 @@ pub enum Response {
         #[ts(type = "unknown")]
         compound: serde_json::Value,
         notes: Vec<String>,
+        /// CM2: the flight-log entries written (the carrier's split or join event, the carried construct's piece).
+        logged: Vec<String>,
         event_id: String,
         state_hash: String,
     },

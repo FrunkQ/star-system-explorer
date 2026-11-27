@@ -124,5 +124,50 @@
     "from": "u:cm1/sys:0/ship:csm",
     "push_m_s": 0.1,
     "at_s": 2700
+  },
+  {
+    "op": "log_flight",
+    "construct": "u:cm1/sys:0/ship:csm",
+    "piece": {
+      "from_s": 63115200000,
+      "state": {
+        "kind": "orbit",
+        "around": "Earth",
+        "elements": {
+          "a_m": 6778000.0,
+          "e": 0.0,
+          "epoch_s": 63115200000
+        }
+      },
+      "mark": "authored"
+    },
+    "at_s": 63115200000
+  },
+  {
+    "op": "mount_construct",
+    "address": "u:cm1/sys:0/ship:lrr",
+    "on": "u:cm1/sys:0/ship:csm",
+    "place": "hull",
+    "clock_deg": 90.0,
+    "at_s": 63115200100
+  },
+  {
+    "op": "flight_log",
+    "construct": "u:cm1/sys:0/ship:lrr",
+    "where_at": 63115200200,
+    "fixture": "sol"
+  },
+  {
+    "op": "release_construct",
+    "address": "u:cm1/sys:0/ship:lrr",
+    "push_m_s": 0.2,
+    "fixture": "sol",
+    "at_s": 63115201000
+  },
+  {
+    "op": "flight_log",
+    "construct": "u:cm1/sys:0/ship:lrr",
+    "where_at": 63115202000,
+    "fixture": "sol"
   }
 ]
