@@ -130,3 +130,16 @@ test("remembered per desk (TM6): a desk's own value first, else the latest anywh
   assert.deepEqual(keepForDesk("run", "view", null), ["view"]);
   assert.deepEqual(keepForDesk("build", "depth"), ["desk.build.depth", "depth"]);
 });
+
+test("the ruler opens by desk and level (top-level 12.1), and keeps the GM's span", async () => {
+  const { rulerOpens, keepRulerSpan } = await import("../src/desk.ts");
+  assert.equal(rulerOpens("explore", "system", null), "week", "Explore at a system: human time");
+  assert.equal(rulerOpens("explore", "world", null), "week");
+  assert.equal(rulerOpens("explore", "galaxy", null), null, "Explore above the system: the whole history");
+  assert.equal(rulerOpens("build", "system", null), null, "Build: the full ruler");
+  assert.equal(rulerOpens("explore", null, null), null, "the Workshop: the whole history");
+  assert.equal(rulerOpens("build", "system", keepRulerSpan(1000)), 1000, "a kept span comes back");
+  assert.equal(rulerOpens("explore", "system", keepRulerSpan(null)), null, "a kept whole history comes back");
+  assert.equal(rulerOpens("explore", "system", "nonsense"), "week", "an odd kept value falls back to the default");
+  assert.equal(keepRulerSpan(Infinity), "whole");
+});

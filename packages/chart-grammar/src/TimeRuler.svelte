@@ -11,6 +11,7 @@
   looks: arrows 1 % of the window, Page Up/Down 10 %, Home/End, + and − zoom.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
   import { motionMs } from "./motion.ts";
   import { constant, drawn } from "../../ui-contract/src/index.ts";
@@ -27,6 +28,8 @@
     onchange,
     onmakenow,
     note,
+    opens,
+    onspan,
   }: {
     from: number;
     to: number;
@@ -40,6 +43,14 @@
     onmakenow?: (yr: number) => void;
     /** A caveat shown while the window is in human time (under 10,000 years). */
     note?: string;
+    /**
+     * The span the ruler opens on (top-level design 12.1, by desk and level): a length of time around the time in view,
+     * one of the Show list's ids ("week"), or null for the whole history. Applied when `key` changes (a desk or level switch), not on every new span, so a
+     * zoom is never re-centred. With it, "Whole life ›" shows beside a narrower window.
+     */
+    opens?: { key: string; span: number | string | null };
+    /** The GM changed the span (zoom, Show, Whole life ›): its length, or null for the whole history, to remember. */
+    onspan?: (span: number | null) => void;
   } = $props();
 
   const cal = $derived(calendar ?? defaultCalendar(campaignNow ?? now));
@@ -59,9 +70,10 @@
   const w = $derived(anim ?? wt);
   const span = $derived(wt.to - wt.from);
   let glideRaf = 0;
-  function glide(next: RulerWindow | null) {
+  function glide(next: RulerWindow | null, remember = true) {
     const prev = w;
     win = next;
+    if (remember) said();
     const target = wt;
     cancelAnimationFrame(glideRaf);
     anim = null;
@@ -130,8 +142,23 @@
   function zoomBy(factor: number, about: number, smooth = true) {
     const next = zoom(wt, factor, about, bounds);
     if (smooth) glide(next);
-    else ((anim = null), (win = next));
+    else ((anim = null), (win = next), said());
   }
+  /** Tell the shell the span the GM chose, as a length (a difference of times), or null for the whole history. */
+  function said() {
+    onspan?.(full ? null : span);
+  }
+  // The opening span, once per key (a desk or level switch).
+  let openedKey: string | null = null;
+  $effect(() => {
+    const o = opens;
+    if (!o || o.key === openedKey) return;
+    untrack(() => {
+      openedKey = o.key;
+      const len = typeof o.span === "string" ? SHOWS.find((x) => x.id === o.span)?.span : o.span;
+      glide(len === null || len === undefined || !(len > 0) || len === Infinity ? null : around(now, len, bounds), false);
+    });
+  });
   // Wheel zoom about the pointer (non-passive, so the page does not scroll).
   $effect(() => {
     const el = track;
@@ -176,7 +203,7 @@
   function play() {
     if (span > stepYr * 600) {
       const fit = SHOWS.filter((x) => x.span !== Infinity && x.span >= stepYr * 30).sort((a, b) => a.span - b.span)[0];
-      if (fit && fit.span < span) glide(around(now, fit.span, bounds));
+      if (fit && fit.span < span) glide(around(now, fit.span, bounds), false);
     }
     playing = true;
   }
@@ -222,6 +249,7 @@
       <span class="grp">
         <button type="button" onclick={() => zoomBy(2, now)} disabled={full} aria-label="Zoom out" title="Zoom out (−)">−</button>
         <button type="button" onclick={() => zoomBy(0.5, now)} aria-label="Zoom in" title="Zoom in (+)">+</button>
+        {#if opens && !full}<button type="button" class="link" data-whole-life onclick={() => glide(null)} title="Show the whole of this place's life, birth to death">Whole life ›</button>{/if}
         <select aria-label="Show" onchange={(e) => (show(e.currentTarget.value), (e.currentTarget.value = ""))}>
           <option value="">{full ? "Whole history" : `Showing ${spanWords(span, cal)}`}</option>
           {#each SHOWS as s (s.id)}<option value={s.id}>{s.label}</option>{/each}

@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, partShows, SHIPPED_DESKS, deskDoc, deskKeeps, isDesk, type Desk, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskMemoryKey, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
@@ -669,6 +669,21 @@
       if (isDepth(d) && d !== depth) depth = d;
     });
   });
+  // The ruler's span (TM6, top-level 12.1): each desk opens it on its own default at each level (Explore on human time at
+  // a system or world, Build on the whole life), and keeps the span the GM last chose there. No fallback to another
+  // desk's span: the desks differ on purpose.
+  $effect(() => {
+    const level = deskLevelOf(railScale);
+    const d = desk;
+    untrack(() => {
+      const kept = level ? loadPref(deskMemoryKey(d, "ruler-span", level)) : null;
+      ws.ruler_opens = { key: `${d}|${level}`, span: rulerOpens(d, level, kept) };
+    });
+  });
+  ws.setRulerSpan = (span) => {
+    const level = deskLevelOf(railScale);
+    if (level) savePref(deskMemoryKey(desk, "ruler-span", level), keepRulerSpan(span));
+  };
   let viewAt = "";
   $effect(() => {
     const level = deskLevelOf(railScale);

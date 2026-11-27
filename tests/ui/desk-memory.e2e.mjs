@@ -2,6 +2,7 @@
 // (scripts/build-shell.sh first). Usage: node tests/ui/desk-memory.e2e.mjs [chromium firefox webkit] [--screens <dir>]
 // Each desk keeps its own depth, and at each level its own view choice, on this device. A desk visited for the first
 // time starts from the latest choice made anywhere; coming back to a desk brings back what it had; a reload keeps it.
+// The ruler opens on each desk's own span (top-level 12.1) and keeps the span chosen on that desk.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -71,6 +72,24 @@ try {
     await desk(page, "Explore");
     await page.waitForFunction(() => document.querySelector(".viewbar [data-view-controls]")?.getAttribute("data-style") === "3d");
     assert.equal(await depthNow(), "science");
+
+    // The ruler's span by desk (top-level 12.1): Explore at a system opens on human time with "Whole life ›", Build on
+    // the whole life; each keeps the span chosen on it.
+    const ruler = page.locator(".area-ruler .ruler");
+    const span = async () => Number(await ruler.getAttribute("data-span"));
+    const YEAR = 1;
+    assert.ok((await span()) < 30 / 365, `Explore opens on human time, not ${await span()} years`);
+    assert.equal(await ruler.locator("[data-whole-life]").count(), 1);
+    await page.getByLabel("Show", { exact: true }).selectOption("year");
+    await page.waitForFunction(() => Math.abs(Number(document.querySelector(".area-ruler .ruler")?.getAttribute("data-span")) - 1) < 0.01);
+    await desk(page, "Build");
+    await page.waitForFunction(() => Number(document.querySelector(".area-ruler .ruler")?.getAttribute("data-span")) > 1e6);
+    assert.equal(await ruler.locator("[data-whole-life]").count(), 0, "Build opens on the whole life");
+    await shot("3-build-ruler");
+    await desk(page, "Explore");
+    await page.waitForFunction(() => Math.abs(Number(document.querySelector(".area-ruler .ruler")?.getAttribute("data-span")) - 1) < 0.01);
+    assert.ok(Math.abs((await span()) - YEAR) < 0.01, "Explore keeps the year it was shown");
+    await shot("4-explore-ruler");
 
     assert.deepEqual(errors, []);
     await browser.close();

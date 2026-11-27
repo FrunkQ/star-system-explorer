@@ -252,3 +252,22 @@ export function keepForDesk(desk: Desk, what: DeskMemory, level?: DeskLevel | nu
   if (DESK_MEMORY[what] === "level" && !level) return [what];
   return [deskMemoryKey(desk, what, DESK_MEMORY[what] === "level" ? level! : undefined), what];
 }
+
+/**
+ * What the ruler opens on (top-level design 12.1), for a desk at a level: the span this desk last chose there, else the
+ * desk's default. Explore at a system, world or site opens on human time ("week", a Show id the ruler knows), with
+ * "Whole life ›" beside it; Build, and every desk above the system, on the whole history (null). Run has the clock, not
+ * the ruler. `kept` is what `keepRulerSpan` wrote: a length of time, or "whole".
+ */
+export function rulerOpens(desk: Desk, level: DeskLevel | null, kept: string | null): number | string | null {
+  if (kept === "whole") return null;
+  const n = kept === null ? NaN : Number(kept);
+  if (Number.isFinite(n) && n > 0) return n;
+  const human = level === "system" || level === "world" || level === "site";
+  return desk === "explore" && human ? "week" : null;
+}
+
+/** A span the GM chose, as `rulerOpens` reads it back. */
+export function keepRulerSpan(span: number | null): string {
+  return span === null || !(span > 0) || !Number.isFinite(span) ? "whole" : String(span);
+}
