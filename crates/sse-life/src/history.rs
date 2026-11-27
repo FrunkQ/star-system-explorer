@@ -231,6 +231,24 @@ pub struct Epoch {
     pub graph: Option<HabitatGraph>,
     #[serde(default)]
     pub facts: BTreeMap<String, f64>,
+    /// Habitat graphs this epoch uses instead of `graph` while a world fact
+    /// is below a threshold, first match wins: a world's ocean keeps its
+    /// dissolved iron while the history's own air is still without oxygen.
+    /// The fact is read at each step's start, from the physics boundary (the
+    /// air box) or else the epoch's own facts, so no step reads a later
+    /// state.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub graph_while: Vec<GraphWhile>,
+}
+
+/// A habitat graph used while `fact` < `below`.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct GraphWhile {
+    pub fact: String,
+    pub below: f64,
+    pub graph: HabitatGraph,
+    /// What differs, in words.
+    pub why: String,
 }
 
 /// A physical catastrophe from the world's chronicle.
@@ -492,8 +510,24 @@ pub fn history_model(
         else {
             continue;
         };
+        // The graph this step: a `graph_while` variant whose fact, as the
+        // world stands at the step's start, is below its threshold.
+        let variant = ep.graph_while.iter().position(|v| {
+            world
+                .get(&v.fact)
+                .or_else(|| ep.facts.get(&v.fact))
+                .is_some_and(|x| *x < v.below)
+        });
+        let graph_now: Option<&HabitatGraph> = ep
+            .graph
+            .as_ref()
+            .map(|g| variant.map_or(g, |i| &ep.graph_while[i].graph));
+        let ei_key = match variant {
+            Some(i) => format!("{ei}.{i}"),
+            None => ei.to_string(),
+        };
         // Open habitats in this epoch.
-        let open: Vec<usize> = match &ep.graph {
+        let open: Vec<usize> = match graph_now {
             None => vec![],
             Some(g) => g
                 .habitats
@@ -503,7 +537,7 @@ pub fn history_model(
                 .map(|(i, _)| i)
                 .collect(),
         };
-        if let Some(g) = &ep.graph {
+        if let Some(g) = graph_now {
             for h in &g.habitats {
                 if h.profile.temperature_k.is_none() {
                     let a = h.address.to_string();
@@ -519,7 +553,7 @@ pub fn history_model(
             let ci = next_cat;
             next_cat += 1;
             if let Some(l) = life.as_mut() {
-                let g = ep.graph.as_ref();
+                let g = graph_now;
                 let total = open.len().max(1) as f64;
                 let exposed = open
                     .iter()
@@ -601,7 +635,7 @@ pub fn history_model(
                 }
             }
         }
-        let Some(g) = &ep.graph else {
+        let Some(g) = graph_now else {
             continue;
         };
         // Box C: origin.
@@ -693,7 +727,7 @@ pub fn history_model(
             {
                 media.extend(c.unlocks_media.clone());
             }
-            let key = format!("{ei}|{}|{}", mets.join(","), media.join(","));
+            let key = format!("{ei_key}|{}|{}", mets.join(","), media.join(","));
             // E2: the catalogue with the evolved gradients tapped, and what
             // each untapped one would add.
             let mut prizes: BTreeMap<String, f64> = BTreeMap::new();
@@ -707,7 +741,7 @@ pub fn history_model(
                     .map(|d| d.id.clone())
                     .collect();
                 let gkey = format!(
-                    "{ei}|{oxic}|{}|{}",
+                    "{ei_key}|{oxic}|{}|{}",
                     usable.iter().cloned().collect::<Vec<_>>().join(","),
                     media.join(",")
                 );
