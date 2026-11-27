@@ -184,7 +184,7 @@
       "life.survey.hazard": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious",
       "life.survey.summary": "teeming biosphere, 14 guilds, about 911 lineages"
     },
-    "hash": "18814680aa3e0095b3c69fb2f9bff289b7e0745128f9a076ef6c6104ea969881",
+    "hash": "11dd8ae378eda1759683792d21578cb342d02db4cac2f6cb19d0d7674d5dd195",
     "hooks": []
   },
   "earth-archean": {
@@ -214,7 +214,7 @@
       "life.survey.hazard": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious",
       "life.survey.summary": "modest biosphere, 9 guilds, about 5 lineages"
     },
-    "hash": "0c00d7ae54b3928146ca55527166ecb7aec00dd393719dc0a9c5226e7eb872f0",
+    "hash": "62b0da0071c10a8443522b0f3188c83022219aba44b9b6cccb2700dd80545fde",
     "hooks": []
   },
   "europa": {
@@ -243,7 +243,7 @@
       "life.survey.hazard": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious",
       "life.survey.summary": "sparse biosphere, 4 guilds, about 2 lineages"
     },
-    "hash": "87470fa21bf5d293b3e321e6ee4aa56f0e89e97ab4dd987b5bb81f1e2b0a0e7f",
+    "hash": "b7cf3003212f2cb4a86790cb76d8e447952b353f52f3cd52703e572e1a975447",
     "hooks": [
       "hidden_life"
     ]

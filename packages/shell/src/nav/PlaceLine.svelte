@@ -481,5 +481,70 @@
     .place {
       min-width: 64px;
     }
+    /* On Run the place line is its own row, the stepper (design section 8): every step drawn, scrolling sideways, Out
+       and In thumb-sized and held at the row's two ends. */
+    .place.stepper {
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      padding: 0 0 2px;
+    }
+    .place.stepper .step,
+    .place.stepper .step.below,
+    .place.stepper .step.far,
+    .place.stepper .sep,
+    .place.stepper .sep.below,
+    .place.stepper .sep.far {
+      display: inline-flex;
+      align-items: center;
+      flex: none;
+      min-height: 44px;
+      font-size: 14px;
+    }
+    .place.stepper .up {
+      font-size: 14px;
+    }
+    .place.stepper .up-name {
+      display: inline;
+    }
+    .place.stepper .up-sep {
+      display: inline-flex;
+    }
+    .place.stepper .up-arrow {
+      display: none;
+    }
+    .place.stepper .title {
+      flex: none;
+      overflow: visible;
+      font-size: 20px;
+    }
+    .place.stepper .outin {
+      display: contents;
+    }
+    .place.stepper .oi {
+      position: sticky;
+      z-index: 1;
+      flex: none;
+      min-width: 56px;
+      height: 44px;
+      font-size: 14px;
+      background: var(--sse-ground);
+    }
+    /* Held over the steps, so a disabled button is drawn muted rather than see-through. */
+    .place.stepper .oi:disabled {
+      opacity: 1;
+      color: var(--sse-ink-muted);
+      border-color: var(--sse-rule);
+    }
+    .place.stepper [data-step-out] {
+      order: -1;
+      left: 0;
+    }
+    .place.stepper [data-step-in] {
+      order: 1;
+      right: 0;
+    }
   }
 </style>

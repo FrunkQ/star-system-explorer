@@ -809,6 +809,21 @@ for gid, name, t_k, t_src, rho, share in [
         },
         "density": val(rho, "kg m-3", "fudge-register", "authored"),
     })
+# RW16a: what the formation rock and ice hold, for the small-body designer's "what it would take" (sse-small takes.rs).
+# Recalled, not read: fudge SB-strength-sheet in docs/fudges.md.
+_STRENGTH = {
+    "formation-rock": {
+        "tensile_strength": val(1.0e6, "Pa", "fudge-register", "unverified", note="rock at the scale of a small asteroid, about 1 MPa (Holsapple 2007, Icarus 187, 500); laboratory samples are ten times stronger, large bodies weaker; recalled, not read"),
+        "compressive_strength": val(1.0e8, "Pa", "fudge-register", "unverified", note="chondritic and basaltic rock about 100 MPa; recalled, not read"),
+        "rubble_cohesion": val(25.0, "Pa", "fudge-register", "unverified", note="van der Waals cohesion among the fine grains of a rubble pile, tens of pascals (Sanchez and Scheeres 2014, Meteorit. Planet. Sci. 49, 788); recalled, not read"),
+    },
+    "formation-water": {
+        "tensile_strength": val(1.0e5, "Pa", "fudge-register", "unverified", note="water ice at the scale of a small body, about a tenth of rock's (Holsapple 2007); recalled, not read"),
+        "compressive_strength": val(1.0e7, "Pa", "fudge-register", "unverified", note="cold water ice about 10 MPa; recalled, not read"),
+    },
+}
+for _id, _kv in _STRENGTH.items():
+    next(x for x in MIXTURES if x["id"] == _id).update(_kv)
 
 
 # ---------------------------------------------------------------- elements

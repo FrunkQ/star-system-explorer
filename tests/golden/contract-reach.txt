@@ -125,6 +125,10 @@ G cannot_follow {"block":"sse.convection.granule_size","why":"computed or fitted
 G cannot_follow {"block":"sse.convection.speed","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.convection.supergranule_lifetime","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.convection.supergranule_size","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.coorbital.capture_share","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.coorbital.long_lived_share","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.coorbital.neighbour_disturbs","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.coorbital.trojan_zone","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.dynamo.compositional_power","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.dynamo.convected_flux","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.dynamo.flow_speed","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
