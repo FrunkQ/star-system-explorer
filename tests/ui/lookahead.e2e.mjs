@@ -73,6 +73,12 @@ try {
     await gm.waitForSelector(".ahead[data-ahead=open]", { timeout: 30000 });
     await panel.getByLabel("Age shown").fill(await panel.getByLabel("Age shown").getAttribute("max"));
     const at = Number(await gm.locator(".ahead").getAttribute("data-ahead-at"));
+    // On Explore a look-ahead is only looked at; keeping is a Build act (three desks design 7.1): "Keep on Build…"
+    // switches desk with the look-ahead still open, and Build offers the keeps.
+    assert.equal(await panel.getByRole("button", { name: /^Keep and move now/ }).count(), 0, "no keeps on Explore");
+    await panel.getByRole("button", { name: "Keep on Build…" }).click();
+    await gm.waitForFunction(() => document.querySelector('[role=group][aria-label="Desk"] button[aria-pressed="true"]')?.textContent?.trim() === "Build");
+    assert.equal(await gm.locator(".ahead").getAttribute("data-ahead"), "open", "the look-ahead is still open on Build");
     await panel.getByRole("button", { name: /^Keep and move now/ }).click();
     await gm.waitForFunction(() => !document.querySelector(".ahead[data-ahead]"));
     await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, h0);

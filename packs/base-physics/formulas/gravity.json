@@ -752,6 +752,85 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.gravity.zero_velocity_radius",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "age",
+     "letter": "t"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "zero_velocity_radius",
+     "letter": "r"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "positive": [
+    {
+     "port": "age",
+     "says": "age"
+    }
+   ],
+   "references": [
+    "Sandage, A. 1986, ApJ 307, 1, The redshift-distance relation. IX. Perturbation of a very nearby velocity field by the mass of the Local Group. doi:10.1086/164387"
+   ],
+   "shown": "r₀ = (8 G M t² / π²)^(1/3)",
+   "equation": {
+    "name": "Where a group's pull has just stopped the universe's spreading",
+    "formula": "r = cbrt(8 * G * M * t * t / (pi * pi))",
+    "inputs": {
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass inside the sphere"
+     },
+     "t": {
+      "kind": "group.age",
+      "unit": "s",
+      "name": "age of the universe at the time"
+     }
+    },
+    "outputs": {
+     "r": {
+      "kind": "group.zero_velocity_radius",
+      "unit": "m",
+      "name": "radius of the group's edge"
+     }
+    },
+    "source": {
+     "text": "Sandage 1986, ApJ 307, 1",
+     "doi": "10.1086/164387",
+     "where": "equation 9, a spherical mass collapsing from the Big Bang with no cosmological constant"
+    },
+    "explain": {
+     "curious": "Galaxies farther out are still being carried apart as the universe spreads; nearer in they have stopped and are falling together. This is the line between, the edge of a group.",
+     "science": "The zero-velocity surface of a pressureless sphere of mass M that has been decelerating since the Big Bang: r0 = (8 G M t² / π²)^(1/3) (Sandage 1986). Dark energy is left out (a recorded fudge)."
+    },
+    "examples": [
+     {
+      "M": 5.96523e+42,
+      "t": 4.3549488e+17,
+      "r": 3.9409091e+22,
+      "tolerance": 1e-05
+     }
+    ]
+   }
   }
  ]
 }

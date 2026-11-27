@@ -2301,7 +2301,8 @@ pub enum Request {
         #[ts(optional)]
         stars: Option<bool>,
         /// GZ6: with the galaxies, every one of home's satellites' paths
-        /// since infall, in `galaxy_walk.satellites.paths` (default false).
+        /// since infall, in `galaxy_walk.satellites.paths`, and the group's
+        /// edge in `galaxy_walk.group_edge` (default false).
         #[serde(default)]
         #[ts(optional)]
         satellite_paths: Option<bool>,

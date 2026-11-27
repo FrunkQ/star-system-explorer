@@ -151,29 +151,10 @@ test("a stream is drawn along its own path behind its stars, only once torn apar
   assert.equal(satelliteStateWords(readNearby(withPaths)!.paths[1]!, 5), "merged into our galaxy");
 });
 
-test("the group's edge: Sandage's zero-velocity radius of the mass inside it", async () => {
-  const { zeroVelocityRadius, groupEdge } = await import("../src/galaxies-nearby.ts");
-  // An absolute check, by hand: 8 G M t^2 / pi^2 with G = 4.4985e-15 Mpc^3 / (Msun Gyr^2), M = 3e12, t = 13.8 Gyr
-  // gives 2.0835 Mpc^3, so R0 = 1.277 Mpc (about the measured Local Group's 1 Mpc for its mass of 2 to 3e12).
-  assert.ok(Math.abs(zeroVelocityRadius(3e12, 13.8) - 1.277) < 0.002, String(zeroVelocityRadius(3e12, 13.8)));
-  assert.equal(zeroVelocityRadius(0, 13.8), 0);
-  // Grows as the cube root of mass and as t^(2/3).
-  assert.ok(Math.abs(zeroVelocityRadius(8e12, 13.8) / zeroVelocityRadius(1e12, 13.8) - 2) < 1e-9);
-  const home = 1e12;
-  const r0 = zeroVelocityRadius(home, 13.8);
-  // A big neighbour just inside home's own sphere is taken in, which widens it to take in the next; one far
-  // outside is not; a satellite is not counted twice.
-  const gs = [
-    { halo_mass_msun: 1.5e12, distance_mpc: r0 * 0.9, satellite: false },
-    { halo_mass_msun: 1e11, distance_mpc: r0 * 1.15, satellite: false },
-    { halo_mass_msun: 5e12, distance_mpc: 5, satellite: false },
-    { halo_mass_msun: 1e11, distance_mpc: 0.1, satellite: true },
-  ];
-  const e = groupEdge(home, gs, 13.8);
-  assert.equal(e.members, 2);
-  assert.equal(e.mass_msun, 2.6e12);
-  assert.ok(Math.abs(e.radius_mpc - zeroVelocityRadius(2.6e12, 13.8)) < 1e-12);
-  assert.equal(groupEdge(home, [], 13.8).radius_mpc, r0);
+test("the group's edge is read from the kernel's block, and absent when not asked", () => {
+  const e = readNearby({ ...(withPaths as object), galaxy_walk: { ...(withPaths as { galaxy_walk: object }).galaxy_walk, group_edge: { radius_mpc: 1.277, mass_msun: 3e12, members: 2, t_gyr: 13.8, block: "sse.gravity.zero_velocity_radius" } } } as unknown as Json)!.group_edge;
+  assert.deepEqual(e, { radius_mpc: 1.277, mass_msun: 3e12, members: 2, block: "sse.gravity.zero_velocity_radius" });
+  assert.equal(readNearby(withPaths)!.group_edge, null);
 });
 
 test("Free turning: starts as Tilted, a quarter turn of yaw swings x into y, a full tip is Edge-on", async () => {
