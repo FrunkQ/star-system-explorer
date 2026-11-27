@@ -42,7 +42,7 @@ Munk's law there. Thread "Draw shadows, eclipses and sea glint".
   start; so EC1's binding trap is only the placeholder before first use, and no rebuild was added.
 
 ## Not done
-- The weather op's `refused` message still lists the old wants (kept as the core golden has it).
+- The weather op's refusal now names `glint` too (PR 646, with the storms thread's `patch`).
 - The glint is not yet read for the size comparison or the class gallery (they draw at the stand-in).
 - The kernel's `observe.reference` in the imported-system test had no optical row for water; the survey's sea optics
   read that sheet too, so its `refractive_index` may be missing in that path. Worth a look by the climate thread.

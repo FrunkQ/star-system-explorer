@@ -1,0 +1,1 @@
+{"key": "hirth2003", "citation": "Hirth and Kohlstedt 2003", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-surface/src/core.rs"], "claims": ["/// olivine; Hirth and Kohlstedt 2003)."], "tier": 3}

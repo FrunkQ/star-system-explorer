@@ -27,6 +27,7 @@
     label = "Time",
     onchange,
     onmakenow,
+    onrate,
     note,
     opens,
     onspan,
@@ -41,6 +42,8 @@
     label?: string;
     onchange?: (yr: number) => void;
     onmakenow?: (yr: number) => void;
+    /** How fast time passes while playing, years per real second (0 when stopped): the picture's clock runs at it (CLK1). */
+    onrate?: (yr_per_s: number) => void;
     /** A caveat shown while the window is in human time (under 10,000 years). */
     note?: string;
     /**
@@ -210,21 +213,31 @@
     }
     playing = true;
   }
+  // The picture's clock (CLK1) runs at the rate play moves the time, and stops with it.
+  $effect(() => {
+    const r = playing ? stepYr : 0;
+    untrack(() => onrate?.(r));
+  });
+  $effect(() => () => untrack(() => onrate?.(0)));
   $effect(() => {
     if (!playing) return;
-    let last: number | null = null;
+    let first: number | null = null;
     let sent = 0;
-    let t = now;
+    const from_yr = untrack(() => now);
+    let t = from_yr;
     const move = linked;
     let raf = 0;
+    // The time is the start plus the time played, worked out afresh each frame: adding each frame's step to a year
+    // near a star's age loses up to half of it to rounding (a year then resolves about 30 s), so the ruler ran slow
+    // or fast at an hour a second and the picture's clock (CLK1) would have parted from it.
     const frame = (ms: number) => {
-      if (last !== null) {
-        t += ((ms - last) / 1000) * stepYr;
+      if (first === null) first = ms;
+      else {
+        t = from_yr + ((ms - first) / 1000) * stepYr;
         if (t >= to) ((t = to), (playing = false));
         // Ten updates a second is plenty for the chart and keeps the kernel calm.
         if (ms - sent >= 100 || !playing) ((sent = ms), set(t, move));
       }
-      last = ms;
       if (playing) raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);

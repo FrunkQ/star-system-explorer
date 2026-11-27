@@ -241,6 +241,7 @@ G cannot_follow {"block":"sse.surface.ice_share_from_density","why":"computed or
 G cannot_follow {"block":"sse.surface.open_ice_loss","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.surface.space_weathering","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.surface.weathered_reflectance","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.tides.maxwell_response","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"toy.bulk_density","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"toy.effective_temperature","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"toy.equilibrium_temperature","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

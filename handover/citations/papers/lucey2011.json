@@ -1,0 +1,1 @@
+{"key": "lucey2011", "citation": "Lucey and Riner 2011", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-atoms/src/weathering.rs"], "claims": ["/// (Hapke 2001; Lucey and Riner 2011). A stand-in in the fudge register."], "tier": 3}

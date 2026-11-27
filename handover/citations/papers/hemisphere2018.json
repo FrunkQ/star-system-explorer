@@ -1,0 +1,1 @@
+{"key": "hemisphere2018", "citation": "Hemisphere, Jennings et al. 2018", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-climate/src/water.rs"], "claims": ["//!   rain-snow threshold over the Northern Hemisphere, Jennings et al. 2018)."], "tier": 3}

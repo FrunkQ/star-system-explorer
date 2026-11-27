@@ -57,6 +57,7 @@ test("the shell's parts say which desks each is on now", () => {
   // The eyes are Build's and Run's (the SV ruling); the depth dial and the Workshop door are off Run (TM2b) and the rail
   // folds there (TM2c, design 3.1).
   assert.deepEqual(SHELL_PARTS.filter((p) => p.desks).map((p) => [p.id, p.desks]), [
+    ["stepper", ["run"]],
     ["depth", ["explore", "build"]],
     ["rail-open", ["explore", "build"]],
     ["workshop-door", ["explore", "build"]],
@@ -64,6 +65,7 @@ test("the shell's parts say which desks each is on now", () => {
     ["ruler", ["explore", "build"]],
     ["clock", ["run"]],
     ["light", ["explore", "build"]],
+    ["fill-screen", ["run"]],
   ]);
   // The stage's edit tools are Build's; Select and Keyboard shortcuts are off Run; the ruler is on every desk until TM3.
   assert.deepEqual(DESKS.filter((d) => partShows("tools", d, "cut")), ["build"]);
@@ -75,7 +77,7 @@ test("the shell's parts say which desks each is on now", () => {
   // On Run the status line says whether the campaign is kept, without the seat or the engine's numbers.
   assert.deepEqual(["seat", "kept", "engine"].map((c) => partShows("status-line", "run", c)), [false, true, false]);
   assert.ok(["seat", "kept", "engine"].every((c) => partShows("status-line", "explore", c) && partShows("status-line", "build", c)));
-  assert.throws(() => shellPart("stepper"), /no shell part stepper/);
+  assert.throws(() => shellPart("teleporter"), /no shell part teleporter/);
   assert.throws(() => partShows("tools", "run", "measure"), /no control measure/);
   // The eyes read their desks from the part, as they did by name.
   assert.deepEqual(DESKS.map((d) => eyesShow(d, true)), [false, true, true]);

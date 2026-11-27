@@ -138,12 +138,14 @@ export interface ShellPart extends OnDesks {
 
 /**
  * The shell's parts and the desks each shows on, as the shell draws them now. TM2a gave the rail entries their desks;
- * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run; TM2c folded the rail on Run; TM3a put the clock in the ruler's place on Run and took Light with it. The rest
- * are on every desk until their package says otherwise. Form changes on one desk (the place line
- * as a stepper, the folded rail) are the shell's, not a field here.
+ * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run; TM2c folded the rail on Run; TM3a put the clock in the ruler's place on Run and took Light with it; TM7 made the place line the stepper on Run. The rest
+ * are on every desk until their package says otherwise. A form that changes on one desk is a part of its own (the rail
+ * open, the stepper), so the shell asks `partShows` and never tests the desk.
  */
 export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "place-line", words: "The place line: where you are, step by step" },
+  // On Run the place line is the main way to move (design 3.2, TM7): every level drawn, Out and In at its end.
+  { id: "stepper", words: "The stepper: the place line with every level drawn, and Out and In (Page Up, Page Down)", desks: ["run"] },
   { id: "subtitle", words: "The line under the name: the place's subtitle and the date" },
   { id: "desk-switch", words: "The desk switch: Explore, Build, Run" },
   { id: "see-as", words: "See as: the lens the chart is seen through" },
@@ -180,6 +182,8 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "clock", words: "The campaign clock: the date, step chips and Run ▸", desks: ["run"] },
   { id: "light", words: "Light (on Run, the Band control)", desks: ["explore", "build"] },
   { id: "sound", words: "Sound" },
+  // F on the Run desk (design question 11, TM9a): the picture alone; the bar comes back at the top edge.
+  { id: "fill-screen", words: "Fill the screen (F): the picture alone, the bar back at the top edge", desks: ["run"] },
   {
     id: "status-line",
     words: "The status line",

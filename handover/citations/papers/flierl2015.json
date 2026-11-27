@@ -1,0 +1,1 @@
+{"key": "flierl2015", "citation": "Flierl 2015", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-weather/src/giants.rs"], "claims": ["//!   Flierl 2015), but the W/m² cut is ours."], "tier": 3}

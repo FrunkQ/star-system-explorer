@@ -4212,6 +4212,20 @@
         "range": null
       },
       {
+        "description": "shear modulus of a world's rock or ice: how stiffly it resists being bent",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.rigidity",
+        "range": null
+      },
+      {
         "description": "how far a world separated into metal and silicate, 0 to 1",
         "dim": [
           0,
@@ -4237,6 +4251,20 @@
           0
         ],
         "id": "interior.silicate_mass",
+        "range": null
+      },
+      {
+        "description": "dynamic viscosity of a world's insides over long times: how slowly the solid rock or ice creeps",
+        "dim": [
+          -1,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.viscosity",
         "range": null
       },
       {
@@ -7677,6 +7705,20 @@
         "range": null
       },
       {
+        "description": "how fast a tide flexes a world, as an angular rate: the orbit's mean motion for a locked moon",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.frequency",
+        "range": null
+      },
+      {
         "description": "tidal heating power",
         "dim": [
           2,
@@ -7688,6 +7730,20 @@
           0
         ],
         "id": "tides.heating_power",
+        "range": null
+      },
+      {
+        "description": "imaginary part of a world's tidal Love number k2: the share of a tide's work turned to heat, the k2/Q of the heating law",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.im_k2",
         "range": null
       },
       {
@@ -7758,6 +7814,20 @@
           0
         ],
         "id": "tides.raiser_period",
+        "range": null
+      },
+      {
+        "description": "real part of a world's tidal Love number k2: how far its shape follows a tide",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.re_k2",
         "range": null
       },
       {
