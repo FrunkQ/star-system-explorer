@@ -48,3 +48,26 @@ export async function readUmbras(k: UmbraReader, system: string, pairs: readonly
   }
   return out;
 }
+
+/** A world's sea glint as the kernel works it out (EC2): the weather op's `glint`, from `sse.light.sea_glint`. */
+export interface SeaGlint {
+  slope_variance: number;
+  normal_reflectance: number;
+}
+
+export interface GlintReader {
+  weather(ask: { want: "glint"; system: string; body: string }): Promise<{ ok: true; data: unknown } | { ok: false; message: string }>;
+}
+
+/**
+ * The waves' mean square slope and the liquid's reflectance straight back for a world's seas, from the year's winds
+ * and the liquid's index on the data sheet; null for a world with no sea, or a liquid the sheet has no index for.
+ */
+export async function readSeaGlint(k: GlintReader, system: string, body: string): Promise<SeaGlint | null> {
+  const r = await k.weather({ want: "glint", system, body });
+  if (!r.ok) return null;
+  const d = r.data as { slope_variance?: unknown; normal_reflectance?: unknown } | null;
+  const s = d?.slope_variance;
+  const f = d?.normal_reflectance;
+  return typeof s === "number" && s > 0 && typeof f === "number" && f > 0 ? { slope_variance: s, normal_reflectance: f } : null;
+}

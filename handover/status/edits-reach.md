@@ -24,7 +24,7 @@ Nothing is built. ER is a code only, never shown in the product. Every package l
 |---|---|---|
 | ER0 the note in `handover/design/`, this file, the row in START-HERE | done, 26 Nov | this thread |
 | ER1 the physics object and one scope, built at `load_stack`; physics hash; the shrink-only side-door ledger (`scripts/audit-side-doors.py`, `packages/ER-side-doors.txt`) | done, 26 Nov, PR 644; log and "how to fix a red ledger check" in `packages/ER1-physics-in-force.md` | kernel (thread "Start the reference pack migration") |
-| ER1b the reach gate as a report with a ledger that only shrinks; seen red first | proposed, needs ER1 | kernel |
+| ER1b the reach gate as a report with a ledger that only shrinks; seen red first | done, 26 Nov; ledger `packages/ER-reach-ledger.txt` (16 ops read physics but do not follow, 118 have no area case); log `packages/ER1b-reach-gate.md`, with two findings for ER4 and the light track | kernel (thread "Start the reference pack migration") |
 | ER2 the block door (`physics::run`), the 20 call sites, `provides.blocks` settings in force | done, 26 Nov; log in `packages/ER2-block-door.md`. Ledger kind `block` 35 lines to none (the flow compiler is one exact exception in the audit) | kernel (thread "Migrate the next physics reads") |
 | ER11a `sse.table/1` and the `bake` op; the black hole disc first | proposed, needs ER1; wanted early by the renderer fix jobs | kernel, exotic objects |
 | ER4 the sheet's fast table: every single-number row in force, formula blocks may name any row | proposed, needs ER1 | data sheet, kernel |

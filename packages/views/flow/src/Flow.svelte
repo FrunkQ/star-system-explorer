@@ -74,13 +74,13 @@
     {#each layout.nodes as n (n.id)}
       <rect x={n.x} y={n.y} width={n.w} height={n.h} class="node" class:nowhere={n.dashed} data-node={n.id} />
       {#if vertical}
-        <text class="n" x={n.x} y={n.column === last ? n.y + n.h + 13 : n.y - 4}>{n.id}{#if figures}<tspan class="v"> {amountWords(n.amount)}</tspan>{/if}</text>
+        <text class="n" x={n.x} y={n.column === last ? n.y + n.h + 13 : n.y - 4}>{n.id}{#if figures}<tspan class="v" dx="4">{amountWords(n.amount)}</tspan>{/if}</text>
       {:else if n.column === 0}
         <text class="n" x={n.x - 8} y={n.y + n.h / 2 + 4} text-anchor="end">{n.id}{#if figures}<tspan class="v" x={n.x - 8} dy="14">{amountWords(n.amount)}</tspan>{/if}</text>
       {:else if n.column === last}
         <text class="n" x={n.x + n.w + 8} y={n.y + n.h / 2 + 4}>{n.id}{#if figures}<tspan class="v" x={n.x + n.w + 8} dy="14">{amountWords(n.amount)}</tspan>{/if}</text>
       {:else}
-        <text class="n" x={n.x + n.w / 2} y={n.y - 5} text-anchor="middle">{n.id}{#if figures}<tspan class="v"> {amountWords(n.amount)}</tspan>{/if}</text>
+        <text class="n" x={n.x + n.w / 2} y={n.y - 5} text-anchor="middle">{n.id}{#if figures}<tspan class="v" dx="4">{amountWords(n.amount)}</tspan>{/if}</text>
       {/if}
     {/each}
   </svg>
@@ -109,6 +109,11 @@
   .n {
     font-size: 12px;
     font-weight: 500;
+    /* A halo of the ground so a label stays readable where a band passes under it. */
+    paint-order: stroke;
+    stroke: var(--sse-ground);
+    stroke-width: 3px;
+    stroke-linejoin: round;
   }
   .v {
     font-family: var(--sse-font-mono);
