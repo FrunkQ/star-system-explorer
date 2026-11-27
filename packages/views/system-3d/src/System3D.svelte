@@ -16,12 +16,12 @@
 -->
 <script lang="ts">
   import { onDestroy, tick, untrack } from "svelte";
-  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
+  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
   import { constant, SEEN_ELEVATION, thermalColour, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { rangeRingLines } from "./range-rings.ts";
-  import { bandLines, hasChildren, layout, layoutReal, moonsOf, shellDots, type Band3D, type Body3D } from "./bodies.ts";
+  import { bandLines, hasChildren, layout, layoutReal, moonsOf, placedBodies, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -38,6 +38,7 @@
     surfaces = new Map(),
     plumes = new Map(),
     airs = new Map(),
+    umbras = new Map(),
     starColour = "",
     trueNote = "",
     realScale = false,
@@ -72,7 +73,9 @@
     /** True look: each world's plume facts by body id (the kernel's surface record, plumes.ts), when it has any. */
     plumes?: ReadonlyMap<string, PlumeFacts>;
     /** True look: each world's air, by body id (renderer true-air.ts `readTrueFace`): its clouds alone, drawn over its ground, and its air's rim (VP-A3, VP-A4). */
-    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number }>;
+    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number; sea?: { slope_variance: number; normal_reflectance: number } }>;
+    /** True look: the light each body's air bends into its shadow on another (renderer eclipse-read.ts `readUmbras`), by `umbraKey(caster, receiver)`; none, a black umbra. */
+    umbras?: ReadonlyMap<string, [number, number, number]>;
     /** True look: the star's colour (its surface temperature's, as a CSS colour). */
     starColour?: string;
     /** True look: what is still being read, said under the chart. */
@@ -222,12 +225,13 @@
     if (!a || !centreBody) return;
     // Its world first comes to the centre (the frame it is drawn in), then the camera goes where it was.
     if (a.about !== centreBody.id) {
-      if (byId(a.about)) untrack(() => ((flying += 1), (frame = a.about)));
+      if (byId(a.about)) untrack(() => ((flying += 1), (tweening = false), (frame = a.about)));
       return;
     }
     if (!(centreR > 0)) return;
     untrack(() => {
       flying += 1;
+      tweening = false;
       const o = orbitOf(a.dir, a.radii, centreR);
       yaw = o.yaw;
       pitch = o.pitch;
@@ -239,6 +243,8 @@
   });
 
   function enter(id: string) {
+    flying += 1; // a fly-in still under way stops here, or it would drag the camera on in the new frame
+    tweening = false;
     frame = id;
     dist = 26;
     onselect(id);
@@ -248,6 +254,10 @@
   // to the body's own while the eye is close, and the camera eases back out to show it with its moons. Two short
   // moves that read as one; no motion when the person asks for less.
   let flying = 0;
+  // Whether a fly-in is under way, from the first move to the last, said on the chart (data-flying) so a test can wait
+  // for it to finish rather than guess from the camera holding still.
+  let tweening = $state(false);
+  let flights = 0;
   const easeIn = (u: number) => u * u * u;
   const easeOut = (u: number) => 1 - (1 - u) ** 3;
   function tweenCam(to: { pan: [number, number]; dist: number }, ms: number, ease: (u: number) => number): Promise<boolean> {
@@ -292,15 +302,27 @@
       await litTurn(id);
       return;
     }
-    const near = Math.max(MIN, Math.min(3, dist / 6));
-    if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
-    frame = id;
-    pan = [0, 0];
-    dist = 2.5;
-    await litTurn(id);
-    await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
+    const flight = ++flights;
+    tweening = true;
+    try {
+      const near = Math.max(MIN, Math.min(3, dist / 6));
+      if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
+      frame = id;
+      pan = [0, 0];
+      dist = 2.5;
+      const at = flying;
+      await litTurn(id);
+      if (at !== flying) return; // stopped (‹ back, a zoom across frames) while it turned to the light
+      await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
+    } finally {
+      if (flight === flights) tweening = false;
+    }
   }
   function leave() {
+    // Coming back out stops a fly-in still under way: left running, it carried on setting the camera after the frame
+    // changed, so a quick "‹ back" (or a slow device) left the view part-way into a close-up of the frame just left.
+    flying += 1;
+    tweening = false;
     const back = centreId;
     frame = byId(centreId)?.parent && byId(centreId)!.parent !== root ? byId(centreId)!.parent : null;
     dist = 26;
@@ -671,6 +693,19 @@
         // True: worlds in their own surfaces, a world not read yet plain and faint; only the selected orbit drawn.
         const tex = (b: Body3D) => surfaces.get(b.id);
         halo = null;
+        // Shadows and eclipses (renderer eclipse.ts): every body where it really is, each world's casters turned onto
+        // the way the drawing lights it. Visible light only; a star casts none on itself.
+        const placed = trueBand === "visible" && !mag ? placedBodies(bodies) : null;
+        const starP = placed ? [...placed.values()].find((p) => byId(p.id)?.parent === null) : undefined;
+        const shadeOf = (b: Body3D) => {
+          const me = placed?.get(b.id);
+          if (!placed || !starP || !me || b.parent === null) return null;
+          const others = [...placed.values()].filter((p) => p.id !== b.id && p.id !== starP.id).map((p) => {
+            const u = umbras.get(umbraKey(p.id, b.id));
+            return u ? { ...p, umbra: u } : p;
+          });
+          return shadeFor(me, others, starP, lightOf(b));
+        };
         const items = shown.map((b) => {
             const t = tex(b);
             const isStar = b.parent === null;
@@ -687,8 +722,9 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
-            return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}) };
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(a?.sea ? { sea: a.sea } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
+            const shade = emit === undefined && !isStar ? shadeOf(b) : null;
+            return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });
         // The controller's settings: moving, the placed tier's; on a sharpening frame, the still passes at full size.
         void qv;
@@ -950,6 +986,7 @@
   data-scale={realScale ? "real" : "readable"}
   data-hud={overlay ? "on" : "off"}
   data-dist={Math.round(dist * 1000) / 1000}
+  data-flying={tweening ? "yes" : undefined}
   class:true-look={isTrue && using === "gpu"}
 >
   <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true" data-quality={quality || undefined}></canvas>

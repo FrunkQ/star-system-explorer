@@ -4,7 +4,7 @@
 import { thermalColour } from "../../ui-contract/src/index.ts";
 import { coronaScaleHeight, drawStar, granulesShow, type Convection, type StarDraw } from "./star.ts";
 import { spotsAt, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
-import { churningGranules, granuleBlur, limbLumps, narrateLumps } from "./star-churn.ts";
+import { bigCellContrast, cellsAcross, churningBigCells, churningGranules, granuleBlur, limbLumps, narrateLumps } from "./star-churn.ts";
 import { addEjections, ejectionsAt, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares, type EjectionNow, type ShownFlare } from "./star-events.ts";
 import { addProminences, narrateProminences, prominencesAt, type ProminenceNow } from "./star-prominences.ts";
 import { drawGlow, glareProfile, GLOW_REACH_DEG, narrateGlow } from "./star-glow.ts";
@@ -87,7 +87,11 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   const cellT = ask.calm ? s.age_s : ask.t;
   const granules = showCells ? churningGranules(s.address, conv!.granules_across, cellT, conv!.granule_lifetime_s) : null;
   const lumps = limbLumps(conv, s.radius);
-  drawStar(face, { teff_k: s.teff, spots, lon_deg: turnAt(s, ask.t), lat_deg: lat, light, corona_h: coronaScaleHeight(s.mass, s.radius), flares, granules, granuleContrast: showCells && !ask.calm ? granuleBlur(conv!.granule_lifetime_s, ask.span) : 1, lumps }, disc);
+  // The larger cells (the kernel's supergranule scale): drawn where the disc resolves them, each at its own contrast.
+  const bigN = Number(conv?.network_cells ?? 0);
+  const bigDt = conv && light === "visible" ? bigCellContrast(conv) : 0;
+  const bigCells = bigDt > 0 && bigN > 0 && granulesShow(cellsAcross(Math.max(4, bigN)), discPx) ? { granules: churningBigCells(s.address, bigN, cellT, conv!.supergranule_lifetime_s), dt: bigDt * (!ask.calm ? granuleBlur(conv!.supergranule_lifetime_s, ask.span) : 1) } : null;
+  drawStar(face, { teff_k: s.teff, spots, lon_deg: turnAt(s, ask.t), lat_deg: lat, light, corona_h: coronaScaleHeight(s.mass, s.radius), flares, granules, granuleContrast: showCells && !ask.calm ? granuleBlur(conv!.granule_lifetime_s, ask.span) : 1, bigCells, lumps }, disc);
   const boost = flareBoost(s, shown);
   const discDeg = Math.max(1e-4, ask.disc_deg ?? 0.25);
   const reach = GLOW_REACH_DEG / discDeg;
@@ -111,8 +115,11 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   return { shown, ejections, prominences, limb, boost, reach, words };
 }
 
-/** Face sizes in pixels: drawn at about the size the disc shows, in steps so the texture is not remade at each zoom. */
-export const FACE_STEPS = [16, 32, 64, 128, 256] as const;
+/**
+ * Face sizes in pixels: drawn at about the size the disc shows, in steps so the texture is not remade at each zoom.
+ * 512 for a star seen large (the star gallery's close-up), where a giant's cells are too many to show at 256.
+ */
+export const FACE_STEPS = [16, 32, 64, 128, 256, 512] as const;
 
 const faces = new Map<string, { width: number; data: Uint8ClampedArray; version: number; drawn: string; now: StarNow }>();
 

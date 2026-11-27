@@ -138,8 +138,8 @@ export interface ShellPart extends OnDesks {
 
 /**
  * The shell's parts and the desks each shows on, as the shell draws them now. TM2a gave the rail entries their desks;
- * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run; TM2c folded the rail on Run. The rest
- * are on every desk until their part of TM2 or TM3 (the clock joins with TM3). Form changes on one desk (the place line
+ * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run; TM2c folded the rail on Run; TM3a put the clock in the ruler's place on Run and took Light with it. The rest
+ * are on every desk until their package says otherwise. Form changes on one desk (the place line
  * as a stepper, the folded rail) are the shell's, not a field here.
  */
 export const SHELL_PARTS: readonly ShellPart[] = [
@@ -174,8 +174,11 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "card", words: "The card for the thing selected" },
   { id: "eyes", words: "The \"Known to\" eyes and pencil", desks: ["build", "run"] },
   { id: "what-if-stamp", words: "The what-if stamp and dashed frame" },
-  { id: "ruler", words: "The time ruler, with What if and Look ahead" },
-  { id: "light", words: "Light" },
+  // On Run the clock takes the ruler's place (design 7.3, TM3a): the date, step chips and Run ▸; no deep time, What if
+  // or Look ahead. Light goes with the ruler (on Run it is the Band control); Sound stays beside the clock.
+  { id: "ruler", words: "The time ruler, with What if and Look ahead (on Run, the clock)", desks: ["explore", "build"] },
+  { id: "clock", words: "The campaign clock: the date, step chips and Run ▸", desks: ["run"] },
+  { id: "light", words: "Light (on Run, the Band control)", desks: ["explore", "build"] },
   { id: "sound", words: "Sound" },
   {
     id: "status-line",

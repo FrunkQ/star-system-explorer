@@ -28,7 +28,7 @@ export interface SkyAsk {
 
 /** One ask of the kernel `weather` op (presentation reads; nothing is recorded). */
 export interface WeatherAsk {
-  want: "climate" | "systems" | "field" | "report" | "column" | "sound";
+  want: "climate" | "systems" | "field" | "report" | "glint" | "column" | "sound";
   world?: string;
   system?: string;
   body?: string;
@@ -184,6 +184,8 @@ export interface ViewSession {
   surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
+  /** A world's heat books over its life (track HF's screen): the quick survey's envelope with its core history, the same numbers that drive the world; GM only. */
+  surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
@@ -298,6 +300,8 @@ export interface ViewSession {
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
   /** Light through layers of gas and particles (kernel `light_through_gas`, light track ND2): colour in and out per passage. Read only; any seat. */
   lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }>;
+  /** The light inside a world's shadow (kernel `read_shadow_light`, VP-L3): starlight bent through its air, its colour and brightness. Read only; any seat. */
+  readShadowLight(items: Json[]): Promise<{ ok: true; items: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
@@ -835,6 +839,15 @@ export class Session implements ViewSession {
     return c ? { ok: true, climate: c } : { ok: false, code: "no_climate", message: "this world has no climate in its survey" };
   }
 
+  async surveyHeat(system: string, body: string): Promise<{ ok: true; envelope: import("./heat-flow.ts").HeatEnvelope } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
+    // The same quick survey the climate reads (cached by the kernel): its envelope carries the core history.
+    const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit: 1 });
+    if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const e = (r as unknown as { survey?: { envelope?: import("./heat-flow.ts").HeatEnvelope } }).survey?.envelope;
+    return e ? { ok: true, envelope: e } : { ok: false, code: "no_envelope", message: "this world has no envelope in its survey" };
+  }
+
   /** The open universe as a document to keep (kernel `export_chronicle`, `sse.chronicle-export/1`); GM only. Open branches are not in it. */
   async exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master saves the campaign" };
@@ -911,6 +924,11 @@ export class Session implements ViewSession {
   async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_air_optics", airs, ...(wavelengths_m ? { wavelengths_m } : {}) });
     return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readShadowLight(items: Json[]): Promise<{ ok: true; items: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_shadow_light", items });
+    return r.type === "shadow_light_read" ? { ok: true, items: (r as unknown as { items: Json[] }).items } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }> {
