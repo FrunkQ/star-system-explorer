@@ -75,13 +75,15 @@ the kernel ring through.
   (grain physics instead of one tan albedo) with fine radial banding inside each band; the Cassini Division is kept.
   The "below" shots did not get the camera under the ring plane (the drag only spun it), so the unlit side is shown by
   `rings.test.ts`, not by a screen. No Encke or Keeler gap yet: Pan and Daphnis are not in base-sol.
+- After merging main (27 Nov): base-sol now has Saturn's small moons and J2 (PR 663); the scene carries `j2` as a fact
+  and the view passes it to the ask. `after2-saturn-close.png` and `saturn-before-after-2.png`: the app's Saturn now
+  shows Pan's Encke gap (329 km; about 325 km measured, recalled) and Daphnis's Keeler gap (47 km; about 42 km), 53
+  density-wave trains (strongest Janus 6:5), and EC1's planet shadow across the kernel ring (the lit pixels go through
+  main's node material, premultiplied).
 - Golden: only the small-bodies area moved (3 lines added, re-blessed after marks gained `sculptor_name`); no core
   contract line.
 
 ## Next
-- Saturn's small moons (Pan, Daphnis, Atlas, Prometheus, Pandora, Janus, Epimetheus) and J2 on base-sol rows, from
-  the NSSDCA sheets (the cloud session could not reach nssdc.gsfc.nasa.gov): until then the app's Saturn shows its
-  bands' fine structure and the Janus-less resonances only, no Encke or Keeler gap.
 - Fold Sol's ring bands into one subject in lists and cards (the drawing and the kernel's answer are already one).
 - Wavy edges drawn round the ring (2D texture near an embedded moon), second-order resonances (Mimas 5:3), a finer
   window as the camera closes in, particle sizes (K-c) and phase tables (K-e) to replace fudges SB-ring-dust and

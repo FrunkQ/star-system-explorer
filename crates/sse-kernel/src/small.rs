@@ -268,8 +268,15 @@ pub(crate) fn ring_ask_from_run(
         )
     })?;
     let au = sse_core::sheet::AU;
-    let me = sse_core::sheet::M_EARTH;
-    let radius_m = w.radius_earth() * sse_core::sheet::R_EARTH_MEAN;
+    // Earth's mass and radius from the physics in force (the formation's worlds are in Earth units); a stack loaded
+    // without a sheet (tests, toy stacks) reads the shipped one, as `ring_structure` does.
+    let earth = |id: &str| {
+        sse_physics::constant(id)
+            .or_else(|| sse_reference::Reference::base().constant(id))
+            .ok_or_else(|| err("eval", format!("no {id} on the data sheet")))
+    };
+    let (me, re) = (earth("M_earth")?, earth("R_earth_mean")?);
+    let radius_m = w.radius_earth() * re;
     let mut sculptors: Vec<Sculptor> = l
         .moons
         .iter()
