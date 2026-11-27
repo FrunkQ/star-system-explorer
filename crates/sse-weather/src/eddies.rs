@@ -292,6 +292,160 @@ pub fn eddies_between(
     out
 }
 
+/// A plume: a tall storm carrying heat from inside up to the cloud tops (WS3, design 3.4). Fresh bright cloud on
+/// the top deck, half a deformation radius across, drifting with the wind.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Plume {
+    pub lat_deg: f64,
+    /// Longitude when it is born, degrees.
+    pub lon_deg: f64,
+    pub size_km: f64,
+    pub born: f64,
+    pub ends: f64,
+    pub drift_m_s: f64,
+}
+
+impl Plume {
+    pub fn lon_at(&self, a_m: f64, day: f64) -> f64 {
+        let dl = self.drift_m_s * (day - self.born) * DAY_S
+            / (a_m * m::cos(self.lat_deg / DEG).max(1e-6))
+            * DEG;
+        wrap(self.lon_deg + dl)
+    }
+    /// 0 to 1 over its life, rising and falling as sin².
+    pub fn fade_at(&self, day: f64) -> f64 {
+        if day < self.born || day >= self.ends || self.ends <= self.born {
+            return 0.0;
+        }
+        let x = m::sin(m::PI * (day - self.born) / (self.ends - self.born));
+        x * x
+    }
+}
+
+/// Plumes alive at once (`sse.weather.plume_count`), and the deformation radius they are sized by (at 45°), m.
+pub fn plume_count(gs: &GiantSettings, c: &Conditions) -> (f64, f64) {
+    let ld = deformation_m(gs, c, 45.0);
+    if c.internal_flux_w_m2 <= 0.0 || ld <= 0.0 {
+        return (0.0, ld);
+    }
+    let n = sse_physics::run(
+        "sse.weather.plume_count",
+        &[c.internal_flux_w_m2, c.radius_m, ld],
+    )
+    .map(|v| v[0])
+    .unwrap_or(0.0);
+    (n, ld)
+}
+
+/// Every plume alive at some moment from `day0` to `day1`. Each lives one turn of an eddy its own size and rises
+/// where its band's shear turns the way the spin does (cyclonic: where Jupiter's lightning is seen).
+pub fn plumes_between(
+    gs: &GiantSettings,
+    c: &Conditions,
+    l: &GiantLayout,
+    day0: f64,
+    day1: f64,
+) -> Vec<Plume> {
+    let (alive, ld) = plume_count(gs, c);
+    let mut out = vec![];
+    if alive <= 0.0 {
+        return out;
+    }
+    let size = 0.5 * ld;
+    let eps = eddy_power(gs, c);
+    let u = eddy_speed(c, eps, size);
+    if u <= 0.0 {
+        return out;
+    }
+    let life = m::PI * size / u / DAY_S;
+    let a = c.radius_m;
+    let d = draws(c, "weather.giant_plumes.v1");
+    let turn = spin_sign(l);
+    let first = m::floor(day0 / life) as i64 - 1;
+    let last = m::floor(day1 / life) as i64;
+    for wi in first..=last {
+        let n = (alive + d.unit(ectr(0, 0, wi, 0))) as u64;
+        for j in 0..n.min(0x7ff) {
+            let r = |k: u64| d.unit(ectr(0, 0, wi, 1 + 32 * j + k));
+            let born = (wi as f64 + r(0)) * life;
+            let ends = born + life;
+            if born > day1 || ends < day0 {
+                continue;
+            }
+            // Uniform by area until the shear is cyclonic there (up to eight tries).
+            let Some(lat) = (0..8).find_map(|t| {
+                let lat = m::asin(2.0 * r(2 + 2 * t) - 1.0) * DEG;
+                let h = if lat >= 0.0 { 1.0 } else { -1.0 };
+                (zonal_vorticity(gs, l, a, lat) * h * turn > 0.0).then_some(lat)
+            }) else {
+                continue;
+            };
+            out.push(Plume {
+                lat_deg: lat,
+                lon_deg: 360.0 * r(1) - 180.0,
+                size_km: size / 1000.0,
+                born,
+                ends,
+                drift_m_s: zonal_wind(gs, l, a, lat),
+            });
+        }
+    }
+    out
+}
+
+/// How long the top deck lasts before its particles fall out and it is made anew, s (`sse.weather.
+/// particle_fall_time`): the pack's particle radius for the deck's condensate (or the fallback), the data
+/// sheet's density of its solid, the air in the middle of the deck, and the deck's thickness.
+pub fn renewal_s(
+    gs: &GiantSettings,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    l: &GiantLayout,
+) -> Option<f64> {
+    let cl = &gs.clouds;
+    let deck = &l.layers[2];
+    let r_um = cl
+        .particle_radius_um
+        .get(deck)
+        .copied()
+        .filter(|r| *r > 0.0)
+        .unwrap_or(gs.stirring.fallback_particle_um);
+    let name = deck.trim_end_matches(" ice");
+    let gas = cs.substances.iter().find(|s| s.name == name)?.gas.clone();
+    // The sheet in force, or the shipped one outside a call.
+    static BASE: std::sync::OnceLock<sse_reference::Reference> = std::sync::OnceLock::new();
+    let phys = sse_physics::now();
+    let sheet: &sse_reference::Reference = match &phys {
+        Some(p) => p.sheet(),
+        None => BASE.get_or_init(sse_reference::Reference::base),
+    };
+    let rho = sheet
+        .row("substances", &gas)?
+        .get("phases")?
+        .get("density_solid")?
+        .get("v")?
+        .as_f64()?;
+    let dh = cl.heights.as_ref()?;
+    let base = crate::giants::deck_base_bar(dh, cs, c, &l.layers)[2];
+    let mid = base * m::exp(-0.5 * dh.thickness_h);
+    let t = c.t_surface_k * m::pow(mid.max(dh.tropopause_bar), crate::giants::kappa(c));
+    let dz = dh.thickness_h * c.scale_height_m();
+    sse_physics::run(
+        "sse.weather.particle_fall_time",
+        &[
+            r_um * 1e-6,
+            rho,
+            c.gravity_m_s2,
+            t,
+            c.mean_molar_kg,
+            mid * BAR_PA,
+            dz,
+        ],
+    )
+    .ok()
+    .map(|v| v[1])
+}
+
 /// The longest span one flow table covers, days.
 pub const MAX_SPAN_DAYS: f64 = 60.0;
 /// The jets' table step, degrees of latitude.
@@ -328,12 +482,22 @@ pub struct FlowTable {
     /// Storms alive on `day0`, as the systems read gives them (with their aspect).
     pub systems: Vec<crate::contract::WeatherSystem>,
     pub eddies: Vec<Eddy>,
+    /// Plumes alive in the span (WS3).
+    pub plumes: Vec<Plume>,
+    /// How long cloud lasts before it falls out and is made anew, days (WS3); 0 where it cannot be worked out.
+    pub renewal_days: f64,
     pub facts: EddyFacts,
     pub why: String,
 }
 
 /// The flow table from `day` over `span_days` (0 to `MAX_SPAN_DAYS`).
-pub fn flow_table(gs: &GiantSettings, c: &Conditions, day: f64, span_days: f64) -> FlowTable {
+pub fn flow_table(
+    gs: &GiantSettings,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    day: f64,
+    span_days: f64,
+) -> FlowTable {
     let l = crate::giants::layout(gs, c);
     let a = c.radius_m;
     let span = span_days.clamp(0.0, MAX_SPAN_DAYS);
@@ -347,6 +511,8 @@ pub fn flow_table(gs: &GiantSettings, c: &Conditions, day: f64, span_days: f64) 
         .into_iter()
         .collect();
     let eddies = eddies_between(gs, c, &l, day, day + span);
+    let plumes = plumes_between(gs, c, &l, day, day + span);
+    let renewal_days = renewal_s(gs, cs, c, &l).map(|s| s / DAY_S).unwrap_or(0.0);
     let f = facts(gs, c);
     let why = format!(
         "{} eddies from {:.1} W/m² of heat ({:.2e} W/kg into the weather layer down to {} bar), sized from the deformation radius to the band's width; storms from the systems read; jets from the bands.",
@@ -376,6 +542,8 @@ pub fn flow_table(gs: &GiantSettings, c: &Conditions, day: f64, span_days: f64) 
             .collect(),
         systems,
         eddies,
+        plumes,
+        renewal_days,
         facts: f,
         why,
     }

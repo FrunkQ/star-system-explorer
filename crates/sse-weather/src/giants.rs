@@ -250,6 +250,8 @@ pub struct Stirring {
     pub eddy_area_share_per_octave: f64,
     /// How many of its own turns an eddy that the shear does not tear lives.
     pub eddy_life_turns: f64,
+    /// A deck's particle radius where the pack holds none, µm (WS3, the renewal time).
+    pub fallback_particle_um: f64,
     pub source: String,
 }
 
@@ -736,7 +738,7 @@ pub fn jet_profile(gs: &GiantSettings, c: &Conditions, l: &GiantLayout) -> JetPr
 /// The heat-capacity ratio κ = R / c_p of the gas mix: monatomic gases
 /// c_p = 5/2 R, diatomic 7/2 R, others 4 R (ideal gases near room
 /// temperature).
-fn kappa(c: &Conditions) -> f64 {
+pub(crate) fn kappa(c: &Conditions) -> f64 {
     let (mut x, mut cp) = (0.0, 0.0);
     for (g, f) in &c.gases {
         let k = match g.as_str() {
@@ -1195,15 +1197,19 @@ fn systems_for(
 pub struct GiantPrepared {
     pub layout: GiantLayout,
     pub systems: Vec<WeatherSystem>,
+    /// Plumes rising on the day (WS3): counted by the heat from inside, not named.
+    pub plumes: Vec<crate::eddies::Plume>,
     pub day: f64,
 }
 
 pub fn prepare(gs: &GiantSettings, c: &Conditions, date: Date) -> GiantPrepared {
     let l = layout(gs, c);
     let systems = systems_for(gs, c, &l, date);
+    let plumes = crate::eddies::plumes_between(gs, c, &l, date.day, date.day);
     GiantPrepared {
         layout: l,
         systems,
+        plumes,
         day: date.day,
     }
 }
@@ -1494,6 +1500,20 @@ pub fn giant_cell(
             }
             _ => {}
         }
+    }
+    // Plumes from inside (WS3): fresh bright cloud on the top deck, as an outbreak's head, at their own size.
+    for pl in &p.plumes {
+        let lon_p = pl.lon_at(a, p.day);
+        let dd = distance_km(a, lat, lon, pl.lat_deg, lon_p) / (0.5 * pl.size_km.max(1.0));
+        if dd > 3.0 {
+            continue;
+        }
+        let g = m::exp(-dd * dd) * pl.fade_at(p.day);
+        if g > 0.05 {
+            ly[2].cloud_type = "cumulonimbus".into();
+        }
+        add_cover(&mut ly[2], g, 15.0);
+        turb += 0.5 * g;
     }
     for (k, layer) in ly.iter_mut().enumerate() {
         // Deep winds on a giant: a little weaker below the top layer.

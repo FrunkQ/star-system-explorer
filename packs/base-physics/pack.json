@@ -7999,6 +7999,48 @@
         "range": null
       },
       {
+        "description": "pressure inside a cloud deck (Pa)",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deck_pressure",
+        "range": null
+      },
+      {
+        "description": "a cloud deck's thickness (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deck_thickness",
+        "range": null
+      },
+      {
+        "description": "the deformation radius N H / f, where a giant's air stops behaving as a flat sheet (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deformation_radius",
+        "range": null
+      },
+      {
         "description": "power fed to the eddies per kilogram of the weather layer (W/kg)",
         "dim": [
           2,
@@ -8041,6 +8083,20 @@
         "range": null
       },
       {
+        "description": "how fast a cloud's particles fall through the air (m/s)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.fall_speed",
+        "range": null
+      },
+      {
         "description": "heat a world's air sends to space, from inside plus absorbed sunlight, averaged over the sphere (W/m²)",
         "dim": [
           0,
@@ -8066,6 +8122,34 @@
           0
         ],
         "id": "weather.layer_pressure",
+        "range": null
+      },
+      {
+        "description": "tall storms rising from inside a giant, alive at once",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.plume_count",
+        "range": null
+      },
+      {
+        "description": "how long a cloud deck takes to fall out and be made anew (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.renewal_time",
         "range": null
       },
       {

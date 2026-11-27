@@ -353,6 +353,384 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.weather.particle_fall_time",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "particle_radius",
+     "letter": "r"
+    },
+    {
+     "port": "particle_density",
+     "letter": "rho"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "molar_mass",
+     "letter": "M"
+    },
+    {
+     "port": "pressure",
+     "letter": "p"
+    },
+    {
+     "port": "deck_thickness",
+     "letter": "dz"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "fall_speed",
+     "letter": "v"
+    },
+    {
+     "port": "renewal_time",
+     "letter": "tau"
+    }
+   ],
+   "constants": {
+    "R": "sheet/R_gas"
+   },
+   "models": {
+    "A1": {
+     "value": 1.257,
+     "grade": "measured",
+     "source": "Allen and Raabe 1985, the slip correction's constants (unverified)"
+    },
+    "A2": {
+     "value": 0.4,
+     "grade": "measured",
+     "source": "Allen and Raabe 1985 (unverified)"
+    },
+    "A3": {
+     "value": 1.1,
+     "grade": "measured",
+     "source": "Allen and Raabe 1985 (unverified)"
+    },
+    "T3": {
+     "value": 300.0,
+     "grade": "derived",
+     "source": "definition: the reference temperature of the viscosity setting"
+    }
+   },
+   "params": [
+    {
+     "param": "gas_viscosity_300k",
+     "letter": "mu3",
+     "default": 8.9e-06,
+     "range": [
+      1e-07,
+      0.001
+     ],
+     "description": "the air's viscosity at 300 K, Pa s (hydrogen's, about 8.9e-6: a stand-in until the data sheet holds gas viscosities)"
+    },
+    {
+     "param": "viscosity_exponent",
+     "letter": "mun",
+     "default": 0.68,
+     "range": [
+      0.0,
+      1.5
+     ],
+     "description": "how the viscosity grows with temperature, mu = mu(300 K) (T / 300 K)^n (hydrogen's, about 0.68; stand-in)"
+    }
+   ],
+   "checks": [
+    {
+     "port": "particle_radius",
+     "min": 0,
+     "finite": true,
+     "says": "a particle's radius must be more than zero, got {}"
+    },
+    {
+     "port": "particle_density",
+     "min": 0,
+     "finite": true,
+     "says": "a particle's density must be more than zero, got {}"
+    },
+    {
+     "port": "gravity",
+     "min": 0,
+     "finite": true,
+     "says": "gravity must be more than zero, got {}"
+    },
+    {
+     "port": "temperature",
+     "min": 0,
+     "finite": true,
+     "says": "temperature must be more than zero, got {}"
+    },
+    {
+     "port": "molar_mass",
+     "min": 0,
+     "finite": true,
+     "says": "molar mass must be more than zero, got {}"
+    },
+    {
+     "port": "pressure",
+     "min": 0,
+     "finite": true,
+     "says": "pressure must be more than zero, got {}"
+    },
+    {
+     "port": "deck_thickness",
+     "min": 0,
+     "finite": true,
+     "says": "a deck's thickness must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Stokes, G. G. 1851, On the effect of the internal friction of fluids on the motion of pendulums, Trans. Camb. Phil. Soc. 9, 8: the drag on a small sphere (unverified)",
+    "Allen, M. D. and Raabe, O. G. 1985, Slip correction measurements of spherical solid aerosol particles in an improved Millikan apparatus, Aerosol Sci. Technol. 4, 269 (unverified). doi:10.1080/02786828508959055",
+    "Ackerman, A. S. and Marley, M. S. 2001, Precipitating condensation clouds in substellar atmospheres, ApJ 556, 872: cloud as a balance of mixing and fall-out (unverified). doi:10.1086/321540"
+   ],
+   "shown": "v = 2 r² ρ_p g / (9 μ) × (1 + Kn (A₁ + A₂ e^(−A₃/Kn))), Kn = λ / r, λ = (μ / p) √(π R T / 2M); τ = Δz / v",
+   "equation": {
+    "name": "How long a cloud deck takes to fall out and be made anew",
+    "formula": "mu = mu3 * (T / T3) ^ mun\nlam = mu / p * sqrt(pi * R * T / (2 * M))\nkn = lam / r\ncc = 1 + kn * (A1 + A2 * exp(-A3 / kn))\nv = 2 * r * r * rho * g / (9 * mu) * cc\ntau = dz / v",
+    "inputs": {
+     "r": {
+      "kind": "particle.radius",
+      "unit": "m",
+      "name": "the deck's particle radius"
+     },
+     "rho": {
+      "kind": "material.ice_density",
+      "unit": "kg m-3",
+      "name": "density of the particles' solid"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the cloud tops"
+     },
+     "T": {
+      "kind": "atmosphere.temperature",
+      "unit": "K",
+      "name": "temperature of the air in the deck"
+     },
+     "M": {
+      "kind": "material.molar_mass",
+      "unit": "kg mol-1",
+      "name": "mean molar mass of the air"
+     },
+     "p": {
+      "kind": "weather.deck_pressure",
+      "unit": "Pa",
+      "name": "pressure in the deck"
+     },
+     "dz": {
+      "kind": "weather.deck_thickness",
+      "unit": "m",
+      "name": "the deck's thickness"
+     },
+     "R": {
+      "kind": "constant.R_gas",
+      "unit": "J mol-1 K-1",
+      "name": "molar gas constant"
+     },
+     "A1": {
+      "kind": "model.slip_constant",
+      "unit": "1",
+      "name": "slip correction constant"
+     },
+     "A2": {
+      "kind": "model.slip_constant",
+      "unit": "1",
+      "name": "slip correction constant"
+     },
+     "A3": {
+      "kind": "model.slip_constant",
+      "unit": "1",
+      "name": "slip correction constant"
+     },
+     "mu3": {
+      "kind": "model.gas_viscosity",
+      "unit": "Pa s",
+      "name": "the air's viscosity at 300 K"
+     },
+     "mun": {
+      "kind": "model.viscosity_exponent",
+      "unit": "1",
+      "name": "how viscosity grows with temperature"
+     },
+     "T3": {
+      "kind": "model.reference_temperature",
+      "unit": "K",
+      "name": "the viscosity setting's reference temperature"
+     }
+    },
+    "outputs": {
+     "v": {
+      "kind": "weather.fall_speed",
+      "unit": "m/s",
+      "name": "how fast the particles fall"
+     },
+     "tau": {
+      "kind": "weather.renewal_time",
+      "unit": "s",
+      "name": "how long the deck takes to fall out and be made anew"
+     }
+    },
+    "source": {
+     "text": "Stokes 1851; Allen and Raabe 1985",
+     "doi": "10.1080/02786828508959055",
+     "where": "the slip-corrected fall of a small sphere"
+    },
+    "explain": {
+     "curious": "Cloud is not forever: its ice crystals slowly fall out and new ones form. Small crystals in thin air drift down for weeks to months, and that is how long the winds have to stir the cloud.",
+     "science": "Stokes drag on a sphere, corrected for slip when the gas's mean free path is not small beside the particle (Cunningham, with Allen and Raabe's constants). The deck lasts as long as its particles take to fall through it."
+    },
+    "examples": [
+     {
+      "r": 1e-06,
+      "rho": 820.0,
+      "g": 24.79,
+      "T": 130.0,
+      "M": 0.00227,
+      "p": 50000.0,
+      "dz": 9600.0,
+      "v": 0.000994505932152007,
+      "tau": 9653034.426075874
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.weather.plume_count",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "internal_flux",
+     "letter": "Fi"
+    },
+    {
+     "port": "radius",
+     "letter": "a"
+    },
+    {
+     "port": "deformation_radius",
+     "letter": "Ld"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "plumes",
+     "letter": "N"
+    }
+   ],
+   "params": [
+    {
+     "param": "plume_flux_w_m2",
+     "letter": "Fp",
+     "default": 3000.0,
+     "range": [
+      1.0,
+      1000000.0
+     ],
+     "description": "heat flux inside an active plume, W/m² (about 3,000: Gierasch et al. 2000, from memory, unverified)"
+    },
+    {
+     "param": "plume_heat_share",
+     "letter": "s",
+     "default": 1.0,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "share of the internal heat that plumes carry (1: stand-in)"
+    }
+   ],
+   "checks": [
+    {
+     "port": "internal_flux",
+     "min": 0,
+     "finite": true,
+     "says": "the heat from inside must not be negative, got {}"
+    },
+    {
+     "port": "radius",
+     "min": 0,
+     "finite": true,
+     "says": "radius must be more than zero, got {}"
+    },
+    {
+     "port": "deformation_radius",
+     "min": 0,
+     "finite": true,
+     "says": "the deformation radius must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Gierasch, P. J. et al. 2000, Observation of moist convection in Jupiter's atmosphere, Nature 403, 628: moist storms carrying Jupiter's internal heat (unverified). doi:10.1038/35001017"
+   ],
+   "shown": "N = s F_int 4π a² / (F_p π r_p²), r_p = L_d / 2",
+   "equation": {
+    "name": "How many tall storms the heat from inside needs",
+    "formula": "rp = Ld / 2\nN = s * Fi * 4 * pi * a * a / (Fp * pi * rp * rp)",
+    "inputs": {
+     "Fi": {
+      "kind": "body.internal_heat_flux",
+      "unit": "W m-2",
+      "name": "heat from inside, averaged over the sphere"
+     },
+     "a": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "Ld": {
+      "kind": "weather.deformation_radius",
+      "unit": "m",
+      "name": "the deformation radius where plumes rise"
+     },
+     "Fp": {
+      "kind": "model.plume_flux",
+      "unit": "W m-2",
+      "name": "heat flux inside an active plume"
+     },
+     "s": {
+      "kind": "model.plume_heat_share",
+      "unit": "1",
+      "name": "share of the internal heat plumes carry"
+     }
+    },
+    "outputs": {
+     "N": {
+      "kind": "weather.plume_count",
+      "unit": "1",
+      "name": "plumes alive at once"
+     }
+    },
+    "source": {
+     "text": "Gierasch et al. 2000, Nature 403, 628",
+     "doi": "10.1038/35001017",
+     "where": "moist convection carrying the internal heat"
+    },
+    "explain": {
+     "curious": "A giant's inner heat climbs to the cloud tops in tall thunderstorms. The more heat, the more of them: Jupiter has dozens at once, Uranus hardly any.",
+     "science": "If each plume carries a set heat flux over a disc half a deformation radius across, the internal heat fixes how many are alive. The ratio between worlds does not depend on the plume flux."
+    },
+    "examples": [
+     {
+      "Fi": 5.4,
+      "a": 70000000.0,
+      "Ld": 1430000.0,
+      "N": 69.01070957015013
+     }
+    ]
+   }
   }
  ]
 }

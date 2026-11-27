@@ -268,7 +268,9 @@ impl RuleBlock {
         span_days: f64,
     ) -> Option<crate::eddies::FlowTable> {
         let p = self.prepare(c, date);
-        Self::is_giant(&p).then(|| crate::eddies::flow_table(&self.giants, c, date.day, span_days))
+        Self::is_giant(&p).then(|| {
+            crate::eddies::flow_table(&self.giants, &self.settings.climate, c, date.day, span_days)
+        })
     }
 
     /// The field over a patch round a place (`FieldPatch`), cell by cell as

@@ -110,3 +110,55 @@ fn ws2_no_heat_no_eddies() {
     let l = layout(&gs, &c);
     assert!(eddies_between(&gs, &c, &l, 0.0, 10.0).is_empty());
 }
+
+// WS3: plumes from the heat below, and how fast the deck is renewed (design 3.4, 3.5).
+
+#[test]
+fn ws3_plumes_alive_average_the_count_their_heat_gives() {
+    let gs = base_settings();
+    let c = world("Jupiter");
+    let l = layout(&gs, &c);
+    let (want, _) = plume_count(&gs, &c);
+    assert!(want > 10.0, "Jupiter {want} plumes");
+    // Over a long run of dates the plumes alive average the block's count.
+    let ps = plumes_between(&gs, &c, &l, 0.0, 400.0);
+    let mut sum = 0.0;
+    let n = 200;
+    for k in 0..n {
+        let day = 100.0 + k as f64;
+        sum += ps.iter().filter(|p| p.born <= day && p.ends > day).count() as f64;
+    }
+    let mean = sum / n as f64;
+    assert!(
+        (mean / want - 1.0).abs() < 0.2,
+        "{mean} alive on average, the block gives {want}"
+    );
+    // The same plumes whichever date asks.
+    let alive = |p: &&Plume| p.born <= 250.0 && p.ends > 250.0;
+    let one = plumes_between(&gs, &c, &l, 250.0, 250.0);
+    let at: Vec<&Plume> = one.iter().filter(alive).collect();
+    let span: Vec<&Plume> = ps.iter().filter(alive).collect();
+    assert!(!at.is_empty());
+    assert_eq!(at, span);
+}
+
+#[test]
+fn ws3_no_heat_from_below_no_plumes() {
+    let gs = base_settings();
+    let mut c = world("Saturn");
+    c.internal_flux_w_m2 = 0.0;
+    let l = layout(&gs, &c);
+    assert!(plumes_between(&gs, &c, &l, 0.0, 100.0).is_empty());
+}
+
+#[test]
+fn ws3_a_deck_is_renewed_in_months() {
+    let gs = base_settings();
+    let cs = &crate::scenario::settings().climate;
+    let c = world("Jupiter");
+    let l = layout(&gs, &c);
+    let d = renewal_s(&gs, cs, &c, &l).expect("Jupiter's deck renews") / DAY_S;
+    // Micron ammonia grains falling through a scale height of deck: weeks to a year (unverified).
+    assert!(d > 10.0 && d < 1000.0, "{d} days");
+    eprintln!("Jupiter's deck renewed in {d:.0} days");
+}
