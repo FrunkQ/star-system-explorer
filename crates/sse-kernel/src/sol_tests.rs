@@ -1406,3 +1406,29 @@ fn sol_loads_angles_in_radians_and_earths_equator_is_warmest() {
     assert!(equator > t[0] + 30.0, "{t:?}");
     assert!(equator > t[t.len() - 1] + 30.0, "{t:?}");
 }
+
+#[test]
+fn a_giants_stirred_patch_says_where_its_cloud_came_from() {
+    let mut k = open_sol(&[]);
+    let j = world(&mut k, "Jupiter");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"stirred","system":SOL,"body":j["address"],"day":10.0,"lat":-20.0,"lon":30.0,"half_km":2000.0,"n":2}),
+    );
+    let t = &w["data"];
+    assert!(t["renewal_days"].as_f64().unwrap() > 0.0, "{w:.400}");
+    let cells = t["cells"].as_array().unwrap();
+    assert_eq!(cells.len(), 4);
+    for c in cells {
+        let g = c.as_array().unwrap();
+        let sum = g[0]["weight"].as_f64().unwrap() + g[1]["weight"].as_f64().unwrap();
+        assert!((sum - 1.0).abs() < 1e-12);
+        assert!((g[1]["area"].as_f64().unwrap() - 1.0).abs() < 0.01);
+    }
+    let earth = world(&mut k, "Earth");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"stirred","system":SOL,"body":earth["address"],"half_km":100.0}),
+    );
+    assert_eq!(e["code"], "not_a_giant", "{e:.300}");
+}

@@ -148,6 +148,27 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             })?;
             to_json(&t)
         }
+        "stirred" => {
+            rule_only("stirred")?;
+            let half = a.half_km.filter(|h| *h > 0.0).ok_or_else(|| {
+                err(
+                    "bad_patch",
+                    "a stirred patch needs `half_km` > 0 round `lat`, `lon`",
+                )
+            })?;
+            // Each cell follows its cloud back up to two renewals through every eddy (seconds a cell on
+            // Jupiter): a reference for a small patch, kept to 16 across.
+            let n = a.n.unwrap_or(8).clamp(1, 16);
+            let t = block
+                .stirred(&c, date, a.lat, a.lon, half, n)
+                .ok_or_else(|| {
+                    err(
+                        "not_a_giant",
+                        "stirred cloud is a giant's: carried by its jets, storms and eddies",
+                    )
+                })?;
+            to_json(&t)
+        }
         "patch" => {
             rule_only("patch")?;
             let half = a.half_km.filter(|h| *h > 0.0).ok_or_else(|| {

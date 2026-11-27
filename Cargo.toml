@@ -77,6 +77,10 @@ opt-level = 2
 [profile.dev.package.sse-atoms]
 opt-level = 2
 
+# A giant's stirred cloud follows thousands of paths back through its eddies (WS4).
+[profile.dev.package.sse-weather]
+opt-level = 2
+
 [profile.dev.package.sha2]
 opt-level = 2
 
