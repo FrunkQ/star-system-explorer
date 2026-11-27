@@ -66,7 +66,7 @@ A pack of more than one kind shows every line that applies. The shipped packs' w
 | Physics | `physics`, including new reference data (materials, colours, constants), which changes numbers and so is physics. Alex, 27 Nov 11:58 UTC: "they can travel together as a physics pack". A pack of reference data alone sits here too, found by the contains filter |
 | Looks, names and tours | `presentation`, `suite` |
 | Fan-made | anything with a named setting, apart from everything with a price (existing ruling) |
-| V3 library | section 10 |
+| Starmaps (V3), Systems (V3) | the V3 library, as two shelves on the same page (section 9.6); opening them is section 10 |
 
 The small things (calendars, unit schemes, ship styles, overlays) keep the "contains" filter and get no shelf, as ruled on 23 Nov.
 
@@ -223,6 +223,14 @@ Alex, 27 Nov 12:34 UTC: "probably need a badge update on the store now we have m
 
 Smaller contents (calendars, ship styles, overlays and the rest) stay on the contains line under the badges, not as badges. One shared table of badge names, lines and rules is used by the app and the store, so they cannot drift (with SP1's table).
 
+### 9.6 Looking after a listing on the store (Alex, 27 Nov 12:40 UTC)
+
+Found by Alex on uploading Sol today: "no edit to change the name and all the admin functions do not touch v4 stuff, yet. v3 starmaps/system maps should just be a shelf."
+
+- **The owner can edit a listing.** Title, summary, fan-setting field and cover are the listing's, not the file's, so changing them does not touch the published bytes or either fingerprint. An "Edit listing" button on the owner's item page and, when connected, on the pack's card in the app. The file itself still changes only by publishing a new version. Each edit goes in the log. The owner can also take their own item off the shelf (held, not deleted) and put it back.
+- **Every admin function covers V4 items.** Today only hold, restore, remove and reports reach `v4_items` (D-98). The admin pages are gone through one by one (review queue, reports, takedowns, log, tags, stats, issues, config gates, the Explorers starter list, backup) and each either takes V4 items or says in its own page why it does not apply. Backup must include `v4_items` and their files before anything else. Removing stays the admin's alone and nothing here deletes a published item without Alex's go.
+- **V3 starmaps and system maps are shelves** on the same shelves page as everything else, "Starmaps (V3)" and "Systems (V3)", read from the existing V3 tables with nothing moved or rewritten. The separate Browse page becomes a way into those shelves. The same search, contains filter and badges work across V3 and V4.
+
 ## 10. V3
 
 - **On the store.** Every V3 map, system and clip shows a **V3** mark, every V4 item a **V4** mark (the API already says `generation`). V3 items get one more button beside their existing ones: "Open in SSE4", which hands the file to SSE4's Open door, where the V3 importer that exists reads it. Nothing published is altered, moved or re-saved.
@@ -267,6 +275,9 @@ Small, in order. Owners are proposed. Explorers packages add only; any migration
 | **SP12** | The V3 upgrade pass (section 10): a V4 file kept beside each V3 original, the store serving each app its own; hand fixes; `legacy.starsystemx.com` for V3. Only when V4 is settled, and only on Alex's go | Explorers, converter | SP10, a settled V4 | every V3 original byte for byte unchanged; each upgrade compared with its original |
 | **SP13** | The sale scanner: a pack given a price is read for names of known settings, ships, brands and publishers, and for text and pictures matching known sources; findings are listed for the first-sale moderator. Free and fan packs are not scanned | Explorers | PP5, PP6 | a priced pack with a known screen-ship name reaches the moderator with the name shown; a free one is untouched |
 | **SP14** | Badges on the store (9.5): the full set on shelf cards, item pages and the V3 library, from the shared table; the public API returns them so the app shows the same | Explorers | SP1, SP3 | a ship pack carrying a flow shows Constructs, Parts and Physics on its card; every V3 map shows V3 |
+| **SP15** | Edit listing (9.6): the owner edits title, summary, fan-setting and cover, and can take their own item off the shelf and put it back; logged; bytes untouched | Explorers, then the app's card with SP8 | none | after an edit the file's sha256 is unchanged and the new title shows on the shelf and in the app |
+| **SP16** | Admin covers V4 (9.6): each admin page takes V4 items or says why not; backup includes `v4_items` and their files first | Explorers | none | a V4 item appears in the backup, the log, stats and the review tools; any migration adds only and is run by Alex |
+| **SP17** | V3 starmaps and systems as shelves on the shelves page, with shared search and badges; Browse leads there | Explorers | SP14 | every V3 map is on a shelf; nothing in the V3 tables or files is changed |
 
 The "we suggest free" message (section 11) goes in with SP8 on the app side and is a one-line change on the store's upload page.
 
@@ -284,6 +295,7 @@ Already owned elsewhere and unchanged: PP1 to PP8 (money), PK1 (catalogued value
 - 12:04 UTC, the same point said outright: "the store CAN list TV/film ones - fan content... we will deal with issues as they arrive. If they charge - different case." So users may publish film and TV ships and settings free, as fan content; the earlier "no named ships from film, TV or games" ruling is read as covering what we ourselves ship and feature (the thread's reading).
 - 12:05 UTC, question 1 answered, not as recommended: kind is a label, physics may travel with other things and the pack is also categorised as physics; the user only has to know what it will impact (section 3). No pack is refused for its kind and no golden moves.
 - 12:34 UTC: "probably need a badge update on the store now we have more types of content." The badge set is section 9.5; the store half is SP14.
+- 12:40 UTC: "no edit to change the name and all the admin functions do not touch v4 stuff, yet. v3 starmaps/system maps should just be a shelf." Section 9.6; SP15, SP16, SP17.
 
 ## 13. Questions as put
 
