@@ -45,6 +45,7 @@ import optical_rows  # noqa: E402
 import band_rows  # noqa: E402
 import photo_rows  # noqa: E402
 import emission_rows  # noqa: E402
+import melt_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -918,6 +919,11 @@ for _m in optical_rows.apply(MIXTURES):
 for _m in optical_rows.sulphur_rows(MIXTURES):
     MIXTURES.append(_m)
 optical_rows.apply_ices(SUBSTANCES, val)
+# HF4b.0: the rock rows the melt and lid blocks read (scripts/melt_rows.py).
+for _k, _v in melt_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+melt_rows.apply(MIXTURES, val)
 # Lifetimes of gases in sunlight, for the ice ground and the comets (scripts/photo_rows.py).
 for _k, _v in photo_rows.SOURCES.items():
     assert _k not in SOURCES, _k
