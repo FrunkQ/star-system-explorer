@@ -11,6 +11,9 @@ python3 scripts/build-base-reference.py --check
 python3 scripts/build-base-sol.py --check
 # Its measured-motion tables are well formed (RW17; rebuilt from source files by the same script).
 python3 scripts/build-sol-motion.py --check
+# The Solar System catalogue build (RW7) on its invented fixture.
+cargo build -q -p sse-cli
+python3 scripts/test-build-sol-catalogues.py --sse target/debug/sse
 python3 scripts/build-base-starters.py --check
 python3 scripts/build-base-names.py --check
 # The class atlas reads the sheet and base-sol (its builder is what the MP22 audit reads).

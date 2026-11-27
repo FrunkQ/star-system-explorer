@@ -66,6 +66,8 @@ mod physics_tests;
 #[cfg(test)]
 mod power_books_tests;
 pub mod protocol;
+#[cfg(test)]
+mod reach_gate_tests;
 mod reference;
 mod scenario;
 mod sea;

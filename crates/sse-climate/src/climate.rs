@@ -262,7 +262,59 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
     out
 }
 
+/// The world's sunlight budget, averaged over the sphere and the year, W/m²
+/// (HV2, the energy flow view): what arrives, what the climate's own bands
+/// reflect and absorb, the heat from inside, and what leaves as infrared.
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Sunlight {
+    /// Starlight reaching the top of the air, averaged over the sphere and
+    /// the year: S/4 times the year's mean (a/r)², 1/√(1 − e²).
+    pub arriving_w_m2: f64,
+    /// Absorbed: the annual season's band values, weighted by area.
+    pub absorbed_w_m2: f64,
+    /// Arriving less absorbed.
+    pub reflected_w_m2: f64,
+    /// Reflected over arriving: the Bond albedo the bands give (the input
+    /// albedo before ice, cloud and land change it is `conditions.albedo`).
+    pub bond_albedo: f64,
+    /// Heat from inside the world as the climate takes it.
+    pub internal_w_m2: f64,
+    /// Infrared leaving to space in the steady state: absorbed plus internal.
+    pub emitted_w_m2: f64,
+}
+
 impl Climate {
+    /// The sunlight budget of this climate (see [`Sunlight`]).
+    pub fn sunlight(&self) -> Sunlight {
+        let c = &self.conditions;
+        let e = c.eccentricity.clamp(0.0, 0.95);
+        let arriving = c.flux_w_m2 / 4.0 / m::sqrt(1.0 - e * e);
+        let (mut num, mut den) = (0.0, 0.0);
+        for (i, lat) in self.annual.lat_deg.iter().enumerate() {
+            let w = m::cos(lat * m::PI / 180.0);
+            num += w * self.annual.absorbed_w_m2.get(i).copied().unwrap_or(0.0);
+            den += w;
+        }
+        let absorbed = if den > 0.0 {
+            num / den
+        } else {
+            c.absorbed_w_m2()
+        };
+        let reflected = (arriving - absorbed).max(0.0);
+        Sunlight {
+            arriving_w_m2: arriving,
+            absorbed_w_m2: absorbed,
+            reflected_w_m2: reflected,
+            bond_albedo: if arriving > 0.0 {
+                reflected / arriving
+            } else {
+                0.0
+            },
+            internal_w_m2: c.internal_flux_w_m2,
+            emitted_w_m2: absorbed + c.internal_flux_w_m2,
+        }
+    }
+
     /// Linear interpolation between band centres at a latitude (degrees),
     /// held flat beyond the outermost centres.
     pub fn lerp(&self, v: &[f64], lat_deg: f64) -> f64 {

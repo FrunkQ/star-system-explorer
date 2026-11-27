@@ -310,7 +310,7 @@ fn the_catalogued_solar_system_pack_loads() {
         .map(|s| s["id"].as_str().unwrap())
         .collect();
     let bodies = sol["bodies"].as_array().unwrap();
-    assert_eq!(bodies.len(), 36);
+    assert_eq!(bodies.len(), 43);
     for b in bodies {
         for (_, v) in b["values"].as_object().unwrap() {
             assert!(srcs.contains(&v["src"].as_str().unwrap()), "{b}");
