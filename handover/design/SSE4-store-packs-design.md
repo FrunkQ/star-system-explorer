@@ -59,7 +59,7 @@ A pack with more than one kind has the union and the card says both lines. The s
 | Settings | `universe` packs with places, factions, templates, dressing; catalogues and detail expansion packs (RW8) sit here too |
 | **Constructs and parts** (new) | every kind of construct and what it is made of: ships, stations, land structures, and their parts and engines (section 3.1). Named by Alex, 27 Nov 11:57 to 11:58 UTC: "ships and parts makes sense... and constructs and constituent parts", then "'ships' is too narrow" |
 | Game systems | `game-system` |
-| Physics | `physics` |
+| Physics | `physics`, including new reference data (materials, colours, constants), which changes numbers and so is physics. Alex, 27 Nov 11:58 UTC: "they can travel together as a physics pack". A pack of reference data alone sits here too, found by the contains filter |
 | Looks, names and tours | `presentation`, `suite` |
 | Fan-made | anything with a named setting, apart from everything with a price (existing ruling) |
 | V3 library | section 10 |
