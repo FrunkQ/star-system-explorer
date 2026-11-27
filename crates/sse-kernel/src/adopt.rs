@@ -1429,6 +1429,40 @@ fn orbit_atlas<'c>(
 }
 
 #[allow(clippy::too_many_arguments)]
+/// A star's class from its row, when the row is a star: a phase, or a
+/// surface temperature with mass and radius.
+pub(crate) fn star_class(
+    row: &BTreeMap<String, Value>,
+) -> Option<sse_formation::spectral::StarClass> {
+    let num = |k: &str| row.get(k).and_then(as_f64);
+    let phase = match row.get("star.phase") {
+        Some(Value::Text(p)) => sse_formation::spectral::phase_of(p),
+        _ => None,
+    };
+    let is_star = phase.is_some()
+        || matches!(row.get("body.kind"), Some(Value::Text(k)) if k == "star")
+        || num("star.effective_temperature").is_some();
+    if !is_star {
+        return None;
+    }
+    let mass_kg = num("body.mass")?;
+    let mass = mass_kg / M_SUN_KG;
+    let phase = phase.unwrap_or(sse_formation::Phase::MainSequence);
+    if matches!(
+        phase,
+        sse_formation::Phase::BlackHole | sse_formation::Phase::NeutronStar
+    ) {
+        return Some(sse_formation::spectral::classify(
+            0.0, mass, mass_kg, 0.0, phase,
+        ));
+    }
+    let teff = num("star.effective_temperature").filter(|x| *x > 0.0)?;
+    let radius_m = num("body.radius").filter(|x| *x > 0.0)?;
+    Some(sse_formation::spectral::classify(
+        teff, mass, mass_kg, radius_m, phase,
+    ))
+}
+
 pub(crate) fn resolved_system(
     ch: &Chronicle,
     seed: &Seed,
@@ -1493,6 +1527,23 @@ pub(crate) fn resolved_system(
                 .or_default()
                 .entry("body.moment_of_inertia_factor".to_string())
                 .or_insert(f(c));
+        }
+    }
+    // Every star's formal class at the date read (sse_formation::spectral):
+    // a label read off its temperature, mass, radius and phase, never read
+    // back by physics. Kept facts of the same name (an authored class) win.
+    for row in facts.values_mut() {
+        if let Some(c) = star_class(row) {
+            for (k, v) in [
+                ("star.spectral_class", c.code.as_str()),
+                ("star.spectral_letter", c.letter.as_str()),
+                ("star.luminosity_class", c.luminosity.as_str()),
+                ("star.class_family", c.family),
+                ("star.class_kind", c.kind.as_str()),
+                ("star.class_why", c.why.as_str()),
+            ] {
+                row.entry(k.to_string()).or_insert(t(v));
+            }
         }
     }
     let mut out_tiles = vec![];

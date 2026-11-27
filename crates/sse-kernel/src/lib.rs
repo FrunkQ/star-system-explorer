@@ -2355,6 +2355,12 @@ impl Kernel {
                 );
                 continue;
             };
+            // A star class is drawn from the life line (describe_star with the
+            // class's sample star), not placed as a world.
+            if class.scheme == "star" {
+                refused.push(serde_json::json!({"class": id, "why": "a star class: draw it with describe_star from its first example's star.sample_mass_msun, star.sample_age_yr and star.sample_feh"}));
+                continue;
+            }
             let best = class
                 .examples
                 .iter()
@@ -3994,6 +4000,7 @@ impl Kernel {
                 n,
                 lat,
                 lon,
+                half_km,
                 pins,
                 sources,
                 block,
@@ -4026,6 +4033,7 @@ impl Kernel {
                         n,
                         lat: lat.unwrap_or(0.0),
                         lon: lon.unwrap_or(0.0),
+                        half_km,
                         pins: pins.unwrap_or_default(),
                         sources,
                         block,

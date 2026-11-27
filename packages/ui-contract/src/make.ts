@@ -3,6 +3,7 @@
 // chart can draw as a preview. Both kernel ops are pure, so nothing here
 // touches the open universe; adopting a preview into the campaign is a later
 // step (see handover/packages/V13.md).
+import { starClassWords } from "./star-class.ts";
 import type { Json } from "./json.ts";
 import type { SceneFact, SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
@@ -505,6 +506,9 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
       const s = surf.get(a);
       const out: SceneFact[] = [f("name", "Name", name)];
       if (kind === "star") {
+        // Its formal class as the kernel reads it at this date (sse_formation::spectral): a label, never physics.
+        const sc = str(a, "star.spectral_class");
+        if (sc) out.push(f("spectral", "Class", sc, undefined, "derived"));
         if (mass !== undefined) out.push(f("mass_sun", "Mass", mass / M_SUN, "M☉", srcOf(a, "body.mass"), at("body.mass", M_SUN)));
         if (radius !== undefined) out.push(f("radius_sun", "Radius", radius / R_SUN_M, "R☉", srcOf(a, "body.radius"), at("body.radius", R_SUN_M)));
         const t = num(a, "star.effective_temperature");
@@ -540,7 +544,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         address: a,
         kind,
         label: name,
-        subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
+        subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind === "star" && str(a, "star.spectral_class") ? starClassWords(str(a, "star.spectral_class")!, str(a, "star.class_family")) : kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
         ...(a !== primary && parent ? { parent } : {}),
         ...(band ? { band_au: band, shape: v3BeltShape(name, band) } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
         ...(ring ? { ring } : {}),
