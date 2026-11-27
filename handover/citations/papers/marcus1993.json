@@ -1,0 +1,1 @@
+{"key": "marcus1993", "citation": "Marcus 1993 applies it to Jupiter's ovals", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-weather/src/giants.rs"], "claims": ["/// 1971, as Marcus 1993 applies it to Jupiter's ovals; worked here from the"], "tier": 3}

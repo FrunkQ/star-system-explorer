@@ -35,7 +35,7 @@ fn ship(radiator_k: f64, transmitting: bool) -> LightDescription {
         },
         ..Default::default()
     };
-    describe(&c, Model::base()).unwrap().0
+    describe(&c, &Model::base()).unwrap().0
 }
 
 fn ir_telescope() -> Sensor {

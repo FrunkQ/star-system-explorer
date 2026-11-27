@@ -26,6 +26,7 @@ pub enum Reach {
 /// The declared blocks, by atom id.
 pub const DECLARED: &[(&str, Reach)] = &[
     ("sse.orbit.total_mass", Reach::Follows(&[])),
+    ("sse.gravity.zero_velocity_radius", Reach::Follows(&["G"])),
     ("sse.orbit.period", Reach::Follows(&["G"])),
     (
         "sse.orbit.semi_major_axis_from_period",

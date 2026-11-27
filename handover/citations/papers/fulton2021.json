@@ -1,0 +1,1 @@
+{"key": "fulton2021", "citation": "Fulton et al. 2021", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/growth_tests.rs"], "claims": ["// (Cumming et al. 2008; Fulton et al. 2021); tolerance a factor of two of 15 percent."], "tier": 3}

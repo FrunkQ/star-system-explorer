@@ -2,8 +2,7 @@
 // as the sky sees them (`sky_from_here` with galaxies and no stars: `galaxies_seen` and `satellites_seen`), and lays
 // them out in space around our galaxy. Each galaxy's place is its direction from home times its distance, so this
 // view and the night sky agree. Nothing is invented: a galaxy has the type, size, tilt and colour the kernel gave it.
-import { constant } from "./sheet.ts";
-import { starColour } from "./compare.ts";
+import { starColour, tempFromBV } from "./compare.ts";
 import type { Json } from "./json.ts";
 
 /** One galaxy as the kernel's sky gives it, cut to what this view draws and says. */
@@ -50,6 +49,20 @@ export interface NearbyRead {
   t_gyr: number;
   /** Home's place in the web, Mpc (the web's frame shares the galactic frame's axes; F37). */
   home_mpc: [number, number, number] | null;
+  /** GZ6: the edge of our group, worked out by the kernel's block (asked with `satellite_paths`); null if not asked. */
+  group_edge: GroupEdge | null;
+}
+
+/**
+ * The edge of our group (design 7.2), from the kernel: the zero-velocity sphere round home of the mass inside it, by
+ * the block `sse.gravity.zero_velocity_radius` (Sandage 1986), which reads G through Look up. `members` counts the
+ * galaxies inside besides ours and its satellites.
+ */
+export interface GroupEdge {
+  radius_mpc: number;
+  mass_msun: number;
+  members: number;
+  block: string;
 }
 
 /** GZ6: one of home's satellites from infall to now, as the kernel followed it in our galaxy's growing pull. */
@@ -148,6 +161,7 @@ export function readNearby(sky: Json): NearbyRead | null {
     centre_mpc: c ? [c[0] / 1000, c[1] / 1000, c[2] / 1000] : [0, 0, 0],
     t_gyr: (num(s!.t_myr) ?? 13800) / 1000,
     home_mpc: vec(walk.home_mpc),
+    group_edge: readEdge(walk.group_edge),
   };
 }
 
@@ -199,38 +213,11 @@ export function satelliteStateWords(p: Pick<SatellitePath, "fate" | "infall_gyr"
 /** The first infall among the paths: where Play starts. */
 export const firstInfall = (ps: readonly Pick<SatellitePath, "infall_gyr">[]): number | null => (ps.length ? Math.min(...ps.map((p) => p.infall_gyr)) : null);
 
-/** G in Mpc^3 per solar mass per Gyr^2, from the sheet's GM_sun, parsec and Julian year. */
-const G_MPC_GYR = (() => {
-  const mpc = constant("pc") * 1e6;
-  const gyr = constant("yr_julian") * 1e9;
-  return (constant("GM_sun") * gyr * gyr) / (mpc * mpc * mpc);
-})();
-
-/**
- * The zero-velocity radius of a mass at a time: the sphere inside which matter has stopped moving apart with the
- * expansion and fallen back. Sandage 1986 (ApJ 307, 1, doi:10.1086/164387), the timing argument for a pressureless sphere with no
- * dark energy: R0^3 = 8 G M t^2 / pi^2. Dark energy would widen it by some per cent (fudge GZ-F13).
- */
-export function zeroVelocityRadius(mass_msun: number, t_gyr: number): number {
-  return Math.cbrt((8 * G_MPC_GYR * Math.max(0, mass_msun) * t_gyr * t_gyr) / (Math.PI * Math.PI));
-}
-
-/**
- * The edge of our group (design 7.2): the zero-velocity sphere around home of the mass inside it, found by
- * widening it until it holds what it needs (home's halo, then every catalogued halo inside, which widens it again;
- * the radius only grows, so it settles in a few steps). Satellites are already inside home's halo, so not counted twice.
- */
-export function groupEdge(home_halo_msun: number, gs: readonly Pick<NearGalaxy, "halo_mass_msun" | "distance_mpc" | "satellite">[], t_gyr: number): { radius_mpc: number; mass_msun: number; members: number } {
-  const others = gs.filter((g) => !g.satellite).sort((a, b) => a.distance_mpc - b.distance_mpc);
-  let mass = home_halo_msun;
-  let r = zeroVelocityRadius(mass, t_gyr);
-  let n = 0;
-  while (n < others.length && others[n]!.distance_mpc <= r) {
-    mass += others[n]!.halo_mass_msun;
-    n++;
-    r = zeroVelocityRadius(mass, t_gyr);
-  }
-  return { radius_mpc: r, mass_msun: mass, members: n };
+function readEdge(v: unknown): GroupEdge | null {
+  const e = v as Record<string, unknown> | null | undefined;
+  const r = typeof e?.radius_mpc === "number" && Number.isFinite(e.radius_mpc) ? e.radius_mpc : null;
+  if (r === null || r <= 0) return null;
+  return { radius_mpc: r, mass_msun: typeof e!.mass_msun === "number" ? e!.mass_msun : 0, members: typeof e!.members === "number" ? e!.members : 0, block: typeof e!.block === "string" ? e!.block : "" };
 }
 
 /** A galaxy's place relative to home, Mpc, in the galactic frame (x to our centre, z out of our disc). */
@@ -313,7 +300,7 @@ export function haloR200(mass_msun: number, home: { r200_mpc: number; mass_msun:
 export function galaxyColour(b_v: number | null): string {
   if (b_v === null) return starColour(undefined);
   const bv = Math.min(2, Math.max(-0.4, b_v));
-  return starColour(4600 * (1 / (0.92 * bv + 1.7) + 1 / (0.92 * bv + 0.62)));
+  return starColour(tempFromBV(bv));
 }
 
 const TYPE_WORDS: Record<string, string> = {

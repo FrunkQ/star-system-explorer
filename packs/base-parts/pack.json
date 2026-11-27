@@ -1,0 +1,4997 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-parts",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0; stage, engine and launch figures from GCAT are CC BY 4.0 (credited)",
+ "provides": {
+  "other": {
+   "about": "The parts palette (compound ships, CM13): every part in the one part format (packages/ui-contract/src/parts.ts). Real stages, engines, power sources, arrays, dishes and a bay with the figures they flew with and the year they first flew; generic primitives with geometry only. Physics names only (ruling 14A.5). Built by scripts/build-base-parts.py; do not edit by hand.",
+   "palette": {
+    "port_sizes": [
+     {
+      "size_m": 0.8,
+      "name": "crew passage (docking standard)",
+      "src": "idss",
+      "check": "unverified"
+     },
+     {
+      "size_m": 1.27,
+      "name": "berthing passage",
+      "src": "cbm",
+      "check": "unverified"
+     },
+     {
+      "size_m": 2.0,
+      "name": "small module or pod",
+      "src": "authored"
+     },
+     {
+      "size_m": 4.0,
+      "name": "module or pod",
+      "src": "authored"
+     },
+     {
+      "size_m": 10.0,
+      "name": "large module, pod or hangar",
+      "src": "authored"
+     }
+    ],
+    "parts": [
+     {
+      "id": "stage-centaur-d-1t",
+      "name": "Centaur D-1T stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 16.3,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 2.63,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 13.67,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 2,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 470,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 3.05,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         9.6,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 3.05,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 9.6,
+       "radius_m": 1.525
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "GDA",
+      "engine": "engine-rl10a-3",
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-et",
+      "name": "ET stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 748,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 27.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 721.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 3,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 516,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 8.4,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         47,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 8.4,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 47,
+       "radius_m": 4.2
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "MMMI",
+      "engine": "engine-ssme",
+      "credit": "gcat",
+      "year": 1981,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-falcon-9-st-1-1d-5",
+      "name": "Falcon 9 St 1/1D-5 stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 390,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 18.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 372.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 9,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 180,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 3.65,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         43.5,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 3.65,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 43.5,
+       "radius_m": 1.825
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "SPX",
+      "engine": "engine-merlin-1d-5",
+      "credit": "gcat",
+      "year": 2010,
+      "year_src": "first orbital launch of the Falcon 9 family in GCAT's launch list (this variant may be later)"
+     },
+     {
+      "id": "stage-falcon-9-st-2-1d-5",
+      "name": "Falcon 9 St 2/1D-5 stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 75.7,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 4.9,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 70.8,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 1,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 372,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 3.65,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         12.6,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 3.65,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 12.6,
+       "radius_m": 1.825
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "SPX",
+      "engine": "engine-merlin-1d-vac",
+      "credit": "gcat",
+      "year": 2010,
+      "year_src": "first orbital launch of the Falcon 9 family in GCAT's launch list (this variant may be later)"
+     },
+     {
+      "id": "stage-lr87aj11",
+      "name": "LR87AJ11 stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 116.6,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 5.5,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 111.1,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 2,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 147,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 3.05,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         23.8,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 3.05,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 23.8,
+       "radius_m": 1.525
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "MARTD",
+      "engine": "engine-lr87aj11",
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-lr91aj11",
+      "name": "LR91AJ11 stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 29.2,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 2.65,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 26.55,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 1,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 205,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 3.05,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         9.6,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 3.05,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 9.6,
+       "radius_m": 1.525
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "MARTD",
+      "engine": "engine-lr91aj11",
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-ov",
+      "name": "OV stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 110,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 80.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 30.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 2,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 90,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 5.49,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         37.2,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 5.49,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 37.2,
+       "radius_m": 2.745
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "RWI",
+      "engine": "engine-aj10-190",
+      "credit": "gcat",
+      "year": 1981,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-srm",
+      "name": "SRM stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 590,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 88.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 502.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 1,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 123,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 3.77,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         45.5,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 3.77,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 45.5,
+       "radius_m": 1.885
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "THKU",
+      "engine": "engine-srm",
+      "credit": "gcat",
+      "year": 1981,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-saturn-s-ic",
+      "name": "Saturn S-IC stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 2286,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 135.2,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 2150.8,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 5,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 170,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 10.06,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         42.1,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 10.06,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 42.1,
+       "radius_m": 5.03
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "BOMI",
+      "engine": "engine-f-1",
+      "credit": "gcat",
+      "year": 1967,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-saturn-s-ii",
+      "name": "Saturn S-II stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 490.8,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 39.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 451.8,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 5,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 270,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 10.06,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         24.8,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 10.06,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 24.8,
+       "radius_m": 5.03
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "NAASB",
+      "engine": "engine-j-2",
+      "credit": "gcat",
+      "year": 1967,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-saturn-s-ivb",
+      "name": "Saturn S-IVB stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 120,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 13.3,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 106.7,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 1,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 500,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 6.6,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         18.7,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 6.6,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 18.7,
+       "radius_m": 3.3
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "DACHB",
+      "engine": "engine-j-2",
+      "credit": "gcat",
+      "year": 1967,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-ua1205",
+      "name": "UA1205 stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 226.2,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 33.8,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 192.4,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 1,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 115,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 3.11,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         25.9,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 3.11,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 25.9,
+       "radius_m": 1.555
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "UTC",
+      "engine": "engine-ua1205",
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first orbital launch of the vehicle in GCAT's launch list"
+     },
+     {
+      "id": "stage-v-2",
+      "name": "V-2 stage",
+      "kind": "stage",
+      "alone": true,
+      "figures": {
+       "wet_t": {
+        "v": 12.8,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "dry_t": {
+        "v": 4.0,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "propellant_t": {
+        "v": 8.8,
+        "unit": "t",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "wet less dry"
+       },
+       "engine_count": {
+        "v": 1,
+        "unit": "",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "burn_s": {
+        "v": 70,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 1.65,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         12,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 1.65,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 12,
+       "radius_m": 0.825
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "WEHR",
+      "engine": "engine-a-4",
+      "credit": "gcat",
+      "year": 1942,
+      "year_src": "first successful flight, 3 October 1942 (from memory, unverified)"
+     },
+     {
+      "id": "engine-a-4",
+      "name": "A-4 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 1.9907,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 203,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 312000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 1.32,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         1.4520000000000002,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 1.452,
+       "radius_m": 0.66,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "HVP",
+      "fuels": [
+       "o2",
+       "ethanol",
+       "h2o"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1942,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-aj10-137",
+      "name": "AJ10-137 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 3.0793,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 314,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 97000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 0.5,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0.55,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 0.55,
+       "radius_m": 0.25,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "AJGC",
+      "fuels": [
+       "n2o4",
+       "n2h4",
+       "udmh"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1969,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "engine-aj10-190",
+      "name": "AJ10-190 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 3.0989,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 316,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 27000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 3.105612983,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         3.4161742812684484,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 3.416174281,
+       "radius_m": 1.552806491,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "AJGC",
+      "fuels": [
+       "n2o4",
+       "mmh"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1981,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-f-1",
+      "name": "F-1 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 2.5497,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 260,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 6680000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 3.599175017,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         3.959092518242028,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 3.959092518,
+       "radius_m": 1.799587508,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "RDYNE",
+      "fuels": [
+       "o2",
+       "rp-1"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1967,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-j-2",
+      "name": "J-2 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 4.1874,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 427,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 1023000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 3.599175017,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         3.959092518242028,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 3.959092518,
+       "radius_m": 1.799587508,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "RDYNE",
+      "fuels": [
+       "o2",
+       "h2"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1967,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-lr87aj11",
+      "name": "LR87AJ11 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 2.9812,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 304,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 1226000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 1.725340546,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         1.8978746007046936,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 1.897874601,
+       "radius_m": 0.862670273,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "AJGC",
+      "fuels": [
+       "n2o4",
+       "n2h4",
+       "udmh"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-lr91aj11",
+      "name": "LR91AJ11 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 3.0989,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 316,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 472200.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.44,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.684,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.684,
+       "radius_m": 1.22,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "AJGC",
+      "fuels": [
+       "n2o4",
+       "n2h4",
+       "udmh"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-leros-1b",
+      "name": "Leros 1b engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 3.1185,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 318,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 670.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 0.5,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0.55,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 0.55,
+       "radius_m": 0.25,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "RPEW",
+      "fuels": [
+       "n2o4",
+       "n2h4"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 2011,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "engine-merlin-1d-5",
+      "name": "Merlin 1D-5 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 2.9891,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 304.8,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 845000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 0.973333333,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         1.0706666666666667,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 1.070666667,
+       "radius_m": 0.486666667,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "SPXTX",
+      "fuels": [
+       "o2",
+       "rp-1"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 2010,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-merlin-1d-vac",
+      "name": "Merlin 1D-Vac engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 3.3833,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 345,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 801000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.92,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         3.212,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 3.212,
+       "radius_m": 1.46,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "SPXTX",
+      "fuels": [
+       "o2",
+       "rp-1"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 2010,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-nstar-30",
+      "name": "NSTAR-30 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 34.8136,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 3550,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 0.5,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0.55,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 0.55,
+       "radius_m": 0.25,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "L3HED",
+      "fuels": [
+       "xe"
+      ],
+      "energy_from": "electric",
+      "to_read": [
+       "mass_t",
+       "electric_w",
+       "thrust_n",
+       "efficiency",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 2007,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "engine-r-4d-11",
+      "name": "R-4D-11 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 3.094,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 315.5,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 490.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 0.5,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0.55,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 0.55,
+       "radius_m": 0.25,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "PRIMX",
+      "fuels": [
+       "n2o4",
+       "mmh"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1997,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "engine-rl10a-3",
+      "name": "RL10A-3 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 4.3542,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 444,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 65600.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 1.725340546,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         1.8978746007046936,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 1.897874601,
+       "radius_m": 0.862670273,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "PWFL",
+      "fuels": [
+       "o2",
+       "h2"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-srm",
+      "name": "SRM engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 2.6213,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 267.3,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 11790000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 3.016,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         3.3176,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 3.3176,
+       "radius_m": 1.508,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "THKU",
+      "fuels": [
+       "pban-ap-al"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1981,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-ssme",
+      "name": "SSME engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 4.4375,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 452.5,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 2100000.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 3.879793809,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         4.267773189849715,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 4.26777319,
+       "radius_m": 1.939896904,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "RDYNE",
+      "fuels": [
+       "o2",
+       "h2"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1981,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "engine-star-37e",
+      "name": "Star 37E engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 2.7812,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 283.6,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 0.5,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         0.55,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 0.55,
+       "radius_m": 0.25,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "THKE",
+      "fuels": [
+       "htpb-ap-al"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1977,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "engine-ua1205",
+      "name": "UA1205 engine",
+      "kind": "engine",
+      "alone": false,
+      "figures": {
+       "exhaust_km_s": {
+        "v": 2.5791,
+        "unit": "km s-1",
+        "src": "gcat",
+        "mark": "derived",
+        "why": "GCAT's specific impulse times the master data sheet's standard gravity"
+       },
+       "isp_s": {
+        "v": 263,
+        "unit": "s",
+        "src": "gcat",
+        "mark": "cited"
+       },
+       "thrust_n": {
+        "v": 5293300.0,
+        "unit": "N",
+        "src": "gcat",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.488,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.7368,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.7368,
+       "radius_m": 1.244,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.7,
+         0.45
+        ],
+        [
+         1,
+         0.35
+        ]
+       ],
+       "shape_src": "estimated: a bell sized to fit its stage's cluster; the real size is to be read"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "maker": "UTC",
+      "fuels": [
+       "htpb-ap-al"
+      ],
+      "energy_from": "fuel",
+      "to_read": [
+       "mass_t",
+       "thrust_sl_n",
+       "condition_of_thrust_and_isp"
+      ],
+      "credit": "gcat",
+      "year": 1974,
+      "year_src": "first flight of the stage it flew on"
+     },
+     {
+      "id": "power-mhw-rtg",
+      "name": "radioisotope generator (as on Voyager 2)",
+      "kind": "power",
+      "alone": false,
+      "figures": {
+       "electric_w": {
+        "v": 156.66666666666666,
+        "unit": "W",
+        "src": "nssdca",
+        "mark": "cited",
+        "why": "each of 3; all three together, at launch"
+       },
+       "mass_t": {
+        "v": 0.039,
+        "unit": "t",
+        "src": "nssdca",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "base",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0.254,
+         0,
+         -0.203
+        ],
+        "facing": [
+         0,
+         0,
+         -1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 0.508,
+       "radius_m": 0.203
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "year": 1977,
+      "year_src": "launch of the craft it flew on (COSPAR id)",
+      "credit": "nssdca"
+     },
+     {
+      "id": "dish-voyager-2",
+      "name": "high-gain dish, 3.66 m (as on Voyager 2)",
+      "kind": "dish",
+      "alone": false,
+      "figures": {
+       "aperture_m": {
+        "v": 3.66,
+        "unit": "m",
+        "src": "nssdca",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "base",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "dish",
+       "length_m": 0.915,
+       "radius_m": 1.83
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "credit": "nssdca",
+      "year": 1977,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "array-dawn",
+      "name": "solar array wing (as on Dawn)",
+      "kind": "solar",
+      "alone": false,
+      "figures": {
+       "electric_w_at_1_au": {
+        "v": 5150.0,
+        "unit": "W",
+        "src": "nssdca",
+        "mark": "cited",
+        "why": "each of 2 wings, at 1 au"
+       },
+       "area_m2": {
+        "v": 19.09,
+        "unit": "m2",
+        "src": "nssdca",
+        "mark": "derived",
+        "why": "width times span"
+       }
+      },
+      "points": [
+       {
+        "id": "root",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         1.15,
+         0,
+         0
+        ],
+        "facing": [
+         0,
+         -1,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "panel",
+       "length_m": 2.3,
+       "radius_m": 0.05,
+       "span_m": 8.3
+      },
+      "scale": {
+       "law": "area",
+       "stretch": true,
+       "widen": true,
+       "with_area": [
+        "electric_w_at_1_au",
+        "area_m2"
+       ],
+       "src": "geometry: an array's output at a given sunlight follows its area"
+      },
+      "year": 2007,
+      "year_src": "launch of the craft it flew on (COSPAR id)",
+      "credit": "nssdca"
+     },
+     {
+      "id": "dish-dawn",
+      "name": "high-gain dish, 1.52 m (as on Dawn)",
+      "kind": "dish",
+      "alone": false,
+      "figures": {
+       "aperture_m": {
+        "v": 1.52,
+        "unit": "m",
+        "src": "nssdca",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "base",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "dish",
+       "length_m": 0.38,
+       "radius_m": 0.76
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "credit": "nssdca",
+      "year": 2007,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "dish-cassini-huygens",
+      "name": "high-gain dish, 4.0 m (as on Cassini-Huygens)",
+      "kind": "dish",
+      "alone": false,
+      "figures": {
+       "aperture_m": {
+        "v": 4.0,
+        "unit": "m",
+        "src": "nssdca",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "base",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "dish",
+       "length_m": 1.0,
+       "radius_m": 2.0
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "credit": "nssdca",
+      "year": 1997,
+      "year_src": "launch of the craft it flew on (COSPAR id)"
+     },
+     {
+      "id": "bay-sts-1-columbia",
+      "name": "payload bay, 4.6 by 18 m (as on Columbia)",
+      "kind": "bay",
+      "alone": false,
+      "figures": {
+       "bay_radius_m": {
+        "v": 2.3,
+        "unit": "m",
+        "src": "nssdca",
+        "mark": "derived",
+        "why": "half the stated width"
+       },
+       "bay_length_m": {
+        "v": 18,
+        "unit": "m",
+        "src": "nssdca",
+        "mark": "cited"
+       }
+      },
+      "points": [
+       {
+        "id": "mouth",
+        "place": "bay",
+        "size_m": 4.6,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         9.0,
+         0,
+         2.3
+        ],
+        "facing": [
+         0,
+         0,
+         1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 18,
+       "radius_m": 2.3
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "real hardware comes in the size it flew"
+      },
+      "year": 1981,
+      "year_src": "launch of the craft it flew on (COSPAR id)",
+      "credit": "nssdca"
+     },
+     {
+      "id": "tank-2m",
+      "name": "propellant tank, 2 m across",
+      "kind": "tank",
+      "alone": false,
+      "figures": {
+       "volume_m3": {
+        "v": 12.566371,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         4.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 2.0,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         2.0,
+         0.0,
+         1.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         2.0,
+         0.0,
+         -1.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 4.0,
+       "radius_m": 1.0
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "wall and insulation mass from the thin-wall pressure block (CM13 part 2)"
+      ]
+     },
+     {
+      "id": "habitat-2m",
+      "name": "habitat can, 2 m across",
+      "kind": "habitat",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 12.566371,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 1.27,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         4.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 1.27,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0.0,
+         1.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         2.0,
+         1.0,
+         0.0
+        ],
+        "facing": [
+         0,
+         1.0,
+         0.0
+        ]
+       },
+       {
+        "id": "port3",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0.0,
+         -1.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       },
+       {
+        "id": "port4",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         2.0,
+         -1.0,
+         -0.0
+        ],
+        "facing": [
+         0,
+         -1.0,
+         -0.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 4.0,
+       "radius_m": 1.0
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "berths from the room per person (base-ships crew rule), worked out by the kernel"
+      ]
+     },
+     {
+      "id": "pod-2m",
+      "name": "cargo pod, 2 m across",
+      "kind": "pod",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 12.566371,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "clamp",
+        "place": "port",
+        "size_m": 2.0,
+        "lines": [],
+        "at": [
+         2.0,
+         0,
+         -1.0
+        ],
+        "facing": [
+         0,
+         0,
+         -1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "box",
+       "length_m": 4.0,
+       "radius_m": 1.0,
+       "span_m": 2.0
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "standard sizes, so a frame freighter's pods fit any frame (ruling 14A.6)"
+      }
+     },
+     {
+      "id": "tank-4m",
+      "name": "propellant tank, 4 m across",
+      "kind": "tank",
+      "alone": false,
+      "figures": {
+       "volume_m3": {
+        "v": 100.530965,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 4.0,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         8.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 4.0,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         4.0,
+         0.0,
+         2.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         4.0,
+         0.0,
+         -2.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 8.0,
+       "radius_m": 2.0
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "wall and insulation mass from the thin-wall pressure block (CM13 part 2)"
+      ]
+     },
+     {
+      "id": "habitat-4m",
+      "name": "habitat can, 4 m across",
+      "kind": "habitat",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 100.530965,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 1.27,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         8.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 1.27,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         4.0,
+         0.0,
+         2.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         4.0,
+         2.0,
+         0.0
+        ],
+        "facing": [
+         0,
+         1.0,
+         0.0
+        ]
+       },
+       {
+        "id": "port3",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         4.0,
+         0.0,
+         -2.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       },
+       {
+        "id": "port4",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         4.0,
+         -2.0,
+         -0.0
+        ],
+        "facing": [
+         0,
+         -1.0,
+         -0.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 8.0,
+       "radius_m": 2.0
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "berths from the room per person (base-ships crew rule), worked out by the kernel"
+      ]
+     },
+     {
+      "id": "pod-4m",
+      "name": "cargo pod, 4 m across",
+      "kind": "pod",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 100.530965,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "clamp",
+        "place": "port",
+        "size_m": 4.0,
+        "lines": [],
+        "at": [
+         4.0,
+         0,
+         -2.0
+        ],
+        "facing": [
+         0,
+         0,
+         -1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "box",
+       "length_m": 8.0,
+       "radius_m": 2.0,
+       "span_m": 4.0
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "standard sizes, so a frame freighter's pods fit any frame (ruling 14A.6)"
+      }
+     },
+     {
+      "id": "tank-10m",
+      "name": "propellant tank, 10 m across",
+      "kind": "tank",
+      "alone": false,
+      "figures": {
+       "volume_m3": {
+        "v": 1570.796327,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 10.0,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         20.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 10.0,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         10.0,
+         0.0,
+         5.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "propellant"
+        ],
+        "at": [
+         10.0,
+         0.0,
+         -5.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 20.0,
+       "radius_m": 5.0
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "wall and insulation mass from the thin-wall pressure block (CM13 part 2)"
+      ]
+     },
+     {
+      "id": "habitat-10m",
+      "name": "habitat can, 10 m across",
+      "kind": "habitat",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 1570.796327,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 1.27,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         20.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 1.27,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         10.0,
+         0.0,
+         5.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         10.0,
+         5.0,
+         0.0
+        ],
+        "facing": [
+         0,
+         1.0,
+         0.0
+        ]
+       },
+       {
+        "id": "port3",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         10.0,
+         0.0,
+         -5.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       },
+       {
+        "id": "port4",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         10.0,
+         -5.0,
+         -0.0
+        ],
+        "facing": [
+         0,
+         -1.0,
+         -0.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 20.0,
+       "radius_m": 5.0
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "berths from the room per person (base-ships crew rule), worked out by the kernel"
+      ]
+     },
+     {
+      "id": "pod-10m",
+      "name": "cargo pod, 10 m across",
+      "kind": "pod",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 1570.796327,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "clamp",
+        "place": "port",
+        "size_m": 10.0,
+        "lines": [],
+        "at": [
+         10.0,
+         0,
+         -5.0
+        ],
+        "facing": [
+         0,
+         0,
+         -1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "box",
+       "length_m": 20.0,
+       "radius_m": 5.0,
+       "span_m": 10.0
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "standard sizes, so a frame freighter's pods fit any frame (ruling 14A.6)"
+      }
+     },
+     {
+      "id": "node-4",
+      "name": "docking node, four ports",
+      "kind": "node",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 7.853982,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         2.5,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         1.25,
+         0.0,
+         1.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         1.25,
+         1.0,
+         0.0
+        ],
+        "facing": [
+         0,
+         1.0,
+         0.0
+        ]
+       },
+       {
+        "id": "port3",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         1.25,
+         0.0,
+         -1.0
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       },
+       {
+        "id": "port4",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         1.25,
+         -1.0,
+         -0.0
+        ],
+        "facing": [
+         0,
+         -1.0,
+         -0.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.5,
+       "radius_m": 1.0
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "authored"
+      }
+     },
+     {
+      "id": "truss",
+      "name": "truss or spine",
+      "kind": "truss",
+      "alone": false,
+      "figures": {},
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 1.27,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         10.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 1.27,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 1.27,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         5.0,
+         0.0,
+         0.5
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 1.27,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         5.0,
+         0.5,
+         0.0
+        ],
+        "facing": [
+         0,
+         1.0,
+         0.0
+        ]
+       },
+       {
+        "id": "port3",
+        "place": "port",
+        "size_m": 1.27,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         5.0,
+         0.0,
+         -0.5
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       },
+       {
+        "id": "port4",
+        "place": "port",
+        "size_m": 1.27,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         5.0,
+         -0.5,
+         -0.0
+        ],
+        "facing": [
+         0,
+         -1.0,
+         -0.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "truss",
+       "length_m": 10.0,
+       "radius_m": 0.5
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "src": "geometry"
+      },
+      "to_read": [
+       "mass from strength for weight (base-tech materials) and the load it carries"
+      ]
+     },
+     {
+      "id": "boom",
+      "name": "boom (sensors clear of the ship)",
+      "kind": "truss",
+      "alone": false,
+      "figures": {},
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         5.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "truss",
+       "length_m": 5.0,
+       "radius_m": 0.1
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": false,
+       "src": "geometry"
+      }
+     },
+     {
+      "id": "solar-panel",
+      "name": "solar array panel",
+      "kind": "solar",
+      "alone": false,
+      "figures": {
+       "area_m2": {
+        "v": 20.0,
+        "unit": "m2",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times span, one face"
+       }
+      },
+      "points": [
+       {
+        "id": "root",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         1.0,
+         0,
+         0
+        ],
+        "facing": [
+         0,
+         -1,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "panel",
+       "length_m": 2.0,
+       "radius_m": 0.05,
+       "span_m": 10.0
+      },
+      "scale": {
+       "law": "area",
+       "stretch": true,
+       "widen": true,
+       "with_area": [
+        "area_m2"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "watts (arrays: sunlight at the ship) and heat shed (radiators: their temperature) worked out by the kernel"
+      ]
+     },
+     {
+      "id": "radiator-panel",
+      "name": "radiator panel",
+      "kind": "radiator",
+      "alone": false,
+      "figures": {
+       "area_m2": {
+        "v": 20.0,
+        "unit": "m2",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times span, one face"
+       }
+      },
+      "points": [
+       {
+        "id": "root",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         1.0,
+         0,
+         0
+        ],
+        "facing": [
+         0,
+         -1,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "panel",
+       "length_m": 2.0,
+       "radius_m": 0.05,
+       "span_m": 10.0
+      },
+      "scale": {
+       "law": "area",
+       "stretch": true,
+       "widen": true,
+       "with_area": [
+        "area_m2"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "watts (arrays: sunlight at the ship) and heat shed (radiators: their temperature) worked out by the kernel"
+      ]
+     },
+     {
+      "id": "bay",
+      "name": "bay",
+      "kind": "bay",
+      "alone": false,
+      "figures": {
+       "volume_m3": {
+        "v": 100.530965,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "mouth",
+        "place": "bay",
+        "size_m": 4.0,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         8.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 4.0,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         8.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 4.0,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 8.0,
+       "radius_m": 2.0
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      }
+     },
+     {
+      "id": "dish",
+      "name": "dish antenna",
+      "kind": "dish",
+      "alone": false,
+      "figures": {
+       "aperture_m": {
+        "v": 2.0,
+        "unit": "m",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "its diameter"
+       }
+      },
+      "points": [
+       {
+        "id": "base",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "dish",
+       "length_m": 0.5,
+       "radius_m": 1.0
+      },
+      "scale": {
+       "law": "area",
+       "stretch": false,
+       "widen": true,
+       "with_area": [],
+       "src": "geometry"
+      },
+      "to_read": [
+       "aperture sized from the link it must carry (the link budget block, CM13 part 2)"
+      ]
+     },
+     {
+      "id": "tech-chemical-rocket",
+      "name": "hydrogen-oxygen rocket",
+      "kind": "engine",
+      "alone": false,
+      "figures": {},
+      "advance": "chemical-rocket",
+      "level": 3,
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance chemical-rocket at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-fission-reactor",
+      "name": "Fission reactor",
+      "kind": "power",
+      "alone": false,
+      "figures": {},
+      "advance": "fission-reactor",
+      "level": 3,
+      "points": [
+       {
+        "id": "mount",
+        "place": "hull",
+        "size_m": 2.0,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         1.0,
+         0,
+         -1.0
+        ],
+        "facing": [
+         0,
+         0,
+         -1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance fission-reactor at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-nuclear-thermal",
+      "name": "nuclear thermal rocket",
+      "kind": "engine",
+      "alone": false,
+      "figures": {},
+      "advance": "nuclear-thermal",
+      "level": 4,
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance nuclear-thermal at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-light-sail",
+      "name": "light sail or photon rocket",
+      "kind": "engine",
+      "alone": false,
+      "figures": {},
+      "advance": "light-sail",
+      "level": 4,
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance light-sail at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-fusion-torch",
+      "name": "fusion torch (d-he3)",
+      "kind": "engine",
+      "alone": false,
+      "figures": {},
+      "advance": "fusion-torch",
+      "level": 5,
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance fusion-torch at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-hall-thruster",
+      "name": "hall thruster",
+      "kind": "engine",
+      "alone": false,
+      "figures": {},
+      "advance": "hall-thruster",
+      "level": 3,
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance hall-thruster at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-arcjet",
+      "name": "hydrazine arcjet",
+      "kind": "engine",
+      "alone": false,
+      "figures": {},
+      "advance": "arcjet",
+      "level": 3,
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance arcjet at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-ion-thruster",
+      "name": "gridded ion thruster",
+      "kind": "engine",
+      "alone": false,
+      "figures": {},
+      "advance": "ion-thruster",
+      "level": 3,
+      "points": [
+       {
+        "id": "mount",
+        "place": "front",
+        "size_m": 2.0,
+        "lines": [
+         "propellant",
+         "power"
+        ],
+        "at": [
+         2.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance ion-thruster at the setting's level"
+      ]
+     },
+     {
+      "id": "tech-rtg",
+      "name": "Radioisotope generator",
+      "kind": "power",
+      "alone": false,
+      "figures": {},
+      "advance": "rtg",
+      "level": 3,
+      "points": [
+       {
+        "id": "mount",
+        "place": "hull",
+        "size_m": 2.0,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         1.0,
+         0,
+         -1.0
+        ],
+        "facing": [
+         0,
+         0,
+         -1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 2.0,
+       "radius_m": 1.0,
+       "shape_src": "estimated: a stand-in size until its sizing block draws it from its output"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "its size follows its output through the advance's figures, worked out by the kernel"
+      },
+      "to_read": [
+       "figures from the base-tech advance rtg at the setting's level"
+      ]
+     }
+    ],
+    "credits": [
+     "GCAT: General Catalog of Artificial Space Objects, Jonathan C. McDowell, https://planet4589.org/space/gcat/ , CC BY 4.0 (stage and engine figures, launch dates), via the Sol today pack (store-packs/sol-today/parts.json, catalogue.json).",
+     "NASA Space Science Data Coordinated Archive and each craft's own source as the Sol today pack's craft.json names it (store-packs/sol-today/craft.json)."
+    ]
+   },
+   "sources": {
+    "gcat": "GCAT: General Catalog of Artificial Space Objects, Jonathan C. McDowell, https://planet4589.org/space/gcat/ , CC BY 4.0 (stage and engine figures, launch dates), via the Sol today pack (store-packs/sol-today/parts.json, catalogue.json).",
+    "nssdca": "NASA Space Science Data Coordinated Archive and each craft's own source as the Sol today pack's craft.json names it (store-packs/sol-today/craft.json).",
+    "idss": "International Docking System Standard (IDSS) Interface Definition Document, revision E, 2016: an 800 mm passage. https://www.internationaldockingstandard.com/ (from memory, unverified).",
+    "cbm": "Common Berthing Mechanism on the International Space Station: a 50 inch (1.27 m) square passage (from memory, unverified).",
+    "authored": "authored for play and pictures; in the fudge register",
+    "geometry": "geometry: volume is length times radius squared (a lathe's frustums); outer area its side and ends"
+   }
+  }
+ }
+}

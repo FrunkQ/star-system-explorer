@@ -14,7 +14,7 @@
   import InMemory from "./InMemory.svelte";
   import CountStrip from "./CountStrip.svelte";
   import { countSteps, onThisDay, rollRecords, sayNumber, lossesOn, dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, secondsToYears, stepEvent, yearsToSeconds, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { openCampaign, openPack, packFolder, type RollFeed } from "./feed.ts";
+  import { folderRead, heldRoll, openCampaign, openPack, packFolder, type RollFeed } from "./feed.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
   const ws = $derived(ctx.workspace);
@@ -22,14 +22,23 @@
   let feed = $state<RollFeed | null>(null);
   let problem = $state<string | null>(null);
   let revision = $state(0);
+  let openedKey: string | null = null;
 
+  // Opened again when the stack changes, so a pack added through the Open door is read at once.
   $effect(() => {
     const sys = scene.system;
+    void ws.revision;
     untrack(() => void open(sys));
   });
   async function open(system: string) {
     const base = packFolder();
-    const f = base ? await openPack(base) : await openCampaign(ctx, system);
+    const st = ctx.session.stack();
+    const held = heldRoll(st.base);
+    // A pack's roll does not change with the campaign's edits: read it again only when the stack does.
+    const key = base ?? (held ? `stack:${st.hash}` : null);
+    if (key && key === openedKey && feed) return;
+    openedKey = key;
+    const f = base ? await openPack(folderRead(base)) : held ? await openPack(held.read, held.label) : await openCampaign(ctx, system);
     if ("why" in f) {
       problem = f.why;
       return;

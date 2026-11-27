@@ -95,7 +95,29 @@ export interface LifeHook {
   why: Lens3;
 }
 
+/** One set of energy lines (LE2 ledger), W; null where the inputs are missing. */
+export interface LifeEnergyLines {
+  arriving_w: number | null;
+  offered_w: number | null;
+  captured_w: number | null;
+  keep_alive_w: number | null;
+  surplus_w: number | null;
+  brought_in_w: number;
+}
+
+/** The kernel's energy ledger for a world of the chart (LE2, `life_view` `view.energy`). */
+export interface LifeEnergy {
+  /** Per habitat: the same lines, flattened in, with where they come from. */
+  habitats: (LifeEnergyLines & { habitat: string; kind: string; light_w: number | null; chemical_w: number | null; exergy_factor: number | null; barely?: boolean; closed?: string | null })[];
+  world: LifeEnergyLines;
+  unknown: string[];
+  absorbed_sunlight_w: number | null;
+  notes: string[];
+}
+
 export interface LifeView {
+  /** The energy ledger (LE2); worlds of the chart only, absent for the example fixtures. */
+  energy?: LifeEnergy | null;
   body: string;
   evidence: string;
   timeline: LifePoint[];

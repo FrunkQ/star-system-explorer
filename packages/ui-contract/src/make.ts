@@ -3,6 +3,7 @@
 // chart can draw as a preview. Both kernel ops are pure, so nothing here
 // touches the open universe; adopting a preview into the campaign is a later
 // step (see handover/packages/V13.md).
+import { starClassWords } from "./star-class.ts";
 import type { Json } from "./json.ts";
 import type { SceneFact, SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
@@ -130,6 +131,8 @@ export interface LeftoverCloud {
   kind: string;
   /** The world a ring or swarm belongs to; null round the star. */
   around: string | null;
+  /** A ring's world by its address (kernel `resolved_system`, VP-R3). */
+  around_address?: string;
   a_min_au: number;
   a_max_au: number;
   /**
@@ -155,10 +158,28 @@ export function v3BeltShape(name: string, band: [number, number] | undefined): "
   return /\boort\b/i.test(name) || (band !== undefined && band[0] > 1000) ? "sphere" : "disc";
 }
 
-/** Belts, discs and the Oort cloud round the star from F5's clouds; rings and Trojans belong to their worlds and are not drawn here. */
+/**
+ * Belts, discs and the Oort cloud round the star from F5's clouds, and each world's ring hung on its world (VP-R3: one
+ * ring per world, whose zones and gaps the kernel's `ring_structure` works out from the run). Trojans belong to their
+ * worlds and are not drawn here.
+ */
 export function cloudSubjects(clouds: readonly LeftoverCloud[], star: string | undefined): SceneSubject[] {
   const out: SceneSubject[] = [];
   for (const c of clouds) {
+    if (c.kind === "ring" && c.around_address && c.a_max_au > c.a_min_au) {
+      out.push({
+        address: c.address,
+        kind: "belt",
+        label: "Rings",
+        subtitle: "Leftovers of formation · a ring round its world",
+        parent: c.around_address,
+        ring: { inner_m: c.a_min_au * AU_M, outer_m: c.a_max_au * AU_M, tau: null, albedo: null, cloud: c.address },
+        facts: [{ field: "name", label: "Name", value: "Rings", display: "Rings", editable: false, source: "derived" }],
+        stamps: ["generated"],
+        tags: [],
+      });
+      continue;
+    }
     if (c.around || !(c.a_max_au > c.a_min_au) || c.kind === "scattered-disc") continue;
     const name = c.kind === "oort" ? "Oort cloud" : c.kind.replace(/-/g, " ").replace(/^./, (x) => x.toUpperCase());
     const shape = cloudShape(c);
@@ -505,6 +526,9 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
       const s = surf.get(a);
       const out: SceneFact[] = [f("name", "Name", name)];
       if (kind === "star") {
+        // Its formal class as the kernel reads it at this date (sse_formation::spectral): a label, never physics.
+        const sc = str(a, "star.spectral_class");
+        if (sc) out.push(f("spectral", "Class", sc, undefined, "derived"));
         if (mass !== undefined) out.push(f("mass_sun", "Mass", mass / M_SUN, "M☉", srcOf(a, "body.mass"), at("body.mass", M_SUN)));
         if (radius !== undefined) out.push(f("radius_sun", "Radius", radius / R_SUN_M, "R☉", srcOf(a, "body.radius"), at("body.radius", R_SUN_M)));
         const t = num(a, "star.effective_temperature");
@@ -521,6 +545,9 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         if (radius !== undefined) out.push(f("radius_earth", "Radius", radius / R_EARTH_M, "R⊕", srcOf(a, "body.radius"), at("body.radius", R_EARTH_M)));
         const day = num(a, "body.rotation_period");
         if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period"), at("body.rotation_period", 3600)));
+        // The world's oblateness in its gravity (J2): it moves the resonances that shape its rings (VP-R3).
+        const j2 = num(a, "body.j2");
+        if (j2 !== undefined) out.push(f("j2", "J2", j2, undefined, srcOf(a, "body.j2"), at("body.j2")));
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
       }
       // The GM's own pictures and the one it opens on (views/pictures): carried for the card, never shown as facts.
@@ -532,7 +559,9 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
       // A belt round a world, not the star, is its ring: edges from the world's centre, and what it is made of.
       const rin = num(a, "body.radius_inner");
       const rout = num(a, "body.radius_outer");
-      const ring = kind === "belt" && parent && parent !== primary && rin !== undefined && rout !== undefined && rout > rin ? { inner_m: rin, outer_m: rout, tau: num(a, "ring.optical_depth") ?? null, albedo: num(a, "ring.albedo") ?? num(a, "body.albedo") ?? null } : undefined;
+      const tlo = num(a, "ring.optical_depth_low");
+      const thi = num(a, "ring.optical_depth_high");
+      const ring = kind === "belt" && parent && parent !== primary && rin !== undefined && rout !== undefined && rout > rin ? { inner_m: rin, outer_m: rout, tau: num(a, "ring.optical_depth") ?? null, albedo: num(a, "ring.albedo") ?? num(a, "body.albedo") ?? null, ...(tlo !== undefined && thi !== undefined && thi >= tlo ? { tau_range: [tlo, thi] as [number, number] } : {}) } : undefined;
       // Axial tilt in radians: the kernel's, else the catalogue's obliquity (radians once through the door; over π/2
       // is a retrograde spin, the same lean).
       const tilt = num(a, "body.axial_tilt") ?? num(a, "body.obliquity");
@@ -540,7 +569,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         address: a,
         kind,
         label: name,
-        subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
+        subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind === "star" && str(a, "star.spectral_class") ? starClassWords(str(a, "star.spectral_class")!, str(a, "star.class_family")) : kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
         ...(a !== primary && parent ? { parent } : {}),
         ...(band ? { band_au: band, shape: v3BeltShape(name, band) } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
         ...(ring ? { ring } : {}),

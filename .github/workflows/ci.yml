@@ -85,6 +85,9 @@ jobs:
           python3 scripts/test-audit-side-doors.py
           python3 scripts/audit-side-doors.py --check --base FETCH_HEAD
       - run: cargo run -q -p sse-cli --release -- harness
+      - if: matrix.os == 'ubuntu-latest'
+        name: the Solar System catalogue build (RW7) on its invented fixture
+        run: python3 scripts/test-build-sol-catalogues.py --sse target/release/sse
 
   wasm:
     name: wasm (node + browsers)
@@ -155,6 +158,8 @@ jobs:
       - run: node tests/ui/campaign.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/biosphere.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/time.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/desk-memory.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/stepper.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/rollcall.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/tactile.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/atlas.e2e.mjs --screens ui-screens

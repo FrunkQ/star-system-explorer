@@ -1055,7 +1055,7 @@
         ],
         "tests": [
           {
-            "name": "Earth (NSSDC fact sheet: Bond albedo 0.294, black-body temperature 254.0 K; magnetopause about 10 Earth radii, Kivelson and Russell 1995)",
+            "name": "Earth (NSSDC fact sheet: Bond albedo 0.294, solar irradiance 1361 W/m²; effective temperature 255 K from the measured outgoing longwave of 239.7 W/m², Loeb et al. 2018, doi:10.1175/JCLI-D-17-0208.1; the fact sheet's 254.0 K black-body figure belongs to its older albedo 0.306 and does not follow from its own 0.294; magnetopause about 10 Earth radii, Kivelson and Russell 1995)",
             "inputs": {
               "flux": {
                 "value": 1361.0,
@@ -1084,7 +1084,7 @@
             },
             "expect": {
               "body.effective_temperature": {
-                "value": 254.0,
+                "value": 255.0,
                 "unit": "k",
                 "tol": 1.0
               },

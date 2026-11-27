@@ -1,0 +1,1 @@
+{"key": "korner2004", "citation": "Körner and Paulsen 2004", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/cover.rs"], "claims": ["//!   averages 6.4 °C (Körner and Paulsen 2004)."], "tier": 3}

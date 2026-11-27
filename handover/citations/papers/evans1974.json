@@ -1,0 +1,1 @@
+{"key": "evans1974", "citation": "Evans 1974", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-field/src/lib.rs"], "claims": ["/// A wind-driven arc: a few to about ten keV (Evans 1974)."], "tier": 3}
