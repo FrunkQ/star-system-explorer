@@ -9,8 +9,8 @@
 //! Generated systems never name a model.
 //!
 //! The models are the published series as cited pack tables
-//! (`packs/base-sol/motion/`, built by `scripts/build-sol-motion.py`), read
-//! once and kept.
+//! (`packs/base-sol/motion/`, built by `scripts/build-sol-motion.py`), built
+//! into the kernel's shipped scenario (`scenario.rs`), read once and kept.
 
 use sse_core::math as m;
 use sse_time::earth::EarthOrientation;
@@ -24,23 +24,11 @@ pub const MOTION_FIELD: &str = "orbit.motion";
 /// universe time.
 pub const ANCHOR_FIELD: &str = "time.j2000_s";
 
-const TABLES: [&str; 9] = [
-    include_str!("../../../packs/base-sol/motion/vsop87a.mer.json"),
-    include_str!("../../../packs/base-sol/motion/vsop87a.ven.json"),
-    include_str!("../../../packs/base-sol/motion/vsop87a.emb.json"),
-    include_str!("../../../packs/base-sol/motion/vsop87a.mar.json"),
-    include_str!("../../../packs/base-sol/motion/vsop87a.jup.json"),
-    include_str!("../../../packs/base-sol/motion/vsop87a.sat.json"),
-    include_str!("../../../packs/base-sol/motion/vsop87a.ura.json"),
-    include_str!("../../../packs/base-sol/motion/vsop87a.nep.json"),
-    include_str!("../../../packs/base-sol/motion/elpmpp02.moon.json"),
-];
-
 /// Every motion model the kernel holds, by id.
 pub fn models() -> &'static BTreeMap<String, Series> {
     static CELL: OnceLock<BTreeMap<String, Series>> = OnceLock::new();
     CELL.get_or_init(|| {
-        TABLES
+        crate::scenario::MOTION_TABLES
             .iter()
             .map(|t| Series::from_json(t).expect("built-in motion table"))
             .map(|s| (s.id.clone(), s))
@@ -57,10 +45,8 @@ pub fn model(id: &str) -> Option<&'static Series> {
 pub fn earth() -> &'static EarthOrientation {
     static CELL: OnceLock<EarthOrientation> = OnceLock::new();
     CELL.get_or_init(|| {
-        EarthOrientation::from_json(include_str!(
-            "../../../packs/base-sol/motion/earth-orientation.json"
-        ))
-        .expect("built-in earth orientation table")
+        EarthOrientation::from_json(crate::scenario::EARTH_ORIENTATION)
+            .expect("built-in earth orientation table")
     })
 }
 
