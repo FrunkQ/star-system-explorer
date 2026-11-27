@@ -1,0 +1,1 @@
+{"key": "hollands2018", "citation": "Hollands et al. 2018, 20 pc sample", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-formation/src/tests.rs"], "claims": ["// (Hollands et al. 2018, 20 pc sample); the sketch giant phases allow a wide band."], "tier": 3}

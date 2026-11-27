@@ -1,0 +1,1 @@
+{"key": "scharlemann2014", "citation": "Scharlemann et al. 2014", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/soil_tests.rs"], "claims": ["/// totals (about 1500 Gt C in the top metre, Scharlemann et al. 2014;"], "tier": 3}

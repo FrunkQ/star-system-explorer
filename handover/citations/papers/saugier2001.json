@@ -1,0 +1,1 @@
+{"key": "saugier2001", "citation": "Saugier, Roy and Mooney 2001", "doi": [], "arxiv": [], "marks": [], "golden": false, "in_code": true, "earlier": "", "status": "unchecked", "checked": "", "note": "", "found": "", "places": ["crates/sse-life/src/cover_tests.rs"], "claims": ["// m-2 of biomass (Saugier, Roy and Mooney 2001)."], "tier": 3}
