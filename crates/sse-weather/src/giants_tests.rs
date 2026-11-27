@@ -741,3 +741,98 @@ fn a_patch_reads_the_same_cells_closer() {
     let (lat, lon) = crate::rules::lat_lon(d);
     assert!(lat > 0.0 && (lon - 30.0).abs() < 1e-9);
 }
+
+/// Largest divergence and largest vorticity of the top deck's wind over a small grid round a place, s⁻¹, by central
+/// differences on the sphere: div = (1 / a cos φ) (∂u/∂λ + ∂(v cos φ)/∂φ).
+fn div_and_curl(
+    gs: &GiantSettings,
+    c: &Conditions,
+    p: &GiantPrepared,
+    lat0: f64,
+    lon0: f64,
+    half_deg: f64,
+) -> (f64, f64) {
+    let d = m::PI / 180.0;
+    let a = c.radius_m;
+    let h = 1e-3;
+    let w = |lat: f64, lon: f64| giant_cell(gs, c, p, lat, lon).layers[2].wind_m_s;
+    let (mut div, mut curl) = (0.0f64, 0.0f64);
+    for i in 0..9 {
+        for j in 0..9 {
+            let lat = lat0 + half_deg * (i as f64 / 4.0 - 1.0);
+            let lon = lon0 + half_deg * (j as f64 / 4.0 - 1.0);
+            let cp = m::cos(lat * d);
+            let (e, wst) = (w(lat, lon + h), w(lat, lon - h));
+            let (n, s) = (w(lat + h, lon), w(lat - h, lon));
+            let du_dl = (e[0] - wst[0]) / (2.0 * h * d);
+            let dv_dl = (e[1] - wst[1]) / (2.0 * h * d);
+            let dvc = (n[1] * m::cos((lat + h) * d) - s[1] * m::cos((lat - h) * d)) / (2.0 * h * d);
+            let duc = (n[0] * m::cos((lat + h) * d) - s[0] * m::cos((lat - h) * d)) / (2.0 * h * d);
+            div = div.max(((du_dl + dvc) / (a * cp)).abs());
+            curl = curl.max(((dv_dl - duc) / (a * cp)).abs());
+        }
+    }
+    (div, curl)
+}
+
+#[test]
+fn ws1_a_sheared_ovals_winds_pile_nothing_up() {
+    let gs = base_settings();
+    let c = fixture("Saturn");
+    let p = prepare(&gs, &c, Date { day: 0.0 });
+    let s = p
+        .systems
+        .iter()
+        .filter(|s| s.kind == "oval" && s.aspect > 1.2)
+        .max_by(|x, y| x.aspect.total_cmp(&y.aspect))
+        .expect("a sheared oval");
+    let half = 0.5 * s.size_km * 1000.0 / c.radius_m * 180.0 / m::PI;
+    let (div, curl) = div_and_curl(&gs, &c, &p, s.lat_deg, s.lon_deg, half);
+    // Absolute: the vortex turns at about 2e-4 s⁻¹; the round direction inside a stretched distance gave a
+    // divergence of 2e-5 s⁻¹, a tenth of that. What is left is the differencing's own error, near 1e-9.
+    assert!(curl > 1e-5, "curl {curl:e}");
+    assert!(
+        div < 1e-8,
+        "divergence {div:e} against vorticity {curl:e} (aspect {})",
+        s.aspect
+    );
+}
+
+#[test]
+fn ws1_the_hexagons_wind_runs_along_its_sides() {
+    let gs = base_settings();
+    let c = fixture("Saturn");
+    let p = prepare(&gs, &c, Date { day: 0.0 });
+    let l = &p.layout;
+    let q = l.poles.iter().find(|q| q.north).unwrap();
+    assert_eq!(q.polygon_sides, 6);
+    let d = m::PI / 180.0;
+    let r_jet = (90.0 - l.polar_jet_lat_deg) * d * c.radius_m / 1000.0;
+    // A point on the edge a quarter of the way along a side, and the side's direction in the polar plane.
+    let lon = q.orient_lon_deg + 15.0;
+    let r = polygon_edge_km(r_jet, 6, q.orient_lon_deg, lon);
+    let lat = 90.0 - r / (c.radius_m / 1000.0) / d;
+    let wind = giant_cell(&gs, &c, &p, lat, lon).layers[2].wind_m_s;
+    let v1 = [m::cos(q.orient_lon_deg * d), m::sin(q.orient_lon_deg * d)];
+    let v2 = [
+        m::cos((q.orient_lon_deg + 60.0) * d),
+        m::sin((q.orient_lon_deg + 60.0) * d),
+    ];
+    let side = [v2[0] - v1[0], v2[1] - v1[1]];
+    let (sl, cl) = (m::sin(lon * d), m::cos(lon * d));
+    let flow = [wind[0] * -sl + wind[1] * -cl, wind[0] * cl + wind[1] * -sl];
+    let cross = (flow[0] * side[1] - flow[1] * side[0])
+        / (m::hypot(flow[0], flow[1]) * m::hypot(side[0], side[1]));
+    assert!(m::hypot(flow[0], flow[1]) > 50.0, "{wind:?}");
+    assert!(
+        cross.abs() < m::sin(0.5 * d),
+        "the wind crosses the side at {:.2}°",
+        m::asin(cross.abs()) / d
+    );
+    // And it piles nothing up there either, off the corners.
+    let (div, curl) = div_and_curl(&gs, &c, &p, lat, lon, 0.5);
+    assert!(
+        curl > 1e-6 && div < 1e-8,
+        "divergence {div:e} against vorticity {curl:e}"
+    );
+}
