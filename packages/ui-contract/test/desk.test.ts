@@ -66,6 +66,7 @@ test("the shell's parts say which desks each is on now", () => {
     ["clock", ["run"]],
     ["light", ["explore", "build"]],
     ["fill-screen", ["run"]],
+    ["card-sheet", ["run"]],
   ]);
   // The stage's edit tools are Build's; Select and Keyboard shortcuts are off Run; the ruler is on every desk until TM3.
   assert.deepEqual(DESKS.filter((d) => partShows("tools", d, "cut")), ["build"]);
