@@ -634,6 +634,7 @@ export async function carryOnGpu(renderer: WebGPURenderer, p: PackedCarry, place
   let queued = 0;
   let batch = 1;
   let since = performance.now();
+  let least = Infinity;
   const budget = opts.budgetMs ?? 8;
   const built = new Set<MeshBasicNodeMaterial>();
   const draw = async (m: MeshBasicNodeMaterial, into: RenderTarget) => {
@@ -649,7 +650,11 @@ export async function carryOnGpu(renderer: WebGPURenderer, p: PackedCarry, place
     queued = 0;
     await renderer.readRenderTargetPixelsAsync(into, 0, 0, 1, 1);
     if (!opts.each) return;
-    const took = performance.now() - since;
+    // What the batch cost the GPU: the wait less the least any wait has taken, since reading a texel back takes most
+    // of a frame on its own on some devices (on AC-ProArt the batch never grew past one draw, 28 Nov).
+    const waited = performance.now() - since;
+    least = Math.min(least, waited);
+    const took = waited - least;
     if (took < budget / 2 && batch < 1024) batch *= 2;
     else if (took > budget && batch > 1) batch = Math.max(1, batch >> 1);
     await opts.each();
