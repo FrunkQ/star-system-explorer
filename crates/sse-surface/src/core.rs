@@ -122,6 +122,11 @@ pub struct CoreSettings {
     /// Core alloy's density below pure iron's, per unit mass fraction of
     /// light elements.
     pub density_deficit_per_light: f64,
+    /// The march's grid (HF4b.1, melt design 6.1): a function of the body
+    /// alone, never of the date asked for. The first step, Myr, each next
+    /// one `grid_growth` times the last, capped at `step_myr`.
+    pub grid_first_myr: f64,
+    pub grid_growth: f64,
     pub step_myr: f64,
     /// Field strength law (Christensen 2010): c and f_ohm.
     pub field_c: f64,
@@ -173,6 +178,8 @@ impl Default for CoreSettings {
             iron_k0_gpa: 163.4,
             iron_k0_prime: 5.38,
             density_deficit_per_light: 1.0,
+            grid_first_myr: 1.0,
+            grid_growth: 1.25,
             step_myr: 20.0,
             field_c: 0.63,
             field_f_ohm: 0.9,
@@ -206,6 +213,88 @@ pub struct CoreStep {
     pub onset: f64,
     /// rms field inside the core, μT (0: no dynamo).
     pub field_ut: f64,
+    /// HF4b.1, melt design section 7: where the heat goes, W/m² of surface,
+    /// one set of names. They close at every step:
+    /// heat_lost = heat_conducted + heat_erupted;
+    /// heat_made = heat_radiogenic + heat_tidal;
+    /// heat_lost = heat_made + mantle_cooling + lid_cooling + core_heat;
+    /// core_heat = core_freezing + core_cooling.
+    /// A store's cooling is negative while it warms.
+    #[serde(default)]
+    pub heat_lost: f64,
+    #[serde(default)]
+    pub heat_conducted: f64,
+    #[serde(default)]
+    pub heat_erupted: f64,
+    #[serde(default)]
+    pub heat_made: f64,
+    #[serde(default)]
+    pub heat_radiogenic: f64,
+    #[serde(default)]
+    pub heat_tidal: f64,
+    #[serde(default)]
+    pub core_heat: f64,
+    #[serde(default)]
+    pub core_freezing: f64,
+    #[serde(default)]
+    pub core_cooling: f64,
+    #[serde(default)]
+    pub mantle_cooling: f64,
+    #[serde(default)]
+    pub lid_cooling: f64,
+    /// The stiff lid's thickness (a plate's, under moving plates), and the
+    /// crust's (zero until HF4b.2 makes crust), km.
+    #[serde(default)]
+    pub lid_km: f64,
+    #[serde(default)]
+    pub crust_km: f64,
+    /// Melt made and erupted, m of rock over the whole surface per Myr, and
+    /// the melt zone's liquid share (zero until HF4b.2).
+    #[serde(default)]
+    pub melt_made: f64,
+    #[serde(default)]
+    pub melt_erupted: f64,
+    #[serde(default)]
+    pub melt_retained: f64,
+}
+
+impl CoreStep {
+    /// The step a share `f` of the way from `a` to `b`: every number
+    /// linearly. A read between two grid points (melt design 6.1).
+    pub(crate) fn between(a: &CoreStep, b: &CoreStep, f: f64) -> CoreStep {
+        let l = |x: f64, y: f64| x + (y - x) * f;
+        CoreStep {
+            t_gyr: l(a.t_gyr, b.t_gyr),
+            t_mantle_k: l(a.t_mantle_k, b.t_mantle_k),
+            t_cmb_k: l(a.t_cmb_k, b.t_cmb_k),
+            q_core_tw: l(a.q_core_tw, b.q_core_tw),
+            q_surface_tw: l(a.q_surface_tw, b.q_surface_tw),
+            q_cmb_w_m2: l(a.q_cmb_w_m2, b.q_cmb_w_m2),
+            q_adiabat_w_m2: l(a.q_adiabat_w_m2, b.q_adiabat_w_m2),
+            q_dynamo_w_m2: l(a.q_dynamo_w_m2, b.q_dynamo_w_m2),
+            inner_core_km: l(a.inner_core_km, b.inner_core_km),
+            flow_m_s: l(a.flow_m_s, b.flow_m_s),
+            rm: l(a.rm, b.rm),
+            onset: l(a.onset, b.onset),
+            field_ut: l(a.field_ut, b.field_ut),
+            heat_lost: l(a.heat_lost, b.heat_lost),
+            heat_conducted: l(a.heat_conducted, b.heat_conducted),
+            heat_erupted: l(a.heat_erupted, b.heat_erupted),
+            heat_made: l(a.heat_made, b.heat_made),
+            heat_radiogenic: l(a.heat_radiogenic, b.heat_radiogenic),
+            heat_tidal: l(a.heat_tidal, b.heat_tidal),
+            core_heat: l(a.core_heat, b.core_heat),
+            core_freezing: l(a.core_freezing, b.core_freezing),
+            core_cooling: l(a.core_cooling, b.core_cooling),
+            mantle_cooling: l(a.mantle_cooling, b.mantle_cooling),
+            lid_cooling: l(a.lid_cooling, b.lid_cooling),
+            lid_km: l(a.lid_km, b.lid_km),
+            crust_km: l(a.crust_km, b.crust_km),
+            melt_made: l(a.melt_made, b.melt_made),
+            melt_erupted: l(a.melt_erupted, b.melt_erupted),
+            melt_retained: l(a.melt_retained, b.melt_retained),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -294,12 +383,13 @@ fn vinet_compression(p_gpa: f64, k0: f64, k0p: f64) -> f64 {
 }
 
 /// The history, or None for a world with no iron core to speak of (or no
-/// solid interior).
+/// solid interior). `heat_w_m2(t)` is the heat made at `t` Gyr, W/m² of
+/// surface: radiogenic, tidal.
 pub fn core_history(
     s: &CoreSettings,
     b: &Body,
     env: &SurfaceEnvelope,
-    heat_w_m2: &dyn Fn(f64) -> f64,
+    heat_w_m2: &dyn Fn(f64) -> (f64, f64),
 ) -> Option<CoreHistory> {
     if b.deep_envelope || b.core_mass_fraction < 0.01 || b.mass_earth <= 0.0 {
         return None;
@@ -420,7 +510,11 @@ pub fn core_history(
             .map(|x| x.regime == "mobile-lid" || x.regime.contains("magma"))
             .unwrap_or(false)
     };
-    let dt_gyr = (s.step_myr / 1000.0).max(1e-4);
+    // The grid (melt design 6.1): from the march's start, each step
+    // `grid_growth` times the last, capped; a function of the body alone.
+    let step_cap = (s.step_myr / 1000.0).max(1e-4);
+    let growth = s.grid_growth.max(1.0);
+    let mut h_next = (s.grid_first_myr / 1000.0).clamp(1e-6, step_cap);
     let sec = 3.155_76e16; // seconds a Gyr
     let mut steps = vec![];
     let mut events = vec![];
@@ -448,6 +542,46 @@ pub fn core_history(
             let theta = s.activation_j_mol * dtm / (R_GAS * t_u * t_u);
             0.53 * s.k_mantle * dtm / d * m::pow(theta.max(1.0), -4.0 / 3.0) * m::cbrt(ra.max(0.0))
         }
+    };
+    // HF4b.1: the stiff lid is kept state (melt design 3.2). Its base is a
+    // fixed step below the mantle (`sse.heat.lid_base_temperature`), it
+    // conducts what its thickness allows (`sse.heat.lid_conduction_with_burial`,
+    // nothing buried until HF4b.2), and it thickens when its base loses more
+    // than the mantle delivers (`sse.heat.lid_growth`, the Stefan rule,
+    // stepped backward so it is stable at any step: a young lid grows as √t
+    // and its surface heat falls as 1/√t while the mantle below loses only
+    // what convection brings it).
+    let ph = sse_physics::in_force();
+    let block = |id: &str, x: &[f64]| -> Vec<f64> {
+        ph.blocks()
+            .run(id, x)
+            .unwrap_or_else(|e| panic!("base block {id}: {e}"))
+    };
+    let lid_base = |t_u: f64| {
+        block("sse.heat.lid_base_temperature", &[t_u, s.activation_j_mol])[0]
+            .clamp(t_s, t_u.max(t_s))
+    };
+    let conduct = |t_l: f64, lid: f64| {
+        block(
+            "sse.heat.lid_conduction_with_burial",
+            &[s.k_mantle, t_l, t_s, lid, 0.0, 0.0, s.kappa_mantle],
+        )[0]
+    };
+    // The lid's backward step: ρc(T_m − T_l)(D′ − D)/h = k(T_l − T_s)/D′ − q_m,
+    // the positive root of its quadratic in D′.
+    let grow = |lid: f64, t_u: f64, q_m: f64, h_s: f64| {
+        let t_l = lid_base(t_u);
+        let a2 = rho_m * s.cp_mantle * (t_u - t_l).max(1.0);
+        let bq = a2 * lid - h_s * q_m;
+        let c = h_s * s.k_mantle * (t_l - t_s).max(0.0);
+        ((bq + m::sqrt(bq * bq + 4.0 * a2 * c)) / (2.0 * a2)).clamp(1.0, d.max(1.0))
+    };
+    // A plate's thickness: the rock that conducts what the mantle loses.
+    let plate = |t_u: f64, q: f64| (s.k_mantle * (t_u - t_s) / q.max(1e-12)).clamp(1.0, d.max(1.0));
+    let mut lid = if mobile_at(t) {
+        plate(t_u, top(t_u, true, wet))
+    } else {
+        grow(0.0, t_u, 0.0, h_next * sec)
     };
     // The hottest the mantle can be. Under moving plates, the cap. Under a
     // lid, the solidus at the lid's base, the lid as thick as the rock that
@@ -477,10 +611,20 @@ pub fn core_history(
         }
         lo
     };
+    let mut why_kept = String::new();
+    let mut on_kept = false;
     loop {
         // Fluxes at this state.
         let mobile = mobile_at(t);
         let q_top = top(t_u, mobile, wet);
+        if mobile {
+            lid = plate(t_u, q_top);
+        }
+        let q_cond = if mobile {
+            q_top
+        } else {
+            conduct(lid_base(t_u), lid)
+        };
         let t_l = t_u * adiabat_ratio;
         let dtc = t_c - t_l;
         let q_cmb = if dtc > 0.0 {
@@ -493,7 +637,8 @@ pub fn core_history(
         } else {
             0.0
         };
-        let heat = heat_w_m2(t) * a_s;
+        let (radiogenic, tidal) = heat_w_m2(t);
+        let heat = (radiogenic + tidal) * a_s;
         let qc = q_cmb * a_c;
         let qs = q_top * a_s;
         // The core: cooling plus freezing pays for what leaves its top.
@@ -637,12 +782,19 @@ pub fn core_history(
                 tw(q_ad * a_c)
             )
         };
+        let erupted = vented / a_s;
+        let core_heat = qc / a_s;
+        let core_freezing = freeze * cool_c / a_s;
+        if t <= age + 1e-12 {
+            why_kept = why_now.clone();
+            on_kept = on;
+        }
         steps.push(CoreStep {
             t_gyr: t,
             t_mantle_k: t_u,
             t_cmb_k: t_c,
             q_core_tw: qc / 1e12,
-            q_surface_tw: (qs + vented) / 1e12,
+            q_surface_tw: (q_cond + erupted) * a_s / 1e12,
             q_cmb_w_m2: q_cmb,
             q_adiabat_w_m2: q_ad,
             q_dynamo_w_m2: q_dyn.max(0.0),
@@ -651,17 +803,44 @@ pub fn core_history(
             rm,
             onset,
             field_ut: field,
+            heat_lost: q_cond + erupted,
+            heat_conducted: q_cond,
+            heat_erupted: erupted,
+            heat_made: radiogenic + tidal,
+            heat_radiogenic: radiogenic,
+            heat_tidal: tidal,
+            core_heat,
+            core_freezing,
+            core_cooling: core_heat - core_freezing,
+            mantle_cooling: q_top + erupted - (radiogenic + tidal) - core_heat,
+            lid_cooling: q_cond - q_top,
+            lid_km: lid / 1000.0,
+            crust_km: 0.0,
+            melt_made: 0.0,
+            melt_erupted: 0.0,
+            melt_retained: 0.0,
         });
         ric_prev = ric;
         first = false;
         if t >= age - 1e-12 {
             break;
         }
-        let h = dt_gyr.min(age - t);
+        // March on the fixed grid past the body's age; the read at its age
+        // falls between two grid points (6.1).
+        let h = h_next;
+        h_next = (h_next * growth).min(step_cap);
+        if !mobile {
+            lid = grow(lid, t_u, q_top, h * sec);
+        }
         t_c -= cool_c * h * sec;
         t_u -= cool_m * h * sec;
         // Melting carries out whatever would lift the mantle past the
-        // hottest it can be, as volcanism through the lid.
+        // hottest it can be, as volcanism through the lid. HF1's stand-in,
+        // read on the steady lid it was built on, not the kept one: on the
+        // kept young lid (a few km thick) it caps a young mantle at the
+        // surface solidus and vents 500 K of it in one step, which no melt
+        // supply could carry and which killed Mars's field at birth.
+        // HF4b.2 replaces the cap with melting itself.
         let cap = hottest(mobile, wet);
         vented = if t_u > cap {
             (t_u - cap) * mm * s.cp_mantle * eps_m / (h * sec)
@@ -674,6 +853,15 @@ pub fn core_history(
         wet += ((if mobile { 1.0 } else { 0.0 }) - wet) * relax;
         t += h;
     }
+    // The read at the body's age: between the last two grid points.
+    let n = steps.len();
+    if n >= 2 && steps[n - 1].t_gyr > age + 1e-12 {
+        let (a, b) = (&steps[n - 2], &steps[n - 1]);
+        let f = ((age - a.t_gyr) / (b.t_gyr - a.t_gyr)).clamp(0.0, 1.0);
+        steps[n - 1] = CoreStep::between(a, b, f);
+    }
+    events.retain(|e| e.t_gyr <= age + 1e-12);
+    let (on_prev, why_now) = (on_kept, why_kept);
     Some(CoreHistory {
         version: CORE_VERSION.into(),
         core_radius_km: rc / 1000.0,

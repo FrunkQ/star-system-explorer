@@ -1,6 +1,7 @@
 //! MF1: core heat histories against what the planets show.
 
 use crate::scenario::{fixtures, settings};
+use sse_core::math as m;
 
 fn core_of(name: &str) -> crate::core::CoreHistory {
     let b = fixtures()
@@ -154,4 +155,102 @@ fn rocky_worlds_publish_their_field_facts() {
     for w in ["Mars", "Venus", "Moon"] {
         assert_eq!(get(&facts(w), "body.magnetic_moment"), 0.0, "{w}");
     }
+}
+
+#[test]
+fn heat_fields_close_at_every_step() {
+    // HF4b.1, melt design section 7: the published heat fields close on each
+    // other at every step of every fixture with a core history, to
+    // round-off: 1e-12 of the largest flow in the sum.
+    let mut seen = 0;
+    for f in fixtures() {
+        let Some(c) = crate::envelope(&settings(), &f.body).core else {
+            continue;
+        };
+        for st in &c.steps {
+            let w = &f.body.label;
+            let scale = 1.0
+                + st.heat_lost.abs()
+                + st.heat_made.abs()
+                + st.mantle_cooling.abs()
+                + st.lid_cooling.abs()
+                + st.core_heat.abs();
+            let near = |a: f64, b: f64, what: &str| {
+                assert!(
+                    (a - b).abs() < 1e-12 * scale,
+                    "{w} at {} Gyr: {what}: {a} vs {b}",
+                    st.t_gyr
+                )
+            };
+            near(st.heat_lost, st.heat_conducted + st.heat_erupted, "lost");
+            near(st.heat_made, st.heat_radiogenic + st.heat_tidal, "made");
+            near(
+                st.heat_lost,
+                st.heat_made + st.mantle_cooling + st.lid_cooling + st.core_heat,
+                "books",
+            );
+            near(st.core_heat, st.core_freezing + st.core_cooling, "core");
+            assert!(st.lid_km > 0.0, "{w}: lid {}", st.lid_km);
+        }
+        seen += 1;
+    }
+    assert!(seen >= 4, "only {seen} fixtures have a core history");
+}
+
+#[test]
+fn a_young_lid_cools_as_a_half_space() {
+    // HF4b.1, melt design 3.2: a young stagnant lid grows as √t, so its
+    // surface heat falls as 1/√t, while the mantle under it loses only what
+    // convection brings (heat_conducted − lid_cooling) and barely changes.
+    // Under HF1 the surface lost the mantle's own flux and this fails.
+    let c = core_of("Mars");
+    let t0 = c.steps[0].t_gyr;
+    let at = |dt: f64| {
+        c.steps
+            .iter()
+            .find(|s| s.t_gyr - t0 >= dt)
+            .expect("a young step")
+    };
+    let (a, b) = (at(0.002), at(0.015));
+    let (ta, tb) = (a.t_gyr - t0, b.t_gyr - t0);
+    let want = m::sqrt(tb / ta);
+    let got = a.heat_conducted / b.heat_conducted;
+    assert!(
+        (got / want - 1.0).abs() < 0.15,
+        "surface heat fell {got:.2} times from {ta} to {tb} Gyr, a half-space falls {want:.2}"
+    );
+    let (ma, mb) = (
+        a.heat_conducted - a.lid_cooling,
+        b.heat_conducted - b.lid_cooling,
+    );
+    assert!((ma / mb - 1.0).abs() < 0.1, "mantle loss {ma} then {mb}");
+    assert!(
+        a.lid_km < 50.0 && b.lid_km > a.lid_km,
+        "lid {} then {} km",
+        a.lid_km,
+        b.lid_km
+    );
+}
+
+#[test]
+fn read_at_a_date_equals_the_line_read_there() {
+    // HF4b.1, melt design 6.1 and the time design's two-legs test: the grid
+    // is the body's own, so a history read at an earlier age is the longer
+    // history's line up to that age, read between its grid points, bit for
+    // bit.
+    let b = fixtures()
+        .into_iter()
+        .find(|f| f.body.label == "Mars")
+        .expect("fixture")
+        .body;
+    let long = crate::envelope(&settings(), &b).core.expect("core");
+    let mut young = b.clone();
+    young.age_gyr = 3.0;
+    let short = crate::envelope(&settings(), &young).core.expect("core");
+    let n = short.steps.len();
+    assert_eq!(short.steps[..n - 1], long.steps[..n - 1]);
+    let (p, q) = (&long.steps[n - 2], &long.steps[n - 1]);
+    let f = (3.0 - p.t_gyr) / (q.t_gyr - p.t_gyr);
+    let read = crate::core::CoreStep::between(p, q, f);
+    assert_eq!(short.steps[n - 1], read);
 }
