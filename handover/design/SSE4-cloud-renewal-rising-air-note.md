@@ -1,6 +1,6 @@
-# Giant cloud renewal in rising air (WS3b): design note, DRAFT
+# Giant cloud renewal in rising air (WS3b): design note
 
-Status: **draft, not accepted.** It was written while Alex's decision card on renewal time is open, at the coordinator's request. Nothing gets built from this note until Alex picks "add renewal by rising air" on that card. If he picks another option, the note is shelved.
+Status: **accepted.** Alex chose "add renewal by rising air" on the renewal-time card on 27 Nov 2026 at 23:33 UTC. The five questions in section 5 are built as recommended (package WS3b, `handover/packages/WS3b.md`).
 
 Track WS (stirred clouds). Builds on design `SSE4-stirred-clouds-design.md` sections 3.4 to 3.6, WS3 (`renewal_s`, `sse.weather.particle_fall_time`, `sse.weather.plume_count`), and the WS4 finding in `handover/packages/WS4.md`.
 
@@ -72,7 +72,7 @@ No world is special-cased.
 4. **Should absorbed sunlight below the deck count towards the heat that drives the turnover, as well as `F_int`?** Jupiter absorbs about 8 W/m² of sunlight, much of it below the ammonia deck (from memory). **Recommend: internal heat only for WS3b, and raise sunlight when the energy view (HF track) gives the absorbed profile by depth.** Counting it now would mean guessing the depth.
 5. **Does the plume count change?** No. `plume_count` still says how many tall storms carry the heat. This note uses the same heat to say how fast the rest of the deck is replaced. Each plume is drawn as before.
 
-## 6. Build package (only if Alex picks this option)
+## 6. Build package
 
 **WS3b, size S:**
 
