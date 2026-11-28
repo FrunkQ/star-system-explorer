@@ -44,8 +44,8 @@ try {
     // What the ship can do where it arrives (ship_at_world): the ship drawn, then the acts, none refused.
     await gm.waitForSelector(".insys [data-at-world]", { timeout: 60000 });
     assert.ok((await ins.locator("[data-at-world] [data-act]").count()) >= 1, "acts at the destination");
-    await gm.waitForSelector(".insys [data-at-world] [data-ship-plans]", { timeout: 30000 });
-    assert.equal(await ins.locator("[data-at-world] [data-ship-plans]").count(), 1, "the ship designed from its numbers");
+    await gm.waitForSelector(".insys [data-at-world] [data-builder] [data-builder-stage]", { timeout: 30000 });
+    assert.equal(await ins.locator("[data-at-world] [data-builder]").count(), 1, "the ship drawn from its parts");
     await shot(gm, "v8-voyage-at-world", true);
     // Abilities shape the ship (SHIP14 stage 4b): fit it for this world, and if the fit carries a heat shield for an
     // aerobraking pass, watch the pass with the shield glowing at its radiative balance.

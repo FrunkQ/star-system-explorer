@@ -100,8 +100,8 @@ try {
   await man.locator("[data-aboard-note]", { hasText: "topped up" }).waitFor();
   await page.waitForFunction(() => document.querySelector("[data-fuel=jump] [data-now]")?.dataset.now === "19.838");
   assert.equal(await man.locator("[data-fuel=jump] [data-fuel-top]").count(), 0);
-  await desk.locator("[data-picture=plans] svg").first().waitFor();
-  assert.equal(await desk.locator("[data-picture=plans] [data-remix]").count(), 0, "no remix outside Build");
+  await desk.locator("[data-picture=ship] [data-builder] [data-builder-stage]").first().waitFor();
+  assert.equal(await desk.locator("[data-remix], [data-picture=ship] [data-palette]").count(), 0, "no remix and no parts to clip outside Build");
   assert.equal(await desk.locator("[data-picture-file]").count(), 0, "no own picture outside Build");
 
   // Known to (MC2): on the Build desk each person aboard has an eye, not yet known to the table (as known as their
@@ -119,20 +119,22 @@ try {
   await crew.locator("[data-show-all-undo]").click();
   await page.waitForFunction((was) => JSON.stringify([...document.querySelectorAll("[data-aboard=crew] [data-person] [data-eye]")].map((e) => e.getAttribute("data-eye"))) === JSON.stringify(was), start);
 
-  // The ship's pictures (edit mode, here the Build desk) are the ship builder (CM14a): the ship opens as palette parts
-  // in plans and a 3D model, with the GM's own pictures and a selector; the old style and remix are gone. A part made
-  // longer and kept keeps the build with the ship, and the one last chosen is kept too.
-  await desk.locator("[data-picture=plans] [data-builder] svg").first().waitFor();
+  // The ship's pictures (edit mode, here the Build desk) are the ship builder (CM14b): the ship opens as palette parts
+  // in the builder, with the GM's own pictures and a selector; the old style and remix are gone. A tank made longer
+  // and kept keeps the build with the ship, and the one last chosen is kept too.
+  const builder = desk.locator("[data-picture=ship] [data-builder]");
+  await builder.locator("[data-palette]").waitFor();
   assert.equal(await desk.locator("[data-remix]").count(), 0, "the old style and remix are gone");
-  await desk.locator("[data-picture=plans] [data-builder] [data-longer]").click();
-  await desk.locator("[data-picture=plans] [data-keep-build]").click();
+  await builder.locator("[data-tab=tree]").click();
+  await builder.locator("[data-tree] button", { hasText: "tank" }).first().click();
+  await builder.locator("[data-length]").evaluate((el) => {
+    el.value = String(Number(el.value) + 0.3);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await builder.locator("[data-keep-build]").click();
   await desk.locator("[data-design-note]", { hasText: "Build kept" }).waitFor();
   assert.equal(await desk.locator("[data-field='construct.design']").count(), 0, "the recipe is drawn, not listed");
   await shot(page, "picture-designed-desk");
-  await desk.locator("[data-show=model]").click();
-  await desk.locator("[data-picture=model] [data-ship-model]").waitFor();
-  await desk.locator("[data-picture-note]", { hasText: "opens on this one" }).waitFor();
-  await shot(page, "picture-model-desk");
   const png = await page.evaluate(() => {
     const c = document.createElement("canvas");
     c.width = 1800;
@@ -151,19 +153,19 @@ try {
   await own.waitFor();
   const natural = await own.evaluate((i) => [i.naturalWidth, i.naturalHeight]);
   assert.deepEqual(natural, [960, 533], `own picture scaled to fit 960 (${natural})`);
-  assert.equal(await desk.locator("[data-show]").count(), 3, "plans, model and one picture to choose from");
+  assert.equal(await desk.locator("[data-show]").count(), 2, "the ship and one picture to choose from");
   await shot(page, "picture-own-desk");
   // Play: any view can be chosen, nothing is kept; it opens on the picture chosen last on Build.
   await chooseDesk(page, "Explore");
   await desk.locator("[data-picture='picture:0'] img[data-own-picture]").waitFor();
-  await desk.locator("[data-show=plans]").click();
-  await desk.locator("[data-picture=plans] svg").first().waitFor();
+  await desk.locator("[data-show=ship]").click();
+  await desk.locator("[data-picture=ship] [data-builder-stage]").first().waitFor();
   assert.equal(await desk.locator("[data-picture-file], [data-picture-clear], [data-remix]").count(), 0, "nothing to change in play");
   await chooseDesk(page, "Build");
   await desk.locator("[data-show='picture:0']").click();
   await desk.locator("[data-picture-clear]").click();
-  await desk.locator("[data-picture=plans] svg").first().waitFor();
-  assert.equal(await desk.locator("[data-show]").count(), 2);
+  await desk.locator("[data-picture=ship] [data-builder]").first().waitFor();
+  assert.ok((await desk.locator("[data-show]").count()) <= 1, "only the ship left");
   await chooseDesk(page, "Explore");
 
   // Cold sleep for Rhee: one person draws, so the oxygen lasts twice as long.

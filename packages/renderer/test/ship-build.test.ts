@@ -100,7 +100,9 @@ test("free points offer the open ends and the hull, not what is taken", () => {
   assert.ok(free.some((f) => f.key === "hab" && f.place === "front"));
   assert.ok(!free.some((f) => f.key === "hab" && f.place === "behind"), "the habitat's stern holds the tank");
   assert.ok(!free.some((f) => f.key === "tank" && f.place === "behind"), "the tank's stern holds the engine");
-  assert.ok(!free.some((f) => f.key === "tank" && f.place === "hull" && f.clock_deg === 90), "the radiator is there");
+  assert.ok(!free.some((f) => f.key === "tank" && f.place === "hull" && f.clock_deg === 90 && Math.abs(f.along! - 0.5) < 0.12), "the radiator is there");
+  // Copies round the hull: fewer starting clocks, each drop places them all.
+  assert.ok(freePoints(stack, placed, { sym: 2 }).filter((f) => f.key === "hab" && f.place === "hull").every((f) => f.clock_deg === 0 || f.clock_deg === 90));
   assert.ok(free.some((f) => f.key === "tank" && f.place === "hull" && f.clock_deg === 270));
 });
 

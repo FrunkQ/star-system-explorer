@@ -90,6 +90,22 @@ export const TOKENS: readonly TokenSpec[] = [
   { name: "tag-radius", type: "length", meaning: "Rounding of tag chips." },
   { name: "text-glow", type: "shadow", meaning: "Glow around text (phosphor screens); none for print." },
   { name: "chart-ground", type: "colour", meaning: "Ground behind an orbital chart drawing." },
+  // The workbench (ship builder, CM14b; the mock-up Alex accepted): a dark blueprint ground for building things, kept
+  // dark in every theme so the drawn build and its glowing connection points read the same everywhere.
+  { name: "bench-ground", type: "colour", meaning: "Ground of a builder's working screen (the blueprint)." },
+  { name: "bench-raised", type: "colour", meaning: "Raised controls and fields on the workbench." },
+  { name: "bench-raised-2", type: "colour", meaning: "Tips and tracks on the workbench, a step above raised." },
+  { name: "bench-ink", type: "colour", meaning: "Text on the workbench.", text_on: ["bench-ground", "bench-raised"] },
+  { name: "bench-ink-muted", type: "colour", meaning: "Secondary text on the workbench.", text_on: ["bench-ground"] },
+  { name: "bench-ink-faint", type: "colour", meaning: "Labels and parts not yet offered on the workbench." },
+  { name: "bench-line", type: "colour", meaning: "Rules and borders on the workbench." },
+  { name: "bench-accent", type: "colour", meaning: "The workbench's accent: blueprint lines, end connection points, the chosen control." },
+  { name: "bench-accent-ink", type: "colour", meaning: "Blueprint labels and drawn icons on the workbench." },
+  { name: "bench-on-accent", type: "colour", meaning: "Text on an accent-filled workbench button.", text_on: ["bench-accent"] },
+  { name: "bench-good", type: "colour", meaning: "Hull connection points and a covered need on the workbench." },
+  { name: "bench-warn", type: "colour", meaning: "Overshoot and marks on the workbench." },
+  { name: "bench-bad", type: "colour", meaning: "A danger verdict on the workbench." },
+  { name: "bench-violet", type: "colour", meaning: "Bay connection points and predicted parts on the workbench." },
 
   // Motion (dynamic minimalism, handover/interface-style.md): motion explains
   // a change of state and never delays input. Reduced-motion settings make

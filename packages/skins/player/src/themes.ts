@@ -33,6 +33,9 @@ export const PAPER: ThemeDoc = {
   vocab: "plain",
   tokens: {
     ground: "#FFFFFF",
+    // The workbench in one colour: print and e-ink draw the builder as ink on paper.
+    "bench-ground": "#FFFFFF", "bench-raised": "#F2F2F2", "bench-raised-2": "#E6E6E6", "bench-ink": "#111111", "bench-ink-muted": "#444444", "bench-ink-faint": "#777777", "bench-line": "#BBBBBB",
+    "bench-accent": "#111111", "bench-accent-ink": "#333333", "bench-on-accent": "#FFFFFF", "bench-good": "#111111", "bench-warn": "#555555", "bench-bad": "#111111", "bench-violet": "#555555",
     // One colour: every map slot is the ink, and the slot's pattern carries the answer (OV4).
     "map-1": "#111111",
     "map-2": "#111111",
@@ -185,6 +188,9 @@ export const PHOSPHOR: ThemeDoc = {
   ],
   tokens: {
     ground: "#050A06",
+    // The workbench in one colour: the screen's own green.
+    "bench-ground": "#050A06", "bench-raised": "#07100A", "bench-raised-2": "#0C1A10", "bench-ink": "#5CFF8A", "bench-ink-muted": "#2FBF5C", "bench-ink-faint": "#1F8A42", "bench-line": "#134D25",
+    "bench-accent": "#5CFF8A", "bench-accent-ink": "#8DFFAE", "bench-on-accent": "#050A06", "bench-good": "#5CFF8A", "bench-warn": "#2FBF5C", "bench-bad": "#8DFFAE", "bench-violet": "#2FBF5C",
     // One colour: every map slot is the ink, and the slot's pattern carries the answer (OV4).
     "map-1": "#5CFF8A",
     "map-2": "#5CFF8A",

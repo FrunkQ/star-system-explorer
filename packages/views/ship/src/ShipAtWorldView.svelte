@@ -9,6 +9,7 @@
   import { designShip, fitAbilities, passGlow, type AbilityRules, type DesignRules, type DesignShip, type FitResult, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import type { ShipAtWorld, ShipAtWorldAsk, ViewContext } from "../../../ui-contract/src/index.ts";
   import ShipPlans from "./ShipPlans.svelte";
+  import ShipBuilder from "./ShipBuilder.svelte";
 
   let { ctx, ask, ship, world, fuels = {} }: { ctx: ViewContext; ask: ShipAtWorldAsk; ship: DesignShip; world: ShipAtWorld; fuels?: Propellants } = $props();
 
@@ -63,9 +64,13 @@
 
 {#if pack}
   <div class="ship-at" data-ship-at-world>
-    {#key fitted}
-      <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={24} {...fitted ? { abilities: fitted } : {}} />
-    {/key}
+    <!-- The ship as it is, from its parts (the ship builder's picture). Fitted for a world, it is drawn by the fitting
+         rules until shields, lift and legs are parts a build carries (noted in CM14b). -->
+    {#if fitted}
+      {#key fitted}<ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={24} abilities={fitted} locked />{/key}
+    {:else}
+      <ShipBuilder {ctx} {ship} readonly />
+    {/if}
     <div class="bar">
       {#if askable && !fitted}
         <button type="button" onclick={fit} disabled={busy} data-fit-for-world>{busy ? "Fitting…" : `Fit it for ${world.name}`}</button>
@@ -78,7 +83,7 @@
     </div>
     {#if watching && pass && fitted}
       <figure data-pass-view>
-        <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={32} abilities={fitted} {pass} />
+        <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={32} abilities={fitted} {pass} locked />
         <figcaption class="muted">
           The aerobraking pass at its hottest: the shield's face at about {Math.round(pass.shield_k).toLocaleString("en-GB")} K (radiative balance with the kernel's peak heating), the bow shock standing off its nose, radiators folded behind it. The shock layer's glow is drawn for the eye.
         </figcaption>
