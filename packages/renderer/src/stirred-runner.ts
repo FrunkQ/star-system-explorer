@@ -77,6 +77,10 @@ async function work(q: StirWork, move: Transferable[] = []): Promise<StirAnswer>
 /** A still kept from before, by its key. */
 export const keptStill = (key: string): TrueTexture | undefined => kept.get(key);
 
+/** A number to so many places, for the console's warning (developers' words, not the GM's). */
+const r2 = (x: number) => Math.round(x * 100) / 100;
+const r1 = (x: number) => Math.round(x * 10) / 10;
+
 /** Great-circle distance between two places (degrees), m. */
 function apart(a: number, la1: number, lo1: number, la2: number, lo2: number): number {
   const p = unit(la1, lo1);
@@ -128,7 +132,7 @@ export function stirFace(key: string, face: TrueTexture, table: CarryTable): Pro
           const [la, lo, cla, clo] = [read[k * 4 + g * 2]!, read[k * 4 + g * 2 + 1]!, cpu[n * 4 + g * 2]!, cpu[n * 4 + g * 2 + 1]!];
           const off = apart(table.radius_m, la, lo, cla, clo);
           if (!(Math.abs(la - cla) <= pixelDeg && off <= far))
-            throw new Error(`the GPU read ${la.toFixed(2)}°, ${lo.toFixed(2)}° where the processor reads ${cla.toFixed(2)}°, ${clo.toFixed(2)}° (place ${sample[n * 2]!.toFixed(1)}°, ${sample[n * 2 + 1]!.toFixed(1)}°)`);
+            throw new Error(`the GPU read ${r2(la)}°, ${r2(lo)}° where the processor reads ${r2(cla)}°, ${r2(clo)}° (place ${r1(sample[n * 2]!)}°, ${r1(sample[n * 2 + 1]!)}°)`);
         }
       });
       const made = await work({ op: "compose", face, table, read }, [read.buffer]);
