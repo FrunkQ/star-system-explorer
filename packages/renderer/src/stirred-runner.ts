@@ -10,14 +10,14 @@ import type { TrueTexture } from "./true-look.ts";
 import type { CarryTable } from "./stirred-carry.ts";
 import { carryOnGpu } from "./stirred-gpu.ts";
 import { packCarry, type PackedCarry } from "./stirred-pack.ts";
-import { composeStill, placesFor, twinOf } from "./stirred-still.ts";
+import { composeStill, placesFor } from "./stirred-still.ts";
 import type { StirAnswer, StirWork } from "./stirred-worker.ts";
 
 const KEPT = 32;
 /** How long the carrying's draws may hold the GPU each frame, ms: about half a frame at 60 a second. */
 const BUDGET_MS = 8;
-/** Latitudes (degrees) of the places checked against the processor, one in each kind of band, longitudes spread. */
-const CHECKED = [-62, -27, -6, 9, 33, 64];
+/** The most the younger cloud's median shift north or south may be before the carrying is taken as broken, degrees. */
+const MOST_SHIFT_DEG = 10;
 const kept = new Map<string, TrueTexture>();
 let gpu: Promise<WebGPURenderer | null> | null = null;
 let queue: Promise<unknown> = Promise.resolve();
@@ -64,7 +64,6 @@ async function work(q: StirWork, move: Transferable[] = []): Promise<StirAnswer>
   const w = theWorker();
   if (!w) {
     if (q.op === "pack") return { id: 0, packed: packCarry(q.table) };
-    if (q.op === "twin") return { id: 0, twin: twinOf(q.table, q.places) };
     return { id: 0, still: composeStill(q.face, q.table, q.read) };
   }
   const id = ++asked;
@@ -77,8 +76,7 @@ async function work(q: StirWork, move: Transferable[] = []): Promise<StirAnswer>
 /** A still kept from before, by its key. */
 export const keptStill = (key: string): TrueTexture | undefined => kept.get(key);
 
-/** A number to so many places, for the console's warning (developers' words, not the GM's). */
-const r2 = (x: number) => Math.round(x * 100) / 100;
+/** A number to a place, for the console's warning (developers' words, not the GM's). */
 const r1 = (x: number) => Math.round(x * 10) / 10;
 
 const frame = () => new Promise<void>((done) => (typeof requestAnimationFrame === "function" ? requestAnimationFrame(() => done()) : setTimeout(done, 0)));
@@ -100,32 +98,24 @@ export function stirFace(key: string, face: TrueTexture, table: CarryTable): Pro
       const filed = await work({ op: "pack", table });
       if (!filed.packed) throw new Error(filed.error ?? "the table could not be filed");
       const packed: PackedCarry = { ...filed.packed, table };
-      // A few places carried by the processor too, alongside: a shader three.js fails to build only says so on the
-      // console and reads back zeros, so the GPU's answer is held to the processor's before it is shown (AC-ProArt,
-      // 28 Nov). Only the younger generation's latitude is held, to a pixel of the face, and at most two places may
-      // miss. The older generation cannot be held at all: Jupiter's eddies make its path chaotic, a nudge of 0.00001°
-      // at the start moving it by up to 3.5° of latitude (WS5.md), so float32 and float64 part company there and
-      // either is as good a picture. Along the bands both are read where they drifted for their age, so a float's last
-      // digit of latitude times the jets' shear moves them a long way east or west. A broken shader misses everywhere.
+      // A shader three.js fails to build only says so on the console and reads back zeros (AC-ProArt, 28 Nov), so the
+      // answer is looked over before it is shown. It cannot be held to the processor's place by place: Jupiter's eddies
+      // make the paths chaotic, a nudge of 0.00001° at the start moving where the cloud was made by up to 3.5° of
+      // latitude, so float32 and float64 part company and either is as good a picture (WS5.md). What does hold: the
+      // younger generation moves only a few pixels north or south (WS5.md, how far cloud moves), so its median shift
+      // is under 10°; a shader that read back zeros puts every pixel on the equator, a median of about 45°.
       const places = placesFor(face.width, face.height);
-      const at = CHECKED.map((lat, n) => {
-        const j = Math.min(face.height - 1, Math.max(0, Math.floor(((lat + 90) / 180) * face.height)));
-        const i = Math.floor(((n * 0.37 + 0.11) % 1) * face.width);
-        return j * face.width + i;
-      });
-      const sample = new Float32Array(at.flatMap((k) => [places[k * 2]!, places[k * 2 + 1]!]));
-      const twin = work({ op: "twin", table, places: sample });
       // A frame between batches of draws, so the view's own frames keep coming while the still is built.
       const read = await carryOnGpu(r, packed, places, face.width, face.height, { budgetMs: BUDGET_MS, each: frame });
-      const cpu = (await twin).twin;
-      if (!cpu) throw new Error("the processor's check could not be made");
-      const pixelDeg = 180 / face.height;
-      const misses = at.flatMap((k, n) => {
-        const [la, lo, cla, clo] = [read[k * 4]!, read[k * 4 + 1]!, cpu[n * 4]!, cpu[n * 4 + 1]!];
-        const sane = [0, 1, 2, 3].every((q) => Number.isFinite(read[k * 4 + q]!)) && Math.abs(read[k * 4 + 2]!) <= 90;
-        return sane && Math.abs(la - cla) <= pixelDeg ? [] : [`the GPU read ${r2(la)}°, ${r2(lo)}° where the processor reads ${r2(cla)}°, ${r2(clo)}° (place ${r1(sample[n * 2]!)}°, ${r1(sample[n * 2 + 1]!)}°)`];
-      });
-      if (misses.length > 2) throw new Error(`${misses.length} of ${at.length} places checked disagree: ${misses.join("; ")}`);
+      const shifts: number[] = [];
+      let broken = 0;
+      for (let k = 0; k < face.width * face.height; k += 97) {
+        if (![0, 1, 2, 3].every((q) => Number.isFinite(read[k * 4 + q]!)) || Math.abs(read[k * 4]!) > 90 || Math.abs(read[k * 4 + 2]!) > 90) broken++;
+        else shifts.push(Math.abs(read[k * 4]! - places[k * 2]!));
+      }
+      shifts.sort((x, y) => x - y);
+      const median = shifts[shifts.length >> 1] ?? 90;
+      if (broken > 0 || median > MOST_SHIFT_DEG) throw new Error(`the GPU's carrying looks broken: ${broken} places unreadable, the younger cloud's median shift ${r1(median)}° (at most ${MOST_SHIFT_DEG}°)`);
       const made = await work({ op: "compose", face, table, read }, [read.buffer]);
       if (!made.still) throw new Error(made.error ?? "the still could not be composed");
       kept.set(key, made.still);

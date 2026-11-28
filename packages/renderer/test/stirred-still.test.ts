@@ -60,3 +60,15 @@ test("cloud drawn finer than a pixel is read through a coarser level: a checkerb
   const sharp = composeStill(checks, t, readOf((la, lo) => [la, lo]));
   assert.equal(sharp.data[(10 * W + 10) * 4], 0);
 });
+
+test("cloud sheared along its band is averaged along the band alone: the bands keep their colours", () => {
+  // Bands two pixels tall, read from places dragged east by forty degrees per degree of latitude (a jet's shear):
+  // neighbours north and south read forty of the face's pixels apart east-west and none north-south.
+  const bands = faceOf((i, j) => (j % 4 < 2 ? [255, 255, 255] : [0, 0, 0]));
+  const s = composeStill(bands, t, readOf((la, lo) => [la, lo + 40 * la]));
+  for (const [i, j] of [[10, 10], [33, 13], [50, 20], [3, 25]] as const) {
+    const want = bands.data[(j * W + i) * 4]!;
+    const v = s.data[(j * W + i) * 4]!;
+    assert.ok(Math.abs(v - want) < 2, `pixel ${i}, ${j}: ${v}, its band is ${want}`);
+  }
+});
