@@ -49,8 +49,65 @@ SOURCES = {
     "idss": "International Docking System Standard (IDSS) Interface Definition Document, revision E, 2016: an 800 mm passage. https://www.internationaldockingstandard.com/ (from memory, unverified).",
     "cbm": "Common Berthing Mechanism on the International Space Station: a 50 inch (1.27 m) square passage (from memory, unverified).",
     "authored": "authored for play and pictures; in the fudge register",
+    "wiki-engines": "Wikipedia, Comparison of orbital rocket engines, the Mass (kg) column, read 28 Nov 2026 (RS-25 3,526; F-1 8,391; J-2 1,438; Merlin 1D FT 470; AJ10-190 118). https://en.wikipedia.org/wiki/Comparison_of_orbital_rocket_engines (unverified: the page does not say dry or wet; liquid rows carry no 'with fuel' label).",
+    "nasa-std-5001b": "NASA-STD-5001B with Change 3 (2022), Structural design and test factors of safety for spaceflight hardware, section 4.2.1 Table 1: metallic structures, ultimate design factor 1.4, yield design factor 1.25 (protoflight). https://standards.nasa.gov/standard/nasa/nasa-std-5001 (unverified).",
+    "nasa-tnd6876": "Szabo, S. V. and Groesbeck, W. A. 1972, Centaur space vehicle pressurized propellant feed system tests, NASA TN D-6876, page 20: the flight-weight Centaur tank 'was structurally limited to maximum tank pressures of 19.6 N/cm2 (28.5 psia) in the hydrogen tank and 27.6 N/cm2 (40.0 psia) in the liquid oxygen tank'. https://ntrs.nasa.gov/api/citations/19720025206/downloads/19720025206.pdf (unverified).",
+    "nss-iss-elements": "International Space Station reference guide, Elements chapter (NASA; the copy at nss.org, an edition before Node 3 flew): Destiny length 8.5 m, diameter 4.3 m, mass 14,515 kg; Node 1 length 5.5 m, diameter 4.3 m, mass 11,895 kg. https://nss.org/wp-content/uploads/2017/07/ISS-International-Space-Station-03-Elements.pdf (unverified).",
+    "nasa-iss-atcs": "NASA, International Space Station active thermal control system overview: 'Each Radiator ORU measures 76.4 feet (23.3 meters) by 11.2 feet (3.4 meters) and weighs 2,475 pounds (1,122.64 kilograms)'. https://www.nasa.gov/wp-content/uploads/2021/02/473486main_iss_atcs_overview.pdf (unverified).",
+    "jpl-dawn-launch": "NASA/JPL 2007, Dawn launch press kit, Quick Facts: 'Two 8.3-meter-by-2.3-meter (27-foot-by-8-foot) solar panels ... Each wing weighs almost 63 kilograms (139 pounds).' https://www.jpl.nasa.gov/news/press_kits/dawn-launch.pdf (unverified).",
+    "wiki-mplm": "Wikipedia, Multi-Purpose Logistics Module, specifications: length 6.6 m, width 4.57 m, mass 4,082 kg empty, read 28 Nov 2026 (the body text says about 4,400 kg). https://en.wikipedia.org/wiki/Multi-Purpose_Logistics_Module (unverified).",
     "geometry": "geometry: volume is length times radius squared (a lathe's frustums); outer area its side and ends",
 }
+
+# Engine dry masses (CM14c part 3): a cited published table, keyed by GCAT's engine name. An engine not listed here
+# keeps "mass_t" in its to_read and its build says "needs part masses"; never a guessed mass.
+ENGINE_KG = {
+    "F-1": (8391.0, "the page's F-1 row"),
+    "J-2": (1438.0, "the page's J-2 row"),
+    "SSME": (3526.0, "the page's RS-25 row (the Space Shuttle Main Engine)"),
+    "Merlin 1D-5": (470.0, "the page's Merlin 1D FT row, whose 845 kN sea-level thrust matches GCAT's figure"),
+    "AJ10-190": (118.0, "the page's AJ10-190 row"),
+}
+
+# Mass by kind (CM14c part 3c): a generic part with no sizing block of its own weighs what one flown example of its
+# kind weighs per square metre or per cubic metre of the same measure the part's own figure uses (outer area for a
+# panel, length times radius squared for a can). One row per kind, each cited and editable; the kinds with no row
+# (shields, legs, dishes, bays) still say "needs part masses". The loop: a sizing block per kind (F-CM14c-kind-mass).
+PI = 3.141592653589793
+
+
+def _can(m_kg, length_m, diameter_m):
+    return m_kg / (PI * (diameter_m / 2) ** 2 * length_m)
+
+
+MASS_BY_KIND = [
+    {"kind": "solar", "per": "area_m2", "v": round(63.0 / (8.3 * 2.3), 4), "unit": "kg m-2", "src": "jpl-dawn-launch", "check": "unverified",
+     "why": "a Dawn solar wing: almost 63 kg over 8.3 m by 2.3 m"},
+    {"kind": "radiator", "per": "area_m2", "v": round(1122.64 / (23.3 * 3.4), 4), "unit": "kg m-2", "src": "nasa-iss-atcs", "check": "unverified",
+     "why": "an ISS heat rejection radiator: 1,122.64 kg over 23.3 m by 3.4 m deployed"},
+    {"kind": "habitat", "per": "volume_m3", "v": round(_can(14515.0, 8.5, 4.3), 4), "unit": "kg m-3", "src": "nss-iss-elements", "check": "unverified",
+     "why": "the ISS Destiny laboratory: 14,515 kg in a can 8.5 m long and 4.3 m across, before racks"},
+    {"kind": "node", "per": "volume_m3", "v": round(_can(11895.0, 5.5, 4.3), 4), "unit": "kg m-3", "src": "nss-iss-elements", "check": "unverified",
+     "why": "ISS Node 1: 11,895 kg in a can 5.5 m long and 4.3 m across"},
+    {"kind": "pod", "per": "volume_m3", "v": round(_can(4082.0, 6.6, 4.57), 4), "unit": "kg m-3", "src": "wiki-mplm", "check": "unverified",
+     "why": "the Multi-Purpose Logistics Module: 4,082 kg empty in a can 6.6 m long and 4.57 m across"},
+]
+
+
+# Tank walls (CM14c part 3): what the thin-wall block sse.ship.tank_wall_mass reads besides the room. The design
+# pressure is a flown upper stage's oxygen tank limit (the higher of its two, so a hydrogen tank errs heavy); the
+# wall stress is the alloy's strength over NASA-STD-5001B's factors; the alloy is the master data sheet's row.
+PSIA_PA = 0.45359237 * 9.80665 / 0.0254 ** 2
+TANK_WALL = "al-2219-t87"
+
+
+def tank_wall_figures():
+    return {
+        "design_pressure_pa": fig(round(40.0 * PSIA_PA, 0), "Pa", "nasa-tnd6876", check="unverified", why="40.0 psia, the Centaur oxygen tank's structural limit (its hydrogen tank's is 28.5 psia)"),
+        "ultimate_factor": fig(1.4, "", "nasa-std-5001b", check="unverified", why="ultimate design factor for metallic structures"),
+        "yield_factor": fig(1.25, "", "nasa-std-5001b", check="unverified", why="yield design factor for metallic structures, protoflight"),
+    }
+
 
 # The base palette's names are physics names (ruling 14A.5) and never a named screen ship (house rule; ruling 14A.3).
 REFUSED = [r"atomic\s*rockets?", r"projectrho", r"\bliberator\b", r"millennium falcon", r"\bserenity\b", r"rocinante", r"nostromo", r"discovery one"]
@@ -172,6 +229,11 @@ def real_parts():
         figures = {"exhaust_km_s": fig(e["exhaust_km_s"], "km s-1", GCAT, "derived", why="GCAT's specific impulse times the master data sheet's standard gravity"), "isp_s": fig(e["isp_s"], "s", GCAT)}
         if e.get("thrust_n") is not None:
             figures["thrust_n"] = fig(e["thrust_n"], "N", GCAT)
+        to_read = list(e.get("to_read", []))
+        if e["id"] in ENGINE_KG:
+            m, why = ENGINE_KG[e["id"]]
+            figures["dry_t"] = fig(m / 1e3, "t", "wiki-engines", check="unverified", why=why)
+            to_read = [x for x in to_read if x != "mass_t"]
         host = engine_host.get(e["id"])
         # The bell's size is not in the catalogue: drawn to fit its stage's cluster (estimated), or small on a craft.
         if host:
@@ -195,7 +257,7 @@ def real_parts():
             "maker": e["maker"],
             "fuels": e["fuels"],
             "energy_from": e["energy_from"],
-            "to_read": e.get("to_read", []),
+            "to_read": to_read,
             "credit": GCAT,
         }
         if year is not None:
@@ -276,10 +338,11 @@ def generic_parts():
         V = round(3.141592653589793 * r * r * L, 6)
         tag = f"{size:g} m"
         out.append({"id": f"tank-{tag.replace(' ', '')}", "name": f"propellant tank, {tag} across", "kind": "tank", "alone": False,
-                    "figures": {"volume_m3": fig(V, "m3", "geometry", "derived", why="length times radius squared")},
+                    "figures": {"volume_m3": fig(V, "m3", "geometry", "derived", why="length times radius squared"), **tank_wall_figures()},
+                    "wall_material": TANK_WALL,
                     "points": axial(size, ["propellant"], L) + hull_ports(0.8, ["propellant"], L, r, 2),
                     "shape": {"hint": "lathe", "length_m": L, "radius_m": r}, "scale": vol(),
-                    "to_read": ["wall and insulation mass from the thin-wall pressure block (CM13 part 2)"]})
+                    "to_read": ["insulation, ends, welds and fittings (the thin-wall block weighs the wall alone)"]})
         out.append({"id": f"habitat-{tag.replace(' ', '')}", "name": f"habitat can, {tag} across", "kind": "habitat", "alone": True,
                     "figures": {"volume_m3": fig(V, "m3", "geometry", "derived", why="length times radius squared")},
                     "points": axial(min(size, 1.27) if size < 4 else 1.27, ["air", "people", "power"], L) + hull_ports(0.8, ["air", "people", "power"], L, r, 4),
@@ -524,7 +587,7 @@ def build():
         "provides": {
             "other": {
                 "about": "The parts palette (compound ships, CM13): every part in the one part format (packages/ui-contract/src/parts.ts). Real stages, engines, power sources, arrays, dishes and a bay with the figures they flew with and the year they first flew; generic primitives with geometry only. Physics names only (ruling 14A.5). Built by scripts/build-base-parts.py; do not edit by hand.",
-                "palette": {"eras": ERAS, "port_sizes": PORTS, "parts": parts, "credits": [SOURCES[GCAT], SOURCES[NSSDCA]]},
+                "palette": {"eras": ERAS, "port_sizes": PORTS, "parts": parts, "mass_by_kind": MASS_BY_KIND, "credits": [SOURCES[GCAT], SOURCES[NSSDCA]]},
                 "sources": SOURCES,
                 "examples": EXAMPLES,
             }

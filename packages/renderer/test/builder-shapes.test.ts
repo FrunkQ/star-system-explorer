@@ -83,3 +83,20 @@ test("a bay is open along its top", () => {
   for (let i = 0; i < pos.count; i++) if (Math.abs(pos.getY(i)) < 0.3) topZ = Math.max(topZ, pos.getZ(i));
   assert.ok(topZ < 0, `nothing of the shell straight overhead (highest near the middle line ${topZ})`);
 });
+
+test("cut away, a bay and a habitat open on the viewer's side; whole, they are closed there", () => {
+  for (const id of ["bay", "habitat-4m"]) {
+    const r: BuildRecipe = { format: "sse.build/1", name: "cut", parts: [{ key: "a", part: id }] };
+    const { placed } = placeBuild(r, PALETTE);
+    const nearSide = (cut: boolean) => {
+      const g = partShapes(placed[0]!, 32, { cut })[0]!.geometry;
+      const pos = g.getAttribute("position");
+      let least = Infinity;
+      for (let i = 0; i < pos.count; i++) if (Math.abs(pos.getZ(i)) < 0.3) least = Math.min(least, pos.getY(i));
+      return least;
+    };
+    const R = placed[0]!.part.shape.radius_m;
+    assert.ok(nearSide(false) < -0.9 * R, `${id} whole reaches the viewer's side`);
+    assert.ok(nearSide(true) > -0.5 * R, `${id} cut away is open there (${nearSide(true)})`);
+  }
+});

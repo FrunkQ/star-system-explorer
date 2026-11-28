@@ -17203,6 +17203,38 @@
      }
     },
     {
+     "id": "al-2219-t87",
+     "names": {
+      "physics": "aluminium alloy 2219-T87 (Al-6.3Cu)",
+      "plain": "aluminium tank alloy",
+      "story": "tank alloy"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2840.0,
+      "unit": "kg m-3",
+      "src": "aerospacemetals-2219",
+      "check": "unverified",
+      "note": "2.84 g/cc"
+     },
+     "yield_strength": {
+      "v": 393000000.0,
+      "unit": "Pa",
+      "src": "aerospacemetals-2219",
+      "check": "unverified",
+      "note": "393 MPa (57000 psi), typical"
+     },
+     "tensile_strength": {
+      "v": 476000000.0,
+      "unit": "Pa",
+      "src": "aerospacemetals-2219",
+      "check": "unverified",
+      "note": "476 MPa (69000 psi), typical"
+     },
+     "note": "typical values from the Aluminum Association, not design minimums; the product form and direction are not stated"
+    },
+    {
      "id": "polyethylene",
      "names": {
       "physics": "polyethylene (CH2)n",
@@ -20015,6 +20047,12 @@
      "text": "Abbott, B. P. et al. (LIGO and Virgo) 2017, Phys. Rev. Lett. 119, 161101: GW170817, observation of gravitational waves from a binary neutron star inspiral",
      "status": "verified",
      "doi": "10.1103/PhysRevLett.119.161101"
+    },
+    {
+     "id": "aerospacemetals-2219",
+     "text": "Aerospace Metals, Aluminum 2219-T87 data sheet (Aluminum Association typical values, 'not for design'): density 2.84 g/cc; ultimate tensile strength 476 MPa (69000 psi); tensile yield strength 393 MPa (57000 psi)",
+     "status": "unverified",
+     "url": "https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2219-T87.pdf"
     },
     {
      "id": "ame2020",

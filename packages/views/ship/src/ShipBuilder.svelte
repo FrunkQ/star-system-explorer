@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { PAINT_SWATCHES, budgets, buildLayout, driveFacts, freePoints, fromLayout, designShip, readPropellants, shipViews, startBuilder, type BuildRecipe, type BuiltPart, type BuilderMarker, type BuilderScene, type DesignRules, type DesignShip, type FreePoint, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { PAINT_SWATCHES, budgets, buildLayout, driveFacts, freePoints, fromLayout, designShip, readPropellants, readTankWalls, shipViews, startBuilder, wallKey, type BuildRecipe, type BuiltPart, type BuilderMarker, type BuilderScene, type DesignRules, type DesignShip, type FreePoint, type Propellants, type ShipStyle, type TankWall } from "../../../renderer/src/index.ts";
   import { eraOf, paletteByUse, sayNumber, shipRecordOf, verdictWords, type NavShip, type Part, type PartsPalette, type ShipAtWorld, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
@@ -46,9 +46,10 @@
   const read = (path: string) => fetch(new URL(path, document.baseURI)).then((r) => r.json());
   $effect(() => {
     void Promise.all([read(SHIPS_PACK), read(PARTS_PACK)])
-      .then(([s, p]: [{ provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }, { provides: { other: { palette: PartsPalette; examples?: Example[] } } }]) => {
+      .then(([s, p]: [{ provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }, { provides: { other: { palette: PartsPalette; examples?: Example[]; sources?: Record<string, string> } } }]) => {
         pack = { rules: s.provides.other.ship_design, styles: s.provides.other.ship_styles };
         palette = p.provides.other.palette;
+        partSources = p.provides.other.sources ?? {};
         examples = p.provides.other.examples ?? [];
       })
       .catch((e) => (missing = `The parts could not be read (${e instanceof Error ? e.message : String(e)}).`));
@@ -74,6 +75,10 @@
   let notes = $state<string[]>([]);
   let fuels = $state<Propellants>({});
   let reframe = $state(1);
+  // Tank walls from the kernel's thin-wall flow, cached by what each wall depends on (renderer ship-walls.ts), so a
+  // stretched tank asks again and an unchanged one never does.
+  let walls = $state<Record<string, TankWall>>({});
+  let partSources = $state<Record<string, string>>({});
 
   // Open the ship as parts once the palette is here (convert on open); a saved build wins.
   $effect(() => {
@@ -106,11 +111,21 @@
   let hover = $state<number | null>(null);
   let tab = $state<"part" | "tree" | "paint">("part");
   let viewStyle = $state<"flat" | "3d" | "wire">("3d");
+  let cut = $state(false);
   let seen = $state<"above" | "tilted" | "edge" | "free">("tilted");
   let sheet = $state<"palette" | "inspector" | null>(null);
 
   const style = $derived(pack ? (pack.styles.spine ?? Object.values(pack.styles)[0]!) : null);
-  const layout = $derived(pack && palette ? buildLayout(recipe, palette, fuels, pack.rules) : null);
+  const layout = $derived(pack && palette ? buildLayout(recipe, palette, fuels, pack.rules, walls) : null);
+  $effect(() => {
+    const placed = layout?.placed ?? [];
+    const have = untrack(() => walls);
+    if (!placed.some((q) => { const k = wallKey(q); return k !== null && !(k in have); })) return;
+    void readTankWalls(ctx.session, placed, have)
+      .then((got) => Object.keys(got).length && (walls = { ...untrack(() => walls), ...got }))
+      .catch(() => {});
+  });
+  const massOf = (key: string): string => layout?.totals.mass_from[key] ?? "";
   const facts = $derived(layout ? driveFacts(layout.record) : null);
   // A part with no mass yet leaves the build's masses unknown: delta-v and push are said as needing them.
   const massKnown = $derived(!!layout && !layout.totals.unmassed.length);
@@ -309,7 +324,7 @@
     for (const b of recipe.parts) if (b.paint?.startsWith("#")) paints[b.key] = b.paint;
     const frame = reframe !== lastFrame;
     lastFrame = reframe;
-    s.show({ layout: l, placed: l.placed, name: recipe.name, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", frame });
+    s.show({ layout: l, placed: l.placed, name: recipe.name, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", cut, frame });
     s.draw({ yaw_deg: cam.yaw, pitch_deg: cam.pitch, zoom: cam.zoom, pan: cam.pan }, box.w, box.h);
   });
   // "Seen from": a short turn to the preset; a drag makes it Free.
@@ -539,7 +554,7 @@
         </div>
       </div>
       {#if !readonly}
-        <button type="button" class="chip" disabled title="Cutaway comes with bays that hold parts inside (CM8)">Cutaway</button>
+        <button type="button" class="chip" class:on={cut} aria-pressed={cut} onclick={() => ((cut = !cut), viewStyle === "flat" && (viewStyle = "3d"))} title="Open bays and habitats on this side, so what they hold shows" data-cutaway>Cutaway</button>
         <button type="button" class="chip" disabled title="Sensor views come with sensor parts and their fields of view (CM13 part 3)">Sensor views</button>
         <button type="button" class="chip" onclick={doUndo} title="Undo (Ctrl+Z)" data-undo>Undo</button>
       {/if}
@@ -637,6 +652,7 @@
                   <dt>{k.replaceAll("_", " ")}</dt><dd>{sayNumber(f.v, 0, { decimals: Math.abs(f.v) >= 100 ? 0 : 2 })} {f.unit} {#if f.mark !== "cited"}<span class="mark">{f.mark}</span>{/if}</dd>
                 {/each}
               </dl>
+              {#if massOf(chosen.key)}<p class="note" data-mass-from title={Object.values(partSources).length ? (partSources[(chosen.part.figures.dry_t ?? chosen.part.figures.mass_t)?.src ?? ""] ?? "") : ""}>Mass: {massOf(chosen.key)}.</p>{:else}<p class="note" data-mass-from="none">Mass: not known yet, so the build's Δv waits for it.</p>{/if}
               {#if chosen.part.to_read?.length}<p class="note">Still to read: {chosen.part.to_read.join("; ")}</p>{/if}
             </div>
             <div class="sect actions"><button type="button" class="btn" onclick={removeSel} data-remove>Remove{groupOf(chosen.key).length > 1 ? " all copies" : ""}</button></div>
@@ -822,6 +838,7 @@
   .vgroup { display: flex; align-items: center; gap: 6px; }
   .chip { background: color-mix(in srgb, var(--b-ground) 82%, transparent); border: 1px solid var(--b-line); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--b-muted); }
   .chip:disabled { color: var(--b-faint); cursor: not-allowed; }
+  .chip.on { color: var(--b-accent); border-color: var(--b-accent); }
   .hint { position: absolute; left: 12px; bottom: 12px; background: color-mix(in srgb, var(--b-ground) 88%, transparent); border: 1px solid var(--b-line); border-radius: 999px; padding: 6px 14px; font-size: 12px; color: var(--b-muted); white-space: nowrap; max-width: calc(100% - 190px); overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
   .hint :global(b), .tip :global(b) { color: var(--b-ink); font-weight: 500; }
   .tip { position: absolute; pointer-events: none; background: var(--b-raised2); border: 1px solid var(--b-line); border-radius: 6px; padding: 4px 8px; font-size: 12px; white-space: nowrap; transform: translate(12px, -130%); }

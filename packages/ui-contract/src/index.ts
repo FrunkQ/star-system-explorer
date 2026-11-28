@@ -251,4 +251,4 @@ export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";
 export type { GrammarPart } from "./grammar.ts";
 export { CONTENTS, bundlePack, heldFiles, namedFiles, safePackPath, type Bundled } from "./pack-bundle.ts";
 export { clips, eraOf, flownBy, PART_USES, paletteByEra, paletteByUse, partWarnings, shapeArea, shapeVolume, stretchPart } from "./parts.ts";
-export type { ConnectionPoint, Era, FigureMark, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";
+export type { ConnectionPoint, Era, FigureMark, KindMass, Line as PartLine, PartsPalette, Part, PartFigure, PartKind, PartScale, PartShape, PointPlace, PortSize, ShapeRule } from "./parts.ts";

@@ -1,0 +1,3 @@
+| # | Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|---|
+| F-CM14c-tank-pressure | `scripts/build-base-parts.py` `tank_wall_figures` | Every palette tank holds 40.0 psia, the Centaur oxygen tank's structural limit (NASA TN D-6876), whatever it holds | The parts pack has one generic tank; the block needs a design pressure; the higher of the Centaur's two limits keeps a hydrogen tank heavy rather than light | Design pressure from what the tank feeds (pump inlet need, ullage, the stack's acceleration head), per tank, from the engine it feeds | stand-in, cited |

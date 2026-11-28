@@ -23,6 +23,8 @@ export interface BuilderShow {
   placed?: readonly PlacedPart[];
   /** The ship's name, lettered along its biggest crew or tank part. */
   name?: string;
+  /** Cutaway: bays and habitats open on the viewer's side, so what they hold shows. */
+  cut?: boolean;
   /** The part being placed, drawn as a see-through ghost where it would go. */
   ghost?: string | null;
   selected?: readonly string[];
@@ -336,9 +338,9 @@ export async function mountBuilder(canvas: HTMLCanvasElement, skin: SkinSpec, o:
         if (!ghost) parts.push({ key, mesh });
       };
       if (s.placed?.length) {
-        for (const q of s.placed) for (const p of partShapes(q, o.segments)) addMesh(q.key, p.geometry, finishMaterial(p.finish, s.paints?.[q.key], s.wire === true));
+        for (const q of s.placed) for (const p of partShapes(q, o.segments, { cut: s.cut === true })) addMesh(q.key, p.geometry, finishMaterial(p.finish, s.paints?.[q.key], s.wire === true));
         const host = s.name ? nameCarrier(s.placed.filter((q) => !isGhost(q.key))) : null;
-        if (host && s.name && !s.wire) {
+        if (host && s.name && !s.wire && !(s.cut && host.part.kind !== "tank")) {
           const lt = lettering(host, s.name, s.paints?.[host.key] ?? null, skin);
           owned.push(lt.geometry, lt.material, lt.material.map!);
           ship.add(lt);
@@ -368,7 +370,7 @@ export async function mountBuilder(canvas: HTMLCanvasElement, skin: SkinSpec, o:
       }
       if (!Number.isFinite(lo.x)) lo.set(-5, -3, -3), hi.set(5, 3, 3);
       box = { lo, hi };
-      const shape = `${[...lo.toArray(), ...hi.toArray()].map((v) => Math.round(v * 100))}|${parts.length}|${s.wire}`;
+      const shape = `${[...lo.toArray(), ...hi.toArray()].map((v) => Math.round(v * 100))}|${parts.length}|${s.wire}|${s.cut}`;
       if (s.frame || roomFor !== shape) {
         centre = new Vector3((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, (lo.z + hi.z) / 2);
         radius = 0.5 * Math.hypot(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z);

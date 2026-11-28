@@ -124,6 +124,22 @@ try {
     assert.ok(await b.locator("[data-what-can-it-do]").isDisabled(), "no verdicts from masses that are not known");
     await gm.waitForTimeout(1200);
     await shot("example");
+    // Its tank's wall is weighed by the kernel's thin-wall flow, and the part says so (CM14c part 3).
+    await sheet("part");
+    await b.locator('[data-tab="tree"]').click();
+    await b.locator("[data-tree] button", { hasText: "propellant tank" }).first().click();
+    await b.locator("[data-mass-from]", { hasText: "wall from the thin-wall pressure block" }).waitFor();
+    await shot("tank-mass");
+    await done();
+
+    // Cutaway: Wayfarer's bay and habitat open on this side, and its lander shows inside the bay.
+    await b.locator("[data-example-ships]").click();
+    await b.locator('[data-example-ship="wayfarer"]').click();
+    await b.locator("[data-cutaway]").click();
+    assert.equal(await b.locator("[data-cutaway]").getAttribute("aria-pressed"), "true");
+    await gm.waitForTimeout(1200);
+    await shot("cutaway");
+    await b.locator("[data-cutaway]").click();
 
     // Example ships: a blank build, then a part starts it.
     await b.locator("[data-example-ships]").click();

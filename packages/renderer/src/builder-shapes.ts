@@ -28,7 +28,7 @@ const merge = (gs: BufferGeometry[]) => {
 };
 
 /** The part's own shape, centred on its own axis along x, from -L/2 to +L/2 (panels and dishes reach along +y). */
-function local(q: PlacedPart, seg: number): ShapePiece[] {
+function local(q: PlacedPart, seg: number, cut: boolean): ShapePiece[] {
   const s = q.part.shape;
   const L = s.length_m;
   const R = s.radius_m;
@@ -75,6 +75,15 @@ function local(q: PlacedPart, seg: number): ShapePiece[] {
       break;
     }
     case "habitat": {
+      if (cut) {
+        // Cut away on the viewer's side (-y): the shell open from a little above the middle line to below it, its
+        // ends and a deck inside showing.
+        const open = 2.1;
+        add(new CylinderGeometry(R, R, L, seg, 1, true, Math.PI / 2 + open / 2, Math.PI * 2 - open).rotateZ(-Math.PI / 2), "hull");
+        add(merge([-L / 2, L / 2].map((x) => cylX(R, R, Math.max(0.02, L * 0.01), seg).translate(x, 0, 0))), "hull");
+        add(new BoxGeometry(L * 0.96, R * 1.7, Math.max(0.04, R * 0.04)).translate(0, 0, -R * 0.45), "spine");
+        break;
+      }
       // A can: rounded shoulders, a raised rib every few metres, two rows of windows.
       const pts = [V2(0, -L / 2), V2(R * 0.86, -L / 2), V2(R, -L / 2 + Math.min(0.3, L * 0.08))];
       const rib = Math.max(1.6, R * 1.3);
@@ -168,7 +177,9 @@ function local(q: PlacedPart, seg: number): ShapePiece[] {
       // An open bay: a shell with a gap along its top, a ring at each end, a back wall.
       const gap = (80 * Math.PI) / 180;
       // Turned onto x, angle 0 is straight up (+z): the gap is centred there.
-      add(new CylinderGeometry(R, R, L, seg, 1, true, gap / 2, Math.PI * 2 - gap).rotateZ(-Math.PI / 2), "hull");
+      // Cut away, it is open on the viewer's side (-y, angle 90 degrees) as well, so what it holds shows.
+      const from = cut ? Math.PI / 2 + 0.7 : gap / 2;
+      add(new CylinderGeometry(R, R, L, seg, 1, true, from, Math.PI * 2 - gap / 2 - from).rotateZ(-Math.PI / 2), "hull");
       add(merge([-L / 2, L / 2].map((x) => new TorusGeometry(R, Math.max(0.04, R * 0.06), 6, seg).rotateY(Math.PI / 2).translate(x, 0, 0))), "spine");
       add(cylX(R * 0.98, R * 0.98, Math.max(0.02, L * 0.01), seg).translate(-L / 2, 0, 0), "dark");
       break;
@@ -201,11 +212,12 @@ function local(q: PlacedPart, seg: number): ShapePiece[] {
 }
 
 /** A placed part's shapes in the build's frame (x along the ship from the stern, z up): the part's own shape moved to
- * where it sits, flat parts turned to reach out along their clock, hull parts facing out. */
-export function partShapes(q: PlacedPart, seg: number): ShapePiece[] {
+ * where it sits, flat parts turned to reach out along their clock, hull parts facing out. `cut` opens bays and habitats on
+ * the viewer's side (the mock-up's Cutaway), so what they hold shows. */
+export function partShapes(q: PlacedPart, seg: number, o: { cut?: boolean } = {}): ShapePiece[] {
   const L = q.part.shape.length_m;
   const flat = q.part.kind === "solar" || q.part.kind === "radiator" || q.part.kind === "dish";
-  const pieces = local(q, seg);
+  const pieces = local(q, seg, o.cut === true);
   for (const p of pieces) {
     if (flat) {
       // Reach out along the clock: +y turned onto (sin c, cos c) in (y, z). On the axis a dish faces forward.
