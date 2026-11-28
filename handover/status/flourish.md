@@ -7,9 +7,9 @@ What it is, in one line: a picture that is dear to work out is shown as a stand-
 
 | Package | State | Owner (proposed) |
 |---|---|---|
-| FL0 the list of existing uses, and their register rows (`ui-contract/src/stand-ins.json`; rows FL-F1 to FL-F3) | built, PR open | "Build the shared flourish system"; log `packages/FL1.md` |
-| FL1 the schedule (`ui-contract/src/settle.ts`), pure | built, PR open | "Build the shared flourish system"; log `packages/FL1.md` |
-| FL2 the kit: Carry, Exposure and Fade nodes with processor twins | accepted, not started | "Build the shared flourish system" |
+| FL0 the list of existing uses, and their register rows (`ui-contract/src/stand-ins.json`; rows FL-F1 to FL-F3) | done (PR 744) | "Build the shared flourish system"; log `packages/FL1.md` |
+| FL1 the schedule (`ui-contract/src/settle.ts`), pure | done (PR 744) | "Build the shared flourish system"; log `packages/FL1.md` |
+| FL2 the kit: Carry, Exposure and Fade nodes with processor twins (`renderer/src/settle-kit.ts`, `settle-kit-cpu.ts`, `wind-table.ts`) | built, PR open; AC-ProArt check owed; log `packages/FL2.md` | "Build the shared flourish system" |
 | FL3 giants: the stirred still on the schedule and the kit | accepted, not started; after PR 739 | the stirred clouds thread |
 | FL4 the note's clause, the readout's line, the declared-list check | accepted, not started | "Build the shared flourish system" |
 | FL5 the zoom travels on a coarse picture and settles at a stop | accepted, not started | "Build the crash zoom between places" |
@@ -17,5 +17,5 @@ What it is, in one line: a picture that is dear to work out is shown as a stand-
 | FL6 folding in sharpen at rest, orbits between answers, star cells, finer tiles | accepted, not started | each view's owner |
 
 ## Next
-- FL0 and FL1 built (PR open). Then FL2, FL4 and FL7's pure part, by "Build the shared flourish system".
+- FL0 and FL1 on main (PR 744). FL2 built (PR open). Then FL4 and FL7's pure part, by "Build the shared flourish system".
 - PR 739 is not held by this track.

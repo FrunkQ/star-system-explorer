@@ -120,10 +120,26 @@ export async function standardFrames(recipe: RecipeDoc = systemTrue as RecipeDoc
 }
 
 /** Measure this device (always afresh: the bench never reads the app's cache), place it at 1080p, and draw the standard frame. */
-export async function benchDrawing(): Promise<DrawingBench & { standard: StandardFrame[]; standard_pixels: number }> {
+/** The settle kit's three pieces (FL2) on a 512-wide face, each with its upload and read-back: empty without a GPU. */
+export async function kitFrames(): Promise<{ piece: string; width: number; height: number; ms: number }[]> {
+  if (typeof document === "undefined") return [];
+  const [{ WebGPURenderer }, { benchKit }] = await Promise.all([import("three/webgpu"), import("./settle-kit.ts")]);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1;
+  const r = new WebGPURenderer({ canvas, antialias: false });
+  try {
+    await r.init();
+    return await benchKit(r);
+  } finally {
+    r.dispose();
+  }
+}
+
+export async function benchDrawing(): Promise<DrawingBench & { standard: StandardFrame[]; standard_pixels: number; kit: { piece: string; width: number; height: number; ms: number }[] }> {
   const caps = await readCapabilities();
   const probe = await measureProbe(caps, { runs: 15, cap_ms: 1500 });
   const placed = drawingBench(caps, probe, systemTrue as RecipeDoc, LIBRARY);
   const standard = await standardFrames().catch(() => []);
-  return { ...placed, standard, standard_pixels: BENCH_PIXELS };
+  const kit = await kitFrames().catch(() => []);
+  return { ...placed, standard, standard_pixels: BENCH_PIXELS, kit };
 }
