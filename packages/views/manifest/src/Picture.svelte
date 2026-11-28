@@ -1,12 +1,13 @@
 <script lang="ts">
   // A construct's pictures on the Ships and stations card: the shared Pictures panel (views/pictures) with a ship's
-  // own drawn views, its plans and 3D model designed from its parts (the renderer's ShipPlans, from the base-ships
-  // pack), or a station's design built from its description (the renderer's StationPicture). On the Build desk the design's style, remix and overrides are kept with the construct as a recipe; on
-  // Explore and Run the look is fixed (Alex, 24 Nov: play changes what is aboard, never the ship). Sites with
-  // neither take own pictures.
-  import { DESIGN_FIELD, buildOf, designOf, factOf, shipRecordOf, type Json, type NavShip, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { readPropellants, type BuildRecipe, type DesignRecipe, type DesignRules, type DesignShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
-  import { ShipBuilder, ShipPlans } from "../../ship/src/index.ts";
+  // own drawn views, the ship from its parts (the ship builder, CM14b: a kept build, or its catalogue record opened as
+  // parts), or a station's design built from its description (the renderer's StationPicture). On the Build desk the
+  // picture is the builder itself and the build is kept with the construct; on Explore and Run the look is fixed
+  // (Alex, 24 Nov: play changes what is aboard, never the ship). The old style-and-remix designer is gone (Alex,
+  // 28 Nov). Sites with neither take own pictures.
+  import { DESIGN_FIELD, buildOf, factOf, shipRecordOf, type Json, type NavShip, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { readPropellants, type BuildRecipe, type DesignRules, type DesignShip, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { ShipBuilder } from "../../ship/src/index.ts";
   import StationPicture from "../../ship/src/StationPicture.svelte";
   import { Pictures } from "../../pictures/src/index.ts";
 
@@ -28,7 +29,6 @@
   } = $props();
   const session = $derived(ctx.session);
   const ws = $derived(ctx.workspace);
-  const design = $derived(designOf(factOf(construct, DESIGN_FIELD)));
   // A ship built from parts (CM14a) is drawn from its build; on the Build desk the pictures are the builder itself.
   const build = $derived(buildOf(factOf(construct, DESIGN_FIELD)) as BuildRecipe | null);
   let note = $state<string | null>(null);
@@ -46,7 +46,6 @@
 
   // The ship's full numbers from the kernel.
   let ship = $state<DesignShip | null>(null);
-  let fuels = $state<Propellants>({});
   let gen = 0;
   $effect(() => {
     const n = nav;
@@ -56,24 +55,12 @@
       if (g !== gen) return;
       if (!r.ok) return void ((ship = null), (note = r.message));
       const s = r.ship as unknown as DesignShip;
-      const f = await readPropellants(session, (s as { fuels?: string[] }).fuels ?? []).catch(() => ({}));
-      if (g === gen) ((fuels = f), (ship = s));
+      await readPropellants(session, (s as { fuels?: string[] }).fuels ?? []).catch(() => ({}));
+      if (g === gen) ship = s;
     });
   });
-  const views = $derived(station ? [{ id: "station", label: "Design" }] : ship && pack ? [{ id: "plans", label: "Plans" }, { id: "model", label: "3D model" }] : []);
+  const views = $derived(station ? [{ id: "station", label: "Design" }] : ship && pack ? [{ id: "ship", label: "Ship" }] : []);
 
-  // The plans report each change of style, remix or override (offered only on Build); the last one is kept, a moment after.
-  let pending: ReturnType<typeof setTimeout> | null = null;
-  function designChanged(r: DesignRecipe) {
-    if (!editing) return;
-    if (pending) clearTimeout(pending);
-    const keepIt = { style: r.style, seed: r.seed, ...(r.overrides && Object.keys(r.overrides).length ? { overrides: r.overrides } : {}) } as unknown as Json;
-    pending = setTimeout(async () => {
-      pending = null;
-      await keep(keepIt, "Design kept with the ship.");
-    }, 500);
-  }
-  $effect(() => () => pending && clearTimeout(pending));
   async function keep(value: Json, kept: string) {
     const s = await session.send({ kind: "set_value", address: construct.address, field: DESIGN_FIELD, value, at_yr: ws.campaign_now_yr ?? ws.now_yr });
     if (s.status === "applied") ((note = kept), ws.revision++);
@@ -83,13 +70,11 @@
 </script>
 
 <Pictures {ctx} subject={construct} {name} {editing} {views} hint={station ? "The shape and remix are kept with it." : views.length ? "Built from parts; the build is kept with the ship." : undefined}>
-  {#snippet view(id, choose)}
+  {#snippet view(id)}
     {#if id === "station" && station}
       <StationPicture {construct} {name} words={station.words} tags={station.tags} locked={!editing} onchange={(r) => editing && station.ondesign(r)} />
-    {:else if ship && pack && (editing || build)}
-      <ShipBuilder {ctx} {ship} saved={build} readonly={!editing} start={id === "model" ? "model" : "plans"} {...editing ? { onkeep: keepBuild } : {}} />
     {:else if ship && pack}
-      <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={24} fit="hull" locked={!editing} start={id === "model" ? "model" : "plans"} onview={choose} {...design && pack.styles[design.style] ? { recipe: design as DesignRecipe } : {}} onchange={designChanged} />
+      <ShipBuilder {ctx} {ship} saved={build} readonly={!editing} {...editing ? { onkeep: keepBuild } : {}} />
     {/if}
   {/snippet}
 </Pictures>

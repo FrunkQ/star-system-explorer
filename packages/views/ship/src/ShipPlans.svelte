@@ -167,14 +167,7 @@
     if (onview && c.style !== was) onview(c.style === "3d" ? "model" : "plans");
   }} compact />
   <div class="bar">
-    {#if !locked}
-      <label>Style
-        <select value={styleId} onchange={(e) => change({ style: (e.currentTarget as HTMLSelectElement).value })}>
-          {#each Object.entries(styles) as [id, s] (id)}<option value={id}>{s.name}</option>{/each}
-        </select>
-      </label>
-      <button type="button" onclick={() => change({ seed: seed + 1 })} data-remix>Remix</button>
-    {/if}
+    <!-- The style switch and Remix are gone (Alex, 28 Nov): ships are built from parts in the ship builder. -->
     {#if canClose || framing === "hull"}
       <button type="button" aria-pressed={framing === "hull"} onclick={() => (framing = framing === "hull" ? "all" : "hull")}>Close in on the hull</button>
     {/if}

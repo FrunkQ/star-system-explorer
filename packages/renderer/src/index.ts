@@ -89,7 +89,7 @@ export type { Callout, DesignBay, DesignOverrides, DesignRecipe, DesignRules, De
 export { compoundMesh, panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
 export { baysFromFacts, designCompound, mountFromFacts, placeCompound, portsFromFacts, reachOf, ringPoints, sizeBays } from "./compound-layout.ts";
 export type { BayFacts, CompoundLayout, CompoundMember, CompoundRules, MountFacts, MountPlace, PlacedMember, PortFacts, PortMark } from "./compound-layout.ts";
-export { budgets, buildLayout, buildPieces, buildRecord, buildTotals, freePoints, fromLayout, fuelDensity, partAsBuilt, placeBuild } from "./ship-build.ts";
+export { budgets, PAINT_SWATCHES, buildLayout, buildPieces, buildRecord, buildTotals, freePoints, fromLayout, fuelDensity, partAsBuilt, placeBuild } from "./ship-build.ts";
 export type { Budget, BuildPlace, BuildRecipe, BuildTotals, BuiltPart, FreePoint, PlacedPart } from "./ship-build.ts";
 export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
 // GH9: every collision leaves its mark: warps, ripples, rings, lopsided discs, drawn from the kernel's dated marks.
@@ -184,6 +184,13 @@ export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_
 export type { Composite, FacePicture, GroundAsk, PatchPicture, TileKey } from "./texture-ladder.ts";
 export { discCover, GLINT_FALLBACK, glintBrdf, MAX_CASTERS, ringPassAt, seenFrom, shadeFor, starLightAt, turnOnto, umbraLight, type Caster, type Placed, type Shade, type ShadowLightRead } from "./eclipse.ts";
 export { readSeaGlint, readUmbras, umbraKey, type GlintReader, type SeaGlint, type UmbraPair, type UmbraReader } from "./eclipse-read.ts";
+// The ship builder's working view (CM14b): the build part by part over its fixed blueprint room, with connection points.
+export type { BuilderCamera, BuilderMarker, BuilderScene, BuilderShow } from "./builder-scene.ts";
+/** The builder's 3D view, loaded only when asked (three.js is heavy). */
+export async function startBuilder(...a: Parameters<typeof import("./builder-scene.ts").mountBuilder>) {
+  const { mountBuilder } = await import("./builder-scene.ts");
+  return mountBuilder(...a);
+}
 // The settle kit (FL2): its wind table and processor twins. The GPU pieces (settle-kit.ts) pull in three/webgpu, so a
 // view imports them directly, as stirred-runner.ts does stirred-gpu.ts.
 export { LOOP_MAX_S, loopLength, rowLat, windAt, windTable, type WindTable } from "./wind-table.ts";

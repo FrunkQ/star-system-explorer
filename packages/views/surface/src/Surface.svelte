@@ -13,7 +13,7 @@
   they never pick the site or steer (seats rule).
 -->
 <script module lang="ts">
-  import type { Landmark, SurfaceTile } from "../../../ui-contract/src/index.ts";
+  import type { Landmark, PartsPalette, SurfaceTile } from "../../../ui-contract/src/index.ts";
   import type { StainHue } from "../../../renderer/src/index.ts";
   // The world's map tiles (a second or so) and its landmarks, kept per world for the page's life.
   const globes = new Map<string, SurfaceTile[]>();
@@ -24,8 +24,8 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { clockAt, constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, readShape, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, readGroundOptics, readStains, stainTiles, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle, smallBodyShape } from "../../../renderer/src/index.ts";
+  import { clockAt, constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, buildOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, readShape, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, buildLayout, fromLayout, type BuildRecipe, readPropellants, readGroundOptics, readStains, stainTiles, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle, smallBodyShape } from "../../../renderer/src/index.ts";
   import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
@@ -343,10 +343,10 @@
     toGround();
   }
   // The party's ship's own model on the ground (LR6b): the GM reads its numbers (the kernel's ship record, as Ships
-  // and stations does), how its fuels are stored and the design kept with the construct (its style, remix and
-  // overrides), and sends them with the landing; every screen designs it from the base-ships pack and stands it on its
-  // tail where it came down. A stock lander keeps the stock shape.
-  let ownModel = $state<{ ship: Json; store: Json; style: string; seed?: number; overrides?: Json } | null>(null);
+  // and stations does), how its fuels are stored and the build kept with the construct (CM14b: a ship is its parts),
+  // and sends them with the landing; every screen builds it from the parts pack (a ship with no kept build opens as
+  // parts, as the ship builder opens it) and stands it on its tail where it came down. A stock lander keeps the stock shape.
+  let ownModel = $state<{ ship: Json; store: Json; style: string; seed?: number; overrides?: Json; build?: Json } | null>(null);
   let mgen = 0;
   $effect(() => {
     const ph = landerPick === "party" ? partyHere : null;
@@ -362,32 +362,35 @@
       const sc = await session.scene(sys).catch(() => null);
       const c = sc?.ok ? sc.scene.subjects.find((x) => x.address === ph.ship) : undefined;
       const recipe = c ? designOf(factOf(c, DESIGN_FIELD)) : null;
+      const build = c ? buildOf(factOf(c, DESIGN_FIELD)) : null;
       const store = await readPropellants(session, (r.ship as { fuels?: string[] }).fuels ?? []).catch(() => ({}));
       if (g !== mgen) return;
-      ownModel = JSON.parse(JSON.stringify({ ship: r.ship, store, style: recipe?.style ?? "", seed: recipe?.seed ?? 1, ...(recipe?.overrides ? { overrides: recipe.overrides } : {}) })) as typeof ownModel;
+      ownModel = JSON.parse(JSON.stringify({ ship: r.ship, store, style: recipe?.style ?? "", seed: recipe?.seed ?? 1, ...(recipe?.overrides ? { overrides: recipe.overrides } : {}), ...(build ? { build } : {}) })) as typeof ownModel;
     });
   });
   const modelText = $derived(JSON.stringify((watching ? show?.ship_model : ownModel) ?? null));
-  type ShipsPack = { rules: DesignRules; styles: Record<string, ShipStyle> };
+  type ShipsPack = { rules: DesignRules; styles: Record<string, ShipStyle>; palette: PartsPalette };
   const SHIPS_PACK = "packs/base-ships.json";
+  const PARTS_PACK = "packs/base-parts.json";
   let shipsPack = $state.raw<ShipsPack | null>(null);
   $effect(() => {
     if (modelText === "null" || shipsPack) return;
     // The shell serves the pack beside the page (scripts/build-shell.sh), as the ship views read it.
-    void fetch(new URL(SHIPS_PACK, document.baseURI))
-      .then((r) => r.json())
-      .then((p: { provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }) => (shipsPack = { rules: p.provides.other.ship_design, styles: p.provides.other.ship_styles }))
+    const read = (path: string) => fetch(new URL(path, document.baseURI)).then((r) => r.json());
+    void Promise.all([read(SHIPS_PACK), read(PARTS_PACK)])
+      .then(([p, q]: [{ provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }, { provides: { other: { palette: PartsPalette } } }]) => (shipsPack = { rules: p.provides.other.ship_design, styles: p.provides.other.ship_styles, palette: q.provides.other.palette }))
       .catch(() => undefined);
   });
   const landerShip = $derived.by<LanderShip | null>(() => {
-    const m = JSON.parse(modelText) as { ship: DesignShip; store: Propellants; style: string; seed?: number; overrides?: DesignOverrides } | null;
+    const m = JSON.parse(modelText) as { ship: DesignShip; store: Propellants; style: string; seed?: number; overrides?: DesignOverrides; build?: BuildRecipe } | null;
     const pk = shipsPack;
     if (!m || !pk) return null;
     const id = m.style && pk.styles[m.style] ? m.style : Object.keys(pk.styles)[0];
     const style = id ? pk.styles[id] : undefined;
     if (!id || !style) return null;
     try {
-      const mesh = shipMesh(designShip(m.ship, m.store, pk.rules, id, style, m.seed ?? 1, m.overrides ?? {}), { segments: 16, panel_m: style.skin?.panel_m ?? 2 });
+      const build = m.build ?? fromLayout(designShip(m.ship, m.store, pk.rules, id, style, m.seed ?? 1, m.overrides ?? {}), m.ship, pk.palette).recipe;
+      const mesh = shipMesh(buildLayout(build, pk.palette, m.store, pk.rules), { segments: 16, panel_m: style.skin?.panel_m ?? 2 });
       // On the ground the drive is off and its radiators are stowed (fudge register, "The lander on the ground").
       const { radiators: _stowed, ...surfaces } = mesh.surfaces;
       void _stowed;

@@ -15,6 +15,7 @@ Only the owner thread edits this file. Packages are in design section 13; owners
 | CM7 the designer places each construct by its mount; bays, ports, turned panels | done 27 Nov, PR 686 | packages/CM7-placement.md |
 | CM8 to CM12 | accepted, not started; CM8 (renderer owner, the builder thread) waits on CM6 | |
 | CM13 the palette: part 1 the one part format and 61 base parts, PR 697 (done 27 Nov); part 2 the tank wall, split surface, dish gain and link rate blocks, PR 704 (core lane). Eras of spaceflight, not decades (ruling 14A.8): `palette.eras` in base-parts | part 1 done; part 2 in the lane | packages/CM13-palette.md, packages/CM13-part2-blocks.md |
-| CM14a first builder slice (ruling 14A.7): catalogue-first start, Build it and Build to a plan on one canvas, the Build desk pictures are the builder, Style and Remix gone, catalogue ships converted to parts on open | in progress, builder thread | packages/CM14a-builder.md |
+| CM14a first builder slice (ruling 14A.7): catalogue-first start, Build it and Build to a plan on one canvas, the Build desk pictures are the builder, Style and Remix gone, catalogue ships converted to parts on open | done, PR 720 | packages/CM14a-builder.md |
+| CM14b the builder to the mock-up: full-screen parts list, 3D parts over fixed blueprint walls, glowing clip points, drag to clip, Parts from year slider, Selected / Build tree / Paint, shopping list; every ship picture drawn from parts, old designer gone | in progress, builder thread | packages/CM14b-builder-mockup.md |
 | CM14 the full builder (compounds, staging, sequence) | waits on CM8 | |
 | CM15 to CM18 | accepted, not started (design section 13); CM15 reads eras, not decades | |

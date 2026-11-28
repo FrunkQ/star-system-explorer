@@ -12,6 +12,9 @@ import { constant } from "../../ui-contract/src/index.ts";
 import { driveFacts, type Propellants, type ShipRecord } from "./ship.ts";
 import { needsOf, type DesignRules, type DesignShip, type Piece, type ShipLayout, type SystemKind } from "./ship-design.ts";
 
+/** The builder's paint swatches (the mock-up's): a build's own colours, kept in its recipe like its name. */
+export const PAINT_SWATCHES: readonly string[] = ["#C8402A", "#E0A030", "#2E7D5B", "#2B5FA8", "#5B3F8C", "#ECEFF4", "#3A3F47", "#151619"];
+
 /** Where a part sits on the one it clips to: in front of it, behind it, on its hull, or inside its bay. */
 export type BuildPlace = "front" | "behind" | "hull" | "bay";
 
@@ -35,6 +38,8 @@ export interface BuiltPart {
   /** A drive whose figures its part does not give yet (a tech advance's): the push and exhaust speed stated by the
    * record it came from, with that record named. */
   drive?: { thrust_n: number; exhaust_km_s: number; src: string };
+  /** Copies clipped together round a hull ("Clip on x2" to "x4"): they share this id and move and paint together. */
+  sym?: string;
 }
 
 /** A build: everything needed to rebuild the same ship anywhere. Saved with the construct in place of the old style recipe. */
@@ -189,8 +194,11 @@ export function buildPieces(placed: readonly PlacedPart[]): Piece[] {
 
 /** Connection points not yet taken: the free front and back of each part on the axis line it sits on, and its hull for
  * radial parts (offered at four clocks, plus where its own hull points are). Bay mouths with nothing inside. */
-export function freePoints(r: BuildRecipe, placed: readonly PlacedPart[]): FreePoint[] {
+export function freePoints(r: BuildRecipe, placed: readonly PlacedPart[], o: { sym?: number } = {}): FreePoint[] {
   const out: FreePoint[] = [];
+  // Copies round the hull (the mock-up's "Clip on x2 to x4"): fewer starting clocks, since each drop places them all.
+  const sym = Math.max(1, Math.min(4, Math.round(o.sym ?? 1)));
+  const clocks = sym === 1 ? [0, 90, 180, 270] : sym === 2 ? [0, 90] : sym === 3 ? [0, 60] : [0, 45];
   for (const q of placed) {
     const s = q.part.shape;
     const used = (place: BuildPlace) => r.parts.some((b) => b.on === q.key && (b.place ?? "front") === place);
@@ -201,12 +209,16 @@ export function freePoints(r: BuildRecipe, placed: readonly PlacedPart[]): FreeP
     }
     // An engine's only point is its top; an engine at the root has its top free.
     if (q.part.kind === "engine" && !q.built.on && !used("front")) out.push({ key: q.key, place: "front", at: [q.x0 + s.length_m, q.y, q.z], size_m: q.part.points[0]?.size_m ?? 2 * s.radius_m, label: `In front of ${q.part.name}` });
-    if (s.hint === "lathe" || s.hint === "truss" || s.hint === "box")
-      for (const clock of [0, 90, 180, 270]) {
-        const taken = r.parts.some((b) => b.on === q.key && b.place === "hull" && Math.abs(((b.clock_deg ?? 0) - clock + 540) % 360 - 180) < 30 && Math.abs((b.along ?? 0.5) - 0.5) < 0.2);
-        if (taken) continue;
-        out.push({ key: q.key, place: "hull", at: [q.x0 + s.length_m / 2, q.y + s.radius_m * Math.sin(rad(clock)), q.z + s.radius_m * Math.cos(rad(clock))], size_m: 0.8, along: 0.5, clock_deg: clock, label: `On ${q.part.name}'s hull, ${clockWords(clock)}` });
-      }
+    if (s.hint === "lathe" || s.hint === "truss" || s.hint === "box") {
+      // More stations along a longer part, as the mock-up offers them.
+      const alongs = s.length_m > 9 ? [0.2, 0.5, 0.8] : s.length_m > 3 ? [0.3, 0.7] : [0.5];
+      for (const along of alongs)
+        for (const clock of clocks) {
+          const taken = r.parts.some((b) => b.on === q.key && b.place === "hull" && Math.abs((((b.clock_deg ?? 0) - clock + 540) % 360) - 180) > 150 && Math.abs((b.along ?? 0.5) - along) < 0.12);
+          if (taken) continue;
+          out.push({ key: q.key, place: "hull", at: [q.x0 + along * s.length_m, q.y + s.radius_m * Math.sin(rad(clock)), q.z + s.radius_m * Math.cos(rad(clock))], size_m: 0.8, along, clock_deg: clock, label: `On ${q.part.name}'s hull, ${clockWords(clock)}, ${Math.round(along * 100)}% along` });
+        }
+    }
   }
   // Points clip only where nothing sits already: a front on the axis taken by the stern of another part is not free.
   return out;

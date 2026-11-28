@@ -1,8 +1,8 @@
 <!--
-  The ship builder on the Workshop (CM14a): start from the catalogue (the default, Alex 27 Nov 11:47: "generally they
-  will be working from a catalogue of premade ships") or from nothing, then build in the one builder. Each catalogue
-  ship opens as palette parts (convert on open). Nothing is kept here: a build is kept with a ship on its card's Build
-  desk pictures.
+  The ship builder on the Workshop (CM14b): it opens on the first catalogue ship (the default, Alex 27 Nov 11:47:
+  "generally they will be working from a catalogue of premade ships"), and "Example ships" in the builder opens any
+  other, or a blank build. Each catalogue ship opens as palette parts (convert on open). Nothing is kept here: a build
+  is kept with a ship on its card's Build desk pictures.
 -->
 <script lang="ts">
   import { readPropellants, type DesignShip } from "../../../renderer/src/index.ts";
@@ -26,20 +26,30 @@
       if (g === gen) ((note = null), (ship = s));
     });
   });
+
+  // The builder is a working screen: it fills the area it scrolls in, to the bottom edge, as the mock-up does.
+  let el = $state<HTMLElement | null>(null);
+  let fillH = $state<number | null>(null);
+  $effect(() => {
+    if (!el) return;
+    let box: HTMLElement | null = el.parentElement;
+    while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+    const host = box ?? document.documentElement;
+    const fit = () => el && (fillH = Math.max(420, host.clientHeight - (el.getBoundingClientRect().top - (box ? box.getBoundingClientRect().top : 0)) - 4));
+    const ro = new ResizeObserver(fit);
+    ro.observe(host);
+    fit();
+    return () => ro.disconnect();
+  });
 </script>
 
-<section class="screen" data-builder-screen>
-  <label>Start from
-    <select bind:value={pick} data-catalogue>
-      {#each STOCK_SHIPS as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
-      <option value="">Nothing: a blank build</option>
-    </select>
-  </label>
+<section class="screen" data-builder-screen data-opened={pick} bind:this={el} style={fillH ? `height: ${fillH}px` : ""}>
   {#if note}<p class="note">{note}</p>{/if}
-  {#key pick}<ShipBuilder {ctx} {ship} />{/key}
+  {#key pick}<ShipBuilder {ctx} {ship} catalogue={STOCK_SHIPS} onopen={(id) => (pick = id)} />{/key}
 </section>
 
 <style>
-  .screen { display: grid; gap: 0.75em; padding: 0.75em; max-width: 1100px; box-sizing: border-box; min-width: 0; }
+  .screen { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 0.5em; box-sizing: border-box; min-width: 0; }
+  .screen > :global(.builder) { height: 100%; min-height: 0; }
   .note { color: var(--sse-ink-muted); font-size: 0.85em; }
 </style>
