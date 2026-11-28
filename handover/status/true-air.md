@@ -20,7 +20,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Files: 
 | WS3: plumes numbered by the heat from below (`sse.weather.plume_count`), painted fresh on the top deck; cloud renewal time (`particle_fall_time`, Stokes with slip); both on the flow table | done, merged in PR 706 (main f351889b) | packages/WS3.md |
 | WS4: the carrying in the kernel, `want: "stirred"`: every giant's cloud followed back along bands, storms and eddies, area kept, storms turning as one body (design's blend replaced, see log) | done, merged in PR 728 (main 91888bfd) | packages/WS4.md |
 | WS3b (note `design/SSE4-cloud-renewal-rising-air-note.md`, Alex chose it 27 Nov): a deck also renewed by air rising and sinking through it, carrying the plumes' heat (`sse.weather.overturn_time`); Jupiter about a month, Uranus fall-out alone | built, PR open | packages/WS3b.md |
-| WS5a: the carry table (`want: "carry"`) and the renderer's carrying (`stirred-carry.ts`), held to the kernel by test; cost measured | built, PR open | packages/WS5.md |
+| WS5a: the carry table (`want: "carry"`) and the renderer's carrying (`stirred-carry.ts`), held to the kernel by test; cost measured | done (PR 737) | packages/WS5.md |
+| WS5c: the carrying on the GPU (`stirred-gpu.ts`), held to its processor twin on WebGL2 | built, PR open | packages/WS5.md |
 | WS5: the stirred face on the GPU, off the clock; PR 646's winding and curls off where it runs | after WS5a | packages/WS5.md |
 | WS5b: a stirred still on low-power devices, built unasked, cached in memory only (Alex, 27 Nov) | after WS5 | |
 | WS6a and WS6b: "why does it look like this here?" (`want: "look"`) and its line on the giant's card | after WS3 | |
