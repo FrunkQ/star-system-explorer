@@ -563,7 +563,7 @@
           : `Mag: ${magShapes.size === 1 ? "one world's" : `${magShapes.size} worlds'`} magnetic fields from the kernel's facts (read_field), traced as on each world's own Mag layer. Orange where the field points away from the world, blue where it points in; the faint outlines are the wind's bubble (magnetopause), its nose toward the star.${realScale ? " Real scale: each field at its true size." : " Readable scale: each field is drawn to its world's enlarged size and stopped short of the nearest body drawn; Real shows them at their true size."}`,
   );
   // What the star showed in its last picture (star-now.ts): flares on screen, ejections leaving, words for the note.
-  let starNow = $state<StarNow | null>(null);
+  let starNow = $state.raw<StarNow | null>(null);
   const flaringNow = $derived(starNow ? starNow.shown.length : 0);
   const calm = reducedMotion();
   // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom
@@ -1088,7 +1088,7 @@
     {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
     {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
     {#if motionNote}<span data-clock-rate={clock?.rate ?? 0} data-clock-fast={fastNames.length}>{motionNote}</span>{/if}
-    {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)} data-star-ejections={starNow?.ejections.length ?? 0} data-star-calm={calm ? "yes" : "no"}>The star turns on its own spin, its spots go round with it and its cells live their own lives, on the campaign's clock{flaringNow ? "; it is flaring now" : ""}. {(starNow?.words ?? []).join(" ")}</span>{/if}
+    {#if isTrue && star?.reading && using === "gpu"}<span data-star-reading>{(starNow?.words ?? []).join(" ")}</span>{:else if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)} data-star-ejections={starNow?.ejections.length ?? 0} data-star-calm={calm ? "yes" : "no"}>The star turns on its own spin, its spots go round with it and its cells live their own lives, on the campaign's clock{flaringNow ? "; it is flaring now" : ""}. {(starNow?.words ?? []).join(" ")}</span>{/if}
   </p>
 </div>
 

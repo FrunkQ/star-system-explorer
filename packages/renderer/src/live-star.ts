@@ -42,6 +42,22 @@ export interface LiveStar {
   corona?: Record<string, Json>;
   /** The active regions alive over the same span (SG7): the spots, and where flares and prominences sit. */
   regions?: Regions;
+  /** Its activity is still being read: drawn as the bare star (its temperature's limb darkening, no spots, flares or prominences) meanwhile. */
+  reading?: true;
+}
+
+/**
+ * The star as it is drawn while its activity is read (`readLiveStar` can take seconds on a busy kernel): the same
+ * disc from the facts the scene already has, limb-darkened by its own temperature, with nothing on it yet. Null
+ * without all three numbers.
+ */
+export function readingStar(address: string, given: GivenStar, age_s?: number): LiveStar | null {
+  const teff = Number(given.teff_k);
+  const mass = Number(given.mass_sun) * constant("M_sun");
+  const radius = Number(given.radius_sun) * constant("R_sun");
+  if (!(teff > 0 && mass > 0 && radius > 0)) return null;
+  const lum = 4 * Math.PI * radius * radius * constant("sigma_SB") * teff ** 4;
+  return { address, teff, mass, radius, lum, age_s: Number(age_s) > 0 ? Number(age_s) : 4.6e9 * constant("yr_julian"), activity: {}, moment: {}, flares: [], prominences: [], reading: true };
 }
 
 /** How much of the star's time the drawn star keeps prominences for: about six minutes on the True view's star clock. */

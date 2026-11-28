@@ -32,3 +32,18 @@ Thread "Draw binary mass transfer and flares". On 28 Nov, Alex's PC (WebGPU on t
 - `close-up.test.ts` updated for the new floor.
 - `npm run ui:test` (1233 pass) and `ui:check` are clean.
 - Owed: a second GPU look on Alex's PC.
+
+## Round two (second GPU look, 28 Nov)
+
+The second look on Alex's PC ran 387e567a: the clock stopped gave 54 fps at the close-up floor, the clock running still 3 to 19 fps in the Sun's system.
+
+1. **Every lit material was rebuilt on every frame.** `gpu.ts` made new lights each draw. three keys its compiled materials by the lights' ids, so each frame rebuilt them all (`getNodeBuilderState` in the profile). The point, directional and ambient lights are now kept across draws.
+2. **The star's facts sat behind a deep reactive proxy.** `liveStar` (SystemChart) and `starNow` (System3D) were `$state`, so every read of a prominence's fields on every picture went through Svelte's proxy (16 % of the frame in `prominenceColour`). Both are `$state.raw`; nothing mutates them in place. Prominence colours are also kept by their lines' strengths.
+3. **An eruption vanished in one frame** as its front crossed the glow's edge (`prominencesAt` cut it at `reach`). It is now kept to ten times the reach and fades by its own thinning.
+4. **A beaded seam at the limb.** The prominences' stand-off from the disc is soft: a pixel's share off the disc, so it meets the face's screen-cut edge.
+5. **The Sun drawn plain for about 25 s** while its activity was read. The kernel's read itself is fast (under 0.2 s for the Sun with 8 targets, debug build); the wait is the busy kernel at first open. Meanwhile the star is now drawn bare from the facts the scene already has (`readingStar`): limb-darkened by its temperature, no spots, flares or prominences, and the words say its activity is still being read.
+6. **Limb darkening looked weak on screen.** It is right: at 0.98 R the Sun's green is 0.46 of the centre in linear light, which is 0.71 in screen values; B2 V 0.88, M3 V 0.56. The screen read 0.81, 0.94 and 0.59, the rest being the eye's glare laid over the disc (CIE glare, physics). No change.
+
+The headless browser (SwiftShader) cannot measure the real frame rate; that is owed to the third look on Alex's PC.
+
+Checks: `star-gpu-check.test.ts` adds "an eruption fades as it leaves the picture, not in one frame" (seen red with the old cut: minute 40, 402900 to 0) and "a star still being read is drawn bare". The row-span change in `addProminences` gives the same pixels as before (checked byte for byte on a 25-prominence Sun).

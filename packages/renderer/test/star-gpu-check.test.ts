@@ -5,7 +5,7 @@ import { srgb255, linear255 } from "../src/srgb.ts";
 import { limbDarkeningAt } from "../src/star.ts";
 import { drawGlow } from "../src/star-glow.ts";
 import { drawStarNow } from "../src/star-now.ts";
-import type { LiveStar } from "../src/live-star.ts";
+import { readingStar, type LiveStar } from "../src/live-star.ts";
 
 const exact = (c: number) => 255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 
@@ -69,4 +69,40 @@ test("the Sun's face is round, so the view cuts its limb on the screen; an erupt
   const ratio = extra(born + 5 * DAY + 1800) / extra(born + DAY);
   // (186 with the log scale; 108 when the fade was laid over the scale instead.)
   assert.ok(ratio > 150, `${ratio}`);
+});
+
+test("an eruption fades as it leaves the picture, not in one frame", () => {
+  const prom = { kind: "quiescent", born_s: born, life_s: 5 * DAY, lat_deg: 30, lon_deg: 90, tilt_deg: 10, height_m: 4e7, length_m: 2e8, thickness_m: 7e6, mass_kg: 1e12, temperature_k: 8000, share_visible: 1e-4, eruption: { at_s: born + 5 * DAY, speed_m_s: 4e5 } };
+  const face = { width: 128, data: new Uint8ClampedArray(128 * 128 * 4) };
+  const halo = { width: 160, data: new Uint8ClampedArray(160 * 160 * 4) };
+  const ask = { clock: 0, span: 0, disc: 0.92, disc_deg: 13.5, reach_deg: 30, lat_deg: 0 };
+  drawStarNow(face, halo, sun([]), { ...ask, t: born + DAY });
+  const bare = Uint8ClampedArray.from(halo.data);
+  const light: number[] = [];
+  for (let min = 0; min <= 240; min += 2) {
+    drawStarNow(face, halo, sun([prom]), { ...ask, t: born + 5 * DAY + min * 60 });
+    let sum = 0;
+    for (let i = 3; i < bare.length; i += 4) sum += Math.max(0, halo.data[i]! - bare[i]!);
+    light.push(sum);
+  }
+  const most = Math.max(...light);
+  assert.ok(most > 0);
+  // Two minutes apart, a rope still at a tenth of its brightest never loses more than half its light.
+  for (let i = 1; i < light.length; i++) if (light[i - 1]! > 0.1 * most) assert.ok(light[i]! > 0.5 * light[i - 1]!, `minute ${2 * i}: ${light[i - 1]} to ${light[i]}`);
+});
+
+test("a star still being read is drawn bare: limb-darkened by its temperature, and says its activity is coming", () => {
+  const s = readingStar("u:t/sys:0/star:0", { teff_k: 5772, mass_sun: 1, radius_sun: 1 });
+  assert.ok(s);
+  assert.equal(readingStar("x", { teff_k: 5772 }), null);
+  const n = 128;
+  const face = { width: n, data: new Uint8ClampedArray(n * n * 4) };
+  const now = drawStarNow(face, null, s, { t: s.age_s, clock: 0, span: 0, disc: 0.92, lat_deg: 0 });
+  assert.equal(now.round, true);
+  assert.match(now.words.join(" "), /still being read/);
+  assert.doesNotMatch(now.words.join(" "), /no flares/);
+  // Green near the limb (0.97 of the radius) against the centre, in linear light: well under two thirds.
+  const at = (x: number) => linear255(face.data[(64 * n + x) * 4 + 1]!);
+  const edge = Math.round(64 - 0.97 * 0.46 * n);
+  assert.ok(at(edge) / at(64) < 0.65, `${at(edge) / at(64)}`);
 });

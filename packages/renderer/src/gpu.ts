@@ -323,6 +323,7 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     return m;
   };
   // A star's face: one texture and material per star, its pixels replaced when the moment drawn changes.
+  const lamps = { point: new PointLight(0xffffff, 3, 0, 0), sun: new DirectionalLight(0xffffff, 3), ambient: new AmbientLight(0xffffff, 0.04) };
   const faces = new Map<string, { tex: DataTexture; mat: SpriteMaterial | SpriteNodeMaterial; version: number; width: number; round: boolean }>();
   // A round limb is cut on the screen, not in the picture: its edge is as sharp and smooth as the screen's pixels at
   // any zoom, however few texels the face has (the GPU check of 28 Nov 2026 found the texture's edge stepped).
@@ -512,16 +513,17 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
       if (o.light) {
         // The star lights its worlds with no fall-off across the frame (the distances are drawn on a log scale);
         // a trace of ambient keeps a night side from vanishing against space.
+        // The same light objects every draw: three keys its compiled materials by the lights' ids, so new lights
+        // each frame rebuilt every lit material on every frame.
         if (o.light.at) {
-          const l = new PointLight(0xffffff, 3, 0, 0);
-          l.position.set(o.light.at[0], o.light.at[1], o.light.at[2]);
-          scene.add(l);
+          lamps.point.position.set(o.light.at[0], o.light.at[1], o.light.at[2]);
+          scene.add(lamps.point);
         } else if (o.light.from) {
-          const l = new DirectionalLight(0xffffff, 3);
-          l.position.set(o.light.from[0], o.light.from[1], o.light.from[2]);
-          scene.add(l);
+          lamps.sun.position.set(o.light.from[0], o.light.from[1], o.light.from[2]);
+          scene.add(lamps.sun);
         }
-        scene.add(new AmbientLight(0xffffff, o.light.ambient ?? 0.04));
+        lamps.ambient.intensity = o.light.ambient ?? 0.04;
+        scene.add(lamps.ambient);
       }
       for (const it of o.items) {
         if (o.light && it.face) {

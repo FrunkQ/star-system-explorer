@@ -78,7 +78,9 @@ export function prominencesAt(s: LiveStar, t: number, reach: number, calm = fals
       // Lifting off: risen at its speed, spread out as it goes, so fainter with the square of its distance.
       const r0 = 1 + h;
       const r = r0 + (p.eruption.speed_m_s * (at - end)) / s.radius;
-      if (r > reach) continue;
+      // Its legs stay in the picture long after its top has left it: it fades by its own thinning (through the
+      // filter's scale), not at the picture's edge (the GPU check of 28 Nov saw it vanish in one frame).
+      if (r > 10 * reach) continue;
       h = r - 1;
       k = (r0 / r) ** 2;
       erupting = true;
@@ -100,7 +102,19 @@ export function prominenceShown(share: number): number {
 }
 
 /** A prominence's colour from its own hydrogen lines (linear, brightest channel 1): red hydrogen-alpha, a touch of blue-green hydrogen-beta. */
-export const prominenceColour = (p: Prominence): [number, number, number] => nebulaColour({ shells: [], light: { lines: p.light?.lines ?? [] } } as unknown as NebulaShape, "visible");
+export const prominenceColour = (p: Prominence): [number, number, number] => {
+  // Kept by the lines' strengths: they are fixed for a prominence, and this ran for every one on every picture.
+  const lines = p.light?.lines ?? [];
+  const key = lines.map((l) => `${l.line}:${l.power_w}`).join("|");
+  let rgb = coloursKept.get(key);
+  if (!rgb) {
+    if (coloursKept.size >= 512) coloursKept.clear();
+    rgb = nebulaColour({ shells: [], light: { lines } } as unknown as NebulaShape, "visible");
+    coloursKept.set(key, rgb);
+  }
+  return rgb;
+};
+const coloursKept = new Map<string, [number, number, number]>();
 
 
 /** An erupting rope's radius over its height above the surface: the aspect ratio of Thernisien et al.'s croissant
@@ -223,22 +237,28 @@ export function addProminences(out: { width: number; data: Uint8ClampedArray }, 
       const cx = c + x * px;
       const cy = c - y * px;
       const r = Math.ceil(rad * 2);
-      for (let yy = Math.max(0, Math.floor(cy - r)); yy <= Math.min(n - 1, Math.ceil(cy + r)); yy++)
-        for (let xx = Math.max(0, Math.floor(cx - r)); xx <= Math.min(n - 1, Math.ceil(cx + r)); xx++) {
-          const dd = ((xx + 0.5 - cx) ** 2 + (yy + 0.5 - cy) ** 2) / (rad * rad);
+      for (let yy = Math.max(0, Math.floor(cy - r)); yy <= Math.min(n - 1, Math.ceil(cy + r)); yy++) {
+        // Only the row's span inside two widths of the point.
+        const dy = yy + 0.5 - cy;
+        const half = Math.sqrt(Math.max(0, 4 * rad * rad - dy * dy));
+        for (let xx = Math.max(0, Math.floor(cx - half - 0.5)); xx <= Math.min(n - 1, Math.ceil(cx + half - 0.5)); xx++) {
+          const dd = ((xx + 0.5 - cx) ** 2 + dy * dy) / (rad * rad);
           if (dd > 4) continue;
-          // Stand-off: a pixel on the disc stays the disc's.
+          // Stand-off: a pixel on the disc stays the disc's, faded across the limb by how much of the pixel lies
+          // off the disc, so it meets the face's smooth edge without a beaded seam.
           const bx = (xx + 0.5 - c) / px;
           const by = -(yy + 0.5 - c) / px;
-          if (bx * bx + by * by < 1) continue;
+          const off = Math.min(1, (Math.sqrt(bx * bx + by * by) - 1) * px + 0.5);
+          if (off <= 0) continue;
           const i = yy * n + xx;
-          const w = v * Math.exp(-dd);
+          const w = v * Math.exp(-dd) * off;
           if (w > a[i]!) a[i] = w;
           if (xx < x0) x0 = xx;
           if (xx > x1) x1 = xx;
           if (yy < y0) y0 = yy;
           if (yy > y1) y1 = yy;
         }
+      }
     }
     if (x1 < 0) continue;
     drawn++;
