@@ -125,6 +125,15 @@ try {
     await gm.waitForTimeout(1200);
     await shot("example");
 
+    // Cutaway: Wayfarer's bay and habitat open on this side, and its lander shows inside the bay.
+    await b.locator("[data-example-ships]").click();
+    await b.locator('[data-example-ship="wayfarer"]').click();
+    await b.locator("[data-cutaway]").click();
+    assert.equal(await b.locator("[data-cutaway]").getAttribute("aria-pressed"), "true");
+    await gm.waitForTimeout(1200);
+    await shot("cutaway");
+    await b.locator("[data-cutaway]").click();
+
     // Example ships: a blank build, then a part starts it.
     await b.locator("[data-example-ships]").click();
     await b.locator('[data-catalogue-ship=""]').click();

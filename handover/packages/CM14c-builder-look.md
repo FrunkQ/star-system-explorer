@@ -34,3 +34,8 @@ Track CM. Builds on CM14b (the builder to the mock-up, PR 746). Mock-up: `sse4/h
 - `builder-shapes.test.ts` gains: every example places all its parts, has a part to letter its name on, types no structure mass and says it needs part masses; a bay is open along its top (seen red with the old opening, green restored).
 - `ship-builder.e2e.mjs` opens Kestrel from Example ships: eight or more parts at once, "needs part masses" shown, "What can it do?" disabled. Picture `example-*.png`.
 - `ui:test` 1271 pass; `ui:check` clean; `build-base-parts.py --check`; ship-builder, manifest and voyage e2e pass.
+
+# CM14c part 3a: Cutaway
+
+- **Cutaway** (the mock-up's chip, now live): bays and habitats open on the viewer's side, so what they hold shows: Wayfarer's lander in its bay, a habitat's deck. Geometry only (the shell is drawn with a gap, no clipping planes, so it works the same on WebGPU, WebGL2 and software drawing). The name is not lettered on a cut-away habitat.
+- Check: `builder-shapes.test.ts` "cut away, a bay and a habitat open on the viewer's side" (seen red with the cut ignored); the e2e opens Wayfarer, presses Cutaway and takes `cutaway-*.png`.

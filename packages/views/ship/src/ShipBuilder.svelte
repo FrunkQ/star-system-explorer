@@ -106,6 +106,7 @@
   let hover = $state<number | null>(null);
   let tab = $state<"part" | "tree" | "paint">("part");
   let viewStyle = $state<"flat" | "3d" | "wire">("3d");
+  let cut = $state(false);
   let seen = $state<"above" | "tilted" | "edge" | "free">("tilted");
   let sheet = $state<"palette" | "inspector" | null>(null);
 
@@ -309,7 +310,7 @@
     for (const b of recipe.parts) if (b.paint?.startsWith("#")) paints[b.key] = b.paint;
     const frame = reframe !== lastFrame;
     lastFrame = reframe;
-    s.show({ layout: l, placed: l.placed, name: recipe.name, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", frame });
+    s.show({ layout: l, placed: l.placed, name: recipe.name, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", cut, frame });
     s.draw({ yaw_deg: cam.yaw, pitch_deg: cam.pitch, zoom: cam.zoom, pan: cam.pan }, box.w, box.h);
   });
   // "Seen from": a short turn to the preset; a drag makes it Free.
@@ -539,7 +540,7 @@
         </div>
       </div>
       {#if !readonly}
-        <button type="button" class="chip" disabled title="Cutaway comes with bays that hold parts inside (CM8)">Cutaway</button>
+        <button type="button" class="chip" class:on={cut} aria-pressed={cut} onclick={() => ((cut = !cut), viewStyle === "flat" && (viewStyle = "3d"))} title="Open bays and habitats on this side, so what they hold shows" data-cutaway>Cutaway</button>
         <button type="button" class="chip" disabled title="Sensor views come with sensor parts and their fields of view (CM13 part 3)">Sensor views</button>
         <button type="button" class="chip" onclick={doUndo} title="Undo (Ctrl+Z)" data-undo>Undo</button>
       {/if}
@@ -822,6 +823,7 @@
   .vgroup { display: flex; align-items: center; gap: 6px; }
   .chip { background: color-mix(in srgb, var(--b-ground) 82%, transparent); border: 1px solid var(--b-line); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--b-muted); }
   .chip:disabled { color: var(--b-faint); cursor: not-allowed; }
+  .chip.on { color: var(--b-accent); border-color: var(--b-accent); }
   .hint { position: absolute; left: 12px; bottom: 12px; background: color-mix(in srgb, var(--b-ground) 88%, transparent); border: 1px solid var(--b-line); border-radius: 999px; padding: 6px 14px; font-size: 12px; color: var(--b-muted); white-space: nowrap; max-width: calc(100% - 190px); overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
   .hint :global(b), .tip :global(b) { color: var(--b-ink); font-weight: 500; }
   .tip { position: absolute; pointer-events: none; background: var(--b-raised2); border: 1px solid var(--b-line); border-radius: 6px; padding: 4px 8px; font-size: 12px; white-space: nowrap; transform: translate(12px, -130%); }
