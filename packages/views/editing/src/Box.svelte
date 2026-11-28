@@ -25,7 +25,7 @@
     pairOf,
     handleValue,
     trueAnomalyFrom,
-    yearsToSeconds,
+    drawnSecond,
     type Depth,
     type Handle,
     type Json,
@@ -86,12 +86,12 @@
   const isOrbit = $derived(handle.part.field === "orbit.semi_major_axis");
 
   // The kernel's orbits now (orbits_at at the campaign's now) and, for the Orbit box, its stability checks.
-  const now_s = $derived(Number(yearsToSeconds(ws.now_yr)));
+  const now_s = $derived(Number(drawnSecond(ws.birth_s, ws.now_yr)));
   let placed = $state.raw<OrbitPlaced[]>([]);
   let checks = $state.raw<StabilityCheck[] | null>(null);
   $effect(() => {
     const sys = scene.system;
-    const at = yearsToSeconds(ws.now_yr);
+    const at = drawnSecond(ws.birth_s, ws.now_yr);
     const orbit = isOrbit;
     void ws.revision;
     if (!sys) return;

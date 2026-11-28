@@ -6,7 +6,7 @@ use crate::scenario::world;
 use std::collections::BTreeMap as Map;
 
 fn sun() -> (Fits, LifeLine) {
-    let f = Fits::new(0.02);
+    let f = Fits::new(crate::hurley::Z_SUN);
     let l = LifeLine::new(&f, 1.0).unwrap();
     (f, l)
 }

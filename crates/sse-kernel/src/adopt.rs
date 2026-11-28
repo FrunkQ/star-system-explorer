@@ -28,7 +28,7 @@ pub const TIME_AGED: &str = "time.aged";
 pub const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 
 /// The serde name of a plain enum value (kebab-case labels).
-fn json_name<T: serde::Serialize>(v: &T) -> String {
+pub(crate) fn json_name<T: serde::Serialize>(v: &T) -> String {
     serde_json::to_value(v)
         .ok()
         .and_then(|x| x.as_str().map(str::to_string))
@@ -36,7 +36,7 @@ fn json_name<T: serde::Serialize>(v: &T) -> String {
 }
 pub const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 /// Metal mass fraction assumed when a system has no `star.metallicity_z` fact.
-pub const DEFAULT_Z: f64 = 0.0142;
+pub const DEFAULT_Z: f64 = sse_formation::hurley::Z_SUN;
 /// Most tiles one `resolved_system` builds.
 pub const MAX_TILES: usize = 24;
 
@@ -762,30 +762,52 @@ fn adopted_v3(ch: &Chronicle, system: &Address) -> bool {
         .any(|e| e.body.kind == ADOPT_V3 && e.body.subject.contains(system))
 }
 
+/// A Julian year in whole seconds (the sheet's, exact).
+use sse_core::time::YEAR_S;
+
+/// The real-sky anchor on a star's row (`time.j2000_s`, RW17), whole seconds.
+fn anchor_s(row: &BTreeMap<String, Value>) -> Option<i64> {
+    match row.get(crate::motion::ANCHOR_FIELD)? {
+        Value::Int(i) => i64::try_from(*i).ok(),
+        _ => None,
+    }
+}
+
+/// The universe second a system was born (time design section 4,
+/// `system.birth_s`; TP2's first slice, reported, not yet a written fact):
+/// its spec's birth year in whole seconds. A screen that counts a system's
+/// time from its star's birth draws universe second `birth_s + age`.
+pub(crate) fn birth_s(spec: &SystemSpec) -> Option<i64> {
+    spec.birth_year.checked_mul(YEAR_S)
+}
+
 /// A `SystemSpec` from facts: the star is the body with a temperature and a
 /// mass and no host; planets are the bodies whose `orbit.host` is that star.
-/// Universe time "now" is `system.now_year` (else the origin), birth is now
-/// minus `system.age` unless `system.birth_year` is set.
+/// Universe time "now" is `system.now_year`, else the year of the real-sky
+/// anchor its star carries (`time.j2000_s`: a measured system's `system.age`
+/// is its age at that date), else the origin; birth is now minus
+/// `system.age` unless `system.birth_year` is set.
 pub(crate) fn spec_from_facts(facts: &Facts, system: &Address) -> Option<SystemSpec> {
     let row = facts.get(system)?;
     let age_s = row.get("system.age").and_then(as_f64)?;
     let age_myr = age_s / JULIAN_YEAR / 1.0e6;
-    let now_year = row
-        .get("system.now_year")
-        .and_then(as_f64)
-        .map(|y| y as i64)
-        .unwrap_or(0);
-    let birth_year = row
-        .get("system.birth_year")
-        .and_then(as_f64)
-        .map(|y| y as i64)
-        .unwrap_or(now_year - m::round(age_myr * 1.0e6) as i64);
     let (star, star_row) = facts.iter().find(|(a, r)| {
         system.contains(a)
             && r.contains_key("star.effective_temperature")
             && r.contains_key("body.mass")
             && !r.contains_key("orbit.host")
     })?;
+    let now_year = row
+        .get("system.now_year")
+        .and_then(as_f64)
+        .map(|y| y as i64)
+        .or_else(|| anchor_s(star_row).map(|s| s.div_euclid(YEAR_S)))
+        .unwrap_or(0);
+    let birth_year = row
+        .get("system.birth_year")
+        .and_then(as_f64)
+        .map(|y| y as i64)
+        .unwrap_or(now_year - m::round(age_myr * 1.0e6) as i64);
     let star_mass = as_f64(&star_row["body.mass"])? / M_SUN_KG;
     let z = row
         .get("star.metallicity_z")
@@ -928,6 +950,17 @@ fn bodies_from_facts(
             z: spec.z,
             formed_myr: 0.0,
             measured_myr: spec.age_myr,
+            // CS1: how bright the star is, from its own catalogued radius and
+            // temperature; without both, the life line's model star.
+            luminosity_lsun: match (
+                srow.get("star.effective_temperature").and_then(as_f64),
+                srow.get("body.radius").and_then(as_f64),
+            ) {
+                (Some(t), Some(r)) if t > 0.0 && r > 0.0 => {
+                    star_luminosity_w(r, t).map(|l| l / L_SUN)
+                }
+                _ => None,
+            },
         });
     let mut out = vec![];
     let system: Address = spec.system.parse().expect("spec system address");
@@ -955,11 +988,12 @@ fn bodies_from_facts(
             .get("orbit.semi_major_axis")
             .and_then(as_f64)
             .unwrap_or(AU);
-        let (a_star, e, host_msun) = if host == star {
+        let (a_star, e, host_msun, e_star) = if host == star {
             (
                 a_own,
                 r.get("orbit.eccentricity").and_then(as_f64).unwrap_or(0.0),
                 spec.star_mass,
+                None,
             )
         } else {
             let hr = match facts.get(&host) {
@@ -972,6 +1006,8 @@ fn bodies_from_facts(
                     .unwrap_or(AU),
                 r.get("orbit.eccentricity").and_then(as_f64).unwrap_or(0.0),
                 hr.get("body.mass").and_then(as_f64).unwrap_or(0.0) / M_SUN_KG,
+                // CS1: the planet's own orbit carries the moon round the star.
+                Some(hr.get("orbit.eccentricity").and_then(as_f64).unwrap_or(0.0)),
             )
         };
         let mass_earth = mass / M_EARTH_KG;
@@ -986,11 +1022,11 @@ fn bodies_from_facts(
         // A catalogued world brings what was measured: its own Bond albedo,
         // its mean surface temperature and its air. Only what is missing is
         // estimated (equilibrium with the star, the pack's greenhouse).
-        let albedo = r
+        let measured_albedo = r
             .get("body.albedo")
             .and_then(as_f64)
-            .filter(|x| (0.0..1.0).contains(x))
-            .unwrap_or(s.albedo_default);
+            .filter(|x| (0.0..1.0).contains(x));
+        let albedo = measured_albedo.unwrap_or(s.albedo_default);
         let greenhouse = if oceans > 0.0 { s.greenhouse_k } else { 0.0 };
         let t_eq = teff * m::sqrt(r_star / (2.0 * a_star)) * m::pow(1.0 - albedo, 0.25);
         // A measured mean temperature belongs to the world it was measured
@@ -1045,6 +1081,8 @@ fn bodies_from_facts(
             water_from_density: makeup_shares(r).is_none(),
             // A moon's sunlight is its planet's distance from the star (HV2c).
             star_au: (host != star).then_some(a_star / AU),
+            star_e: e_star,
+            bond_albedo: measured_albedo,
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,
@@ -1115,6 +1153,17 @@ fn bodies_from_facts(
     out
 }
 
+/// A star's luminosity, W, from its radius (m) and effective temperature
+/// (K): the block `sse.star.luminosity` (L = 4πR²σT⁴) through the block
+/// door, with its settings in force.
+fn star_luminosity_w(radius_m: f64, teff_k: f64) -> Option<f64> {
+    sse_physics::run("sse.star.luminosity", &[radius_m, teff_k])
+        .ok()?
+        .first()
+        .copied()
+        .filter(|l| l.is_finite() && *l > 0.0)
+}
+
 /// Equilibrium temperature of a fact row (its own orbit, or its host's for a
 /// moon; its own Bond albedo, else the pack default), for comparing a world
 /// now with the world as catalogued.
@@ -1173,6 +1222,7 @@ pub(crate) struct Resolved {
     pub at_s: Option<i64>,
     pub facts: serde_json::Value,
     pub spec: Option<serde_json::Value>,
+    pub birth_s: Option<i64>,
     pub surfaces: Vec<serde_json::Value>,
     pub tiles: Vec<serde_json::Value>,
     pub refused: Vec<serde_json::Value>,
@@ -1250,7 +1300,7 @@ pub(crate) fn worlds_at(
     let now_s = all
         .get(system, "system.now_year")
         .and_then(as_f64)
-        .map(|y| y as i64 * (sse_core::sheet::YR_JULIAN as i64));
+        .map(|y| y as i64 * YEAR_S);
     // Once the one clock has moved this system (its own age shift, or campaign
     // time elapsed), "now" is its present on its own dates, not the latest
     // event: a kept look-ahead's future must not read as the present.
@@ -1614,6 +1664,7 @@ pub(crate) fn resolved_system(
         source: source.into(),
         at_s: (at_s != i64::MAX).then_some(at_s),
         facts: serde_json::Value::Object(facts_json),
+        birth_s: spec.as_ref().and_then(birth_s),
         spec: spec.map(|x| serde_json::to_value(x).expect("plain data")),
         // Each world's surface record, with its vapour plumes when it has
         // any (third audit R10: drawn above the limb in True), and how its
@@ -1747,6 +1798,11 @@ pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Valu
         };
         *found.entry(sys).or_insert(0) += 1;
     }
+    // A drawn star pinned as another system's slot (GZ13) is that system's
+    // place in the galaxy, not a system of the campaign's own.
+    found.retain(|sys, _| {
+        !matches!(st.get(sys, crate::slot::SLOT_OF).and_then(as_text), Some(of) if of != sys.to_string())
+    });
     found
         .into_iter()
         .map(|(sys, n)| {

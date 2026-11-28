@@ -1,0 +1,1 @@
+G cannot_follow {"block":"sse.gravity.shadow_angle","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

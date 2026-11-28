@@ -10,7 +10,9 @@ fn seed() -> Seed {
 
 pub(crate) fn one(n: u64, mass: f64, feh: f64) -> (Disc, Growth) {
     let sys = system(n);
-    let fits = crate::hurley::Fits::new((0.02 * sse_core::math::pow(10.0, feh)).clamp(1e-4, 0.03));
+    let fits = crate::hurley::Fits::new(
+        crate::inherit::z_of_feh(feh).clamp(crate::history::Z_FITS.0, crate::history::Z_FITS.1),
+    );
     let l = fits.l_zams(mass);
     let disc = Disc::new(disc_params(
         &seed(),
@@ -76,7 +78,7 @@ struct Tally {
 /// small planets passed through F6 for the radius gap.
 #[test]
 fn population_of_10000_systems() {
-    let fits = crate::hurley::Fits::new(0.02);
+    let fits = crate::hurley::Fits::new(crate::hurley::Z_SUN);
     let sun = crate::lifeline::LifeLine::new(&fits, 1.0).unwrap();
     let pops = [(1.0, 0.0), (1.0, 0.3), (1.0, -0.3), (0.4, 0.0), (1.6, 0.0)];
     let mut t: Vec<Tally> = pops.iter().map(|_| Tally::default()).collect();

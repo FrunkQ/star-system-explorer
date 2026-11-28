@@ -5,6 +5,7 @@
 // "Back to <world>". The picker beside the name at the galaxy offers the campaign's systems and recent places. Esc climbs one
 // scale. Each place is the address bar's hash: Back and Forward move through places, and a link opens straight on its
 // place with no start sheet. On a phone the line is "‹ name ▾". Moving about writes nothing.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

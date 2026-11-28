@@ -1,0 +1,6 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "bake", "table": "sse.light.disc", "subject": {"gravitational_radius_m": 14766.25, "rate_kg_s": 1.0e15, "inner_m": 88597.5, "outer_m": 1.4766e9}, "tier": "gpu-basic", "values": false},
+ {"op": "bake", "table": "sse.light.disc", "subject": {"mass_kg": 1.988409870698051e31, "rate_kg_s": 1.0e15, "inner_m": 88597.5, "outer_m": 1.4766e9}, "values": false},
+ {"op": "bake", "table": "sse.nothing"}
+]

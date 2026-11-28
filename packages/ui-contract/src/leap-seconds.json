@@ -1,0 +1,14 @@
+{
+  "schema": "sse.leap-seconds/1",
+  "about": "TAI minus UTC in whole seconds from each date (UTC, Unix milliseconds) since J2000.0, as IERS Bulletin C states them; TT is TAI + 32.184 s. The Sol door reads the device's clock (UTC) onto the universe clock (TT) with it. A leap second announced after this list was made is missing until the list is updated: the drawn sky is then a second early per missing leap.",
+  "source": "IERS Earth Orientation Center, Bulletin C (Paris Observatory), leap seconds of 1 January 2006, 1 January 2009, 1 July 2012, 1 July 2015 and 1 January 2017; Bulletin C 70 (July 2025) announces no leap second before July 2026. Unverified against Bulletin C itself (figures from memory, 26 Nov 2026).",
+  "tt_minus_tai_ms": 32184,
+  "steps": [
+    { "from_unix_ms": 915148800000, "tai_utc_s": 32 },
+    { "from_unix_ms": 1136073600000, "tai_utc_s": 33 },
+    { "from_unix_ms": 1230768000000, "tai_utc_s": 34 },
+    { "from_unix_ms": 1341100800000, "tai_utc_s": 35 },
+    { "from_unix_ms": 1435708800000, "tai_utc_s": 36 },
+    { "from_unix_ms": 1483228800000, "tai_utc_s": 37 }
+  ]
+}

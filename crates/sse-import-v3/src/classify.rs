@@ -27,10 +27,12 @@ pub fn starmap_class(k: &str) -> Class {
         "id" | "name" | "description" | "gmNotes" | "routes" | "activeJourneys"
         | "adriftConstructs" | "temporal" | "rulePackOverrides" | "travellerMetadata"
         | "importedSubsectors" | "distanceUnit" | "unitIsPrefix" | "coiCategories" | "poiPacks"
-        | "reasonsConfig" => Authored,
-        "mapMode"
-        | "invertDisplay"
-        | "scale"
+        | "reasonsConfig"
+        // GZ13: the map's scale and mode turn a system's map position into
+        // a distance, so its star slot keeps the map's layout.
+        | "mapMode"
+        | "scale" => Authored,
+        "invertDisplay"
         | "mapGrid"
         | "ignoreZForDistances"
         | "measurementUnits"

@@ -265,6 +265,58 @@ pub(crate) fn read_light(fixture: Option<&str>, bodies: Option<Vec<serde_json::V
     })
 }
 
+/// Light near a mass (XO2, XO3): design 3.4's fixtures or given bodies.
+pub(crate) fn read_light_paths(
+    fixture: Option<&str>,
+    bodies: Option<Vec<serde_json::Value>>,
+    table: bool,
+) -> Out {
+    let bad = |e: String| err("bad_light_paths", e);
+    let (source, asks) = match (fixture, bodies) {
+        (_, Some(list)) => {
+            let mut out = vec![];
+            for (i, v) in list.into_iter().enumerate() {
+                out.push(
+                    serde_json::from_value::<sse_light::paths::PathsAsk>(v)
+                        .map_err(|e| bad(format!("body {i}: {e}")))?,
+                );
+            }
+            ("given".to_string(), out)
+        }
+        (Some("black-holes"), None) => (
+            "fixture:black-holes".to_string(),
+            sse_light::scenario::fixtures(),
+        ),
+        (f, None) => {
+            return Err(bad(format!(
+                "no light paths for {}; fixtures: black-holes, or give bodies",
+                f.unwrap_or("(nothing asked)")
+            )))
+        }
+    };
+    let light = &sse_light::emit::Model::base().table;
+    let mut paths = vec![];
+    for (i, a) in asks.iter().enumerate() {
+        let p = sse_light::paths::read(a, light).map_err(|e| bad(format!("body {i}: {e}")))?;
+        paths.push(serde_json::to_value(p).expect("plain data"));
+    }
+    let bend_table = table.then(|| {
+        let t = sse_gravity::scenario::table();
+        serde_json::json!({
+            "hash": t.hash().hex(),
+            "rows": sse_gravity::bend::ROWS,
+            "cols": sse_gravity::bend::COLS,
+            "row_length": sse_gravity::bend::COLS + 4,
+            "flat": t.flat(),
+        })
+    });
+    Ok(Response::LightPathsRead {
+        source,
+        paths,
+        bend_table,
+    })
+}
+
 fn parse_list<T: serde::de::DeserializeOwned>(
     what: &str,
     v: Option<Vec<serde_json::Value>>,
@@ -1045,6 +1097,10 @@ pub(crate) fn read_activity(
             )
             .map_err(|e| err("bad_activity", e))?;
             one["prominences"] = serde_json::to_value(p).expect("plain data");
+            // SG7: the active regions over the same span (the spots, and where flares and prominences sit).
+            let g = regions::regions(&seed, &a, w.from_s, w.to_s, &set)
+                .map_err(|e| err("bad_activity", e))?;
+            one["regions"] = serde_json::to_value(g).expect("plain data");
         }
         out.push(one);
     }
@@ -1121,5 +1177,47 @@ pub(crate) fn read_nebulae(
         at_s,
         nebulae,
         absent,
+    })
+}
+
+/// BX1: a pair of stars aged together.
+pub(crate) fn age_pair(
+    node: serde_json::Value,
+    to_myr: f64,
+    z: Option<f64>,
+    planets: Option<Vec<serde_json::Value>>,
+    seed: Option<String>,
+    time: Option<&sse_time::epoch::TimeSettings>,
+) -> Out {
+    use sse_time::pair::*;
+    let node: Node =
+        serde_json::from_value(node).map_err(|e| err("bad_pair", format!("node: {e}")))?;
+    let planets: Vec<PlanetIn> = planets
+        .unwrap_or_default()
+        .into_iter()
+        .map(|p| serde_json::from_value(p).map_err(|e| err("bad_pair", format!("planet: {e}"))))
+        .collect::<Result<_, _>>()?;
+    // The stack's time settings (its ageing star); the rule table and the
+    // pair settings are their defaults until they join the stack.
+    let time = time.ok_or_else(|| {
+        err(
+            "no_time_settings",
+            "no pack in the stack provides time settings",
+        )
+    })?;
+    let star = time.star.clone();
+    let line = age_node(
+        &node,
+        z.unwrap_or(crate::adopt::DEFAULT_Z),
+        to_myr,
+        &planets,
+        &star,
+        &sse_time::binary::BinaryRules::default(),
+        &PairSettings::default(),
+        &sse_core::Seed::from_text(seed.as_deref().unwrap_or("sse4")),
+    )
+    .map_err(|e| err("bad_pair", e))?;
+    Ok(Response::PairAged {
+        line: serde_json::to_value(line).expect("plain data"),
     })
 }

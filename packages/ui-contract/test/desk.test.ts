@@ -146,3 +146,29 @@ test("the ruler opens by desk and level (top-level 12.1), and keeps the GM's spa
   assert.equal(rulerOpens("explore", "system", "nonsense"), "week", "an odd kept value falls back to the default");
   assert.equal(keepRulerSpan(Infinity), "whole");
 });
+
+test("a start-sheet verb lands on a desk that has what it opens (TM9c): the desk in front first, else Explore, Build, Run", async () => {
+  const { deskFor } = await import("../src/desk.ts");
+  const { screenOnDesk } = await import("../src/screen.ts");
+  const life = { rail: [{ scale: "world", group: "understand", label: "Life", order: 1, desks: ["explore", "build"] }] } as Pick<ScreenDoc, "rail">;
+  const sky = { rail: [{ scale: "world", group: "look", label: "Sky", order: 1 }] } as Pick<ScreenDoc, "rail">;
+  assert.deepEqual(DESKS.map((d) => screenOnDesk(life, d)), [true, true, false]);
+  assert.ok(DESKS.every((d) => screenOnDesk(sky, d) && screenOnDesk({}, d)), "no desks: every desk; no rail entry: every desk");
+  assert.equal(deskFor("run", (d) => screenOnDesk(life, d)), "explore", "Life from Run lands on Explore");
+  assert.equal(deskFor("build", (d) => screenOnDesk(life, d)), "build", "the desk in front keeps it when it has it");
+  assert.equal(deskFor("run", (d) => screenOnDesk(sky, d)), "run");
+  assert.equal(deskFor("explore", (d) => d === "run"), "run", "only Run has it: Run");
+  assert.equal(deskFor("build", () => false), "build", "nowhere: stay");
+  assert.equal(deskFor("run", (d) => partShows("light", d)), "explore", "Light is off Run");
+});
+
+test("See as on Run: three kinds only (design 3.1): Game master, The table, each role", async () => {
+  const { SHIPPED_LENSES, playerLenses, tableLenses } = await import("../src/lens.ts");
+  const plan = { audiences: [{ id: "everyone", label: "Everyone" }, { id: "crew", label: "The crew" }] } as never;
+  const setup = { views: [{ id: "scan", label: "Scanner" }] } as never;
+  const all = [...SHIPPED_LENSES, ...playerLenses(setup, plan)];
+  assert.deepEqual(tableLenses(all).map((l) => [l.id, l.label]), [["running", "Game master"], ["players", "As the table sees it"], ["players.crew", "As The crew sees it"]]);
+  assert.ok(all.some((l) => l.id === "view.scan") && !tableLenses(all).some((l) => l.id === "view.scan"), "a data view is not a role");
+  assert.equal(all.find((l) => l.id === "running")!.label, "Running", "the shipped lens keeps its own name");
+  assert.deepEqual(DESKS.map((d) => [partShows("see-as", d, "every-lens"), partShows("see-as", d, "make")]), [[true, true], [true, true], [false, false]]);
+});

@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import { constant, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { cycleActivity, drawCorona, narrateCorona, churningGranules, coronaScaleHeight, CORONA_K, cycleOf, drawStar, flaresAt, flareWhiteLight, limbLumps, narrateLumps, patchContrast, patchRadiusDeg, readLiveStar, GRANULE_DT, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type Convection, type LiveStar, type StarDraw, type StarReader } from "../../../renderer/src/index.ts";
+  import { cycleActivity, drawCorona, narrateCorona, churningGranules, coronaScaleHeight, CORONA_K, cycleOf, drawStar, flaresAt, flareWhiteLight, limbLumps, narrateLumps, patchContrast, patchRadiusDeg, readLiveStar, GRANULE_DT, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsOf, regionShare, STAR_REFERENCES, type Convection, type LiveStar, type StarDraw, type StarReader } from "../../../renderer/src/index.ts";
 
   // `bare` draws the disc alone, in the `light` given (the body card's picture); the Body screen adds the facts and switch.
   let { ctx, scene, address, label, size, bare = false, light = "visible" }: { ctx: ViewContext; scene: SystemScene; address: string; label: string; size: number; bare?: boolean; light?: StarDraw["light"] } = $props();
@@ -39,7 +39,12 @@
 
   const cyc = $derived(got ? cycleOf(got) : null);
   const coverage = $derived(Number(got?.moment.spot_coverage ?? 0));
-  const spots = $derived(got ? spotsFor(address, coverage, cyc) : []);
+  // Its active regions' spots at its present (SG7), from the kernel.
+  const spots = $derived(got ? spotsOf(got) : []);
+  // The regions with spots now, and their mean distance from the equator.
+  const live = $derived(got?.regions ? got.regions.regions.filter((g) => regionShare(g, got!.age_s) > 0) : []);
+  const pairs = $derived(live.length);
+  const belt = $derived(live.length ? Math.round(live.reduce((a, g) => a + Math.abs(g.lat_deg), 0) / live.length) : null);
   const H = $derived(got ? coronaScaleHeight(got.mass, got.radius) : 0.1);
   const now = $derived(got?.age_s ?? 0);
   const active = $derived(got ? flaresAt(got, spots, now) : []);
@@ -116,7 +121,7 @@
       <dt>Activity</dt>
       <dd data-regime>{got.activity.regime}{spin_days ? `, turning every ${spin_days.toFixed(1)} days (${got.activity.rotation_from})` : ""}</dd>
       <dt>Spots</dt>
-      <dd data-spot-words>{spots.length ? `${spots.length} covering ${(coverage * 100).toFixed(coverage < 0.01 ? 2 : 1)}%${cyc ? `, at about ${Math.round(28 - 20 * cyc.phase)}° from the equator, ${Math.round(cyc.phase * 100)}% through the cycle` : ", spread to high latitudes (no clean cycle)"}` : "None"}</dd>
+      <dd data-spot-words>{spots.length ? `${spots.length} covering ${(coverage * 100).toFixed(coverage < 0.01 ? 2 : 1)}%${belt === null ? "" : `, in ${pairs} active region${pairs === 1 ? "" : "s"} about ${belt}° from the equator`}${cyc ? `, ${Math.round(cyc.phase * 100)}% through the cycle` : " (no clean cycle)"}` : "None"}</dd>
       <dt>X-rays</dt>
       <dd>{pow(Number(got.moment.xray_w))}; corona scale height {(H * got.radius / 1e6).toFixed(0)} thousand km at {(CORONA_K / 1e6).toFixed(1)} MK</dd>
       <dt>Flares</dt>
@@ -129,7 +134,7 @@
         {/if}
       </dd>
       <dt>Why</dt>
-      <dd class="why">Spot places are drawn from the star and the cycle (the kernel gives coverage, not maps); spots are {SPOT_DELTA_K} K cooler; the corona is taken at {(CORONA_K / 1e6).toFixed(1)} MK; granule cells are placed from the star (the kernel gives their size and life) with a temperature spread of {(GRANULE_DT * 100).toFixed(1)}%, set from the Sun's measured contrast. Turn with the arrow keys. Sources: {STAR_REFERENCES.map((r) => r.text.split(".")[0]).join("; ")}.</dd>
+      <dd class="why">Spots are the kernel's active regions, each a pair of opposite sign, placed by the cycle (Spörer's law) and tilted by Joy's law; spots are {SPOT_DELTA_K} K cooler; the corona is taken at {(CORONA_K / 1e6).toFixed(1)} MK; granule cells are placed from the star (the kernel gives their size and life) with a temperature spread of {(GRANULE_DT * 100).toFixed(1)}%, set from the Sun's measured contrast. Turn with the arrow keys. Sources: {STAR_REFERENCES.map((r) => r.text.split(".")[0]).join("; ")}.</dd>
     </dl>{/if}
   {/if}
 </div>

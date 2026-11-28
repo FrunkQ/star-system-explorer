@@ -5,6 +5,7 @@
 // in stage 4, the violent phase in stage 6 with an event in words, and the
 // run's worlds at the end. Play moves time forward; Escape closes it. Watching
 // never changes the state hash, and nothing is written.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

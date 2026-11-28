@@ -1103,5 +1103,49 @@
    "plain": "magnetic field",
    "view": "view-mag"
   }
+ ],
+ "lines": [
+  {
+   "id": "oiii-4959",
+   "row": "o+2",
+   "at_m": 4.95891e-07,
+   "medium": "air",
+   "src": "storey2014"
+  },
+  {
+   "id": "oiii",
+   "row": "o+2",
+   "at_m": 5.00684e-07,
+   "medium": "air",
+   "src": "storey2014"
+  },
+  {
+   "id": "sii",
+   "row": "s+",
+   "at_m": 6.71644e-07,
+   "medium": "air",
+   "src": "sii-aa2025"
+  },
+  {
+   "id": "sii-6731",
+   "row": "s+",
+   "at_m": 6.73082e-07,
+   "medium": "air",
+   "src": "sii-aa2025"
+  },
+  {
+   "id": "co+",
+   "row": "co+",
+   "at_m": 4.26e-07,
+   "medium": "air",
+   "src": "brandt-chapman2004"
+  },
+  {
+   "id": "h2o+",
+   "row": "h2o+",
+   "at_m": 6.15e-07,
+   "medium": "air",
+   "src": "brandt-chapman2004"
+  }
  ]
 }

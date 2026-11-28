@@ -5,6 +5,7 @@
 // that is not a save is refused in words. Grow: a seed grows a system whose
 // preview has the same number of worlds as Node's run of the same request.
 // Nothing moves the campaign's state hash.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -61,7 +62,7 @@ try {
     await dlg.getByRole("button", { name: "Try a sample save" }).click();
     const report = dlg.getByLabel("Import report");
     await report.waitFor({ timeout: 8000 });
-    assert.match(await report.innerText(), /1 system, 3 bodies, 1 constructs, 87 facts/);
+    assert.match(await report.innerText(), /1 system, 3 bodies, 1 constructs, 88 facts/);
     assert.equal(await report.getAttribute("data-outside"), "1");
     assert.equal(await report.locator("tr[data-within=false] td").first().innerText(), "Moon (sample)");
     await dlg.locator(".preview .body").first().waitFor({ timeout: 8000 });

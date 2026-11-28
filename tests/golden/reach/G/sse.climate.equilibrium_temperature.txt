@@ -1,0 +1,1 @@
+G follows {"block":"sse.climate.equilibrium_temperature","reads":["sigma_SB"],"uses_it":false}

@@ -3,11 +3,12 @@
 // The GM shares from Kestrel: the players' screen shows Kestrel. The GM opens the Solar System privately: the players
 // still see Kestrel, and the GM's bar says so and offers "Send this view". Sent, the players' screen follows to the
 // Solar System, as far as the table knows it. Hold all on the Switchboard puts a holding card up until a view is sent again.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { desk, more } from "./nav.mjs";
+import { desk, more, pinClock } from "./nav.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -23,7 +24,7 @@ const shot = async (page, n) => {
 };
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const context = await browser.newContext();
   const errors = [];
   const gm = await context.newPage();

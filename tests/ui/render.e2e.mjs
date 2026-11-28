@@ -10,6 +10,7 @@
 //  - on an emulated low-end phone (Playwright's Moto G4 with Chromium's CPU
 //    slowed 4x, as Lighthouse does for mobile; not a real phone) the governor
 //    steps quality down until frames fit the budget, and the badge says so.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";

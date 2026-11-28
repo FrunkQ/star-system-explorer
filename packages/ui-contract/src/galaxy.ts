@@ -527,8 +527,8 @@ export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, str
 }
 
 /**
- * The cell our galaxy sits in. The sky puts home at (4, 4, 4) Mpc in the web (F37) and a cell is 8 Mpc a side, so home
- * is in cell 0.0.0; if GZ12 moves home, this follows it.
+ * Where to look for home before the kernel's `home_galaxy` has answered: the middle cell. Since GZ12 home is one of the
+ * web's own haloes, within two cells of it; pass `HomeGalaxy.cell` to `cellName` once it is read.
  */
 export const HOME_CELL: readonly [number, number, number] = [0, 0, 0];
 
@@ -551,10 +551,50 @@ export function placeholderGalaxyName(address: string): string {
 }
 
 /**
- * A cell is named after the most important galaxy in it: ours where we live ("Milky Way neighbourhood"), otherwise its
+ * A cell is named after the most important galaxy in it: ours where we live (`homeCell`, the kernel's home galaxy's
+ * cell; "Milky Way neighbourhood"), otherwise its
  * biggest halo's galaxy, by its stand-in name until it has a real one. A cell with no halo drawn keeps its number.
  */
-export function cellName(index: readonly [number, number, number], biggestAddress: string | null | undefined): string {
-  if (index.every((v, i) => v === HOME_CELL[i])) return "Milky Way neighbourhood";
+export function cellName(index: readonly [number, number, number], biggestAddress: string | null | undefined, homeCell: readonly [number, number, number] | null = HOME_CELL): string {
+  if (homeCell && index.every((v, i) => v === homeCell[i])) return "Milky Way neighbourhood";
   return biggestAddress ? `${placeholderGalaxyName(biggestAddress)} neighbourhood` : `Cell ${index.join(" · ")}`;
+}
+
+/** GZ13: a system's star slot (kernel `star_slot`): the drawn star of the home galaxy it stands for. */
+export interface StarSlot {
+  system: string;
+  /** Null when the system has no slot yet. */
+  star: string | null;
+  /** "drawn" (grown from it), "map" (its V3 map position), "fit" (nearest fitting star) or "gm" (moved). */
+  by?: "drawn" | "map" | "fit" | "gm";
+  fits?: boolean;
+  galaxy?: string;
+  in_home?: boolean;
+  cell?: [number, number, number];
+  xyz_pc?: [number, number, number];
+  r_kpc?: number;
+  phi_deg?: number;
+  /** What of the drawn star the system's authored star replaced. */
+  authored_over?: string[];
+  /** The drawn star as the place made it. */
+  drawn?: { mass_msun: number; birth_gyr: number; feh: number; companions: { mass_msun: number; a_au: number }[] } | null;
+  origin?: { feh_gas: number; feh: number; birth_r_kpc: number; unusual: string | null; impossible: string | null };
+  /** "unusual for its birthplace: …", as advice; null when nothing is unusual. */
+  advice?: string | null;
+  why?: string[];
+  model?: string[];
+}
+
+/** GZ13: what a system's slot has lived through (kernel `site_history`, G6 hits). */
+export interface SiteHistory {
+  system: string;
+  star: string;
+  from_myr: number;
+  to_myr: number;
+  now_myr: number;
+  counts: Record<string, number>;
+  harmful: number;
+  showers: number;
+  hits: { kind: string; id: string; occurred_myr: number; activated_myr: number; until_myr: number; distance_pc: number; harmful: boolean; remnant: boolean; shower: boolean; dose: number; passage?: [number, number, number]; why: string }[];
+  model: string[];
 }

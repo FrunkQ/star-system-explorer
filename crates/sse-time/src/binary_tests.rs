@@ -16,7 +16,7 @@ fn pair(m1: f64, m2: f64, a_au: f64, e: f64) -> Option<Interaction> {
         side("u:t/sys:0/star:1", m2),
         a_au,
         e,
-        0.02,
+        sse_formation::hurley::Z_SUN,
         &settings(),
         &rules,
     )

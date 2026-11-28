@@ -13,7 +13,7 @@
   import { untrack } from "svelte";
   import InMemory from "./InMemory.svelte";
   import CountStrip from "./CountStrip.svelte";
-  import { countSteps, onThisDay, rollRecords, sayNumber, lossesOn, dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, secondsToYears, stepEvent, yearsToSeconds, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { countSteps, onThisDay, rollRecords, sayNumber, lossesOn, dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, drawnSecond, screenYears, stepEvent, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { folderRead, heldRoll, openCampaign, openPack, packFolder, type RollFeed } from "./feed.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
@@ -48,12 +48,13 @@
     // A pack opened on a day outside its span starts on its latest day, so the first look is never empty.
     if (!opened && f.span) {
       opened = true;
-      const t = Number(yearsToSeconds(ws.now_yr));
-      if (t < f.span.from_s || t > f.span.to_s + 365 * f.calendar.day_s) ws.setTime(secondsToYears(f.span.to_s));
+      const t = Number(drawnSecond(ws.birth_s, ws.now_yr));
+      if (t < f.span.from_s || t > f.span.to_s + 365 * f.calendar.day_s) ws.setTime(screenYears(ws.birth_s, BigInt(Math.round(f.span.to_s))));
     }
   }
 
-  const t = $derived(Number(yearsToSeconds(ws.now_yr)));
+  // Universe seconds, as the logs keep them: the screen's years count from the viewed system's birth second.
+  const t = $derived(Number(drawnSecond(ws.birth_s, ws.now_yr)));
   const anchor = $derived(feed ? epochOf(feed.calendar) : null);
   const dayFrom = $derived(feed && anchor ? t - dateOf(feed.calendar, t, anchor).second : t);
   const dayTo = $derived(feed ? dayFrom + feed.calendar.day_s : t);
@@ -82,7 +83,7 @@
 
   function go(s: number | null) {
     if (s === null) return;
-    ws.setTime(secondsToYears(s));
+    ws.setTime(screenYears(ws.birth_s, BigInt(Math.round(s))));
   }
   const day = (n: number) => feed && go(t + n * feed.calendar.day_s);
   const event = (dir: 1 | -1) => feed && go(stepEvent(feed.ix, dir > 0 ? Math.max(t, dayFrom) : Math.min(t, dayFrom), dir));

@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `views/black-hole/src/picture.ts` `BACKDROPS` (XO4) | The kernel's three holes are fixtures with no place in the galaxy, so each is drawn in front of the sky in the direction of the real object it stands for (Cygnus X-1, 3C 273, Sagittarius A*), seen from this system's place, and only stars to magnitude 6.5 (the kernel's whole-sky read) are laid behind | A generated system's own remnants are not drawn by this view yet; deeper `sky_from_here` cones take minutes in the browser | Real remnants drawn where they sit, with the deep cone behind them once `sky_from_here` is fast enough | presentation, XO4 |

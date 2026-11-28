@@ -44,6 +44,14 @@ pub fn run(requests: &Value, packs: &BTreeMap<String, Value>) -> Vec<String> {
     out
 }
 
+/// A baked table names the physics in force by its hash, which every new or
+/// edited block anywhere moves; the golden keeps the rest of the line, and
+/// masks the hash only when it is one (64 hex digits). That a new physics
+/// bakes afresh is checked in `bake_tests`.
+const BAKED: &str = r#"{"type":"baked""#;
+const PHYSICS_FROM: &str = r#""physics":""#;
+const PHYSICS_MASK: &str = "the physics in force";
+
 /// What the golden keeps of a response line. Two lines list every op, so
 /// every new op used to change them and golden-changing PRs queued behind
 /// each other: the `hello` op list and the unknown-op message. The golden
@@ -52,6 +60,15 @@ pub fn run(requests: &Value, packs: &BTreeMap<String, Value>) -> Vec<String> {
 /// The JavaScript runner (`packages/kernel-client/src/contract.ts`,
 /// `maskOps`) masks the same way.
 pub fn mask_ops(line: &str) -> String {
+    if line.starts_with(BAKED) {
+        if let Some(s) = line.find(PHYSICS_FROM) {
+            let s = s + PHYSICS_FROM.len();
+            let hex = line[s..].bytes().take_while(u8::is_ascii_hexdigit).count();
+            if hex == 64 && line[s + 64..].starts_with('"') {
+                return format!("{}{PHYSICS_MASK}{}", &line[..s], &line[s + 64..]);
+            }
+        }
+    }
     if line.starts_with(HELLO) {
         if let (Some(s), Some(e)) = (line.find(OPS_FROM), line.find(OPS_TO)) {
             if s < e {
@@ -77,8 +94,10 @@ pub fn mask_ops(line: &str) -> String {
 
 /// The constants reach report lists every block, so every new block used to
 /// change its line. The golden keeps the line's head; the lists go one entry
-/// per line to `tests/golden/contract-reach.txt` (`reach_entries`), where a
-/// new block is one new line.
+/// per block to `tests/golden/reach/<constant>/<block>.txt` (`reach_entries`,
+/// checked by `check_reach_golden`), where a new block is one new file. The
+/// mask text still names the old one-file `contract-reach.txt` because it sits
+/// in the core golden; change it with the next core golden change.
 pub const REACH: &str = "{\"type\":\"reach\"";
 pub const REACH_FROM: &str = "\"follows\":[";
 pub const REACH_MASK: &str = "\"lists\":\"one line per block in tests/golden/contract-reach.txt\"";

@@ -29,4 +29,7 @@ test("a cell is named after its most important galaxy: ours at home, a keyed sta
   const names = new Set(Array.from({ length: 50 }, (_, i) => placeholderGalaxyName(`u/web/cell:${i}.0.0/halo:0`)));
   assert.ok(names.size >= 45, `stand-in names rarely repeat (${names.size} of 50)`);
   assert.equal(cellName([2, 0, 0], null), "Cell 2 · 0 · 0", "no halo drawn, keeps its number");
+  // GZ12: home is wherever the kernel's home galaxy is; the middle cell is then named after its own biggest.
+  assert.equal(cellName([0, 2, -2], "u/web/cell:0.2.-2/halo:4", [0, 2, -2]), "Milky Way neighbourhood");
+  assert.match(cellName([0, 0, 0], "u/web/cell:0.0.0/halo:7", [0, 2, -2]), /^[A-Z][a-z]+ neighbourhood$/);
 });

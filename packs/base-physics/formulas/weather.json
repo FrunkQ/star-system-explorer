@@ -1,0 +1,947 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.weather",
+ "about": "A giant's stirring from the heat it sends out (track WS, design SSE4-stirred-clouds-design.md sections 3.2 and 3.3): the power into eddies, an eddy's speed by its width, and whether the band's shear holds an eddy or tears it apart.",
+ "atoms": [
+  {
+   "id": "sse.weather.eddy_power",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "heat_out",
+     "letter": "F"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "layer_pressure",
+     "letter": "p0"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "eddy_power",
+     "letter": "eps"
+    }
+   ],
+   "params": [
+    {
+     "param": "efficiency",
+     "letter": "eta",
+     "default": 0.0068,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "share of the heat flowing through the air that ends up as eddy motion. Fitted (WS2): set so Jupiter's eddies at band width at 45 degrees run at the 17 m/s its bands already use, with the cascade constant 3"
+    }
+   ],
+   "checks": [
+    {
+     "port": "heat_out",
+     "min": 0,
+     "finite": true,
+     "says": "heat flowing out must not be negative, got {}"
+    },
+    {
+     "port": "gravity",
+     "min": 0,
+     "finite": true,
+     "says": "gravity must be more than zero, got {}"
+    },
+    {
+     "port": "layer_pressure",
+     "min": 0,
+     "finite": true,
+     "says": "the weather layer's pressure must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Kraichnan, R. H. 1967, Inertial ranges in two-dimensional turbulence, Phys. Fluids 10, 1417: energy passed from small eddies to large, speed as the cube root of size times the energy rate (unverified until the citations check, paper search out until 1 Dec 2026). doi:10.1063/1.1762301",
+    "Salyk, C., Ingersoll, A. P., Lorre, J., Vasavada, A. and Del Genio, A. D. 2006, Interaction between eddies and mean flow in Jupiter's atmosphere: analysis of Cassini imaging data, Icarus 185, 430: the power eddies put into Jupiter's jets (unverified). doi:10.1016/j.icarus.2006.08.007"
+   ],
+   "shown": "ε = η F g / p₀",
+   "equation": {
+    "name": "Power that heat puts into a giant's eddies",
+    "formula": "eps = eta * F * g / p0",
+    "inputs": {
+     "F": {
+      "kind": "weather.heat_out",
+      "unit": "W m-2",
+      "name": "heat the air sends out: from inside plus absorbed sunlight"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the cloud tops"
+     },
+     "p0": {
+      "kind": "weather.layer_pressure",
+      "unit": "Pa",
+      "name": "pressure at the base of the weather layer"
+     },
+     "eta": {
+      "kind": "model.eddy_efficiency",
+      "unit": "1",
+      "name": "share of the heat that becomes eddy motion"
+     }
+    },
+    "outputs": {
+     "eps": {
+      "kind": "weather.eddy_power",
+      "unit": "W kg-1",
+      "name": "power into eddies per kilogram of the weather layer"
+     }
+    },
+    "source": {
+     "text": "Kraichnan 1967, Phys. Fluids 10, 1417; efficiency fitted on Jupiter (Salyk et al. 2006 give eddy power of this order)",
+     "doi": "10.1063/1.1762301",
+     "where": "the energy rate of two-dimensional turbulence"
+    },
+    "explain": {
+     "curious": "Heat leaving a giant has to stir its air on the way out; the more heat, the harder its storms and eddies churn.",
+     "science": "The heat flux F through a layer of mass p0/g per square metre, times an efficiency, is the energy rate per unit mass fed to the eddies. The efficiency is fitted once on Jupiter; every other giant follows from its own heat and gravity."
+    },
+    "examples": [
+     {
+      "F": 13.655,
+      "g": 24.79,
+      "p0": 100000.0,
+      "eps": 2.30185066e-05
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.weather.cascade_speed",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "eddy_power",
+     "letter": "eps"
+    },
+    {
+     "port": "width",
+     "letter": "L"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "molar_mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "speed",
+     "letter": "u"
+    }
+   ],
+   "constants": {
+    "R": "sheet/R_gas"
+   },
+   "params": [
+    {
+     "param": "cascade_constant",
+     "letter": "Cc",
+     "default": 3.0,
+     "range": [
+      0.1,
+      30.0
+     ],
+     "description": "the constant of the cube-root law, about 3 (Kraichnan's inverse cascade; unverified)"
+    }
+   ],
+   "checks": [
+    {
+     "port": "eddy_power",
+     "min": 0,
+     "finite": true,
+     "says": "eddy power must not be negative, got {}"
+    },
+    {
+     "port": "width",
+     "min": 0,
+     "finite": true,
+     "says": "an eddy's width must be more than zero, got {}"
+    },
+    {
+     "port": "temperature",
+     "min": 0,
+     "finite": true,
+     "says": "temperature must be more than zero, got {}"
+    },
+    {
+     "port": "molar_mass",
+     "min": 0,
+     "finite": true,
+     "says": "molar mass must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Kraichnan, R. H. 1967, Inertial ranges in two-dimensional turbulence, Phys. Fluids 10, 1417: energy passed from small eddies to large, speed as the cube root of size times the energy rate (unverified until the citations check, paper search out until 1 Dec 2026). doi:10.1063/1.1762301"
+   ],
+   "shown": "u(L) = C (ε L)^(1/3), at most √(R T / M)",
+   "equation": {
+    "name": "How fast an eddy of a given width turns",
+    "formula": "u = min(Cc * cbrt(eps * L), sqrt(R * T / M))",
+    "inputs": {
+     "eps": {
+      "kind": "weather.eddy_power",
+      "unit": "W kg-1",
+      "name": "power into eddies per kilogram"
+     },
+     "L": {
+      "kind": "weather.eddy_width",
+      "unit": "m",
+      "name": "the eddy's width"
+     },
+     "T": {
+      "kind": "atmosphere.temperature",
+      "unit": "K",
+      "name": "temperature at the cloud tops"
+     },
+     "M": {
+      "kind": "material.molar_mass",
+      "unit": "kg mol-1",
+      "name": "mean molar mass of the air"
+     },
+     "R": {
+      "kind": "constant.R_gas",
+      "unit": "J mol-1 K-1",
+      "name": "molar gas constant"
+     },
+     "Cc": {
+      "kind": "model.cascade_constant",
+      "unit": "1",
+      "name": "constant of the cube-root law"
+     }
+    },
+    "outputs": {
+     "u": {
+      "kind": "weather.eddy_speed",
+      "unit": "m/s",
+      "name": "the eddy's speed"
+     }
+    },
+    "source": {
+     "text": "Kraichnan 1967, Phys. Fluids 10, 1417",
+     "doi": "10.1063/1.1762301",
+     "where": "the inverse energy cascade"
+    },
+    "explain": {
+     "curious": "Bigger eddies spin faster at their edges, but only as the cube root of their size: an eddy eight times wider runs twice as fast.",
+     "science": "In flat turbulence fed with energy at rate ε the speed at scale L goes as (ε L)^(1/3). Capped at the isothermal speed of sound, past which the air no longer moves as a thin sheet."
+    },
+    "examples": [
+     {
+      "eps": 2.3e-05,
+      "L": 7900000.0,
+      "T": 165.0,
+      "M": 0.00227,
+      "u": 16.991806893971937
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.weather.torn_by_shear",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "band_vorticity",
+     "letter": "zeta"
+    },
+    {
+     "port": "core_vorticity",
+     "letter": "omega"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "aspect",
+     "letter": "lambda"
+    },
+    {
+     "port": "torn",
+     "letter": "torn"
+    },
+    {
+     "port": "life",
+     "letter": "life"
+    }
+   ],
+   "checks": [
+    {
+     "port": "core_vorticity",
+     "finite": true,
+     "says": "the vortex's own vorticity must be a number, got {}"
+    },
+    {
+     "port": "band_vorticity",
+     "finite": true,
+     "says": "the band's vorticity must be a number, got {}"
+    }
+   ],
+   "references": [
+    "Moore, D. W. and Saffman, P. G. 1971, Structure of a line vortex in an imposed strain, in Aircraft Wake Turbulence, Plenum, 339: the steady elliptical patch in shear, zeta/omega = lambda (lambda - 1)/(lambda + 1) (unverified)",
+    "Marcus, P. S. 1993, Jupiter's Great Red Spot and other vortices, Annu. Rev. Astron. Astrophys. 31, 523 (unverified). doi:10.1146/annurev.aa.31.090193.002515"
+   ],
+   "shown": "ζ/ω = λ(λ − 1)/(λ + 1); no steady shape below ζ/ω = 2√2 − 3: torn in one shear time 1/|ζ|",
+   "equation": {
+    "name": "Whether a band's shear holds an eddy or tears it apart",
+    "formula": "x = zeta / omega\nk = 2 * sqrt(2) - 3\ntorn = if x < k then 1 else 0\nd = max(x * x + 6 * x + 1, 0)\nlambda = if x < k then sqrt(2) - 1 else (1 + x + sqrt(d)) / 2\nlife = if x < k then 1 / abs(zeta) else 0",
+    "inputs": {
+     "zeta": {
+      "kind": "weather.band_vorticity",
+      "unit": "s-1",
+      "name": "the band's own vorticity where the eddy sits, signed as the eddy's turning"
+     },
+     "omega": {
+      "kind": "weather.core_vorticity",
+      "unit": "s-1",
+      "name": "the eddy's own core vorticity"
+     }
+    },
+    "outputs": {
+     "lambda": {
+      "kind": "weather.vortex_aspect",
+      "unit": "1",
+      "name": "the steady shape's length along the wind over its width"
+     },
+     "torn": {
+      "kind": "weather.torn",
+      "unit": "1",
+      "name": "1 when no steady shape exists and the shear tears the eddy apart"
+     },
+     "life": {
+      "kind": "weather.tear_time",
+      "unit": "s",
+      "name": "how long a torn eddy lasts: one shear time (0 when it holds)"
+     }
+    },
+    "source": {
+     "text": "Moore and Saffman 1971; Marcus 1993",
+     "doi": "10.1146/annurev.aa.31.090193.002515",
+     "where": "the elliptical vortex in shear"
+    },
+    "explain": {
+     "curious": "A band's winds stretch every eddy in it. An eddy turning the same way as the shear is drawn into an oval and lives; one turning against it is pulled apart within a few hours to days.",
+     "science": "Moore and Saffman's steady elliptical patch in a shear flow. Its aspect λ solves ζ/ω = λ(λ − 1)/(λ + 1). Below ζ/ω = 2√2 − 3 no real λ exists: the patch is torn, here in one shear time."
+    },
+    "examples": [
+     {
+      "zeta": 1.8e-05,
+      "omega": 1.3e-05,
+      "lambda": 2.8674832107986594,
+      "torn": 0.0,
+      "life": 0.0
+     },
+     {
+      "zeta": -1.8e-05,
+      "omega": 1.3e-05,
+      "lambda": 0.41421356237309515,
+      "torn": 1.0,
+      "life": 55555.555555555555
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.weather.particle_fall_time",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "particle_radius",
+     "letter": "r"
+    },
+    {
+     "port": "particle_density",
+     "letter": "rho"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "molar_mass",
+     "letter": "M"
+    },
+    {
+     "port": "pressure",
+     "letter": "p"
+    },
+    {
+     "port": "deck_thickness",
+     "letter": "dz"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "fall_speed",
+     "letter": "v"
+    },
+    {
+     "port": "renewal_time",
+     "letter": "tau"
+    }
+   ],
+   "constants": {
+    "R": "sheet/R_gas"
+   },
+   "models": {
+    "A1": {
+     "value": 1.257,
+     "grade": "measured",
+     "source": "Allen and Raabe 1985, the slip correction's constants (unverified)"
+    },
+    "A2": {
+     "value": 0.4,
+     "grade": "measured",
+     "source": "Allen and Raabe 1985 (unverified)"
+    },
+    "A3": {
+     "value": 1.1,
+     "grade": "measured",
+     "source": "Allen and Raabe 1985 (unverified)"
+    },
+    "T3": {
+     "value": 300.0,
+     "grade": "derived",
+     "source": "definition: the reference temperature of the viscosity setting"
+    }
+   },
+   "params": [
+    {
+     "param": "gas_viscosity_300k",
+     "letter": "mu3",
+     "default": 8.9e-06,
+     "range": [
+      1e-07,
+      0.001
+     ],
+     "description": "the air's viscosity at 300 K, Pa s (hydrogen's, about 8.9e-6: a stand-in until the data sheet holds gas viscosities)"
+    },
+    {
+     "param": "viscosity_exponent",
+     "letter": "mun",
+     "default": 0.68,
+     "range": [
+      0.0,
+      1.5
+     ],
+     "description": "how the viscosity grows with temperature, mu = mu(300 K) (T / 300 K)^n (hydrogen's, about 0.68; stand-in)"
+    }
+   ],
+   "checks": [
+    {
+     "port": "particle_radius",
+     "min": 0,
+     "finite": true,
+     "says": "a particle's radius must be more than zero, got {}"
+    },
+    {
+     "port": "particle_density",
+     "min": 0,
+     "finite": true,
+     "says": "a particle's density must be more than zero, got {}"
+    },
+    {
+     "port": "gravity",
+     "min": 0,
+     "finite": true,
+     "says": "gravity must be more than zero, got {}"
+    },
+    {
+     "port": "temperature",
+     "min": 0,
+     "finite": true,
+     "says": "temperature must be more than zero, got {}"
+    },
+    {
+     "port": "molar_mass",
+     "min": 0,
+     "finite": true,
+     "says": "molar mass must be more than zero, got {}"
+    },
+    {
+     "port": "pressure",
+     "min": 0,
+     "finite": true,
+     "says": "pressure must be more than zero, got {}"
+    },
+    {
+     "port": "deck_thickness",
+     "min": 0,
+     "finite": true,
+     "says": "a deck's thickness must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Stokes, G. G. 1851, On the effect of the internal friction of fluids on the motion of pendulums, Trans. Camb. Phil. Soc. 9, 8: the drag on a small sphere (unverified)",
+    "Allen, M. D. and Raabe, O. G. 1985, Slip correction measurements of spherical solid aerosol particles in an improved Millikan apparatus, Aerosol Sci. Technol. 4, 269 (unverified). doi:10.1080/02786828508959055",
+    "Ackerman, A. S. and Marley, M. S. 2001, Precipitating condensation clouds in substellar atmospheres, ApJ 556, 872: cloud as a balance of mixing and fall-out (unverified). doi:10.1086/321540"
+   ],
+   "shown": "v = 2 r² ρ_p g / (9 μ) × (1 + Kn (A₁ + A₂ e^(−A₃/Kn))), Kn = λ / r, λ = (μ / p) √(π R T / 2M); τ = Δz / v",
+   "equation": {
+    "name": "How long a cloud deck takes to fall out and be made anew",
+    "formula": "mu = mu3 * (T / T3) ^ mun\nlam = mu / p * sqrt(pi * R * T / (2 * M))\nkn = lam / r\ncc = 1 + kn * (A1 + A2 * exp(-A3 / kn))\nv = 2 * r * r * rho * g / (9 * mu) * cc\ntau = dz / v",
+    "inputs": {
+     "r": {
+      "kind": "particle.radius",
+      "unit": "m",
+      "name": "the deck's particle radius"
+     },
+     "rho": {
+      "kind": "material.ice_density",
+      "unit": "kg m-3",
+      "name": "density of the particles' solid"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the cloud tops"
+     },
+     "T": {
+      "kind": "atmosphere.temperature",
+      "unit": "K",
+      "name": "temperature of the air in the deck"
+     },
+     "M": {
+      "kind": "material.molar_mass",
+      "unit": "kg mol-1",
+      "name": "mean molar mass of the air"
+     },
+     "p": {
+      "kind": "weather.deck_pressure",
+      "unit": "Pa",
+      "name": "pressure in the deck"
+     },
+     "dz": {
+      "kind": "weather.deck_thickness",
+      "unit": "m",
+      "name": "the deck's thickness"
+     },
+     "R": {
+      "kind": "constant.R_gas",
+      "unit": "J mol-1 K-1",
+      "name": "molar gas constant"
+     },
+     "A1": {
+      "kind": "model.slip_constant",
+      "unit": "1",
+      "name": "slip correction constant"
+     },
+     "A2": {
+      "kind": "model.slip_constant",
+      "unit": "1",
+      "name": "slip correction constant"
+     },
+     "A3": {
+      "kind": "model.slip_constant",
+      "unit": "1",
+      "name": "slip correction constant"
+     },
+     "mu3": {
+      "kind": "model.gas_viscosity",
+      "unit": "Pa s",
+      "name": "the air's viscosity at 300 K"
+     },
+     "mun": {
+      "kind": "model.viscosity_exponent",
+      "unit": "1",
+      "name": "how viscosity grows with temperature"
+     },
+     "T3": {
+      "kind": "model.reference_temperature",
+      "unit": "K",
+      "name": "the viscosity setting's reference temperature"
+     }
+    },
+    "outputs": {
+     "v": {
+      "kind": "weather.fall_speed",
+      "unit": "m/s",
+      "name": "how fast the particles fall"
+     },
+     "tau": {
+      "kind": "weather.renewal_time",
+      "unit": "s",
+      "name": "how long the deck takes to fall out and be made anew"
+     }
+    },
+    "source": {
+     "text": "Stokes 1851; Allen and Raabe 1985",
+     "doi": "10.1080/02786828508959055",
+     "where": "the slip-corrected fall of a small sphere"
+    },
+    "explain": {
+     "curious": "Cloud is not forever: its ice crystals slowly fall out and new ones form. Small crystals in thin air drift down for weeks to months, and that is how long the winds have to stir the cloud.",
+     "science": "Stokes drag on a sphere, corrected for slip when the gas's mean free path is not small beside the particle (Cunningham, with Allen and Raabe's constants). The deck lasts as long as its particles take to fall through it."
+    },
+    "examples": [
+     {
+      "r": 1e-06,
+      "rho": 820.0,
+      "g": 24.79,
+      "T": 130.0,
+      "M": 0.00227,
+      "p": 50000.0,
+      "dz": 9600.0,
+      "v": 0.000994505932152007,
+      "tau": 9653034.426075874
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.weather.plume_count",
+   "version": "1.1.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "internal_flux",
+     "letter": "Fi"
+    },
+    {
+     "port": "radius",
+     "letter": "a"
+    },
+    {
+     "port": "deformation_radius",
+     "letter": "Ld"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "plumes",
+     "letter": "N"
+    },
+    {
+     "port": "convected_flux",
+     "letter": "Fc"
+    }
+   ],
+   "params": [
+    {
+     "param": "plume_flux_w_m2",
+     "letter": "Fp",
+     "default": 3000.0,
+     "range": [
+      1.0,
+      1000000.0
+     ],
+     "description": "heat flux inside an active plume, W/m² (about 3,000: Gierasch et al. 2000, from memory, unverified)"
+    },
+    {
+     "param": "plume_heat_share",
+     "letter": "s",
+     "default": 1.0,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "share of the internal heat that plumes carry (1: stand-in)"
+    }
+   ],
+   "checks": [
+    {
+     "port": "internal_flux",
+     "min": 0,
+     "finite": true,
+     "says": "the heat from inside must not be negative, got {}"
+    },
+    {
+     "port": "radius",
+     "min": 0,
+     "finite": true,
+     "says": "radius must be more than zero, got {}"
+    },
+    {
+     "port": "deformation_radius",
+     "min": 0,
+     "finite": true,
+     "says": "the deformation radius must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Gierasch, P. J. et al. 2000, Observation of moist convection in Jupiter's atmosphere, Nature 403, 628: moist storms carrying Jupiter's internal heat (unverified). doi:10.1038/35001017"
+   ],
+   "shown": "N = s F_int 4π a² / (F_p π r_p²), r_p = L_d / 2; F_c = s F_int",
+   "equation": {
+    "name": "How many tall storms the heat from inside needs",
+    "formula": "rp = Ld / 2\nN = s * Fi * 4 * pi * a * a / (Fp * pi * rp * rp)\nFc = s * Fi",
+    "inputs": {
+     "Fi": {
+      "kind": "body.internal_heat_flux",
+      "unit": "W m-2",
+      "name": "heat from inside, averaged over the sphere"
+     },
+     "a": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "Ld": {
+      "kind": "weather.deformation_radius",
+      "unit": "m",
+      "name": "the deformation radius where plumes rise"
+     },
+     "Fp": {
+      "kind": "model.plume_flux",
+      "unit": "W m-2",
+      "name": "heat flux inside an active plume"
+     },
+     "s": {
+      "kind": "model.plume_heat_share",
+      "unit": "1",
+      "name": "share of the internal heat plumes carry"
+     }
+    },
+    "outputs": {
+     "N": {
+      "kind": "weather.plume_count",
+      "unit": "1",
+      "name": "plumes alive at once"
+     },
+     "Fc": {
+      "kind": "weather.convected_flux",
+      "unit": "W m-2",
+      "name": "heat the plumes carry up, over the whole sphere"
+     }
+    },
+    "source": {
+     "text": "Gierasch et al. 2000, Nature 403, 628",
+     "doi": "10.1038/35001017",
+     "where": "moist convection carrying the internal heat"
+    },
+    "explain": {
+     "curious": "A giant's inner heat climbs to the cloud tops in tall thunderstorms. The more heat, the more of them: Jupiter has dozens at once, Uranus hardly any.",
+     "science": "If each plume carries a set heat flux over a disc half a deformation radius across, the internal heat fixes how many are alive. The ratio between worlds does not depend on the plume flux."
+    },
+    "examples": [
+     {
+      "Fi": 5.4,
+      "a": 70000000.0,
+      "Ld": 1430000.0,
+      "N": 69.01070957015013,
+      "Fc": 5.4
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.weather.overturn_time",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "convected_flux",
+     "letter": "Fc"
+    },
+    {
+     "port": "latent_heat",
+     "letter": "L"
+    },
+    {
+     "port": "deep_mole_fraction",
+     "letter": "x"
+    },
+    {
+     "port": "condensate_molar_mass",
+     "letter": "Mg"
+    },
+    {
+     "port": "molar_mass",
+     "letter": "M"
+    },
+    {
+     "port": "deck_base_pressure",
+     "letter": "pb"
+    },
+    {
+     "port": "deck_scale_heights",
+     "letter": "th"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "fall_time",
+     "letter": "tf"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "overturn_rate",
+     "letter": "ru"
+    },
+    {
+     "port": "renewal_time",
+     "letter": "tau"
+    }
+   ],
+   "checks": [
+    {
+     "port": "convected_flux",
+     "min": 0,
+     "finite": true,
+     "says": "the heat the plumes carry must not be negative, got {}"
+    },
+    {
+     "port": "latent_heat",
+     "min": 0,
+     "finite": true,
+     "says": "the latent heat must be more than zero, got {}"
+    },
+    {
+     "port": "deep_mole_fraction",
+     "min": 0,
+     "finite": true,
+     "says": "the condensing gas's share must be more than zero, got {}"
+    },
+    {
+     "port": "condensate_molar_mass",
+     "min": 0,
+     "finite": true,
+     "says": "the condensing gas's molar mass must be more than zero, got {}"
+    },
+    {
+     "port": "molar_mass",
+     "min": 0,
+     "finite": true,
+     "says": "the air's molar mass must be more than zero, got {}"
+    },
+    {
+     "port": "deck_base_pressure",
+     "min": 0,
+     "finite": true,
+     "says": "the deck's base pressure must be more than zero, got {}"
+    },
+    {
+     "port": "deck_scale_heights",
+     "min": 0,
+     "finite": true,
+     "says": "the deck's thickness must be more than zero, got {}"
+    },
+    {
+     "port": "gravity",
+     "min": 0,
+     "finite": true,
+     "says": "gravity must be more than zero, got {}"
+    },
+    {
+     "port": "fall_time",
+     "min": 0,
+     "finite": true,
+     "says": "the fall time must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Gierasch, P. J. et al. 2000, Observation of moist convection in Jupiter's atmosphere, Nature 403, 628: moist storms carrying Jupiter's internal heat (unverified). doi:10.1038/35001017",
+    "Ackerman, A. S. and Marley, M. S. 2001, Precipitating condensation clouds in substellar atmospheres, ApJ 556, 872: cloud as a balance of mixing and fall-out (unverified). doi:10.1086/321540"
+   ],
+   "shown": "ṁ = F_c / (L q), q = x M_g / M, Δm = p_b (1 − e^(−h)) / g; r = ṁ / Δm; τ = τ_fall / (1 + τ_fall r)",
+   "equation": {
+    "name": "How fast rising and sinking air renews a cloud deck",
+    "formula": "q = x * Mg / M\ndm = pb * (1 - exp(-th)) / g\nru = Fc / (L * q * dm)\ntau = tf / (1 + tf * ru)",
+    "inputs": {
+     "Fc": {
+      "kind": "weather.convected_flux",
+      "unit": "W m-2",
+      "name": "heat the plumes carry up, over the whole sphere"
+     },
+     "L": {
+      "kind": "material.latent_heat",
+      "unit": "J kg-1",
+      "name": "latent heat of the deepest condensate"
+     },
+     "x": {
+      "kind": "weather.deep_mole_fraction",
+      "unit": "1",
+      "name": "its share of the air below its cloud, by molecules"
+     },
+     "Mg": {
+      "kind": "material.molar_mass",
+      "unit": "kg mol-1",
+      "name": "its molar mass"
+     },
+     "M": {
+      "kind": "material.molar_mass",
+      "unit": "kg mol-1",
+      "name": "mean molar mass of the air"
+     },
+     "pb": {
+      "kind": "weather.deck_pressure",
+      "unit": "Pa",
+      "name": "pressure at the top deck's base"
+     },
+     "th": {
+      "kind": "weather.deck_scale_heights",
+      "unit": "1",
+      "name": "the deck's thickness in scale heights"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the cloud tops"
+     },
+     "tf": {
+      "kind": "weather.renewal_time",
+      "unit": "s",
+      "name": "how long the deck takes to fall out"
+     }
+    },
+    "outputs": {
+     "ru": {
+      "kind": "weather.overturn_rate",
+      "unit": "s-1",
+      "name": "how fast air crossing the deck replaces it"
+     },
+     "tau": {
+      "kind": "weather.renewal_time",
+      "unit": "s",
+      "name": "how long the deck lasts before it is made anew"
+     }
+    },
+    "source": {
+     "text": "Gierasch et al. 2000, Nature 403, 628",
+     "doi": "10.1038/35001017",
+     "where": "moist convection carrying the internal heat; its return flow sinks through the decks"
+    },
+    "explain": {
+     "curious": "Cloud is renewed two ways: its crystals fall out, and air rising through it brings new vapour while sinking air dries it out. The more heat a giant sends up from inside, the faster its clouds turn over, so Jupiter's are younger than Uranus's.",
+     "science": "Each kilogram of rising air carries the latent heat of the water it condenses lower down, so the heat the plumes carry fixes the air mass crossing each square metre. The deck's own air mass over that flux is its overturn time; the two losses add as rates."
+    },
+    "examples": [
+     {
+      "Fc": 5.4,
+      "L": 2500000.0,
+      "x": 0.002,
+      "Mg": 0.018,
+      "M": 0.00227,
+      "pb": 70000.0,
+      "th": 0.5,
+      "g": 24.79,
+      "tf": 9653034.426075874,
+      "ru": 1.225870791041297e-07,
+      "tau": 4421229.119813919
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -19,6 +19,7 @@ pub mod climate;
 pub mod composition;
 pub mod core;
 pub mod cover;
+pub mod creep;
 pub mod detail;
 pub mod frames;
 pub mod giant_field;
@@ -32,6 +33,7 @@ pub mod scenario;
 pub mod site;
 pub mod sketch;
 pub mod stains;
+pub mod starlight;
 pub mod survey;
 pub mod tubes;
 pub mod wear;
@@ -119,6 +121,8 @@ pub struct SurfaceSettings {
     pub atlas: atlas::AtlasSettings,
     pub plates: plates::PlateSettings,
     pub wear: wear::WearSettings,
+    /// Downslope creep rates (sheet references), read by crater fading and slope wear.
+    pub creep: creep::CreepRates,
     pub impacts: impacts::ImpactSettings,
     pub regime_features: regimes::RegimeSettings,
     pub cover: cover::CoverSettings,
@@ -235,6 +239,11 @@ pub struct Anchor {
     pub formed_myr: f64,
     /// The star's age when the temperature was measured, Myr.
     pub measured_myr: f64,
+    /// CS1: the star's luminosity when measured, solar luminosities, from its
+    /// own catalogued radius and temperature (4πR²σT⁴). The life line gives
+    /// how it changes; this gives how bright it is.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub luminosity_lsun: Option<f64>,
 }
 
 /// Another body's light on a world.
@@ -330,6 +339,15 @@ pub struct Body {
     /// is read at this distance (HV2c). None when `orbit` is round the star.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub star_au: Option<f64>,
+    /// CS1: the eccentricity of the planet's orbit round the star, for a
+    /// moon (its `orbit.e` is round the planet). None when `orbit` is round
+    /// the star.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub star_e: Option<f64>,
+    /// CS1: the world's own Bond albedo, measured or typed (a catalogue's
+    /// `body.albedo`). The climate reads it before any estimate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bond_albedo: Option<f64>,
 }
 
 /// A body's makeup as mass shares of the whole (`makeup.metal`, `rock`,
@@ -888,6 +906,8 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
                 makeup: None,
                 water_from_density: false,
                 star_au: None,
+                star_e: None,
+                bond_albedo: None,
             }
         })
         .collect()
@@ -918,6 +938,8 @@ mod land_tests;
 mod plates_tests;
 #[cfg(test)]
 mod regimes_tests;
+#[cfg(test)]
+mod starlight_tests;
 #[cfg(test)]
 mod survey_tests;
 #[cfg(test)]

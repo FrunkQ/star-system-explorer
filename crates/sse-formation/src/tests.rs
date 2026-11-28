@@ -30,14 +30,14 @@ fn sun_manifest() -> Manifest {
 
 #[test]
 fn zero_age_fits_match_tout_1996() {
-    // Tout et al. 1996 quote their Z = 0.02, 1 solar-mass fit as L = 0.698, R = 0.888
+    // (Z_SUN measured is the fits' Z = 0.02.) Tout et al. 1996 quote their Z = 0.02, 1 solar-mass fit as L = 0.698, R = 0.888
     // (their models: 0.70, 0.89). Checks the port of the coefficient tables.
-    let f = Fits::new(0.02);
+    let f = Fits::new(crate::hurley::Z_SUN);
     close(f.l_zams(1.0), 0.698, 0.002, "L_ZAMS(1)");
     close(f.r_zams(1.0), 0.888, 0.002, "R_ZAMS(1)");
     // Lower metal content: brighter and hotter at the same mass (Tout et al. 1996
     // figure 1: a metal-poor solar-mass ZAMS star near 6700 K).
-    let poor = Fits::new(0.001);
+    let poor = Fits::new(0.001 * crate::hurley::Z_SUN / crate::hurley::Z_REF);
     let t = |f: &Fits| crate::lifeline::teff(f.l_zams(1.0), f.r_zams(1.0));
     assert!(poor.l_zams(1.0) > 2.0 * f.l_zams(1.0));
     assert!(
@@ -50,14 +50,14 @@ fn zero_age_fits_match_tout_1996() {
 
 #[test]
 fn main_sequence_matches_hurley_and_the_sun() {
-    let f = Fits::new(0.02);
+    let f = Fits::new(crate::hurley::Z_SUN);
     // HPT00 section 5.1: t_MS of a solar-mass Z = 0.02 star about 11 Gyr (their 1.1e4 Myr).
     close(f.t_ms(1.0), 11_000.0, 0.03, "t_MS(1)");
     // Massive stars live millions of years; HPT00 figure 6 (about 25 Myr at 10, 8.7 at 20).
     close(f.t_ms(10.0), 24.3, 0.05, "t_MS(10)");
     close(f.t_ms(20.0), 8.7, 0.05, "t_MS(20)");
     // Metal-poor solar-mass star burns faster (HPT00: about 6 Gyr at Z = 0.001).
-    let poor = Fits::new(0.001).t_ms(1.0);
+    let poor = Fits::new(0.001 * crate::hurley::Z_SUN / crate::hurley::Z_REF).t_ms(1.0);
     assert!(
         (5_000.0..7_500.0).contains(&poor),
         "t_MS(1, Z=0.001) = {poor}"
@@ -87,7 +87,7 @@ fn main_sequence_matches_hurley_and_the_sun() {
 fn remnants_follow_the_initial_final_mass_relation() {
     // Sirius B: about 1.02 solar masses from a progenitor near 5 (Cummings 2018 figure 7).
     close(white_dwarf_mass(5.0), 1.006, 0.001, "IFMR(5)");
-    let f = Fits::new(0.02);
+    let f = Fits::new(crate::hurley::Z_SUN);
     assert_eq!(LifeLine::new(&f, 12.0).unwrap().remnant, Phase::NeutronStar);
     assert_eq!(LifeLine::new(&f, 40.0).unwrap().remnant, Phase::BlackHole);
     let bd = LifeLine::new(&f, 0.05).unwrap();
@@ -127,7 +127,10 @@ fn remnants_follow_the_initial_final_mass_relation() {
 /// L_sun giant tip they can never grow a core for.
 #[test]
 fn every_life_line_stays_inside_real_stars() {
-    for z in [0.02, 0.001] {
+    for z in [
+        crate::hurley::Z_SUN,
+        0.001 * crate::hurley::Z_SUN / crate::hurley::Z_REF,
+    ] {
         let f = Fits::new(z);
         for i in 0..=60 {
             let mass = 0.1 * sse_core::math::pow(1000.0, f64::from(i) / 60.0);
@@ -155,7 +158,7 @@ fn every_life_line_stays_inside_real_stars() {
             }
         }
     }
-    let f = Fits::new(0.02);
+    let f = Fits::new(crate::hurley::Z_SUN);
     // Red dwarfs below 0.25 M_sun never become giants: straight to a helium
     // white dwarf of their whole mass.
     let rd = LifeLine::new(&f, 0.15).unwrap();
@@ -341,6 +344,18 @@ fn close_pairs_get_dated_mass_transfer() {
     assert!(found > 20, "only {found} mass-transfer events in 400 pairs");
 }
 
+/// A star of the Sun's measured composition (Z = 0.0142) is the fits' Sun: at
+/// 4,567 Myr within a few percent of 1 L_sun. Before ZS1 the measured Z went
+/// straight into fits whose Sun is Z = 0.02, giving 1.134 L_sun.
+#[test]
+fn the_measured_sun_is_the_fits_sun() {
+    let f = Fits::new(0.0142);
+    let s = LifeLine::new(&f, 1.0).unwrap().state_at(&f, 4567.0);
+    assert!((0.92..1.05).contains(&s.luminosity), "L {}", s.luminosity);
+    assert!((5650.0..5850.0).contains(&s.teff), "T {}", s.teff);
+    close(crate::inherit::z_of_feh(0.0), 0.0142, 1e-12, "solar Z");
+}
+
 #[test]
 fn metals_outside_the_fits_use_the_nearest_edge_and_say_so() {
     let mut m = sun_manifest();
@@ -350,7 +365,12 @@ fn metals_outside_the_fits_use_the_nearest_edge_and_say_so() {
         panic!()
     };
     assert!(source.contains("nearest edge"), "{source}");
-    assert_eq!(h.fits().z, 1.0e-4);
+    close(
+        h.fits().z_fit,
+        1.0e-4,
+        1e-12,
+        "fits floor on their own scale",
+    );
 }
 
 #[test]

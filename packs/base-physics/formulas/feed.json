@@ -1,0 +1,728 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.feed",
+ "about": "Matter falling onto anything through a disc (exotic objects design 2.2, package XO2): how fast a body can feed, how much of the mass comes out as light, where the disc ends inside and out, which flow the gas takes, and how much gas a mass sweeps up. One descriptor on any body; it never asks what kind of body it is.",
+ "atoms": [
+  {
+   "id": "sse.feed.eddington",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "efficiency",
+     "letter": "eta"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "eddington_luminosity",
+     "letter": "Le"
+    },
+    {
+     "port": "eddington_rate",
+     "letter": "Me"
+    }
+   ],
+   "constants": {
+    "G": "constants/G",
+    "c": "constants/c",
+    "m_p": "sheet/m_p",
+    "sigma_T": "sheet/sigma_T"
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Eddington, A. S. 1926, The Internal Constitution of the Stars, Cambridge University Press https://ui.adsabs.harvard.edu/abs/1926ics..book.....E",
+    "Frank, J., King, A. and Raine, D. 2002, Accretion Power in Astrophysics, 3rd edn, Cambridge University Press https://ui.adsabs.harvard.edu/abs/2002apa..book.....F"
+   ],
+   "shown": "L_Edd = 4πGM m_p c / σ_T,  Ṁ_Edd = L_Edd / (η c²)",
+   "equation": {
+    "name": "How fast a body can feed before its own light pushes the gas away",
+    "formula": "Le = 4 * pi * G * M * m_p * c / sigma_T\nMe = if eta <= 0 then 0 else Le / (eta * c^2)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the body being fed"
+     },
+     "eta": {
+      "kind": "feed.efficiency",
+      "unit": "1",
+      "name": "share of the infalling mass's rest energy given off as light"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m/s",
+      "name": "speed of light"
+     },
+     "m_p": {
+      "kind": "constant.m_p",
+      "unit": "kg",
+      "name": "proton mass"
+     },
+     "sigma_T": {
+      "kind": "constant.sigma_T",
+      "unit": "m2",
+      "name": "Thomson cross section"
+     }
+    },
+    "outputs": {
+     "Le": {
+      "kind": "feed.eddington_luminosity",
+      "unit": "W",
+      "name": "Eddington luminosity"
+     },
+     "Me": {
+      "kind": "feed.eddington_rate",
+      "unit": "kg s-1",
+      "name": "Eddington feeding rate"
+     }
+    },
+    "source": {
+     "text": "Eddington 1926; Frank, King and Raine 2002, Accretion Power in Astrophysics, section 1.2",
+     "url": "https://ui.adsabs.harvard.edu/abs/2002apa..book.....F",
+     "where": "ionised hydrogen, light pushing on free electrons (Thomson scattering), spherical"
+    },
+    "explain": {
+     "curious": "Light pushes. Gas falling onto anything gets hot and shines, and if it falls too fast its own light blows the rest away. For a body as heavy as the Sun the limit is about 33,000 times the Sun's light.",
+     "science": "Radiation force on electrons, σ_T L / (4π r² c), balances gravity on the protons they drag, GM m_p / r², at L_Edd = 4πGM m_p c / σ_T ≈ 1.26 × 10³¹ W per solar mass. The rate that gives it is L_Edd / (η c²). Ionised hydrogen; helium-rich gas has a higher limit (fewer electrons per unit mass)."
+    },
+    "examples": [
+     {
+      "M": 2e+30,
+      "eta": 0.0572,
+      "Le": 1.2643924156396243e+31,
+      "Me": 2459486524711884.5,
+      "tolerance": 1e-09
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.feed.efficiency",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "inner_edge",
+     "letter": "r"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "efficiency",
+     "letter": "eta"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    },
+    {
+     "port": "inner_edge",
+     "says": "inner edge"
+    }
+   ],
+   "references": [
+    "Bardeen, J. M., Press, W. H. and Teukolsky, S. A. 1972, Rotating black holes: locally nonrotating frames, energy extraction, and scalar synchrotron radiation, ApJ 178, 347 https://ui.adsabs.harvard.edu/abs/1972ApJ...178..347B",
+    "Novikov, I. D. and Thorne, K. S. 1973, Astrophysics of black holes, in Black Holes (Les Astres Occlus), eds. DeWitt, C. and DeWitt, B. S., Gordon and Breach, 343 https://ui.adsabs.harvard.edu/abs/1973blho.conf..343N",
+    "Misner, C. W., Thorne, K. S. and Wheeler, J. A. 1973, Gravitation, W. H. Freeman (Schwarzschild geometry, chapters 25 and 31) https://ui.adsabs.harvard.edu/abs/1973grav.book.....M"
+   ],
+   "shown": "η = 1 − (1 − 2r_g/r) / √(1 − 3r_g/r);  inside 6 r_g (a spinning hole's last stable orbit) η = 1 − √(1 − 2r_g/3r)",
+   "equation": {
+    "name": "How much of the falling matter's mass comes out as light",
+    "formula": "x = r / rg\neta = if x < 6 then 1 - sqrt(max(1 - 2 / (3 * x), 0)) else 1 - (1 - 2 / x) / sqrt(1 - 3 / x)",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "r": {
+      "kind": "feed.inner_edge",
+      "unit": "m",
+      "name": "where the disc ends on the inside"
+     }
+    },
+    "outputs": {
+     "eta": {
+      "kind": "feed.efficiency",
+      "unit": "1",
+      "name": "share of rest energy given off as light"
+     }
+    },
+    "source": {
+     "text": "Bardeen, Press and Teukolsky 1972; Novikov and Thorne 1973",
+     "url": "https://ui.adsabs.harvard.edu/abs/1972ApJ...178..347B",
+     "where": "energy of a circular orbit at r, Schwarzschild; at a Kerr last stable orbit E = √(1 − 2/(3x))"
+    },
+    "explain": {
+     "curious": "Gas spiralling in gives off the energy it loses on the way down. Onto a black hole that is about 6% of its whole mass, many times what burning hydrogen in a star gets (0.7%). Onto a white dwarf it is a few thousandths of a percent.",
+     "science": "η = 1 − E(r_in), the specific energy of a circular geodesic at the inner edge: E = (1 − 2/x)/√(1 − 3/x) with x = r/r_g (Schwarzschild), 0.0572 at x = 6, → 1/(2x) far out (the Newtonian GM/2r). Inner edges inside 6 r_g are a spinning hole's last stable orbit, where E = √(1 − 2/(3x)) holds for every spin (Bardeen et al. 1972 eq. 2.21): 0.32 at x = 1.24 (a = 0.998). The two agree at x = 6."
+    },
+    "examples": [
+     {
+      "rg": 1.0,
+      "r": 6.0,
+      "eta": 0.057190958417936644,
+      "tolerance": 1e-12
+     },
+     {
+      "rg": 1.0,
+      "r": 1.237,
+      "eta": 0.32098475095592716,
+      "tolerance": 1e-12
+     },
+     {
+      "rg": 1.0,
+      "r": 10000.0,
+      "eta": 4.99962483120342e-05,
+      "tolerance": 1e-09
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.feed.inner_edge",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "surface_radius",
+     "letter": "R"
+    },
+    {
+     "port": "last_stable_orbit",
+     "letter": "risco"
+    },
+    {
+     "port": "rate",
+     "letter": "Md"
+    },
+    {
+     "port": "magnetic_moment",
+     "letter": "mu"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "magnetospheric_radius",
+     "letter": "rm"
+    },
+    {
+     "port": "inner_edge",
+     "letter": "rin"
+    }
+   ],
+   "params": [
+    {
+     "param": "xi",
+     "letter": "xi",
+     "default": 0.5,
+     "range": [
+      0.3,
+      1.0
+     ],
+     "description": "where the field takes over, as a share of the Alfvén radius (Ghosh and Lamb about 0.5; a factor of 2 either way is argued)"
+    }
+   ],
+   "constants": {
+    "G": "constants/G",
+    "mu0": "sheet/mu0"
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Ghosh, P. and Lamb, F. K. 1979, Accretion by rotating magnetic neutron stars. III. Accretion torques and period changes in pulsating X-ray sources, ApJ 234, 296 https://ui.adsabs.harvard.edu/abs/1979ApJ...234..296G",
+    "Frank, J., King, A. and Raine, D. 2002, Accretion Power in Astrophysics, 3rd edn, Cambridge University Press https://ui.adsabs.harvard.edu/abs/2002apa..book.....F",
+    "Bardeen, J. M., Press, W. H. and Teukolsky, S. A. 1972, Rotating black holes: locally nonrotating frames, energy extraction, and scalar synchrotron radiation, ApJ 178, 347 https://ui.adsabs.harvard.edu/abs/1972ApJ...178..347B"
+   ],
+   "shown": "r_in = max(R, r_isco, ξ r_A),  r_A = ((μ₀/4π)² μ⁴ / (2GMṀ²))^(1/7)",
+   "equation": {
+    "name": "Where a disc ends on the inside",
+    "formula": "ra = if mu <= 0 or Md <= 0 then 0 else ((mu0 / (4 * pi))^2 * mu^4 / (2 * G * M * Md^2)) ^ (1/7)\nrm = xi * ra\nrin = max(max(R, risco), rm)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the body being fed"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "the body's surface (a black hole's horizon)"
+     },
+     "risco": {
+      "kind": "gravity.last_stable_orbit_radius",
+      "unit": "m",
+      "name": "innermost stable circular orbit"
+     },
+     "Md": {
+      "kind": "feed.rate",
+      "unit": "kg s-1",
+      "name": "feeding rate"
+     },
+     "mu": {
+      "kind": "body.magnetic_moment",
+      "unit": "m2 A",
+      "name": "strength of the body's magnet (dipole moment)"
+     },
+     "xi": {
+      "kind": "model.magnetosphere_share",
+      "unit": "1",
+      "name": "share of the Alfvén radius"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     }
+    },
+    "outputs": {
+     "rm": {
+      "kind": "feed.magnetospheric_radius",
+      "unit": "m",
+      "name": "where the body's field takes over from the disc"
+     },
+     "rin": {
+      "kind": "feed.inner_edge",
+      "unit": "m",
+      "name": "where the disc ends on the inside"
+     }
+    },
+    "source": {
+     "text": "Ghosh and Lamb 1979; Frank, King and Raine 2002, section 6.3",
+     "url": "https://ui.adsabs.harvard.edu/abs/1979ApJ...234..296G",
+     "where": "Alfvén radius for spherical infall, disc edge a share ξ of it"
+    },
+    "explain": {
+     "curious": "A disc stops where something stops it: the body's own surface, the closest a stable orbit can go, or a magnetic field strong enough to grab the gas. That one rule gives a black hole's dark gap, a white dwarf's bright edge and the glowing poles of an X-ray pulsar.",
+     "science": "The largest of the surface, the last stable orbit and the magnetospheric radius ξ r_A, where magnetic pressure B²/2μ₀ of the dipole matches the ram pressure of the infall: r_A = ((μ₀/4π)² μ⁴ / (2GMṀ²))^(1/7). ξ ≈ 0.5 (Ghosh and Lamb 1979; argued within a factor of 2). A neutron star with μ = 10²⁷ A m² fed 10¹⁴ kg/s holds the disc off at about 1,500 km."
+    },
+    "examples": [
+     {
+      "M": 2.783773818977271e+30,
+      "R": 12000.0,
+      "risco": 12400.0,
+      "Md": 100000000000000.0,
+      "mu": 1e+27,
+      "rm": 1545112.3086463048,
+      "rin": 1545112.3086463048,
+      "tolerance": 1e-09
+     },
+     {
+      "M": 1.988409870698051e+31,
+      "R": 29500.0,
+      "risco": 88600.0,
+      "Md": 1000000000000000.0,
+      "mu": 0.0,
+      "rm": 0.0,
+      "rin": 88600.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.feed.disc_outer_edge",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "separation",
+     "letter": "a"
+    },
+    {
+     "port": "mass_ratio",
+     "letter": "q"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "outer_edge",
+     "letter": "rout"
+    }
+   ],
+   "params": [
+    {
+     "param": "share",
+     "letter": "k",
+     "default": 0.6,
+     "range": [
+      0.45,
+      0.75
+     ],
+     "description": "Paczyński's fitted share of the separation"
+    }
+   ],
+   "positive": [
+    {
+     "port": "separation",
+     "says": "separation"
+    }
+   ],
+   "references": [
+    "Paczyński, B. 1977, A model of accretion disks in close binaries, ApJ 216, 822 https://ui.adsabs.harvard.edu/abs/1977ApJ...216..822P",
+    "Frank, J., King, A. and Raine, D. 2002, Accretion Power in Astrophysics, 3rd edn, Cambridge University Press https://ui.adsabs.harvard.edu/abs/2002apa..book.....F"
+   ],
+   "shown": "r_out ≈ 0.6 a / (1 + q)",
+   "equation": {
+    "name": "Where the companion's pull cuts a disc off",
+    "formula": "rout = k * a / (1 + max(q, 0))",
+    "inputs": {
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "distance between the two stars"
+     },
+     "q": {
+      "kind": "feed.mass_ratio",
+      "unit": "1",
+      "name": "the companion's mass over the fed body's"
+     },
+     "k": {
+      "kind": "model.outer_edge_share",
+      "unit": "1",
+      "name": "fitted share of the separation"
+     }
+    },
+    "outputs": {
+     "rout": {
+      "kind": "feed.outer_edge",
+      "unit": "m",
+      "name": "where the disc ends on the outside"
+     }
+    },
+    "source": {
+     "text": "Paczyński 1977; Frank, King and Raine 2002, section 5.5",
+     "url": "https://ui.adsabs.harvard.edu/abs/1977ApJ...216..822P",
+     "where": "largest non-crossing orbit in the restricted three-body problem, fitted for 0.03 < q < 1"
+    },
+    "explain": {
+     "curious": "A disc in a pair of stars cannot grow past where the other star's pull bends its orbits into each other: a little over half the way to the companion.",
+     "science": "Paczyński (1977) found the largest periodic orbit that does not cross its neighbours; a fit gives r_out ≈ 0.6 a / (1 + q) for 0.03 < q < 1. Tidal truncation, so a fact of the orbit, not of the gas."
+    },
+    "examples": [
+     {
+      "a": 10000000000.0,
+      "q": 0.1,
+      "rout": 5454545454.545454
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.feed.flow_strengths",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "eddington_share",
+     "letter": "s"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "thin",
+     "letter": "thin"
+    },
+    {
+     "port": "hot",
+     "letter": "hot"
+    },
+    {
+     "port": "thick",
+     "letter": "thick"
+    },
+    {
+     "port": "hot_lit_share",
+     "letter": "lit"
+    }
+   ],
+   "params": [
+    {
+     "param": "hot_below",
+     "letter": "sh",
+     "default": 0.01,
+     "range": [
+      0.001,
+      0.1
+     ],
+     "description": "feeding share below which the gas cannot cool and puffs up into a hot thin flow (about α² for viscosity α ≈ 0.1)"
+    },
+    {
+     "param": "thick_above",
+     "letter": "st",
+     "default": 1.0,
+     "range": [
+      0.3,
+      3.0
+     ],
+     "description": "feeding share above which the disc swells and blows matter back out"
+    },
+    {
+     "param": "sharpness",
+     "letter": "n",
+     "default": 3.0,
+     "range": [
+      1.0,
+      8.0
+     ],
+     "description": "how sharply one flow hands over to the next"
+    }
+   ],
+   "references": [
+    "Narayan, R. and Yi, I. 1994, Advection-dominated accretion: a self-similar solution, ApJ 428, L13 https://ui.adsabs.harvard.edu/abs/1994ApJ...428L..13N",
+    "Narayan, R. and Yi, I. 1995, Advection-dominated accretion: underfed black holes and neutron stars, ApJ 452, 710 https://ui.adsabs.harvard.edu/abs/1995ApJ...452..710N",
+    "Abramowicz, M. A., Czerny, B., Lasota, J. P. and Szuszkiewicz, E. 1988, Slim accretion disks, ApJ 332, 646 https://ui.adsabs.harvard.edu/abs/1988ApJ...332..646A",
+    "Yuan, F. and Narayan, R. 2014, Hot accretion flows around black holes, ARA&A 52, 529 https://ui.adsabs.harvard.edu/abs/2014ARA%26A..52..529Y"
+   ],
+   "shown": "hot = 1/(1 + (s/s_h)ⁿ), thick = 1/(1 + (s_t/s)ⁿ), thin = the rest",
+   "equation": {
+    "name": "Which way matter falls in: hot and puffed up, a thin bright disc, or a thick swollen one",
+    "formula": "hot = if s <= 0 then 1 else 1 / (1 + (s / sh)^n)\nthick = if s <= 0 then 0 else 1 / (1 + (st / s)^n)\nthin = max(1 - hot - thick, 0)\nlit = if s <= 0 then 0 else min(s / sh, 1)",
+    "inputs": {
+     "s": {
+      "kind": "feed.eddington_share",
+      "unit": "1",
+      "name": "feeding rate as a share of the Eddington rate"
+     },
+     "sh": {
+      "kind": "model.hot_flow_below",
+      "unit": "1",
+      "name": "share below which the flow is hot"
+     },
+     "st": {
+      "kind": "model.thick_flow_above",
+      "unit": "1",
+      "name": "share above which the flow is thick"
+     },
+     "n": {
+      "kind": "model.flow_sharpness",
+      "unit": "1",
+      "name": "sharpness of the hand-over"
+     }
+    },
+    "outputs": {
+     "thin": {
+      "kind": "feed.flow_thin",
+      "unit": "1",
+      "name": "strength of the thin bright disc"
+     },
+     "hot": {
+      "kind": "feed.flow_hot",
+      "unit": "1",
+      "name": "strength of the hot thin flow"
+     },
+     "thick": {
+      "kind": "feed.flow_thick",
+      "unit": "1",
+      "name": "strength of the thick swollen disc"
+     },
+     "lit": {
+      "kind": "feed.hot_lit_share",
+      "unit": "1",
+      "name": "how well a hot flow shines against a thin disc fed as fast"
+     }
+    },
+    "source": {
+     "text": "Narayan and Yi 1994, 1995; Abramowicz et al. 1988; Yuan and Narayan 2014",
+     "url": "https://ui.adsabs.harvard.edu/abs/2014ARA%26A..52..529Y",
+     "where": "states of accretion by Eddington share; the smooth hand-over between them is argued, not computed"
+    },
+    "explain": {
+     "curious": "How fast a black hole is fed decides what it looks like. Starved, the gas stays too hot and thin to shine much and you see almost nothing. Fed well, it settles into a thin, blinding disc. Overfed, the disc swells up and blows much of its gas away.",
+     "science": "Three processes with strengths that blend, not three classes. Below about α² ≈ 0.01 of the Eddington rate the gas cannot cool by radiation and advects its heat inward (ADAF; Narayan and Yi 1994, 1995), radiating a share that falls with the rate (taken ∝ s here, their ε ∝ ṁ scaling). Near and above the Eddington rate the disc thickens and advects or blows out its heat (slim discs; Abramowicz et al. 1988). The joins and the sharpness are argued (Yuan and Narayan 2014 review the states)."
+    },
+    "examples": [
+     {
+      "s": 0.0001,
+      "thin": 9.99997999939855e-07,
+      "hot": 0.9999990000010001,
+      "thick": 9.99999999999e-13,
+      "lit": 0.01,
+      "tolerance": 1e-12
+     },
+     {
+      "s": 0.1,
+      "thin": 0.9980019980019981,
+      "hot": 0.000999000999000999,
+      "thick": 0.000999000999000999,
+      "lit": 1,
+      "tolerance": 1e-12
+     },
+     {
+      "s": 3.0,
+      "thin": 0.03571424867725004,
+      "hot": 3.703703566529498e-08,
+      "thick": 0.9642857142857143,
+      "lit": 1,
+      "tolerance": 1e-12
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.feed.capture_from_surroundings",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "gas_density",
+     "letter": "rho"
+    },
+    {
+     "port": "sound_speed",
+     "letter": "cs"
+    },
+    {
+     "port": "relative_speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "rate",
+     "letter": "Md"
+    },
+    {
+     "port": "capture_radius",
+     "letter": "racc"
+    }
+   ],
+   "params": [
+    {
+     "param": "lambda",
+     "letter": "lam",
+     "default": 0.25,
+     "range": [
+      0.25,
+      1.12
+     ],
+     "description": "Bondi's number: 1/4 for gas with γ = 5/3, 1.12 for gas held at one temperature"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "sound_speed",
+     "says": "sound speed"
+    }
+   ],
+   "references": [
+    "Bondi, H. and Hoyle, F. 1944, On the mechanism of accretion by stars, MNRAS 104, 273 https://ui.adsabs.harvard.edu/abs/1944MNRAS.104..273B",
+    "Bondi, H. 1952, On spherically symmetrical accretion, MNRAS 112, 195 https://ui.adsabs.harvard.edu/abs/1952MNRAS.112..195B",
+    "Frank, J., King, A. and Raine, D. 2002, Accretion Power in Astrophysics, 3rd edn, Cambridge University Press https://ui.adsabs.harvard.edu/abs/2002apa..book.....F"
+   ],
+   "shown": "Ṁ = 4πλ G²M²ρ / (c_s² + v²)^(3/2),  r_acc = 2GM / (c_s² + v²)",
+   "equation": {
+    "name": "How much gas a mass sweeps up from its surroundings",
+    "formula": "w = cs^2 + v^2\nMd = 4 * pi * lam * G^2 * M^2 * rho / w^(3/2)\nracc = 2 * G * M / w",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass doing the sweeping"
+     },
+     "rho": {
+      "kind": "feed.gas_density",
+      "unit": "kg m-3",
+      "name": "density of the surrounding gas"
+     },
+     "cs": {
+      "kind": "feed.sound_speed",
+      "unit": "m/s",
+      "name": "sound speed in the surrounding gas"
+     },
+     "v": {
+      "kind": "feed.relative_speed",
+      "unit": "m/s",
+      "name": "speed of the mass through the gas"
+     },
+     "lam": {
+      "kind": "model.bondi_lambda",
+      "unit": "1",
+      "name": "Bondi's number"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     }
+    },
+    "outputs": {
+     "Md": {
+      "kind": "feed.rate",
+      "unit": "kg s-1",
+      "name": "rate gas is captured"
+     },
+     "racc": {
+      "kind": "feed.capture_radius",
+      "unit": "m",
+      "name": "distance inside which the gas is captured"
+     }
+    },
+    "source": {
+     "text": "Bondi and Hoyle 1944; Bondi 1952",
+     "url": "https://ui.adsabs.harvard.edu/abs/1952MNRAS.112..195B",
+     "where": "spherical capture (Bondi), with the Bondi-Hoyle interpolation for a moving mass"
+    },
+    "explain": {
+     "curious": "A heavy thing sitting in thin gas pulls in what comes close enough. The faster it moves or the hotter the gas, the less it catches. This is an upper limit: near real black holes most of that gas is blown out again before it reaches the middle.",
+     "science": "Bondi (1952) steady spherical accretion, Ṁ = 4πλ G²M²ρ / c_s³ with λ = 1/4 for γ = 5/3, joined to Bondi and Hoyle (1944) for a moving mass by replacing c_s² with c_s² + v². Gas inside r_acc = 2GM/(c_s² + v²) is bound. The Milky Way's centre in hot gas of 130 per cm³ at 1.3 × 10⁷ K captures about 10⁻⁵ solar masses a year; far less reaches the hole (Yuan and Narayan 2014): the block is rough in practice."
+    },
+    "examples": [
+     {
+      "M": 8.251900963396911e+36,
+      "rho": 1.3046451004782e-19,
+      "cs": 545962.9536613568,
+      "v": 0.0,
+      "Md": 7.639627755581932e+17,
+      "racc": 3695416359825071.5,
+      "tolerance": 1e-09
+     }
+    ]
+   }
+  }
+ ]
+}

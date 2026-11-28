@@ -7,9 +7,11 @@
 // does not publish (spot places, spot temperature, coronal temperature) the
 // choice is named here and in docs/fudges.md.
 import { constant, planck, thermalColour, type ViewBand } from "../../ui-contract/src/index.ts";
+import { srgb255 } from "./srgb.ts";
 
 export const STAR_REFERENCES = [
   { text: "Eddington, A. S. (1926). The Internal Constitution of the Stars. Cambridge University Press (grey atmosphere limb darkening, I(mu)/I(1) = (2 + 3 mu) / 5).", url: "https://archive.org/details/internalconstitu0000eddi" },
+  { text: "Mihalas, D. (1978). Stellar Atmospheres, 2nd ed. W. H. Freeman (the grey atmosphere's T^4 = (3/4) Teff^4 (tau + 2/3); the Eddington-Barbier relation I(mu) = S(tau = mu)).", url: "https://ui.adsabs.harvard.edu/abs/1978stat.book.....M" },
   { text: "Hathaway, D. H. (2015). The Solar Cycle. Living Reviews in Solar Physics 12, 4 (Sporer's law: spots start near 25 to 30 degrees and drift to about 8 degrees).", doi: "10.1007/lrsp-2015-4" },
   { text: "Berdyugina, S. V. (2005). Starspots: a key to the stellar dynamo. Living Reviews in Solar Physics 2, 8 (spot temperature contrasts; polar spots on active stars).", doi: "10.12942/lrsp-2005-8" },
   { text: "Aschwanden, M. J. (2005). Physics of the Solar Corona. Springer (hydrostatic scale height kT/(mu m_H g); optically thin emission measure).", doi: "10.1007/3-540-30766-4" },
@@ -42,6 +44,22 @@ const RGB_M = [610e-9, 550e-9, 465e-9] as const;
 
 /** Grey-atmosphere limb darkening (Eddington): intensity at mu = cos(angle from disc centre) over the centre's. */
 export const limbDarkening = (mu: number) => (2 + 3 * Math.max(0, mu)) / 5;
+
+/**
+ * Limb darkening in one colour (Eddington-Barbier in the same grey atmosphere): the light leaving at mu is the
+ * Planck light at the depth tau = mu, where T^4 = (3/4) Teff^4 (tau + 2/3); over the centre's. Bluer light falls
+ * further toward the limb than redder, and the Sun's green limb comes out near a third of its centre, as observed;
+ * the grey law above is this summed over all colours. Drawing-side physics for now (fudge register: to move into a
+ * kernel table through the bake seam).
+ */
+export function limbDarkeningAt(mu: number, lambda_m: number, teff_k: number): number {
+  const t = (m: number) => teff_k * (0.75 * (Math.max(0, m) + 2 / 3)) ** 0.25;
+  const x = (m: number) => HC_K / (lambda_m * t(m));
+  return Math.expm1(x(1)) / Math.expm1(x(mu));
+}
+
+/** Steps across mu for the drawing's limb tables (one per channel, made once a picture). */
+const LIMB_STEPS = 256;
 
 export interface Spot {
   lat_deg: number;
@@ -278,7 +296,6 @@ export interface StarDraw {
 export const LUMP_MAX = 0.04;
 
 const decode = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-const encode = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 
 /** Unit vector on the star for latitude and longitude, turned to the viewer's frame (z towards the viewer). */
 function toView(lat: number, lon: number, cLat: number, cLon: number): [number, number, number] {
@@ -332,6 +349,15 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
   const big = s.light === "visible" && s.bigCells && s.bigCells.dt > 0 ? s.bigCells : null;
   const lump = gran ? Math.min(LUMP_MAX, Math.max(0, s.lumps ?? 0)) : 0;
   const lumpy = lump * R >= 0.25;
+  const limbTable = RGB_M.map((l) => Float64Array.from({ length: LIMB_STEPS + 1 }, (_, i) => limbDarkeningAt(i / LIMB_STEPS, l, s.teff_k)));
+  const limbAt = (tab: Float64Array, mu: number) => {
+    const f = mu * LIMB_STEPS;
+    const i = Math.min(LIMB_STEPS - 1, Math.floor(f));
+    return tab[i]! + (f - i) * (tab[i + 1]! - tab[i]!);
+  };
+  const rim0 = srgb255(base[0]! * limbTable[0]![0]!);
+  const rim1 = srgb255(base[1]! * limbTable[1]![0]!);
+  const rim2 = srgb255(base[2]! * limbTable[2]![0]!);
   const slope = RGB_M.map((l) => {
     const x = HC_K / (l * s.teff_k);
     return x / (1 - Math.exp(-x)) / s.teff_k;
@@ -356,6 +382,10 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
           rl = 1 + lump * zs;
         }
         if (b >= rl) {
+          // Clear, in the limb's own colour, so a filtered edge blends toward the limb and never toward black.
+          d[o] = rim0;
+          d[o + 1] = rim1;
+          d[o + 2] = rim2;
           d[o + 3] = 0;
           continue;
         }
@@ -367,30 +397,50 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
           b = Math.sqrt(b2);
         }
         const mu = Math.sqrt(1 - b2);
-        const ld = limbDarkening(mu);
-        let f = [1, 1, 1];
+        const ld0 = limbAt(limbTable[0]!, mu);
+        const ld1 = limbAt(limbTable[1]!, mu);
+        const ld2 = limbAt(limbTable[2]!, mu);
+        // Each channel's share of the plain disc's light here (three numbers, not an array: this runs per pixel).
+        let f0 = 1;
+        let f1 = 1;
+        let f2 = 1;
         if (gran || big) {
           const [sx, sy, sz] = toStar(x, y, mu, s.lat_deg, s.lon_deg);
           let dT = gran ? contrast * granuleDeltaT(gran, s.teff_k, sx, sy, sz) : 0;
           if (big) dT += ((granulePattern(big.granules, sx, sy, sz) - big.granules.mean) / big.granules.rms) * big.dt * s.teff_k;
-          f = slope.map((k) => Math.max(0, 1 + k * dT));
+          f0 = Math.max(0, 1 + slope[0]! * dT);
+          f1 = Math.max(0, 1 + slope[1]! * dT);
+          f2 = Math.max(0, 1 + slope[2]! * dT);
         }
-        const fg = f;
+        let umbra = false;
+        let penumbra = false;
         for (const sp of spots) {
           const cosang = x * sp.v[0] + y * sp.v[1] + mu * sp.v[2];
-          if (cosang > sp.cosr) f = spotRatio;
-          else if (cosang > sp.pen && f === fg) f = spotRatio.map((q) => 0.5 + 0.5 * q);
+          if (cosang > sp.cosr) umbra = true;
+          else if (cosang > sp.pen) penumbra = true;
         }
+        if (umbra) [f0, f1, f2] = [spotRatio[0]!, spotRatio[1]!, spotRatio[2]!];
+        else if (penumbra) [f0, f1, f2] = [0.5 + 0.5 * spotRatio[0]!, 0.5 + 0.5 * spotRatio[1]!, 0.5 + 0.5 * spotRatio[2]!];
         for (const fl of flares) {
           const cosang = x * fl.v[0] + y * fl.v[1] + mu * fl.v[2];
           if (fl.patch) {
             // The kernel's patch, drawn at least a pixel wide with its light spread to keep the same power.
-            if (cosang > fl.patchCos) f = f.map((q, ch) => q + fl.patch!.k * (fl.patch!.contrast[ch]! - 1) * fl.patchShare);
-          } else if (cosang > 0.995) f = f.map((q) => q + Math.min(3, fl.k));
+            if (cosang > fl.patchCos) {
+              const q = fl.patch.k * fl.patchShare;
+              f0 += q * (fl.patch.contrast[0]! - 1);
+              f1 += q * (fl.patch.contrast[1]! - 1);
+              f2 += q * (fl.patch.contrast[2]! - 1);
+            }
+          } else if (cosang > 0.995) {
+            const q = Math.min(3, fl.k);
+            f0 += q;
+            f1 += q;
+            f2 += q;
+          }
         }
-        r = base[0]! * ld * f[0]!;
-        g = base[1]! * ld * f[1]!;
-        bl = base[2]! * ld * f[2]!;
+        r = base[0]! * ld0 * f0;
+        g = base[1]! * ld1 * f1;
+        bl = base[2]! * ld2 * f2;
         a = 1;
         // Soft rim (pixel coverage).
         a = Math.min(1, (rl - edgeB) * R + 0.5);
@@ -426,9 +476,9 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
         const fr = Math.hypot(px + 0.5 - c, py + 0.5 - c) / (n / 2);
         a = Math.max(0, Math.min(1, (1 - fr) * (n / 2) + 0.5));
       }
-      d[o] = 255 * encode(Math.min(1, r));
-      d[o + 1] = 255 * encode(Math.min(1, g));
-      d[o + 2] = 255 * encode(Math.min(1, bl));
+      d[o] = srgb255(r);
+      d[o + 1] = srgb255(g);
+      d[o + 2] = srgb255(bl);
       d[o + 3] = 255 * a;
     }
   }

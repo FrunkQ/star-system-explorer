@@ -7,6 +7,7 @@
 // and nothing changes (no request filed, state hash unchanged) until Accept.
 // Accepting files Orac's request on the Physics screen, validated, for the GM
 // to adopt there.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

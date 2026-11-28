@@ -5,6 +5,7 @@
 // Tarn has been engulfed and the star is a white dwarf, marked one plausible
 // future; throwing away restores the chart; keeping and moving now changes
 // the main line and the ruler's now.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

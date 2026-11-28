@@ -587,6 +587,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         half_km: Option<f64>,
+        /// `want: "flow"`: the span of days from `day` the table covers (0 to 60).
+        #[serde(default)]
+        #[ts(optional)]
+        span_days: Option<f64>,
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
@@ -612,6 +616,44 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// ER11a: bake a table for the renderer (`sse.table/1`, edits-reach
+    /// design section 11) from the physics in force: `table` is its id
+    /// (`"sse.light.disc"`), `subject` what it is baked for, and `tier` the
+    /// renderer's quality tier, which picks its size. Kept by id, subject,
+    /// size and physics hash. An unknown id lists the known ones. With
+    /// `values: false` the numbers are left out (the hash still names them).
+    Bake {
+        table: String,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        subject: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        values: Option<bool>,
+    },
+    /// Light near a mass (XO2, XO3; exotic objects design 3.5): for each body
+    /// and its far viewer, which bender applies, the sizes from the gravity
+    /// blocks, the bend table's hash and layout, the feed (what falls onto
+    /// it, through which flow, where its disc ends), the disc traced point
+    /// by point as that viewer sees it, its light by band, and the viewer's
+    /// clock rate and tide. Each of `bodies` is `sse_light::paths::PathsAsk`;
+    /// `fixture: "black-holes"` reads design 3.4's three (a 10 Sun hole fed
+    /// by a companion, a quasar, a starved galactic centre). `table: true`
+    /// adds the bend table itself (fetch it once, keyed by its hash).
+    ReadLightPaths {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        table: Option<bool>,
     },
     /// Sensing (O9): for each target (light given as `conditions` or a ready
     /// `light`, distance, dust as A_V, bright neighbours with their sky
@@ -665,6 +707,27 @@ pub enum Request {
     ReadBows {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
+    },
+    /// A pair of stars aged together (BX1): `node` is a star `{node: "star",
+    /// address, mass_msun}` or a pair `{node: "pair", a, b, separation_au,
+    /// eccentricity}` of nodes; the answer is its dated line from birth to
+    /// `to_myr` (each star's phase, mass, radius and lobe fill; the orbit; the
+    /// transfer; common envelopes, mergers, strippings, supernovae; what each
+    /// planet in `planets` `{address, host, semi_major_axis_au}` ends up doing).
+    AgePair {
+        #[ts(type = "unknown")]
+        node: serde_json::Value,
+        to_myr: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planets: Option<Vec<serde_json::Value>>,
+        /// BX2: keys where on the orbit a death falls and its kick ("sse4" if left out).
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
     },
     /// Phase tables per kind of particle (K-e): each of `items` is
     /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
@@ -2326,6 +2389,36 @@ pub enum Request {
         #[ts(optional)]
         halo: Option<String>,
     },
+    /// GZ13: a system's star slot, the drawn star of the home galaxy it
+    /// stands for (given at adoption, or the GM's move), with where it is,
+    /// what of it is authored over the drawn star, and advice where the
+    /// authored star is unusual for that birthplace. Read only.
+    StarSlot {
+        system: String,
+    },
+    /// GZ13 "Move it": give a system another drawn star as its slot
+    /// (`…/halo:n/cell:x_y_z/sys:f<frame>k<slot>`), or with `star` absent
+    /// look again as at adoption. The old slot's star goes back to the fill.
+    /// GM machine only.
+    SetStarSlot {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        star: Option<String>,
+    },
+    /// GZ13: what a system's star slot has lived through, from its birth (or
+    /// `from_myr`) to now (or `to_myr`), galaxy time in Myr: supernovae,
+    /// kilonovae, gamma-ray bursts, nucleus episodes, close passes of other
+    /// stars and spiral-arm crossings on the star's own path (G6). Read only.
+    SiteHistory {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        from_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        to_myr: Option<f64>,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -2733,6 +2826,16 @@ pub enum Request {
         #[ts(optional)]
         limit: Option<u32>,
     },
+    /// TP4 (time design sections 6 and 9): the pace ladder. Every process
+    /// the stack declares (`provides.other.processes`, base-time) with its
+    /// shape (line, stream, march), anchor, own time `tau_s` worked out at
+    /// each reference subject from its block or Equation and the sheet in
+    /// force (a march driven by another process follows its driver's; the
+    /// campaign's record is paced by its own marks and has none), the
+    /// marks it can publish, a march's grid, and the ops that read it;
+    /// ordered fastest first. Declarations whose form is wrong are listed
+    /// under `refused` with why. Read-only; needs no universe.
+    PaceLadder,
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -2846,6 +2949,8 @@ impl Request {
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::Weather { .. } => "weather",
             Request::ReadLight { .. } => "read_light",
+            Request::ReadLightPaths { .. } => "read_light_paths",
+            Request::Bake { .. } => "bake",
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
@@ -2864,6 +2969,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::AgePair { .. } => "age_pair",
             Request::HazardMap { .. } => "hazard_map",
             Request::ReadScattering { .. } => "read_scattering",
             Request::ReadShadowLight { .. } => "read_shadow_light",
@@ -2944,6 +3050,9 @@ impl Request {
             Request::SectorMap { .. } => "sector_map",
             Request::HomeGalaxy => "home_galaxy",
             Request::SetHome { .. } => "set_home",
+            Request::StarSlot { .. } => "star_slot",
+            Request::SetStarSlot { .. } => "set_star_slot",
+            Request::SiteHistory { .. } => "site_history",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
             Request::StarCell { .. } => "star_cell",
@@ -2966,6 +3075,7 @@ impl Request {
             Request::PackReports { .. } => "pack_reports",
             Request::AtmosphereAdvice { .. } => "atmosphere_advice",
             Request::ReadCatalogue { .. } => "read_catalogue",
+            Request::PaceLadder => "pace_ladder",
         }
     }
 }
@@ -3108,6 +3218,11 @@ pub fn ops() -> Vec<OpInfo> {
             "per item: one or two formula blocks",
         ),
         o(
+            "age_pair",
+            Cost::Light,
+            "per pair: up to a few thousand steps of both life lines, a few formula blocks each",
+        ),
+        o(
             "read_scattering",
             Cost::Light,
             "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
@@ -3206,6 +3321,16 @@ pub fn ops() -> Vec<OpInfo> {
             "read_light",
             Cost::Light,
             "per body: one small flow run and about 2,000 Planck evaluations",
+        ),
+        o(
+            "bake",
+            Cost::Light,
+            "per table: one block evaluation per node (about 34,000 at the medium size), kept by subject, size and physics hash",
+        ),
+        o(
+            "read_light_paths",
+            Cost::Light,
+            "per body: about 100,000 rays, each a bend-table read and one formula block, then band integrals; the bend table is worked out once per process",
         ),
         o(
             "adopt",
@@ -3420,6 +3545,21 @@ pub fn ops() -> Vec<OpInfo> {
             "GM machine only; reads the chosen halo's cell to check it, then one record event",
         ),
         o(
+            "star_slot",
+            Cost::Medium,
+            "reads the home galaxy's stars (kept per universe) and one origin reconstruction; read only",
+        ),
+        o(
+            "set_star_slot",
+            Cost::Medium,
+            "GM machine only; draws the chosen star (or searches up to 343 cells of 10 pc round the Sun's place), then two to three record events",
+        ),
+        o(
+            "site_history",
+            Cost::Heavy,
+            "the event layer along the slot star's path over the window: every cell the path passes within reach of, per time bin; read only",
+        ),
+        o(
             "halo_cell",
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
@@ -3520,6 +3660,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_catalogue",
             Cost::Light,
             "linear in the rows above the cut (a packed file is decoded only to the cut); one SHA-256 per block read; read only",
+        ),
+        o(
+            "pace_ladder",
+            Cost::Trivial,
+            "one block or Equation run per declared subject; read only",
         ),
     ]
 }
@@ -3839,6 +3984,24 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
     },
+    /// `bake`: `table` is `sse_physics::table::Table` (`sse.table/1`);
+    /// `kept` says it came from the kernel's cache.
+    Baked {
+        #[ts(type = "unknown")]
+        table: serde_json::Value,
+        kept: bool,
+    },
+    /// `read_light_paths`: each of `paths` is `sse_light::paths::LightPaths`;
+    /// `bend_table`, when asked, is `{ hash, rows, cols, row_length, flat }`
+    /// with `flat` as `sse_gravity::BendTable::flat` lays it out.
+    LightPathsRead {
+        source: String,
+        #[ts(type = "unknown[]")]
+        paths: Vec<serde_json::Value>,
+        #[ts(optional, type = "unknown")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        bend_table: Option<serde_json::Value>,
+    },
     /// `detect`: each of `detections` is `sse_sense::Detection` (target by
     /// sensor, in order); `radar` is `sse_sense::RadarRanges` when asked.
     Detected {
@@ -3858,6 +4021,11 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `age_pair`: `line` is `sse_time::pair::PairLine`.
+    PairAged {
+        #[ts(type = "unknown")]
+        line: serde_json::Value,
     },
     /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
     BowsRead {
@@ -3990,6 +4158,11 @@ pub enum Response {
         systems: Vec<String>,
         facts: u32,
         state_hash: String,
+        /// GZ13: the star slot each adopted system was given (as
+        /// `star_slot`), or `{system, star: null, why}` when none could be.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(type = "unknown[]", optional)]
+        places: Vec<serde_json::Value>,
     },
     /// `life_view`: `source` is `fixture:<name>` (or the body's address).
     /// `held`: for a body, what was held at today's value or left out, in words.
@@ -4519,6 +4692,12 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         spec: Option<serde_json::Value>,
+        /// The universe second the system was born (time design section 4,
+        /// `system.birth_s`): a screen counting time from the star's birth
+        /// draws universe second `birth_s + age`. Absent with no spec.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        birth_s: Option<i64>,
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
@@ -4668,6 +4847,28 @@ pub enum Response {
         event_id: String,
         state_hash: String,
     },
+    /// `star_slot`: `{system, star, by ("drawn", "map", "fit" or "gm"),
+    /// fits, galaxy, in_home, cell, xyz_pc, r_kpc, phi_deg, authored_over,
+    /// drawn, origin: {feh_gas, birth_r_kpc, unusual}, advice, model}`;
+    /// `star` null when the system has no slot.
+    StarSlot {
+        #[ts(type = "unknown")]
+        slot: serde_json::Value,
+    },
+    /// `set_star_slot`: the slot now (as `star_slot`), the events written
+    /// and the state hash.
+    StarSlotSet {
+        #[ts(type = "unknown")]
+        slot: serde_json::Value,
+        events: Vec<String>,
+        state_hash: String,
+    },
+    /// `site_history`: `{system, star, from_myr, to_myr, counts, harmful,
+    /// hits: [G6 hits], encounters, arm_crossings, model}`.
+    SiteHistory {
+        #[ts(type = "unknown")]
+        history: serde_json::Value,
+    },
     /// `halo_cell`: `{address, index, side_mpc, origin_mpc, delta_l, mass_msun,
     /// halo_mass_msun, total, above_min, haloes: [{address, key, mass_msun,
     /// position_mpc, half_mass_gyr, spin, mergers, major_mergers, last_major_gyr,
@@ -4814,6 +5015,15 @@ pub enum Response {
     CatalogueRead {
         #[ts(type = "unknown")]
         preview: serde_json::Value,
+    },
+    /// `pace_ladder`: `{processes, rungs ([{id, says, shape, anchor,
+    /// subject, tau_s, tau_from, why, marks, grid, ops, how, pack}]),
+    /// refused ([{pack, id, why}])}`. `tau_s` is null for a process paced
+    /// by its own marks, or (with `why`) one whose own time could not be
+    /// worked out.
+    PaceLadder {
+        #[ts(type = "unknown")]
+        ladder: serde_json::Value,
     },
 }
 

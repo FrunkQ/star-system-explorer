@@ -12,12 +12,12 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { sayNumber, checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, pictureSpan, rateWords, tooFast, DEFAULT_VIEW, SEEN_ELEVATION, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SolDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { sayNumber, checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, pictureSpan, rateWords, tooFast, DEFAULT_VIEW, SEEN_ELEVATION, readShapes, type SmallShape, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SolDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, markPattern } from "../../../chart-grammar/src/index.ts";
   import { lineups } from "./lineup.svelte.ts";
   import { COMPARE_CONTROLS } from "./controls.ts";
   import Lineup3D from "./Lineup3D.svelte";
-  import { SECONDS_PER_TURN } from "../../../renderer/src/index.ts";
+  import { SECONDS_PER_TURN, smallBodyMesh } from "../../../renderer/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -153,7 +153,23 @@
   const H = $derived(narrow ? 220 : 300);
   const labelH = 78;
   const base = $derived(H - labelH);
-  const lineup = $derived(layoutLineup(order, base - 16, Math.max(280, w - 8), mode, Number(params.limb_ratio ?? 5), narrow ? 64 : 76, globes));
+  // RW16a: in the globe looks a body below the round size is its own lump, asked of the kernel exactly as the chart
+  // asks it (`small_shape` from the scene's size, mass and day), so it is the same lump; its long end takes its room.
+  let lumps = $state(new Map<string, SmallShape>());
+  $effect(() => {
+    if (!globes) return;
+    const sys = scene.system;
+    const subs = scene.subjects.filter((s) => items.some((i) => i.key === s.address));
+    untrack(() => void readShapes(ctx.session, sys, subs, () => scene.system === sys).then((m) => scene.system === sys && (lumps = m)));
+  });
+  const reachOf = (f: SmallShape, key: string) => {
+    const p = smallBodyMesh(f, key).positions;
+    let m = 1;
+    for (let k = 0; k < p.length; k += 3) m = Math.max(m, Math.hypot(p[k]!, p[k + 1]!, p[k + 2]!));
+    return m;
+  };
+  const laid = $derived(globes ? order.map((i) => (lumps.has(i.key) ? { ...i, lump_reach: reachOf(lumps.get(i.key)!, i.key) } : i)) : order);
+  const lineup = $derived(layoutLineup(laid, base - 16, Math.max(280, w - 8), mode, Number(params.limb_ratio ?? 5), narrow ? 64 : 76, globes));
   // Each label (its name and size line) takes the first of three rows where it clears the label before it; a crowded
   // row of small bodies staggers instead of overprinting.
   const labelRows = $derived.by(() => {
@@ -272,7 +288,7 @@
       <p class="note empty">Nothing to compare. Add bodies from this system, the campaign or the reference objects.</p>
     {:else}
       <div class="frame" class:globes={look} class:space={look === "true"} class:free={look && shownView.seen === "free"} onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} role="presentation">
-      {#if look}<Lineup3D {ctx} system={scene.system} placed={lineup.placed} width={svgW} height={H} {base} {look} view={globeView} {pace} colour={fill} own={selectable} given={starGiven} onfail={() => (noGpu = true)} />{/if}
+      {#if look}<Lineup3D {ctx} system={scene.system} placed={lineup.placed} width={svgW} height={H} {base} {look} view={globeView} {pace} colour={fill} own={selectable} given={starGiven} {lumps} onfail={() => (noGpu = true)} />{/if}
       <svg width={svgW} height={H} role="img" aria-label={`Size comparison${mode === "log" ? ", not to scale (log)" : ""}: ${summary}`}>
         <HatchDefs prefix="cmp" />
         {#if lineup.limb}

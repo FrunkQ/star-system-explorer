@@ -4,12 +4,16 @@
 // in words, and fits a phone. No figure from a book is pinned here: only that the page agrees with the look-up.
 // Then the same pack as one file through the Open door, like any pack (CM0): added to the campaign, Roll call reads it
 // from the stack with no folder anywhere, and it is still there after a reload, kept beside the save in IndexedDB
-// because it is too big for local storage.
+// because it is too big for local storage. Last, a fresh campaign fetches nothing from Explorers by itself (Alex,
+// 28 Nov: the pack is optional), and the Explorers item page's link adds it on request.
 // Usage: node tests/ui/rollcall.e2e.mjs [chromium firefox] [--screens DIR]   (SSE_SHOTS=<dir> for screenshots)
+import "./chart-first.mjs";
+import { createHash } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pinClock } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { go, more } from "./nav.mjs";
@@ -42,7 +46,7 @@ async function servePack(page) {
 let failed = false;
 try {
   for (const engine of engines) {
-    const browser = await pw[engine].launch();
+    const browser = pinClock(await pw[engine].launch());
     const errors = [];
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: shots ? 2 : 1 });
     page.on("pageerror", (e) => errors.push(e.message));
@@ -222,6 +226,48 @@ try {
       assert.deepEqual(errors, [], `page errors in ${engine}`);
       await browser.close();
       console.log(`rollcall e2e: ${engine} Sol today opened as a file, added, read and reopened`);
+    }
+
+    // Optional, by hand, from Explorers (Alex, 28 Nov: the built-in Solar System is the default; Sol today is added only
+    // when asked). A fresh campaign fetches nothing from Explorers by itself, even in a browser that is not automated;
+    // the item page's "Add to my campaign in SSE4" link (?explorers=) offers the pack, checked against the listing's
+    // sha256, and adds it on the press.
+    const link = "https://explorers.starsystemx.com/api/v4/sse.sol-today-0.1.0";
+    const bytes = readFileSync(bundle);
+    const sha = createHash("sha256").update(bytes).digest("hex");
+    for (const engine of engines) {
+      const browser = await pw[engine].launch();
+      const errors = [];
+      const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+      await context.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
+      const asked = [];
+      await context.route("https://explorers.starsystemx.com/**", (r) => {
+        const cors = { "access-control-allow-origin": "*", "access-control-expose-headers": "x-sse-sha256" };
+        asked.push(r.request().url());
+        if (r.request().url().endsWith("/file")) return r.fulfill({ status: 200, body: bytes, headers: { ...cors, "x-sse-sha256": sha } });
+        return r.fulfill({ status: 200, contentType: "application/json", headers: cors, body: JSON.stringify({ sha256: sha, pack: { id: "sse.sol-today", version: "0.1.0" }, source: { site: "Explorers", title: "Sol today", url: link, creditChain: ["FrunkQ"] } }) });
+      });
+      const page = await context.newPage();
+      page.on("pageerror", (e) => errors.push(e.message));
+      const ready = () => page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
+      await page.goto(`http://localhost:${port}/#chart`);
+      await ready();
+      await page.waitForFunction(() => !!localStorage.getItem("sse4.campaign"), null, { timeout: 30000 });
+      assert.deepEqual(asked, [], "a fresh campaign fetches nothing from Explorers by itself");
+      assert.ok(!(await page.evaluate(() => localStorage.getItem("sse4.campaign"))).includes("sse.sol-today"), "and opens without Sol today");
+
+      await page.goto(`http://localhost:${port}/?explorers=${encodeURIComponent(link)}#chart`);
+      await ready();
+      const od = page.getByRole("dialog", { name: "Campaign" });
+      await od.locator("[data-pack-check]").waitFor({ timeout: 120000 });
+      await od.getByRole("button", { name: "Add it to this campaign" }).click();
+      await od.getByText(/^Added\./).waitFor({ timeout: 120000 });
+      await od.getByRole("button", { name: "Close", exact: true }).click();
+      await go(page, "rollcall");
+      await page.waitForFunction(() => /Sol today/.test(document.querySelector("[data-rollcall]")?.textContent ?? ""), null, { timeout: 60000 });
+      assert.deepEqual(errors, [], `page errors in ${engine}`);
+      await browser.close();
+      console.log(`rollcall e2e: ${engine} a fresh campaign fetches nothing; Sol today added from an Explorers link on request`);
     }
   } finally {
     rmSync(bundle, { force: true });

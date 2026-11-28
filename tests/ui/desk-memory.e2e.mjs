@@ -3,6 +3,8 @@
 // Each desk keeps its own depth, and at each level its own view choice, on this device. A desk visited for the first
 // time starts from the latest choice made anywhere; coming back to a desk brings back what it had; a reload keeps it.
 // The ruler opens on each desk's own span (top-level 12.1) and keeps the span chosen on that desk.
+// The start sheet lands a new visitor on Explore, Carry on keeps the desk, and a verb lands where what it opens is.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -90,6 +92,41 @@ try {
     await page.waitForFunction(() => Math.abs(Number(document.querySelector(".area-ruler .ruler")?.getAttribute("data-span")) - 1) < 0.01);
     assert.ok(Math.abs((await span()) - YEAR) < 0.01, "Explore keeps the year it was shown");
     await shot("4-explore-ruler");
+
+    // The start sheet (TM9c, design section 5): a new visitor lands on Explore; "Carry on" keeps the desk last used; a
+    // verb lands on a desk that has what it opens, Explore first.
+    const sheetPage = async (kept) => {
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      if (kept) await ctx.addInitScript((d) => localStorage.setItem("sse4.desk", d), kept);
+      const p = await ctx.newPage();
+      p.on("pageerror", (e) => errors.push(e.message));
+      await p.goto(base);
+      await p.waitForSelector('[data-start] [data-door="grow"]:not([disabled])', { timeout: 20000 });
+      return p;
+    };
+    const deskOf = (p) => p.locator(".app").getAttribute("data-desk");
+    const fresh = await sheetPage(null);
+    assert.equal(await deskOf(fresh), "explore", "a new visitor lands on Explore");
+    await fresh.context().close();
+    const carry = await sheetPage("run");
+    await carry.locator('[data-start] [data-door="carry"]').click();
+    await carry.waitForSelector("[data-start]", { state: "detached" });
+    assert.equal(await deskOf(carry), "run", "Carry on keeps the desk last used");
+    await carry.context().close();
+    const life = await sheetPage("run");
+    await life.locator('[data-start] [data-atlas="world:life"]').click();
+    await life.waitForFunction(() => document.querySelector(".app")?.getAttribute("data-desk") === "explore");
+    await life.waitForSelector('.stage[data-screen="life"]');
+    await life.context().close();
+    const light = await sheetPage("run");
+    await light.locator('[data-start] [data-atlas="control:light"]').click();
+    await light.waitForFunction(() => document.querySelector(".app")?.getAttribute("data-desk") === "explore");
+    await light.waitForSelector('.light .toggle[aria-expanded="true"]', { timeout: 5000 });
+    await light.context().close();
+    const run = await sheetPage("build");
+    await run.locator('[data-start] [data-atlas="desk:run"]').click();
+    await run.waitForFunction(() => document.querySelector(".app")?.getAttribute("data-desk") === "run");
+    await run.context().close();
 
     assert.deepEqual(errors, []);
     await browser.close();

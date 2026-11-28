@@ -241,7 +241,7 @@
   }
 
   // RW16a: a body below the round size is drawn as its own lump on the globe, the same lump system True draws
-  // (kernel `small_shape` from its address); a round body stays a sphere. The canvas tier still draws a disc.
+  // (kernel `small_shape` from its address); a round body stays a sphere. Every tier draws it, the canvas one too.
   let lumpOf = $state<{ address: string; shape: ReturnType<typeof smallBodyShape> | null } | null>(null);
   $effect(() => {
     const sub = subject;

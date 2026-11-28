@@ -2,7 +2,7 @@
 // ground under it for the detail ladder.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CLOSE_FLOOR_M, CLOSE_REACH, closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear } from "../src/close-up.ts";
+import { CLOSE_FLOOR_M, CLOSE_REACH, STAR_CLOSE_SHARE, closeMin, grazeLook, outlineRadius, groundUnder, orbitEye, orbitOf, zoomNear } from "../src/close-up.ts";
 
 test("the camera comes down to a few km over a big world, a small share of the radius over a small one", () => {
   const earth = 6.371e6;
@@ -53,4 +53,19 @@ test("the orbit camera goes to a postcard's camera and back", () => {
   const back = orbitOf(e.dir, e.radii, 0.55);
   for (const k of ["yaw", "pitch", "dist"] as const) assert.ok(Math.abs(back[k] - o[k]) < 1e-12, k);
   assert.equal(orbitEye(o, 0), null);
+});
+
+test("over a star the camera stops where the whole disc fills the view, its face drawn to the sphere's outline", () => {
+  assert.equal(closeMin(2, 6.96e8, true), 2 * (1 + STAR_CLOSE_SHARE));
+  // At the floor the disc fills about three fifths of a 45-degree view's height, and a prominence a third of a
+  // radius over the limb is still inside it.
+  const d = 1 + STAR_CLOSE_SHARE;
+  const deg = (Math.asin(1 / d) * 180) / Math.PI;
+  assert.ok(deg > 12 && deg < 15, `${deg}`);
+  assert.ok((Math.asin(1.33 / d) * 180) / Math.PI < 20, "prominences in sight");
+  // Far off the outline is the radius; up close a picture at the centre must be wider to cover asin(r/d).
+  assert.ok(Math.abs(outlineRadius(1, 1e6) - 1) < 1e-9);
+  const r = outlineRadius(1, 1.5);
+  assert.ok(Math.abs(Math.atan(r / 1.5) - Math.asin(1 / 1.5)) < 1e-12, `${r}`);
+  assert.ok(r > 1.3 && r < 1.4, `${r}`);
 });

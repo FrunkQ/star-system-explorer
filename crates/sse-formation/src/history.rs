@@ -216,8 +216,11 @@ fn first_overflow(fits: &Fits, life: &LifeLine, limit: f64) -> Option<f64> {
 }
 
 const AU_IN_RSUN: f64 = sse_core::sheet::AU / sse_core::sheet::R_SUN;
-/// Metal range of the Hurley fits.
-pub const Z_FITS: (f64, f64) = (1.0e-4, 0.03);
+/// Metal range of the Hurley fits (1e-4 to 0.03 on their scale), as measured Z.
+pub const Z_FITS: (f64, f64) = (
+    1.0e-4 * crate::hurley::Z_SUN / crate::hurley::Z_REF,
+    0.03 * crate::hurley::Z_SUN / crate::hurley::Z_REF,
+);
 
 impl FormationHistory {
     /// Stages 1 and 2 (F0). Later stages add to the record.
@@ -412,7 +415,7 @@ impl FormationHistory {
                 "stars.metallicity_for_fits".to_string(),
                 How::Calculated {
                     source: format!(
-                        "Z = {:.2e} is outside the Hurley fits (1e-4 to 0.03): stars use Z = {fits_z:.2e}, the nearest edge",
+                        "Z = {:.2e} is outside the Hurley fits (measured 7e-5 to 0.021, their 1e-4 to 0.03): stars use Z = {fits_z:.2e}, the nearest edge",
                         inh.z
                     ),
                 },

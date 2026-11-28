@@ -2,6 +2,23 @@
   "about": "What's new, newest first (V3 gap 31). One entry per stage end or notable release, in plain words for a keen amateur. The Help door in More shows these; a dot on Help marks an entry the device has not seen. The chart room thread adds an entry as each stage of handover/design/SSE4-coming-together.md lands.",
   "entries": [
     {
+      "id": "2026-11-27-overnight",
+      "date": "2026-11-27",
+      "title": "New this week, and where to find it",
+      "items": [
+        "Most of the new pictures are in True. Open the Solar System from the start sheet, then choose True under View style (the chart opens on Chart). True needs a browser that can draw with the graphics card.",
+        "Sun prominences: in True, look at the Sun's edge. The loops show only off the disc and are faint, as they are in life.",
+        "Saturn's rings have their gaps and ripple trains: in True, zoom in on Saturn to see the Encke and Keeler gaps and the density waves.",
+        "Shadows, eclipses and sea glint: in True, Saturn's shadow lies across its rings; step time to catch a moon's shadow on Jupiter; Earth's oceans catch the Sun at three-quarter light.",
+        "Press Play on the ruler and everything on screen moves on the campaign's clock, and stands still when you pause.",
+        "Energy flow: pick a world (Earth, say), open it, and open Energy flow: sunlight in, heat out, and life's share of it.",
+        "Every star has a formal class: select the Sun and its card leads with G2 V. Reference on the rail, then Classes, shows the star gallery built on them.",
+        "Small bodies: on the rail, Workshop, then Small bodies, designs an asteroid, comet, contact binary or pair, lumpy as real ones are.",
+        "Each desk remembers its own depth, view and time span. On the Run desk the place line steps Out and In, and F fills the screen with the picture.",
+        "Not seeing these? Start fresh, on the start sheet or at the top of More, forgets this browser's remembered choices (your campaign stays) or everything."
+      ]
+    },
+    {
       "id": "2026-11-23-stage-1",
       "date": "2026-11-23",
       "title": "Stage 1: a test drive you can walk",

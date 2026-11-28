@@ -6,6 +6,7 @@
 // life; the red-dwarf desert is a false alarm. Selecting Tarn asks the kernel
 // for its biosphere, and the view says there is none yet and keeps the
 // example. On a phone the screen menu reaches it and nothing overflows.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

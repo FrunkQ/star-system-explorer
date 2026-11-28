@@ -22,7 +22,7 @@
       "name": "Making and ageing a system",
       "meaning": "Importing a V3 save, the formation run and the look-ahead through deep time. Long, so it shows progress; the budget is for the whole run.",
       "budget_ms": 5000,
-      "sources": ["import_v3", "run_formation", "formation_record", "look_ahead", "commit_look_ahead", "set_system_age"],
+      "sources": ["import_v3", "run_formation", "formation_record", "look_ahead", "commit_look_ahead", "set_system_age", "age_pair"],
       "bench": ["formation", "formation-early", "formation-accrete", "formation-accrete-dole", "formation-growth", "formation-upheaval", "formation-leftovers", "formation-pipeline"]
     },
     {
@@ -45,7 +45,7 @@
       "name": "Light, spectra and the sky",
       "meaning": "Starlight, spectra, activity, air optics, nebulae, planet finding, the sky from a world and light bent by gravity.",
       "budget_ms": 300,
-      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "effect_at_range", "hazard_map", "read_limb", "fog_of_war", "read_bows", "describe_star", "read_scattering", "read_shadow_light", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"],
+      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "effect_at_range", "hazard_map", "read_light_paths", "bake", "read_limb", "fog_of_war", "read_bows", "describe_star", "read_scattering", "read_shadow_light", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"],
       "bench": ["gravity"]
     },
     {
@@ -68,7 +68,7 @@
       "name": "Galaxy and cosmic web",
       "meaning": "The galaxy chart, star and halo cells, the cosmic web, the Window and sector import and export.",
       "budget_ms": 1000,
-      "sources": ["galaxy_chart", "web_slice", "halo_cell", "matter_budget", "star_cell", "window_view", "import_sector", "read_catalogue", "roll_profile", "export_sector", "sector_map", "promote_star", "home_galaxy", "set_home"],
+      "sources": ["galaxy_chart", "web_slice", "halo_cell", "matter_budget", "star_cell", "window_view", "import_sector", "read_catalogue", "roll_profile", "export_sector", "sector_map", "promote_star", "home_galaxy", "set_home", "star_slot", "set_star_slot", "site_history"],
       "bench": ["cosmos", "cosmology", "haloes", "galaxy", "galaxy-events", "envelope", "stars", "nucleus"]
     },
     {
@@ -76,7 +76,7 @@
       "name": "Orbits, routes and voyages",
       "meaning": "Where everything is at a time, the calendar, routes between stars and voyages in a system.",
       "budget_ms": 300,
-      "sources": ["orbits_at", "orbit_stability", "ship_power", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage", "ship_at_world", "jump_map", "elements_in"],
+      "sources": ["orbits_at", "orbit_stability", "pace_ladder", "ship_power", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage", "ship_at_world", "jump_map", "elements_in"],
       "bench": ["time", "time-generated", "nav"]
     },
     {

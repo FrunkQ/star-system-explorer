@@ -28,6 +28,8 @@ export interface Body3D {
   rings?: Ring3D[];
   /** Its axial tilt, radians, when known: the rings lie in its equator. */
   tilt_rad?: number;
+  /** Its own axes at the drawn time where it has a spin model (RW17 part 3): x toward longitude 0, z its north pole. */
+  axes?: [[number, number, number], [number, number, number]];
   /** Its mass, kg, when known: the kernel places its ring's gaps, edges and waves from it and its moons (ring-read.ts). */
   mass_kg?: number;
   /** The world's J2, when on record (moves its rings' resonances). */
@@ -67,7 +69,7 @@ export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => M
     .filter((s) => s === star || s.orbit)
     .map((s) => {
       const rings = scene.subjects.filter((r) => r.ring && r.parent === s.address).map((r) => ({ name: r.label, ...r.ring! }));
-      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), ...(s.orbit?.v_m_s ? { v_m_s: s.orbit.v_m_s } : {}), ...(s.orbit?.period_s && s.orbit.at_s !== undefined ? { period_s: s.orbit.period_s, phase_at_s: s.orbit.at_s } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s), ...j2Of(s) };
+      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), ...(s.orbit?.v_m_s ? { v_m_s: s.orbit.v_m_s } : {}), ...(s.orbit?.period_s && s.orbit.at_s !== undefined ? { period_s: s.orbit.period_s, phase_at_s: s.orbit.at_s } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...(s.orbit?.axes ? { axes: s.orbit.axes } : {}), ...massOf(s), ...j2Of(s) };
     });
 }
 

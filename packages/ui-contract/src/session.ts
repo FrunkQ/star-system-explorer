@@ -49,6 +49,9 @@ export interface PackCalendar {
   day_s: number;
   year_days: number;
   months?: { name: string; days: number }[];
+  /** Long years (a day added to `leap_month`, counted from 0), as the kernel's calendar gives them. */
+  leap?: { every: number; except_every?: number; but_every?: number };
+  leap_month?: number;
   format: string;
 }
 import type { KernelClient } from "../../kernel-client/src/index.ts";
@@ -273,6 +276,12 @@ export interface ViewSession {
   homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
   /** "Make this home" (GZ12, kernel `set_home`): a catalogued halo's address, or null for the web's own choice. GM only. */
   setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
+  /** A system's star slot (GZ13, kernel `star_slot`). Read only; GM only. */
+  starSlot(system: string): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }>;
+  /** "Move it" (GZ13, kernel `set_star_slot`): another drawn star as the system's slot, or null to look again as at adoption. GM only. */
+  setStarSlot(system: string, star: string | null): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }>;
+  /** What a system's slot has lived through (GZ13, kernel `site_history`). Read only; GM only. */
+  siteHistory(system: string, window?: { from_myr?: number; to_myr?: number }): Promise<{ ok: true; history: import("./galaxy.ts").SiteHistory } | { ok: false; code: string; message: string }>;
   /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
   haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
   /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
@@ -349,6 +358,8 @@ export interface ViewSession {
   /** XO18: the Hazard map's reading (kernel `hazard_map`): a measured Solar System body by `fixture` and `body`, or
    * handed `asks`; along `line` ("equator" or "poles"); with `ship`, or the stated stock ship. Read only. */
   hazardMap(ask: { fixture?: string; body?: string; asks?: Json[]; ship?: Json; line?: "equator" | "poles" }): Promise<{ ok: true; maps: Json[] } | { ok: false; code: string; message: string }>;
+  /** XO2 to XO4: light near a mass (kernel `read_light_paths`): per body the bender, sizes, feed and the disc as its viewer sees it; `table` adds the bend table (fetch it once, keyed by its hash). */
+  readLightPaths(ask: { fixture?: string; bodies?: Json[]; table?: boolean }): Promise<{ ok: true; paths: Json[]; bend_table?: Json } | { ok: false; code: string; message: string }>;
   /** SV2: who knows a thing, or one fact on it (kernel `known_to`): per audience its landmark, rung and exceptions. GM only. */
   knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }>;
   /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
@@ -357,6 +368,8 @@ export interface ViewSession {
   nameSample(ask: import("./names.ts").SampleAsk): Promise<{ ok: true; value: import("./names.ts").NameSample } | { ok: false; code: string; message: string }>;
   /** MP10: the master data sheet as the stack has it (kernel `read_matter`): the listing, a table's ids, or one row with sources and readers. Read only. */
   readMatter(ask: { table?: string; id?: string }): Promise<{ ok: true; value: Json } | { ok: false; code: string; message: string }>;
+  /** ER11a: a table baked from the physics in force (kernel `bake`, format `sse.table/1`), sized by the quality tier. Read only. */
+  bake(ask: { table: string; subject?: Json; tier?: string }): Promise<{ ok: true; table: import("./table.ts").Table; kept: boolean } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -1028,6 +1041,13 @@ export class Session implements ViewSession {
     return r.type === "hazard_maps" ? { ok: true, maps: (r as unknown as { maps: Json[] }).maps } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async readLightPaths(ask: { fixture?: string; bodies?: Json[]; table?: boolean }): Promise<{ ok: true; paths: Json[]; bend_table?: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_light_paths", ...ask } as Json);
+    if (r.type !== "light_paths_read") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const got = r as unknown as { paths: Json[]; bend_table?: Json };
+    return { ok: true, paths: got.paths, ...(got.bend_table ? { bend_table: got.bend_table } : {}) };
+  }
+
   async knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master sees who knows what" };
     const r = await this.#call({ op: "known_to", address, ...(field ? { field } : {}), ...(at_s !== undefined ? { at_s } : {}) } as unknown as Json);
@@ -1048,6 +1068,13 @@ export class Session implements ViewSession {
   async readMatter(ask: { table?: string; id?: string }): Promise<{ ok: true; value: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_matter", ...ask } as Json);
     return r.type === "matter" ? { ok: true, value: (r as unknown as { value: Json }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async bake(ask: { table: string; subject?: Json; tier?: string }): Promise<{ ok: true; table: import("./table.ts").Table; kept: boolean } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "bake", ...ask } as Json);
+    if (r.type !== "baked") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const got = r as unknown as { table: import("./table.ts").Table; kept: boolean };
+    return { ok: true, table: got.table, kept: got.kept };
   }
 
   async windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }> {
@@ -1071,6 +1098,24 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master chooses the universe's home" };
     const r = await this.#call(halo ? { op: "set_home", halo } : { op: "set_home" });
     return r.type === "home_set" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async starSlot(system: string): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a system's place in the galaxy is worked out on the game master's machine" };
+    const r = await this.#call({ op: "star_slot", system });
+    return r.type === "star_slot" ? { ok: true, slot: (r as unknown as { slot: import("./galaxy.ts").StarSlot }).slot } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async setStarSlot(system: string, star: string | null): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master moves a system" };
+    const r = await this.#call(star ? { op: "set_star_slot", system, star } : { op: "set_star_slot", system });
+    return r.type === "star_slot_set" ? { ok: true, slot: (r as unknown as { slot: import("./galaxy.ts").StarSlot }).slot } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async siteHistory(system: string, window?: { from_myr?: number; to_myr?: number }): Promise<{ ok: true; history: import("./galaxy.ts").SiteHistory } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a system's history is worked out on the game master's machine" };
+    const r = await this.#call({ op: "site_history", system, ...(window ?? {}) });
+    return r.type === "site_history" ? { ok: true, history: (r as unknown as { history: import("./galaxy.ts").SiteHistory }).history } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }> {
@@ -1254,8 +1299,9 @@ export class Session implements ViewSession {
 
   async setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master moves the campaign's now" };
-    const r = await this.#call({ op: "set_campaign_now", at_s });
-    return r.type === "campaign_now_is" ? { ok: true, state_hash: String((r as unknown as { state_hash?: string }).state_hash ?? "") } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    // A record intent, so players replaying the game master's log move their now too.
+    const w = await this.#record("set_campaign_now", { at_s: at_s.toString() });
+    return w.ok ? { ok: true, state_hash: String(w.reply.state_hash ?? (await this.stateHash())) } : w;
   }
 
   async calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }> {
@@ -1288,8 +1334,12 @@ export class Session implements ViewSession {
 
   async resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads resolved systems" };
-    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}), ...(branch ? { branch } : {}) } as never);
-    return r.type === "system_resolved" ? { ok: true, result: r as unknown as SystemResolved } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const text = await this.#serial(() => this.#client.callRaw(encodeRequest({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}), ...(branch ? { branch } : {}) })));
+    const r = JSON.parse(text) as Raw;
+    if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    // A birth second is past 2^53: read from the reply's own digits, not through a double (it would be 32 s coarse).
+    const birth = birthDigits(text);
+    return { ok: true, result: { ...(r as unknown as SystemResolved), ...(birth !== undefined ? { birth_s: String(birth) } : {}) } };
   }
 
   async kernelVersion(): Promise<string> {
@@ -1304,6 +1354,12 @@ export class Session implements ViewSession {
   pending(): readonly Intent[] {
     return [...this.#pending];
   }
+}
+
+/** The top-level `birth_s` of a `system_resolved` reply, exact, from its digits (the kernel writes it after `spec`). */
+export function birthDigits(text: string): bigint | undefined {
+  const m = /"birth_s":(-?\d+)[,}]/.exec(text);
+  return m ? BigInt(m[1]!) : undefined;
 }
 
 async function call(client: KernelClient, request: unknown): Promise<Raw> {
