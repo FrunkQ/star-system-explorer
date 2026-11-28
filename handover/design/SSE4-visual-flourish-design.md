@@ -1,6 +1,6 @@
 # SSE4: stand-in pictures while things move, the proper picture at rest (track FL)
 
-Status: **ACCEPTED by Alex, 28 Nov 2026 13:23 UTC ("all brilliant ideas! yes").** His answers are in section 10A, and the warm-up he then asked about is section 6A (its two questions, 8 to 10, are still open). Nothing here is built. Written at the coordinator's word for Alex's ask of 28 Nov 13:14 UTC, after he chose stills for the stirred clouds: "can we 'fake movement' and when they stop, resettle ... A simple shader, rather than real maths. Even mobiles have decent shaders for this type of thing. We need to build this in as a standard feature to reuse. The ability to 'fake it if time moves too fast' and fall back to 'proper render' when you stop ... maybe you can still animate but limit to 1 fps for cloud updates ... Is this a 'visual flourish' system we need to have designed to reuse when this type of thing crops up (eg: transitions between the grand zoom)". Design only. FL is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 28 Nov 2026 13:23 UTC ("all brilliant ideas! yes").** His answers are in section 10A, and the warm-up he then asked about is section 6A (questions 8 to 10 answered too: "yes if practical"). Nothing here is built. Written at the coordinator's word for Alex's ask of 28 Nov 13:14 UTC, after he chose stills for the stirred clouds: "can we 'fake movement' and when they stop, resettle ... A simple shader, rather than real maths. Even mobiles have decent shaders for this type of thing. We need to build this in as a standard feature to reuse. The ability to 'fake it if time moves too fast' and fall back to 'proper render' when you stop ... maybe you can still animate but limit to 1 fps for cloud updates ... Is this a 'visual flourish' system we need to have designed to reuse when this type of thing crops up (eg: transitions between the grand zoom)". Design only. FL is a code only, never shown in the product.
 
 Read with: `SSE4-visual-polish-design.md` section 3 (the three grades every drawn thing has) and 8 (tiers, the governor, sharpen at rest); `SSE4-stirred-clouds-design.md` sections 4 and 11A and `packages/WS5.md` (the measured cost); `packages/CLK1.md` (the picture clock); `SSE4-grand-zoom-design.md` sections 5.3, 5.4 and 10 and `packages/GZ8a-first-seam.md`; `SSE4-time-scales-design.md` section 9 (pace); `interface-style.md` rules 7 to 10.
 
@@ -271,6 +271,27 @@ Builder threads are the coordinator's to name (section 11). Each leaves main gre
 | **FL7** warming up | Section 6A: the schedule's queue of builds known to be coming, ordered by when they are needed; build times remembered per device; the "getting ready" line with its time; the way down drawing itself in at the start stop; the warm cache dropped first under memory pressure; the hold-backs (heat, data saver, memory). The journey's read-ahead and the playing clock's next dates become its first two users. Pure part in `settle.ts`, tests only; the journey's use lands with FL5 | FL1 | S |
 | **FL6** folding in | One at a time, each its own small PR: sharpen at rest takes its "moved" from the schedule (so the clock counts as movement in one place); orbits between answers; star cells; a world's finer tiles | FL1 | S each |
 
+### 8A. Build order, and the files each package touches
+
+New files are marked (new). A package edits only the files in its row, plus its own tests, its own log in `handover/packages/`, its register rows (new files in `docs/fudges/0360-interface-and-player-views/`) and its row in `status/flourish.md`.
+
+| Step | Package | Files | Beside |
+|---|---|---|---|
+| 1 | **FL1** the schedule | `packages/ui-contract/src/settle.ts` (new), `packages/ui-contract/test/settle.test.ts` (new), one export line in `packages/ui-contract/src/index.ts` | FL0 |
+| 1 | **FL0** the list | `packages/ui-contract/src/stand-ins.json` (new: the declared list, data only), register rows for the four uses that have none. No code | FL1 |
+| 2 | **FL2** the kit | `packages/renderer/src/settle-kit.ts` (new: Carry, Exposure and Fade as nodes), `settle-kit-cpu.ts` (new: the twins), `wind-table.ts` (new: the table's layout), tests `packages/renderer/test/settle-kit.test.ts` and `tests/ui/settle-kit.e2e.mjs` (both new), export lines in `packages/renderer/src/index.ts`, rows in `bench-drawing.ts`, its own test line in `ci.yml` | FL4, FL7 |
+| 2 | **FL4** said and checked | `packages/ui-contract/src/picture-clock.ts` (`motionWords` takes the uses' clauses), `packages/ui-contract/test/stand-ins.test.ts` (new: list against register), the performance readout's component in the shell (one line per layer) | FL2, FL7 |
+| 2 | **FL7** warming up, pure part | `packages/ui-contract/src/settle.ts` (the ahead queue, remembered build times, the hold-backs) and its test | FL2, FL4, but after FL1 is merged since it edits FL1's file |
+| 3 | **FL3** giants | `packages/renderer/src/true-air.ts` (`flowFace` gives way to the kit), `stirred-gpu.ts` (builds at the size shown), `runtime.ts` (the still's schedule and cache), `packages/views/system-3d/src/System3D.svelte` (reports clock and camera movement), `tests/ui/stirred-gpu.e2e.mjs` | FL5 |
+| 3 | **FL5** the zoom, with FL7's journey use | `packages/shell/src/journey/Journey.svelte`, `JourneyWeb.svelte`, `packages/ui-contract/src/journey-play.ts` and `journey.ts` (the port's ready answer; the warm-up list from a plan), `packages/views/foam-map/src/Web3D.svelte`, `packages/views/cluster-map/src/Nearby.svelte` (a coarse picture each), `tests/ui/journey.e2e.mjs` | FL3 |
+| 4 | **FL6** folding in, one PR each | sharpen at rest: `packages/renderer/src/still.ts`, `true-run.ts`; orbits and star cells: `System3D.svelte`, `star-now.ts`; finer tiles: `texture-ladder.ts` | each other, where the files differ |
+
+- **Can run side by side:** FL0 with FL1; then FL2, FL4 and FL7 (FL4 and FL7 touch different files from FL2; FL7 shares `settle.ts` with FL1, so it starts when FL1 is on main); then FL3 with FL5.
+- **Must wait:** FL3 for FL2 and for PR 739; FL5 for FL2 and FL7's pure part; FL6's `System3D.svelte` pieces for FL3, which edits the same file.
+- **Shared files to watch:** `System3D.svelte` (FL3, FL6, and the picture clock thread), `settle.ts` (FL1, FL7), `ci.yml` (one test line each, FL2 and any other).
+- **GPU checks on AC-ProArt:** FL2, FL3 and FL5. The rest pass in the cloud container.
+- File names for new files are proposals; a builder may choose better ones and says so in its log.
+
 **Later, not queued:** the time exposure for fast bodies (CLK3 already wants it; it is the Exposure kind on a body's arc); a world's cloud faces and sea on the Carry; belts and rings by their shear; a galaxy's turning at play; a view that turns with a giant so its cloud can be watched.
 
 Red-first tests (each seen red with its fix removed; at least one absolute):
@@ -312,11 +333,11 @@ Red-first tests (each seen red with its fix removed; at least one absolute):
 
 7. **Accept that two seats may differ slightly while moving, and agree at rest?** *Recommend yes.*
 
-8. **May a journey be started before its warm-up is done?** Read with his message of 13:24 ("to ensure a smooth journey"): by default the journey waits at its start, with the way down drawing itself in, and goes when everything is ready. A press on Go before that leaves early and travels on coarse pictures where it catches the warm-up up. *Recommend yes to the early press; film always waits.* (Open.)
+8. **May a journey be started before its warm-up is done?** Read with his message of 13:24 ("to ensure a smooth journey"): by default the journey waits at its start, with the way down drawing itself in, and goes when everything is ready. A press on Go before that leaves early and travels on coarse pictures where it catches the warm-up up. *Recommend yes to the early press; film always waits.* (Answered: yes if practical, section 10A.)
 
-9. **Should the Run desk warm the next Show step by itself?** While one step is on screen, the next step's place and journey are made ready, so a GM's reveal does not stall. It costs memory and some battery on the GM's device only. *Recommend yes.* (Open.)
+9. **Should the Run desk warm the next Show step by itself?** While one step is on screen, the next step's place and journey are made ready, so a GM's reveal does not stall. It costs memory and some battery on the GM's device only. *Recommend yes.* (Answered: yes if practical, section 10A.)
 
-10. **"Cache for future runs": this visit only, or kept between visits?** Read here as: in memory while the app is open, in line with his rule of 27 Nov that stills never go in a file. Keeping pictures between visits would need the device's storage. The places and names already stay with the campaign (the gazetteer), so a later visit is quicker anyway. *Recommend memory only, this visit; look again if warm-ups feel long on return.* (Open.)
+10. **"Cache for future runs": this visit only, or kept between visits?** Read here as: in memory while the app is open, in line with his rule of 27 Nov that stills never go in a file. Keeping pictures between visits would need the device's storage. The places and names already stay with the campaign (the gazetteer), so a later visit is quicker anyway. *Recommend memory only, this visit; look again if warm-ups feel long on return.* (Answered: yes if practical, section 10A.)
 
 ---
 
@@ -334,7 +355,13 @@ Questions 1 to 7: **yes**, each as recommended. So:
 - A zoom travels on a coarse picture that shows the same things in the same places.
 - Seats may differ slightly while moving and agree at rest.
 
-In the same message he asked about warming up; the answer is section 6A and package FL7. At 13:24 UTC he added that the wait should show something visually interesting, and that the result is cached for future runs but given up quickly when memory is needed elsewhere; both are in 6A. Questions 8, 9 and 10 are still his to answer.
+In the same message he asked about warming up; the answer is section 6A and package FL7. At 13:24 UTC he added that the wait should show something visually interesting, and that the result is cached for future runs but given up quickly when memory is needed elsewhere; both are in 6A. **Questions 8, 9 and 10, 13:25 UTC: "yes if practical".** Said in the project chat seconds after the coordinator posted the three questions with their recommendations, and read by the coordinator and this thread as yes to each recommendation, where practical:
+
+- A journey waits for its warm-up by default; Go may be pressed early; film always waits.
+- The Run desk warms the next Show step by itself.
+- The warm cache is in memory for this visit only. (This one was an either-or question, so the reading leans on the recommendation; it is also his standing rule of 27 Nov.)
+
+"If practical" is taken to mean: where a package finds that one of these costs more than it gives on a real device, it says so in its log and the simpler form ships, without a new question.
 
 ---
 
@@ -358,6 +385,6 @@ In the same message he asked about warming up; the answer is section 6A and pack
 
 ## 13. Picking this up without the chat
 
-- Nothing is built. The note is accepted (section 10A); FL0 may start when the coordinator names a builder. Questions 8 to 10 (the warm-up) are open and hold only FL7.
+- Nothing is built. The note is accepted (section 10A); FL0 may start when the coordinator names a builder. Questions 8 to 10 (the warm-up) are answered too. The build order and each package's files are in section 8A.
 - The whole idea is section 1 points 2 and 3, the seven rules of section 3, the table in 4.3 and section 6A.
 - The first real user is the stirred still (FL3); read `packages/WS5.md` for its traps on the GPU (no loops round the wind, series for sine and cosine, one step a draw).
