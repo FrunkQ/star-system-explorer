@@ -109,6 +109,18 @@ So the upstream fix is HF7's first slice (HF7.0b, below): formation publishes `i
 | HF7.0 | Scratch check, as section 7 | none |
 | HF7.0b | Formation hands the mantle's water over as an amount; the kept share as a block; catalogue values for Sol | core (formation lines) |
 
+### 8B. HF7.0b: how much water a magma ocean leaves in the mantle (built from 28 Nov)
+
+The fudge register already names the fix for the typed 0.3 (row `early.rs` `MANTLE_RETAINED`: "solubility laws for H2O and CO2 in magma"). One mechanism for every world, a Rust block (`sse.formation.mantle_water`, a sum over the ocean's freezing):
+
+- The ocean freezes from the bottom up in 32 equal mass steps. Each step's new rock keeps the water of the melt it froze from at `D + φ_t`: the mineral partition (`melt.water_partition`, about 0.01) plus the melt trapped between grains (about 0.01; Elkins-Tanton 2008). Both are sheet rows on `mantle-rock`.
+- The melt left over is in balance with the steam above it by water's solubility in magma, `x = a · p^b` (about 6.8e-8 Pa^-0.7 · p^0.7, mass fraction; Lebrun et al. 2013 after Carroll and Holloway), on `mantle-rock`'s melt row. The steam pressure is the air's water times gravity over area, found by halving at each step.
+- **A world whose magma ocean is inside the runaway limit** (formation's `desiccated`, Hamano et al. 2013) loses the air's water to space as fast as it degasses. Each step's leftover melt then balances against an air with no water left, so the rock frozen late keeps almost nothing. Venus's mantle comes out drier than Earth's or Mars's because of how its ocean ended, not because of a number chosen for it.
+- Published as `interior.mantle_water` (kg), read by the thermal history (HF7.1). The bulk share and the surface water stay as they are, now the remainder: water is conserved between mantle, air and space, and the conserved chain checks the sum.
+- Catalogued worlds (Sol's) take the block's answer from their catalogued bulk water where there is one. Earth is checked against published mantle water estimates (about 1 to 3 oceans' worth, unverified), never tuned to it.
+
+Every number here is from memory and unverified until 1 Dec 2026.
+
 ## 9. Sources (all unverified until 1 Dec 2026)
 
-Hirth and Kohlstedt 1996 (EPSL 144, 93: water in the oceanic upper mantle) and 2003 (AGU monograph 138: rheology of the upper mantle); Katz, Spiegelman and Langmuir 2003 (G-cubed 4, 1073); Dixon, Stolper and Holloway 1995 (J. Petrology 36, 1607) and Moore, Vennemann and Carmichael 1998 (Am. Mineral. 83, 36), water solubility in basalt; Crowley, Gérault and O'Connell 2011 (EPSL 310, 380) and Cowan and Abbot 2014 (ApJ 781, 27), regassing; Morschhauser, Grott and Breuer 2011 (Icarus 212, 541), Mars's water; Sandu, Lenardic and McGovern 2011 (JGR 116, B12404), water and thermal histories; O'Rourke 2020 (GRL 47, e2019GL086126), Venus's dynamo.
+Hirth and Kohlstedt 1996 (EPSL 144, 93: water in the oceanic upper mantle) and 2003 (AGU monograph 138: rheology of the upper mantle); Katz, Spiegelman and Langmuir 2003 (G-cubed 4, 1073); Dixon, Stolper and Holloway 1995 (J. Petrology 36, 1607) and Moore, Vennemann and Carmichael 1998 (Am. Mineral. 83, 36), water solubility in basalt; Crowley, Gérault and O'Connell 2011 (EPSL 310, 380) and Cowan and Abbot 2014 (ApJ 781, 27), regassing; Morschhauser, Grott and Breuer 2011 (Icarus 212, 541), Mars's water; Sandu, Lenardic and McGovern 2011 (JGR 116, B12404), water and thermal histories; O'Rourke 2020 (GRL 47, e2019GL086126), Venus's dynamo; Elkins-Tanton 2008 (EPSL 271, 181), magma ocean volatiles; Lebrun et al. 2013 (JGR Planets 118, 1155), water solubility in magma oceans; Hamano, Abe and Genda 2013 (Nature 497, 607), magma oceans inside the runaway limit.
