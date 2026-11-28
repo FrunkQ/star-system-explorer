@@ -1,0 +1,108 @@
+{
+  "about": "The declared list of stand-ins (FL0, SSE4-visual-flourish-design.md sections 2, 3 rule 7 and 8A): every place a cheap picture is shown while the clock, the camera or the place moves faster than the device can rebuild the proper one. Data only. Each use names its kind (design 4.2), what moves it, the kernel numbers it reads, its fudge register row (file under docs/fudges/ and the row's opening words), whether the note says so today, and the package that moves it onto the settle schedule (settle.ts). FL4 adds the test that every use here has its register row and every stand-in row in the register is a use here.",
+  "uses": [
+    {
+      "id": "orbits.run-on",
+      "where": "packages/ui-contract/src/picture-clock.ts phaseAt; packages/views/system-3d/src/System3D.svelte",
+      "kinds": ["carried"],
+      "moves_with": ["clock"],
+      "numbers": ["orbits_at phase", "each body's period"],
+      "proper": "the kernel's orbits_at answer, about ten a second",
+      "register": { "file": "docs/fudges/0290-light-rendering-and-sound-3-kernel-light-track-lig.md", "row": "Orbits run on between the kernel's answers" },
+      "said": null,
+      "moves_onto_schedule": "FL6"
+    },
+    {
+      "id": "giant.face-flow",
+      "where": "packages/renderer/src/true-air.ts flowFace",
+      "kinds": ["carried"],
+      "moves_with": ["clock"],
+      "numbers": ["mean eastward wind of the highest showing deck by row (weather)", "storms' turning"],
+      "proper": "the giant's face as read; the stirred still once PR 739 lands",
+      "register": { "file": "docs/fudges/0290-light-rendering-and-sound-3-kernel-light-track-lig.md", "row": "Giants carried by their winds" },
+      "said": null,
+      "moves_onto_schedule": "FL3"
+    },
+    {
+      "id": "star.cells-blur",
+      "where": "packages/renderer/src/star-churn.ts granuleBlur",
+      "kinds": ["exposure"],
+      "moves_with": ["clock"],
+      "numbers": ["granule life (kernel)", "granule size (kernel)"],
+      "proper": "sharp cells, each at its own place in its life",
+      "register": { "file": "docs/fudges/0290-light-rendering-and-sound-3-kernel-light-track-lig.md", "row": "`star-churn.ts` granuleBlur (SG2)" },
+      "said": null,
+      "moves_onto_schedule": "FL6"
+    },
+    {
+      "id": "view.sharpen-at-rest",
+      "where": "packages/renderer/src/still.ts RestClock; packages/renderer/src/true-run.ts",
+      "kinds": ["coarse"],
+      "moves_with": ["camera", "clock"],
+      "numbers": [],
+      "proper": "16 to 32 finer frames averaged, half a second after the view stops",
+      "register": { "file": "docs/fudges/0360-interface-and-player-views/FL-F1.md", "row": "FL-F1." },
+      "said": "the quality badge",
+      "moves_onto_schedule": "FL6"
+    },
+    {
+      "id": "view.governor",
+      "where": "packages/renderer/src/governor.ts",
+      "kinds": ["coarse"],
+      "moves_with": [],
+      "driven_by": "frame time, not movement: on a slow device it can stay at rest, as the coarser proper picture the design's rule 4 allows, said",
+      "numbers": [],
+      "proper": "the recipe's full passes",
+      "register": { "file": "docs/fudges/0360-interface-and-player-views/FL-F2.md", "row": "FL-F2." },
+      "said": "the quality badge",
+      "moves_onto_schedule": "FL2"
+    },
+    {
+      "id": "journey.seam",
+      "where": "packages/shell/src/journey/Journey.svelte; packages/ui-contract/src/journey.ts SEAM_FADE_S, SEAM_FADE_DECADES",
+      "kinds": ["seam"],
+      "moves_with": ["place"],
+      "numbers": [],
+      "proper": "one level drawn alone",
+      "register": { "file": "docs/fudges/0360-interface-and-player-views/GZ-F1.md", "row": "GZ-F1." },
+      "said": null,
+      "moves_onto_schedule": "FL5"
+    },
+    {
+      "id": "journey.wait",
+      "where": "packages/ui-contract/src/journey-play.ts readyHold; packages/shell/src/journey/Journey.svelte",
+      "kinds": ["held"],
+      "moves_with": ["place"],
+      "numbers": [],
+      "proper": "the level below, once read",
+      "register": { "file": "docs/fudges/0360-interface-and-player-views/FL-F3.md", "row": "FL-F3." },
+      "said": "Reading galaxies nearby…",
+      "moves_onto_schedule": "FL5"
+    },
+    {
+      "id": "world.finer-tiles",
+      "where": "packages/renderer/src/texture-ladder.ts composeFaces",
+      "kinds": ["coarse"],
+      "moves_with": ["camera"],
+      "numbers": ["the kernel's surface tiles at each read depth"],
+      "proper": "the face composed from the finest tiles read",
+      "register": { "file": "docs/fudges/0260-light-rendering-and-sound-1-fudges/0460.md", "row": "`renderer/src/texture-ladder.ts` `composeFaces`" },
+      "said": null,
+      "moves_onto_schedule": "FL6"
+    }
+  ],
+  "not_stand_ins": [
+    {
+      "id": "body.too-fast",
+      "where": "packages/ui-contract/src/picture-clock.ts tooFast",
+      "why": "Drawn where it truly is at each picture, moving or not, so what is seen is the proper picture every time; it is the Too fast state's test, not a stand-in. Its long exposure (CLK3) would be one, and joins this list when built.",
+      "register": { "file": "docs/fudges/0290-light-rendering-and-sound-3-kernel-light-track-lig.md", "row": "Motion faster than the pictures" }
+    }
+  ],
+  "coming": [
+    {
+      "id": "giant.cloud",
+      "why": "The stirred still (PR 739) held or carried between rebuilds. It is declared here, with its register row, by FL3, which puts it on the schedule."
+    }
+  ]
+}
