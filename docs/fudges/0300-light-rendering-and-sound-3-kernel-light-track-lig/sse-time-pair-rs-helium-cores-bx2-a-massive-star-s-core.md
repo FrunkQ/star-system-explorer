@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| sse-time pair.rs helium cores (BX2) | Past its main sequence a star bound to collapse has the core of a helium star as bright as it (HPT00 eq. 77 inverted, from memory); stripped, it is a zero-age helium star of that mass (eqs. 77 and 78) to its line's end, with no wind, then collapses; a lone star's core is still the life line's sketch (a share of its remnant) | the sketch gave a 12 solar mass star a 0.9 solar mass core, so stripping left an impossible light neutron star | HPT00's core-mass relations for massive stars and helium-star evolution (eqs. 79 onward) in the life line itself, for lone stars too (BX2 part 2) | stand-in |

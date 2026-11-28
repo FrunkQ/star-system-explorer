@@ -270,7 +270,7 @@ fn rings_resolve_to_icy_particles_with_no_pairs() {
 fn a_shattered_world_leaves_its_core_as_a_notable_metal_body() {
     use sse_formation::{disc, growth, hurley::Fits, leftovers, scenario, violent};
     let s = Settings::default();
-    let fits = Fits::new(0.02);
+    let fits = Fits::new(sse_formation::hurley::Z_SUN);
     let mut found = false;
     'outer: for text in ["f3-golden", "sb-psyche-1", "sb-psyche-2", "sb-psyche-3"] {
         let seed = Seed::from_text(text);

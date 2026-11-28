@@ -262,7 +262,8 @@ fn solar_system_secular_frequencies() {
 #[test]
 fn ageing_star_follows_the_sun() {
     let st = scenario::settings();
-    let s = crate::star::AgeingStar::new(1.0, 0.02, st.star.clone()).unwrap();
+    let s =
+        crate::star::AgeingStar::new(1.0, sse_formation::hurley::Z_SUN, st.star.clone()).unwrap();
     let l = &s.line;
     // Brightens on the main sequence: about 10 percent per Gyr from now.
     let now = s.state_at(4570.0).star.luminosity;

@@ -10,6 +10,7 @@
 // disc they are dark threads in hydrogen light and invisible in white light.
 import { sayNumber } from "../../ui-contract/src/index.ts";
 import { rateShare, turnAt, type LiveStar } from "./live-star.ts";
+import { rateShareOf } from "./star-regions.ts";
 import { nebulaColour, type NebulaShape } from "./star-shells.ts";
 
 export interface Prominence {
@@ -84,7 +85,7 @@ export function prominencesAt(s: LiveStar, t: number, reach: number, calm = fals
     if (k <= 0) continue;
     // Carried round at its latitude's own rate from where it was born (drifting against the equator, whose turn
     // `turnAt` follows), then seen against the star's turn now.
-    const drift = period > 0 ? (rateShare(p.lat_deg) - 1) * 360 * ((at - p.born_s) / period) : 0;
+    const drift = period > 0 ? ((s.regions ? rateShareOf(s.regions.differential, p.lat_deg) : rateShare(p.lat_deg)) - 1) * 360 * ((at - p.born_s) / period) : 0;
     const lon = p.lon_deg + drift - turnAt(s, at);
     out.push({ p, k, lat_deg: p.lat_deg, lon_deg: ((((lon + 180) % 360) + 360) % 360) - 180, h, half_rad: Math.min(Math.PI / 2, p.length_m / (2 * s.radius)), erupting });
   }
@@ -103,6 +104,10 @@ export const prominenceColour = (p: Prominence): [number, number, number] => neb
 const decode = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const encode = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 
+/** An erupting rope's radius over its height above the surface: the aspect ratio of Thernisien et al.'s croissant
+ * model of coronal mass ejections (about 0.3 to 0.5; 0.4 here, from memory, docs/fudges.md). */
+export const ROPE_ASPECT = 0.4;
+
 type V3 = [number, number, number];
 const unit = (la: number, lo: number): V3 => [Math.cos(la) * Math.sin(lo), Math.sin(la), Math.cos(la) * Math.cos(lo)];
 
@@ -111,7 +116,7 @@ const unit = (la: number, lo: number): V3 => [Math.cos(la) * Math.sin(lo), Math.
  * light. A loop prominence is an arch over its spine: a few threads (the field lines holding the gas) side by side
  * across its thickness, the gas sagging into each from its top; a slingshot cloud is a ball of gas at its height.
  */
-export function prominencePoints(n: ProminenceNow, radius_m: number, steps = 48): { at: V3; w: number }[] {
+export function prominencePoints(n: ProminenceNow, radius_m: number, steps = 48): { at: V3; w: number; size?: number }[] {
   const la = (n.lat_deg * Math.PI) / 180;
   const lo = (n.lon_deg * Math.PI) / 180;
   const d = unit(la, lo);
@@ -120,7 +125,7 @@ export function prominencePoints(n: ProminenceNow, radius_m: number, steps = 48)
   const tl = (n.p.tilt_deg * Math.PI) / 180;
   const along: V3 = [0, 1, 2].map((i) => Math.cos(tl) * east[i]! + Math.sin(tl) * north[i]!) as V3;
   const across: V3 = [0, 1, 2].map((i) => -Math.sin(tl) * east[i]! + Math.cos(tl) * north[i]!) as V3;
-  const out: { at: V3; w: number }[] = [];
+  const out: { at: V3; w: number; size?: number }[] = [];
   const thick = n.p.thickness_m / radius_m;
   if (n.p.kind === "slingshot") {
     const r = 1 + n.h;
@@ -136,6 +141,36 @@ export function prominencePoints(n: ProminenceNow, radius_m: number, steps = 48)
     return out;
   }
   const threads = 3;
+  if (n.erupting) {
+    // Lifting off: the field holding the gas balloons out as it rises, its feet still tied to the surface. Its axis
+    // is the circle through both feet and its risen top (in the plane of its spine): low down that is the standing
+    // arch; risen a radius or more it is as wide as it is tall. Round the axis the rope swells too, its radius a
+    // fixed share of its height (the croissant of Thernisien et al.'s model of coronal mass ejections), so from any
+    // side it is the light bulb coronagraphs see, never a rod.
+    const top = 1 + n.h;
+    const sh = Math.sin(n.half_rad);
+    const ch = Math.cos(n.half_rad);
+    const yc = (top * top - 1) / (2 * (top - ch));
+    const rho = top - yc;
+    const a0 = Math.atan2(ch - yc, sh);
+    const a1 = Math.PI - a0;
+    const ring = 8;
+    for (let i = 0; i <= steps; i++) {
+      const ang = a0 + ((a1 - a0) * i) / steps;
+      const u = rho * Math.cos(ang);
+      const v = yc + rho * Math.sin(ang);
+      const axis: V3 = [0, 1, 2].map((j) => d[j]! * v + along[j]! * u) as V3;
+      const out_: V3 = [0, 1, 2].map((j) => d[j]! * Math.sin(ang) + along[j]! * Math.cos(ang)) as V3;
+      const lift = Math.max(0, Math.hypot(axis[0], axis[1], axis[2]) - 1);
+      const cross = thick / 2 + ROPE_ASPECT * lift;
+      for (let k = 0; k < ring; k++) {
+        const psi = (2 * Math.PI * k) / ring;
+        const o: V3 = [0, 1, 2].map((j) => cross * (Math.cos(psi) * across[j]! + Math.sin(psi) * out_[j]!)) as V3;
+        out.push({ at: [axis[0] + o[0], axis[1] + o[1], axis[2] + o[2]], w: 1 / (ring * (steps + 1)), size: Math.max(thick, cross) });
+      }
+    }
+    return out;
+  }
   for (let th = 0; th < threads; th++) {
     const off = ((th + 0.5) / threads - 0.5) * thick;
     for (let i = 0; i <= steps; i++) {
@@ -171,11 +206,15 @@ export function addProminences(out: { width: number; data: Uint8ClampedArray }, 
     const v = prominenceShown(p.p.share_visible) * p.k;
     if (v <= 0) continue;
     const rgb = prominenceColour(p.p);
-    const pts = prominencePoints(p, radius_m);
     // A soft spot as wide as the gas is thick, at least a pixel and a half.
-    const rad = Math.max(1.5, (p.p.thickness_m / radius_m) * px * 0.5);
+    const rad0 = Math.max(1.5, (p.p.thickness_m / radius_m) * px * 0.5);
+    // Enough points along it that their spots overlap: a risen loop stays a line, never a row of beads.
+    const span = p.erupting ? Math.PI * (1 + p.h) : 2 * p.half_rad * (1 + p.h);
+    const pts = prominencePoints(p, radius_m, Math.min(384, Math.max(48, Math.ceil((span * px) / rad0))));
     let x0 = n, x1 = -1, y0 = n, y1 = -1;
-    for (const { at } of pts) {
+    for (const { at, size } of pts) {
+      // A point of a swollen, risen rope is as wide as the rope is there.
+      const rad = size ? Math.min(24, Math.max(rad0, size * px * 0.5)) : rad0;
       const x = at[0];
       const y = at[1] * Math.cos(t) - at[2] * Math.sin(t);
       // Behind the disc or in front of it: hidden, or a filament lost in white light.

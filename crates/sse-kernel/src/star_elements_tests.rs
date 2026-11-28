@@ -16,7 +16,7 @@ fn sheet() -> sse_reference::Reference {
 fn sun() -> Inheritance {
     Inheritance {
         feh: 0.0,
-        z: 0.02,
+        z: sse_formation::hurley::Z_SUN,
         age_gyr: 4.57,
         born_gyr: 9.2,
         c_o: 0.55,

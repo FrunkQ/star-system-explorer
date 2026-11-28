@@ -124,7 +124,7 @@ pub fn world(n: u64, mass: f64, a_au: f64, wet: f64, gas: f64) -> crate::early::
 
 /// F6 golden: Earth, Venus, Mars, a stripped and a kept 5 Earth-mass world, a water world.
 pub fn early_golden() -> serde_json::Value {
-    let f = Fits::new(0.02);
+    let f = Fits::new(crate::hurley::Z_SUN);
     let l = crate::lifeline::LifeLine::new(&f, 1.0).expect("the Sun");
     let worlds = [
         world(3, 1.0, 1.0, 0.001, 0.0),
@@ -177,7 +177,7 @@ pub fn accrete_golden() -> serde_json::Value {
 /// F3 golden: the modern growth block on six Sun-like discs.
 pub fn growth_golden() -> serde_json::Value {
     let seed = sse_core::Seed::from_text("f3-golden");
-    let fits = Fits::new(0.02);
+    let fits = Fits::new(crate::hurley::Z_SUN);
     let mut out = vec![];
     for n in 0..6u64 {
         let sys = system(n);
@@ -210,7 +210,7 @@ pub fn growth_golden() -> serde_json::Value {
 /// F4 golden: the violent phase on the six F3 golden systems.
 pub fn upheaval_golden() -> serde_json::Value {
     let seed = sse_core::Seed::from_text("f3-golden");
-    let fits = Fits::new(0.02);
+    let fits = Fits::new(crate::hurley::Z_SUN);
     let mut out = vec![];
     for n in 0..6u64 {
         let sys = system(n);
@@ -246,7 +246,7 @@ pub fn upheaval_golden() -> serde_json::Value {
 /// objects of every cloud resolved (the same on every device).
 pub fn leftovers_golden() -> serde_json::Value {
     let seed = sse_core::Seed::from_text("f3-golden");
-    let fits = Fits::new(0.02);
+    let fits = Fits::new(crate::hurley::Z_SUN);
     let mut out = vec![];
     for n in 0..6u64 {
         let sys = system(n);

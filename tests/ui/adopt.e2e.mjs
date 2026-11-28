@@ -5,6 +5,7 @@
 // preview. Add the sample V3 save too, look ahead on it and keep with "move
 // now": the star read back has aged (luminosity up). Back to Kestrel Reach,
 // Tarn is on the chart again. Adding the same system twice is refused.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

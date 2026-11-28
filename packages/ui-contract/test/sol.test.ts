@@ -6,9 +6,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat } from "../src/seat.ts";
-import { readSol, solBatches, solSourceText } from "../src/sol.ts";
+import { readSol, solBatches, solFingerprint, solSourceText } from "../src/sol.ts";
 import { sceneFromResolved } from "../src/make.ts";
 import { nodeKernel } from "./node-kernel.ts";
+import { anchorOf, drawnSecond } from "../src/sky-clock.ts";
+import { constant } from "../src/sheet.ts";
 
 const root = new URL("../../../", import.meta.url);
 const text = (p: string) => readFileSync(new URL(p, root), "utf8");
@@ -59,6 +61,14 @@ test("entered as catalogued facts, Sol reads back whole, with its spec", async (
     assert.equal(scene.subjects.find((x) => x.label === "Oort cloud")!.shape, "sphere");
     assert.ok(Math.abs(scene.now_yr - 4.5673e9) < 1e6, String(scene.now_yr));
     assert.ok(r.result.spec, "the kernel can age it: a spec from its facts");
+    // One epoch (RW17 part 2): Sol's age is its age at its anchor, J2000.0 (time.j2000_s), so its birth second is that
+    // date less its age, in whole Julian years, exactly; the screen draws birth second + age.
+    const spec = r.result.spec as { birth_year: number; age_myr: number };
+    const anchor = anchorOf(r.result.facts)!;
+    const yr = BigInt(constant("yr_julian"));
+    assert.equal(spec.birth_year, Number(anchor / yr) - Math.round(spec.age_myr * 1e6));
+    assert.equal(BigInt(r.result.birth_s!), BigInt(spec.birth_year) * yr);
+    assert.equal(drawnSecond(BigInt(r.result.birth_s!), spec.age_myr * 1e6) - anchor, 0n, "at its own age, Sol is drawn at J2000.0");
     assert.equal(r.result.evidence?.[earth.address]?.["body.mass"]?.evidence, "catalogued");
   } finally {
     await k.close();
@@ -70,4 +80,14 @@ test("the door converts each value by its printed unit: degrees to radians, SI a
   assert.equal(toSI({ v: 180, unit: "deg", src: "x" } as never), Math.PI);
   assert.equal(toSI({ v: 5.97e24, unit: "kg", src: "x" } as never), 5.97e24);
   assert.throws(() => toSI({ v: 1, unit: "AU", src: "x" } as never), /cannot convert/);
+});
+
+test("the sheet's fingerprint is stable, and a newer sheet (one more moon) has another", () => {
+  assert.equal(solFingerprint(sheet), solFingerprint(JSON.parse(JSON.stringify(sheet))));
+  assert.match(solFingerprint(sheet), /^fnv1a:[0-9a-f]{8}:\d+b\d+r$/);
+  const moon = sheet.bodies.find((b) => b.id === "moon") ?? sheet.bodies[sheet.bodies.length - 1]!;
+  const more = { ...sheet, bodies: [...sheet.bodies, { ...moon, id: "a-new-moon", name: "A new moon" }] };
+  assert.notEqual(solFingerprint(more), solFingerprint(sheet));
+  const nudged = { ...sheet, bodies: sheet.bodies.map((b, i) => (i === 0 ? { ...b, name: `${b.name} ` } : b)) };
+  assert.notEqual(solFingerprint(nudged), solFingerprint(sheet));
 });

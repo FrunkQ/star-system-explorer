@@ -4273,3 +4273,18 @@ fn hazard_map_reads_the_solar_system() {
         "{r}"
     );
 }
+
+/// TP4b's rule reads free-form JSON numbers (authored values, pack
+/// settings) as a browser holds them. A typed field is read by its type and
+/// untouched: a time in seconds past 2^53 that no double holds stays exact.
+#[test]
+fn typed_seconds_past_2_53_stay_exact() {
+    let mut k = crate::Kernel::new();
+    k.handle_json(r#"{"op":"open_universe","id":"n","seed":"numbers"}"#);
+    let exact = 435494880000000001_i64;
+    assert_ne!(exact as f64 as i64, exact, "a second no double holds");
+    k.handle_json(&format!(r#"{{"op":"set_campaign_now","at_s":{exact}}}"#));
+    let r: serde_json::Value =
+        serde_json::from_str(&k.handle_json(r#"{"op":"campaign_now"}"#)).unwrap();
+    assert_eq!(r["at_s"].as_i64(), Some(exact), "{r}");
+}

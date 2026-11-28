@@ -16155,6 +16155,22 @@
       "unit": "kg m-3",
       "src": "turcotte2014",
       "check": "unverified"
+     },
+     "hillslope": {
+      "creep_diffusivity": {
+       "v": 1.5844043907014474e-09,
+       "unit": "m2 s-1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "5e4 m2 per Myr (0.05 m2 a year) while wet: set so a 10 km crater on a wet world loses most of its relief in about 100 Myr; hillslope soil creep alone is about 0.003 m2 a year (Roering et al. 1999)"
+      },
+      "air_creep_diffusivity": {
+       "v": 3.168808781402895e-17,
+       "unit": "m2 s-1 Pa-1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "100 m2 per Myr per bar of air: wind-driven creep and infill"
+      }
      }
     },
     {
@@ -18462,6 +18478,14 @@
         "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"
        }
       }
+     },
+     "hillslope": {
+      "creep_diffusivity": {
+       "v": 1.7428448297715923e-13,
+       "unit": "m2 s-1",
+       "src": "fassett2014",
+       "note": "5.5 m2 per Myr: lunar crater degradation read as diffusion, impact gardening on airless ground"
+      }
      }
     },
     {
@@ -20191,6 +20215,13 @@
      "text": "Evonik Active Oxygens, hydrogen peroxide physico-chemical properties (manufacturer's table): 100% density 1.450 g/ml at 20 C, boiling point 150 C at 1013 mbar",
      "status": "unverified",
      "url": "https://www.evonik.com/en/company/businesslines/ao/products-and-services/hydrogen-peroxide/general-information/physico-chemical-properties.html"
+    },
+    {
+     "id": "fassett2014",
+     "text": "Fassett, C. I. and Thomson, B. J. 2014, JGR Planets 119, 2255: crater degradation on the lunar maria read as topographic diffusion, about 5.5 m2 per Myr (the abstract: ~5.5 m2/Myr; docs/citations/surfaces.md)",
+     "status": "verified",
+     "doi": "10.1002/2014JE004698",
+     "url": "https://ui.adsabs.harvard.edu/abs/2014JGRE..119.2255F"
     },
     {
      "id": "fiberline-zylon",

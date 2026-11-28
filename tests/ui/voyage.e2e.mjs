@@ -5,6 +5,7 @@
 // outward), a voyage to a picked star by the antimatter probe (a flight with
 // less time aboard than at home), and a chemical ship refused in words.
 // Night chart and phone (no sideways scroll) too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -7,6 +7,7 @@
 // campaign's now survives a reload. On a phone the ruler fits its width.
 // On the Run desk the clock takes the ruler's place (three desks design 7.3): it shows the same now, says what is due
 // (nothing until the kernel's happenings op), and "Jump to a date…" says where it lands before it moves the campaign.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -163,6 +164,32 @@ try {
       assert.equal(await clockDate(), after);
       const clockOver = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       assert.ok(clockOver <= 1, `the page overflows by ${clockOver}px on Run`);
+      await page.context().close();
+    }
+    // The time in view moved from outside the ruler (the Sol door opens on today, 42.7 million years before the sample
+    // system's now): the window goes with it, at its span, so the ticks read the days around today.
+    {
+      const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+      page.on("pageerror", (e) => errors.push(e.message));
+      const ruler = page.locator(".area-ruler .ruler");
+      const at = async () => ({
+        from: Number(await ruler.getAttribute("data-from")),
+        to: Number(await ruler.getAttribute("data-to")),
+        viewing: Number(await ruler.locator(".now").getAttribute("data-viewing")),
+      });
+      await page.goto(base);
+      await page.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 120000 });
+      await page.locator('[data-door="sol"]').click();
+      await page.locator('.area-chart .body[aria-label^="Jupiter,"]').first().waitFor({ timeout: 120000 });
+      // Sol's time in view is today, the Sun's age (4.5673 Gyr); the sample system's was 4.61 Gyr.
+      await page.waitForFunction(() => Math.abs(Number(document.querySelector(".area-ruler .ruler .now")?.getAttribute("data-viewing")) - 4.5673e9) < 1e6, null, { timeout: 60000 });
+      const w = await at();
+      assert.ok(w.to - w.from < 30 * DAY, `Explore at Sol opens on human time, not ${w.to - w.from} years`);
+      assert.ok(w.from <= w.viewing && w.viewing <= w.to, `the window ${w.from}..${w.to} holds the time in view ${w.viewing}`);
+      assert.equal(await ruler.locator(".present").count(), 1, "the marker of the time in view is on the ruler");
+      const ticks = (await ruler.locator(".tl").allTextContents()).join(" | ");
+      assert.doesNotMatch(ticks, /\d{5,}/, `the ticks read the days around today, not the sample system's year: ${ticks}`);
+      if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/desk-7-sol-door.png` }));
       await page.context().close();
     }
     assert.deepEqual(errors, []);

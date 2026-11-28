@@ -140,6 +140,8 @@ export interface LandingWorld {
   tilt_deg: number;
   /** Surface gravity, m/s² (the sea's waves run on it). */
   gravity_m_s2?: number;
+  /** RW16a: a body below the round size, its lump (kernel `small_shape` as the GM's chart read it): Land's ground lies on it. */
+  figure?: import("./small-shape.ts").SmallShape;
 }
 
 /** The sea at a landing site (kernel weather report `data.sea`, `sse.ocean.wind_waves`), with the tide now. */

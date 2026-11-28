@@ -405,3 +405,174 @@ fn an_orbit_history_moves_the_ice_edge() {
         .all(|c| w.glacial_advances_per_myr[c] == 0.0
             || (w.ice_share[c] > 0.0 && w.ice_share[c] < 1.0)));
 }
+
+/// The edges and lengths of a grid on a body of radius `r` (as `wear` builds them).
+fn grid_edges(n: u32, r: f64) -> (std::collections::BTreeSet<(usize, usize)>, Vec<f64>) {
+    let g = Grid::new(n);
+    let mut edges = std::collections::BTreeSet::new();
+    for c in 0..g.len() {
+        for x in g.neighbours(c) {
+            if x != c {
+                edges.insert((c.min(x), c.max(x)));
+            }
+        }
+    }
+    let lens = edges
+        .iter()
+        .map(|&(a, b)| {
+            let (p, q) = (g.dirs[a], g.dirs[b]);
+            let d = [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
+            (sse_core::math::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]) * r).max(1.0)
+        })
+        .collect();
+    (edges, lens)
+}
+
+fn rough(nc: usize, k: &str) -> Vec<f64> {
+    let d = Draws::new(
+        Seed::from_text(k),
+        "u:t/sys:1/body:0".parse().unwrap(),
+        Stream::new("surface.test.v1").unwrap(),
+    );
+    (0..nc as u64).map(|i| 1000.0 * d.normal(i)).collect()
+}
+
+/// The implicit solve gives the surface the explicit steps give, where both
+/// can run: a grid fine enough that one epoch needs hundreds of explicit
+/// steps, on a body sized so the epoch only partly smooths its largest
+/// features (a degree-2 bulge decays by about e^-1) while it wipes out the
+/// cell-scale roughness. Stated tolerance: the heights differ by under 2% of
+/// what the epoch changed (RMS), and the total height is kept to a part in a
+/// billion.
+#[test]
+fn implicit_slopes_match_the_explicit_steps() {
+    let n = 48;
+    let kappa = 10.0;
+    let dt = 1.0e8;
+    // kappa dt / R^2 = 1/6: the degree-2 mode's rate l(l+1) kappa / R^2 times dt is 1.
+    let r = sse_core::math::sqrt(6.0 * kappa * dt);
+    let (edges, lens) = grid_edges(n, r);
+    let g = Grid::new(n);
+    let noise = rough(g.len(), "implicit-vs-explicit");
+    let h0: Vec<f64> = g
+        .dirs
+        .iter()
+        .zip(&noise)
+        .map(|(d, e)| 3000.0 * (3.0 * d[2] * d[2] - 1.0) + 1500.0 * d[0] * d[1] + 0.3 * e)
+        .collect();
+    let lmin = lens.iter().copied().fold(f64::INFINITY, f64::min);
+    let sub = sse_core::math::ceil(dt * kappa / (lmin * lmin) / 0.2) as u32;
+    assert!(
+        sub > EXPLICIT_STEPS_MAX && sub < 5000,
+        "{sub} explicit steps"
+    );
+    let mut he = h0.clone();
+    relax_explicit(&mut he, &edges, &lens, kappa, dt, sub, &mut |_| {});
+    let mut hi = h0.clone();
+    let got = relax_implicit(
+        &mut hi,
+        &edges,
+        &lens,
+        kappa * dt,
+        IMPLICIT_STEPS,
+        &mut |_| {},
+    );
+    assert_eq!(got.steps, IMPLICIT_STEPS);
+    let rms = |v: &mut dyn Iterator<Item = f64>| {
+        let (s, k) = v.fold((0.0, 0.0), |(s, k), x| (s + x * x, k + 1.0));
+        sse_core::math::sqrt(s / k)
+    };
+    let changed = rms(&mut he.iter().zip(&h0).map(|(a, b)| a - b));
+    let apart = rms(&mut he.iter().zip(&hi).map(|(a, b)| a - b));
+    assert!(
+        changed > 500.0,
+        "the epoch changed the surface: {changed} m"
+    );
+    assert!(
+        apart < 0.02 * changed,
+        "implicit {apart} m from explicit, of {changed} m changed"
+    );
+    let (s0, si): (f64, f64) = (h0.iter().sum(), hi.iter().sum());
+    assert!(
+        (s0 - si).abs() <= 1e-9 * h0.iter().map(|x| x.abs()).sum::<f64>(),
+        "total height kept: {s0} vs {si}"
+    );
+}
+
+/// Small bodies stay fast: an epoch of slope relaxation on a Phobos-sized
+/// grid (11 km, 64 cells a face) costs under 12,000 edge sweeps and under a tenth of the
+/// explicit steps it replaces, and the Moon still takes the explicit steps
+/// exactly as before.
+#[test]
+fn slope_relaxation_on_a_small_body_is_cheap() {
+    // The surface grid base-surface uses (cells_per_face 64).
+    let n = 64;
+    let kappa = 10.0;
+    let dt = 1.0e8;
+    let (edges, lens) = grid_edges(n, 11.0e3);
+    let mut h = rough(6 * (n * n) as usize, "phobos-cost");
+    let got = relax_slopes(&mut h, &edges, &lens, kappa, dt, &mut |_| {});
+    assert_eq!(got.steps, IMPLICIT_STEPS, "the implicit solve");
+    let lmin = lens.iter().copied().fold(f64::INFINITY, f64::min);
+    let explicit = sse_core::math::ceil(dt * kappa / (lmin * lmin) / 0.2) as u64;
+    assert!(
+        got.sweeps < 12_000 && got.sweeps * 10 < explicit,
+        "{} sweeps for one epoch on an 11 km body, against {explicit} explicit steps",
+        got.sweeps
+    );
+    let (edges, lens) = grid_edges(n, 1.7374e6);
+    let mut h = rough(6 * (n * n) as usize, "moon-cost");
+    let got = relax_slopes(&mut h, &edges, &lens, kappa, dt, &mut |_| {});
+    assert!(
+        got.steps <= EXPLICIT_STEPS_MAX,
+        "the Moon keeps the explicit steps"
+    );
+    assert_eq!(got.sweeps, got.steps as u64);
+}
+
+/// The creep rates reach the settings from the data sheet: the measured lunar
+/// rate and the fudge register's wet and wind rates, in SI.
+#[test]
+fn creep_rates_come_from_the_sheet() {
+    let s = settings();
+    let myr = crate::creep::MYR_S;
+    assert!(
+        (s.creep.dry_m2_s * myr - 5.5).abs() < 1e-9,
+        "{}",
+        s.creep.dry_m2_s
+    );
+    assert!((s.creep.wet_m2_s * myr - 5.0e4).abs() < 1e-6);
+    assert!((s.creep.air_m2_s_pa * 1.0e5 * myr - 100.0).abs() < 1e-9);
+    let k = |w: f64, p: f64| crate::creep::diffusivity(&s.creep, w, p) * crate::creep::YR_S;
+    // Airless ground creeps a few millionths of a m² a year; wet ground hundreds of
+    // thousands of times faster; Mars's thin air adds little.
+    assert!(k(0.0, 0.0) < 1.0e-5, "{}", k(0.0, 0.0));
+    assert!(
+        k(1.0, 1.0e5) > 0.01 && k(1.0, 1.0e5) < 0.1,
+        "{}",
+        k(1.0, 1.0e5)
+    );
+    assert!(k(0.0, 600.0) < 2.0 * k(0.0, 0.0));
+}
+
+/// A dry airless world keeps the relief its impacts gave it: four billion
+/// years of regolith creep, even at the grid's effective rate, leave cell-scale
+/// roughness on Vesta nine-tenths standing (measured 0.97). One coarse-grid
+/// rate for every world, as before, left 0.02 of it.
+#[test]
+fn a_dry_airless_world_keeps_its_relief() {
+    let s = settings();
+    let (b, e) = env_of(&s, "Vesta");
+    let n = 16;
+    let nc = Grid::new(n).len();
+    let h0 = rough(nc, "vesta-relief");
+    let water = WaterHistory::steady(0.0, 0.0, b.age_gyr);
+    let cl = wet(&s, &b, &e, &water, 5.34);
+    let w = wear(&s, &e, n, &h0, &water, &cl, 0.0, 4000.0, false);
+    let rms = |h: &[f64]| {
+        let mean = h.iter().sum::<f64>() / h.len() as f64;
+        (h.iter().map(|x| (x - mean) * (x - mean)).sum::<f64>() / h.len() as f64).sqrt()
+    };
+    let kept = rms(&w.heights) / rms(&h0);
+    assert!(kept > 0.9, "relief kept {kept}");
+}

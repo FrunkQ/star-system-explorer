@@ -259,6 +259,61 @@ impl RuleBlock {
         FieldTile { key, n, cells }
     }
 
+    /// What moves a giant's cloud from `date` over `span_days` (WS2, `want: "flow"`); `None` for a world that is
+    /// not a giant.
+    pub fn flow(
+        &self,
+        c: &Conditions,
+        date: Date,
+        span_days: f64,
+    ) -> Option<crate::eddies::FlowTable> {
+        let p = self.prepare(c, date);
+        Self::is_giant(&p).then(|| {
+            crate::eddies::flow_table(&self.giants, &self.settings.climate, c, date.day, span_days)
+        })
+    }
+
+    /// What carries a giant's cloud over the whole picture on a date (WS5, `want: "carry"`): the jets' stream
+    /// function, the polygon, every storm and eddy over the two renewals the picture reaches back; `None` for a world
+    /// that is not a giant, or whose deck has no renewal time.
+    pub fn carry(&self, c: &Conditions, date: Date) -> Option<crate::stirred::CarryTable> {
+        let p = self.prepare(c, date);
+        if !Self::is_giant(&p) {
+            return None;
+        }
+        let l = giants::layout(&self.giants, c);
+        crate::stirred::carry_table(&self.giants, &self.settings.climate, c, &l, date.day)
+    }
+
+    /// A giant's cloud over a patch, carried back along its winds (WS4, `want: "stirred"`): where each cell's two
+    /// generations of cloud were made and how stretched; `None` for a world that is not a giant.
+    #[allow(clippy::too_many_arguments)]
+    pub fn stirred(
+        &self,
+        c: &Conditions,
+        date: Date,
+        lat_deg: f64,
+        lon_deg: f64,
+        half_km: f64,
+        n: u32,
+    ) -> Option<crate::stirred::StirredPatch> {
+        let p = self.prepare(c, date);
+        Self::is_giant(&p).then(|| {
+            let l = giants::layout(&self.giants, c);
+            crate::stirred::stirred_patch(
+                &self.giants,
+                &self.settings.climate,
+                c,
+                &l,
+                date.day,
+                lat_deg,
+                lon_deg,
+                half_km,
+                n,
+            )
+        })
+    }
+
     /// The field over a patch round a place (`FieldPatch`), cell by cell as
     /// the tiles are: a closer look at a storm or a pole.
     #[allow(clippy::too_many_arguments)]

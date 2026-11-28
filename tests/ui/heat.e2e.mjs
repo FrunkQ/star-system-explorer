@@ -5,6 +5,7 @@
 // changes nothing in the campaign, and "Back to now" returns. Above it, the outside half: sunlight in, the share
 // reflected as a bar, what is given off, and life's share as a ladder (LE2). The Moon, under a lid, carries its honesty mark. On a
 // phone the open panel never scrolls sideways.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

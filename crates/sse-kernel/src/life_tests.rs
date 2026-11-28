@@ -222,3 +222,101 @@ fn life_view_shares_the_energy_and_reads_earths_pace() {
         .unwrap()
         .contains("Earth's pace"));
 }
+
+/// The catalogued Earth's early ocean keeps the iron its vents bring: today's
+/// oxygen is life's product, and the history does not read it before life
+/// makes it. Before oxygen-releasing photosynthesis the mats run on that
+/// iron, near Canfield et al. 2006's 1e14 to 1e15 g C a year, not on vent
+/// hydrogen alone (8e11).
+#[test]
+fn earths_early_ocean_keeps_its_iron() {
+    let mut k = open_sol(&[]);
+    let v = life(&mut k, "Earth")["view"].clone();
+    let mats = v["timeline"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|p| {
+            let caps = p["capabilities"].as_array().unwrap();
+            caps.iter().any(|c| c == "anoxygenic") && !caps.iter().any(|c| c == "oxygenic")
+        })
+        .map(|p| p["production_gc_yr"].as_f64().unwrap())
+        .fold(0.0, f64::max);
+    assert!(mats > 1.0e14, "{mats:e}");
+}
+
+/// L3-heat: the catalogued Earth's history reads its interior's own heat at
+/// each age, from the thermal history, not today's held throughout. The
+/// Archean Earth lost about three times the heat it loses now.
+#[test]
+fn earths_young_interior_runs_hotter() {
+    let mut k = open_sol(&[]);
+    let a = address(&mut k, "Earth");
+    let (r, _) = k.body_reading(&a).unwrap();
+    let p = params();
+    let e = sse_life::world_life::heat_epochs(&r, p.heat_epoch_step, p.heat_epoch_cap);
+    let then = |t: f64| e.iter().rev().find(|(from, _)| *from <= t).unwrap().1;
+    let now = r
+        .heat_history
+        .iter()
+        .rev()
+        .find(|x| x.at_myr <= r.age_myr)
+        .unwrap()
+        .heat_flow_w_m2;
+    let ratio = then(r.age_myr - 3500.0) / now;
+    assert!((2.0..5.0).contains(&ratio), "{e:?} now {now}");
+    assert!(e.len() >= 3, "{e:?}");
+    let (_, _, held) = k.body_life(&a).unwrap();
+    assert!(
+        held.iter().any(|h| h.contains("its own history")),
+        "{held:?}"
+    );
+}
+
+/// The history switches its habitats at each heat epoch: a world whose
+/// interior dies part way loses its vents from then on, and nothing before.
+#[test]
+fn a_dying_interior_changes_the_history_from_its_date() {
+    let mut k = open_sol(&[]);
+    let a = address(&mut k, "Earth");
+    let (r, seed) = k.body_reading(&a).unwrap();
+    let p = params();
+    let run = |cold: bool| {
+        let mut w = r.clone();
+        let late = if cold { p.vents_above_w_m2 / 4.0 } else { 0.1 };
+        w.heat_history = vec![
+            sse_life::world_life::HeatSample {
+                at_myr: 0.0,
+                heat_flow_w_m2: 0.1,
+            },
+            sse_life::world_life::HeatSample {
+                at_myr: 2500.0,
+                heat_flow_w_m2: late,
+            },
+        ];
+        let s = sse_surface::scenario::settings();
+        sse_life::world_life::life(
+            &w,
+            &[sse_life::scenario::base_life_pack()],
+            &s.climate,
+            &seed,
+        )
+        .unwrap()
+        .history
+    };
+    let (hot, cold) = (run(false), run(true));
+    let before = |h: &sse_life::history::LifeHistory| {
+        h.points
+            .iter()
+            .filter(|x| x.at_myr < 2500.0)
+            .cloned()
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(before(&hot), before(&cold));
+    assert_ne!(hot.points, cold.points);
+}
+
+fn params() -> sse_life::world_life::FromWorldParams {
+    sse_life::world_life::FromWorldParams::from_packs(&[sse_life::scenario::base_life_pack()])
+        .unwrap()
+}

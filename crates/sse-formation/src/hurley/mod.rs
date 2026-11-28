@@ -15,8 +15,22 @@ pub mod coeffs;
 use coeffs::*;
 use sse_core::math as m;
 
-/// Hurley's reference metallicity: the fits are in `log10(Z / 0.02)`.
+/// Hurley's reference metallicity: the fits are in `log10(Z / 0.02)`. HPT00
+/// fit the Pols et al. 1998 models, in which the Sun is Z = 0.02 (the older
+/// Anders and Grevesse 1989 solar mix). This is the fits' own scale, not a
+/// measured metal fraction.
 pub const Z_REF: f64 = 0.02;
+/// The Sun's metal mass fraction as measured (protosolar, Asplund et al. 2009,
+/// ARA&A 47, 481). Every Z in SSE4 is on this measured scale; the fits are read
+/// at the same [Fe/H], Z_fit = Z x Z_REF / Z_SUN, so a star of solar
+/// composition is the fits' Sun. Until 27 Nov 2026 measured Z went straight in,
+/// which read the Sun as metal-poor ([Fe/H] -0.15) and 13 percent too bright.
+pub const Z_SUN: f64 = 0.0142;
+
+/// The fits' Z for a measured metal mass fraction (the same [Fe/H]).
+pub fn fit_z(z: f64) -> f64 {
+    z * Z_REF / Z_SUN
+}
 
 /// Fortran-style 1-based polynomial in `x`: `c[s] + x (c[s+1] + x (...))`
 /// over `n` coefficients starting at Fortran index `s`.
@@ -35,7 +49,11 @@ fn pw(x: f64, y: f64) -> f64 {
 /// The metallicity-dependent constants of one Z (`zpars`, `msp`, `gbp`).
 #[derive(Clone, Debug)]
 pub struct Fits {
+    /// Measured metal mass fraction (the scale of every Z in SSE4).
     pub z: f64,
+    /// The same composition on the fits' scale (`fit_z`), which the
+    /// coefficients below are worked from.
+    pub z_fit: f64,
     /// `zpars(1..)`: 1 Mhook, 2 MHeF, 3 MFGB, 6 log D, 8 x for tMS, 11 X, 12 Y.
     pub zpars: [f64; 21],
     a: [f64; 201],
@@ -43,7 +61,9 @@ pub struct Fits {
 }
 
 impl Fits {
-    pub fn new(z: f64) -> Self {
+    /// The fits for a star of measured metal mass fraction `z`.
+    pub fn new(z_measured: f64) -> Self {
+        let z = fit_z(z_measured);
         let lzs = m::log10(z / Z_REF);
         let lz = m::log10(z);
         let mut zp = [0.0; 21];
@@ -221,7 +241,13 @@ impl Fits {
         g[21] = poly(&XG, 51, 5, lzs);
         g[22] = poly(&XG, 56, 6, lzs);
         g[23] = poly(&XG, 62, 5, lzs);
-        Fits { z, zpars: zp, a, g }
+        Fits {
+            z: z_measured,
+            z_fit: z,
+            zpars: zp,
+            a,
+            g,
+        }
     }
 
     /// ZAMS luminosity (Tout et al. 1996 eq. 1).

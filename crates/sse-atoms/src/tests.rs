@@ -1864,3 +1864,137 @@ fn prominence_blocks_match_their_sums() {
     let rk_abdor = a::corotation_radius(0.86 * M_SUN, 0.514 * day) / (0.96 * R_SUN);
     assert!(rk_abdor < a::closed_corona_radius(0.285, 2.5, 95.0, 1.0 / 3.0));
 }
+
+#[test]
+fn active_region_blocks_match_their_sums() {
+    use crate::activity as a;
+    for lat in [0.0, 0.3, -0.7, 1.2] {
+        let got = run("sse.activity.differential_rotation", &[lat])[0];
+        let want = a::differential_rotation(lat, 14.713, -2.396, -1.787);
+        assert!((got - want).abs() < 1e-12, "{lat}: {got} against {want}");
+        let got = run("sse.activity.joy_tilt", &[lat])[0];
+        let want = a::joy_tilt(lat, 32.1);
+        assert!((got - want).abs() < 1e-12, "{lat}: {got} against {want}");
+    }
+    for p in [-0.2, 0.0, 0.4, 1.0, 1.3] {
+        let got = run("sse.activity.butterfly_latitude", &[p])[0];
+        let want = a::butterfly_latitude(p, 28.0, 8.0);
+        assert!((got - want).abs() < 1e-12, "{p}: {got} against {want}");
+    }
+    for area in [30.0, 300.0, 3000.0] {
+        let got = run("sse.activity.spot_group_life", &[area])[0];
+        let want = a::spot_group_life(area, 10.0);
+        assert!(
+            (got - want).abs() <= 1e-9 * want,
+            "{area}: {got} against {want}"
+        );
+    }
+    // Absolute: the Sun's poles turn about a third slower than its equator; a cycle's
+    // spots start near 28 degrees and end near 8; a 1000 MSH group lives about 100 days
+    // and is tilted about 8 degrees at 15 degrees latitude.
+    let pole = a::differential_rotation(m::PI / 2.0, 14.713, -2.396, -1.787);
+    assert!((0.6..0.72).contains(&pole), "{pole}");
+    let deg = 180.0 / m::PI;
+    assert!((a::butterfly_latitude(0.0, 28.0, 8.0) * deg - 28.0).abs() < 1e-9);
+    assert!((a::butterfly_latitude(1.0, 28.0, 8.0) * deg - 8.0).abs() < 1e-9);
+    let d = a::spot_group_life(1000.0, 10.0) / sse_core::sheet::DAY;
+    assert!((99.0..101.0).contains(&d), "{d}");
+    let t = a::joy_tilt(15.0 / deg, 32.1) * deg;
+    assert!((7.0..10.0).contains(&t), "{t}");
+}
+
+#[test]
+fn pair_blocks_match_their_sums() {
+    use crate::binary as b;
+    for (q, a) in [(1.0, 1e11), (0.3, 2e10), (5.0, 3e9)] {
+        let got = run("sse.orbit.roche_lobe", &[q, a])[0];
+        let want = b::roche_lobe(q, a);
+        assert!(
+            (got - want).abs() <= 1e-12 * want,
+            "{q}: {got} against {want}"
+        );
+    }
+    // Absolute: equal stars each own 38 % of the separation; a light star much less.
+    assert!((0.37..0.39).contains(&b::roche_lobe(1.0, 1.0)));
+    assert!((0.2..0.26).contains(&b::roche_lobe(0.2, 1.0)));
+    for (mk, x) in [(2e30, 1.0), (2e30, 1.1), (3e31, 1.02)] {
+        let got = run("sse.orbit.overflow_rate", &[mk, x])[0];
+        let want = b::overflow_rate(mk, x, 5.0);
+        assert!(
+            (got - want).abs() <= 1e-12 * want.max(1e-30),
+            "{mk} {x}: {got} against {want}"
+        );
+    }
+    let m = sse_core::sheet::M_SUN;
+    for (ms, mc, r, l) in [(2e30, 0.0, 7e8, 3.8e26), (2e30, 8e29, 7e10, 3.8e28)] {
+        let got = run("sse.star.thermal_timescale", &[ms, mc, r, l])[0];
+        let want = b::thermal_timescale(ms, mc, r, l, 0.5);
+        assert!((got - want).abs() <= 1e-12 * want, "{got} against {want}");
+    }
+    // The Sun settles in about 15 million years (HTP02's 1.5e7 yr).
+    let sun = b::thermal_timescale(m, 0.0, R_SUN, L_SUN, 0.5) / JULIAN_YEAR;
+    assert!((1.2e7..1.9e7).contains(&sun), "{sun}");
+    for (m1, m2, a) in [(m, m, R_SUN), (0.6 * m, 0.2 * m, 0.5 * R_SUN)] {
+        let got = run("sse.orbit.gw_decay", &[m1, m2, a])[0];
+        let want = b::gw_decay(m1, m2, a, 12.8);
+        assert!(
+            (got - want).abs() <= 1e-12 * want.abs(),
+            "{got} against {want}"
+        );
+    }
+    for (ms, me, r, w) in [
+        (m, 0.02 * m, R_SUN, 2.9e-6),
+        (0.5 * m, 0.3 * m, 0.45 * R_SUN, 2e-4),
+    ] {
+        let got = run("sse.star.magnetic_braking", &[ms, me, r, w])[0];
+        let want = b::magnetic_braking(ms, me, r, w, 5.83e-16);
+        assert!(
+            (got - want).abs() <= 1e-12 * want.abs(),
+            "{got} against {want}"
+        );
+    }
+    // Absolute: the Hulse-Taylor pulsar's pair (1.44 + 1.39 Msun, a = 1.95e9 m)
+    // would shrink 0.3 m a year if circular (its e = 0.617 makes it about 12 times
+    // faster, the measured 3.5 m a year); a 0.6 + 0.2 pair 0.5 Rsun
+    // apart merges by waves alone in a few hundred million years (a / 4|adot|).
+    let ht = -b::gw_decay(1.44 * m, 1.39 * m, 1.95e9, 12.8) * JULIAN_YEAR;
+    assert!((0.25..0.35).contains(&ht), "{ht}");
+    let t = 0.5 * R_SUN / (4.0 * -b::gw_decay(0.6 * m, 0.2 * m, 0.5 * R_SUN, 12.8)) / JULIAN_YEAR;
+    assert!((1e7..3e9).contains(&t), "{t}");
+}
+
+#[test]
+fn kick_jump_block_matches_its_sum() {
+    use crate::binary as b;
+    for x in [
+        [3e31, 1.5e12, 4e4, 0.0, 0.0, 0.0, 0.0],
+        [1.4e31, 4e11, 6e4, 1.5e4, -5e4, 2e4, 1e4],
+        [6e30, 3e12, 3e4, 0.0, 2e5, 0.0, 0.0],
+    ] {
+        let got = run("sse.orbit.kick_jump", &x);
+        let (wa, we) = b::kick_jump(x[0], x[1], x[2], x[3], [x[4], x[5], x[6]]);
+        assert!(
+            (got[0] - wa).abs() <= 1e-12 * wa.abs(),
+            "{got:?} against {wa}"
+        );
+        assert!(
+            (got[1] - we).abs() <= 1e-12 * we.abs(),
+            "{got:?} against {we}"
+        );
+    }
+    // Absolute (Blaauw 1961): with no kick a circular pair keeping Ma of Mb
+    // widens to a Ma / (2 Ma - Mb) with e = (Mb - Ma) / Ma, and losing more
+    // than half its mass unbinds it.
+    let g = sse_core::quantity::consts::G;
+    let circ = |mb: f64, a: f64| sse_core::math::sqrt(g * mb / a);
+    let (a1, e1) = b::kick_jump(3e31, 1e11, circ(4e31, 1e11), 0.0, [0.0; 3]);
+    assert!((a1 / 1.5e11 - 1.0).abs() < 1e-9, "{a1}");
+    assert!((e1 - 1.0 / 3.0).abs() < 1e-9, "{e1}");
+    let (a2, e2) = b::kick_jump(1.9e31, 1e11, circ(4e31, 1e11), 0.0, [0.0; 3]);
+    assert!(a2 < 0.0 && e2 > 1.0, "{a2} {e2}");
+    // A kick backwards along the motion can keep together a pair that would
+    // otherwise fly apart.
+    let v0 = circ(4e31, 1e11);
+    let (a3, _) = b::kick_jump(1.9e31, 1e11, v0, 0.0, [-0.4 * v0, 0.0, 0.0]);
+    assert!(a3 > 0.0, "{a3}");
+}

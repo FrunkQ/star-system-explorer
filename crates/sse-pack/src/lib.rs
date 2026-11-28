@@ -134,8 +134,25 @@ pub struct PackManifest {
 }
 
 impl PackManifest {
+    /// A pack from its text. Its numbers are read by value, as
+    /// [`json_numbers`] says, so the text and the browser's copy of it are
+    /// one pack with one hash.
     pub fn from_json(s: &str) -> Result<Self, String> {
-        serde_json::from_str(s).map_err(|e| format!("pack manifest: {e}"))
+        let parsed = serde_json::from_str::<serde_json::Value>(s)
+            .map_err(|e| e.to_string())
+            .and_then(|v| Self::from_value(&v).map_err(|e| e.to_string()));
+        // On a fault, the text's own reading names the line and column.
+        parsed.map_err(|_| match serde_json::from_str::<Self>(s) {
+            Err(e) => format!("pack manifest: {e}"),
+            Ok(_) => "pack manifest: unreadable numbers".into(),
+        })
+    }
+    /// A pack as a client sent it (the kernel's `load_stack` and the ops
+    /// that take packs), numbers read as [`json_numbers`] says.
+    pub fn from_value(v: &serde_json::Value) -> Result<Self, serde_json::Error> {
+        let mut v = v.clone();
+        json_numbers(&mut v);
+        serde_json::from_value(v)
     }
     pub fn content_hash(&self) -> ContentHash {
         ContentHash::of(self).expect("pack holds no NaN")
@@ -522,3 +539,33 @@ fn uses_fictional_box(
 
 #[cfg(test)]
 mod tests;
+
+/// One reading of a JSON number for every client. A browser holds every
+/// JSON number as a double and writes it back by value, never by spelling:
+/// `281.0` goes out as `281`, and `4.560563969097498e17` as
+/// `456056396909749800` (the shortest digits that read back as the same
+/// double, not its exact value, which is 456056396909749824). So a number in
+/// a pack is read as the nearest double, and then by the one rule of
+/// [`sse_core::cbor::json_number`]: integral and below 2^63 in size, the
+/// integer that double is exactly; otherwise that double. Native text and
+/// the browser's copy of it then hold the same value and hash alike.
+pub fn json_numbers(v: &mut serde_json::Value) {
+    use serde_json::Value as J;
+    match v {
+        J::Number(n) => {
+            if let Some(x) = n.as_f64() {
+                *n = match sse_core::cbor::json_number(x) {
+                    sse_core::cbor::Value::Int(i) if i < 0 => (i as i64).into(),
+                    sse_core::cbor::Value::Int(i) => (i as u64).into(),
+                    _ => match serde_json::Number::from_f64(x) {
+                        Some(f) => f,
+                        None => return,
+                    },
+                };
+            }
+        }
+        J::Array(a) => a.iter_mut().for_each(json_numbers),
+        J::Object(m) => m.values_mut().for_each(json_numbers),
+        _ => {}
+    }
+}

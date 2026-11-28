@@ -1,0 +1,3 @@
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| sse.activity.butterfly_latitude, joy_tilt, spot_group_life, differential_rotation (SG7) | The Sun's butterfly as a straight line 28° to 8° through the cycle, spread 5° either side; Joy's law 32.1° sin φ scattered 10°; Gnevyshev-Waldmeier decay 10 MSH a day; the Sun's differential rotation; all used for every star; a star without a cycle has regions anywhere from 15° to 75° (Strassmeier 2009) | solar laws, the only ones measured in detail | stellar dynamo models; Doppler-imaged latitudes per star | stand-in, values unverified |

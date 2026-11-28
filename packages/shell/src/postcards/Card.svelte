@@ -87,7 +87,7 @@
   }
 
   const b = $derived(card.bookmark);
-  const calendar = $derived(ctx.workspace.pack_calendar ? fromPackCalendar(ctx.workspace.pack_calendar) : defaultCalendar(ctx.workspace.campaign_epoch_yr ?? ctx.workspace.campaign_now_yr ?? ctx.workspace.now_yr));
+  const calendar = $derived(ctx.workspace.pack_calendar ? fromPackCalendar(ctx.workspace.pack_calendar, ctx.workspace.birth_s ?? null) : defaultCalendar(ctx.workspace.campaign_epoch_yr ?? ctx.workspace.campaign_now_yr ?? ctx.workspace.now_yr));
   const where = $derived.by(() => {
     const about = b.pose?.about ?? b.selected;
     const w = about ? scene.subjects.find((s) => s.address === about)?.label : null;

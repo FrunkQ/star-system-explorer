@@ -3,6 +3,7 @@
 // (one of a kind of being with no life support figures), load water, food and oxygen, and read the days of life
 // support; put one person in cold sleep and see the days grow; move cargo to another ship. Phone width fits.
 // Usage: node tests/ui/manifest.e2e.mjs   (SSE_SHOTS=<dir> for screenshots)
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -118,11 +119,14 @@ try {
   await crew.locator("[data-show-all-undo]").click();
   await page.waitForFunction((was) => JSON.stringify([...document.querySelectorAll("[data-aboard=crew] [data-person] [data-eye]")].map((e) => e.getAttribute("data-eye"))) === JSON.stringify(was), start);
 
-  // The ship's pictures (edit mode, here the Build desk): plans and 3D model of the ship designed from its parts, and
-  // the GM's own pictures, with a selector; the remix and the one last chosen are kept with the ship.
-  await desk.locator("[data-picture=plans] svg").first().waitFor();
-  await desk.locator("[data-picture=plans] [data-remix]").click();
-  await desk.locator("[data-design-note]", { hasText: "Design kept" }).waitFor();
+  // The ship's pictures (edit mode, here the Build desk) are the ship builder (CM14a): the ship opens as palette parts
+  // in plans and a 3D model, with the GM's own pictures and a selector; the old style and remix are gone. A part made
+  // longer and kept keeps the build with the ship, and the one last chosen is kept too.
+  await desk.locator("[data-picture=plans] [data-builder] svg").first().waitFor();
+  assert.equal(await desk.locator("[data-remix]").count(), 0, "the old style and remix are gone");
+  await desk.locator("[data-picture=plans] [data-builder] [data-longer]").click();
+  await desk.locator("[data-picture=plans] [data-keep-build]").click();
+  await desk.locator("[data-design-note]", { hasText: "Build kept" }).waitFor();
   assert.equal(await desk.locator("[data-field='construct.design']").count(), 0, "the recipe is drawn, not listed");
   await shot(page, "picture-designed-desk");
   await desk.locator("[data-show=model]").click();

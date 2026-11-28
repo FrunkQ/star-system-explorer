@@ -3,11 +3,12 @@
 // The GM shares, opens the Solar System, picks Earth and a site on Land, and presses "Send this view": the players'
 // screen changes to the Landing screen and judges the same site the same way, on its own kernel. The GM lands: the
 // player flies too; the GM skips to the ground and walks: the player follows the GM's pose. Screens off ends it.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { desk, go, more } from "./nav.mjs";
+import { desk, go, more, pinClock } from "./nav.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -23,7 +24,7 @@ const shot = async (page, n) => {
 };
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const context = await browser.newContext();
   const errors = [];
   const gm = await context.newPage();

@@ -1672,6 +1672,127 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.light.disc_shift",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "gravitational_radius",
+     "letter": "rg"
+    },
+    {
+     "port": "distance",
+     "letter": "r"
+    },
+    {
+     "port": "impact_parameter",
+     "letter": "b"
+    },
+    {
+     "port": "tilt",
+     "letter": "i"
+    },
+    {
+     "port": "image_angle",
+     "letter": "al"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "shift_factor",
+     "letter": "g"
+    }
+   ],
+   "positive": [
+    {
+     "port": "gravitational_radius",
+     "says": "gravitational radius"
+    }
+   ],
+   "references": [
+    "Luminet, J.-P. 1979, Image of a spherical black hole with thin accretion disk, A&A 75, 228 https://ui.adsabs.harvard.edu/abs/1979A%26A....75..228L",
+    "Cunningham, C. T. and Bardeen, J. M. 1973, The optical appearance of a star orbiting an extreme Kerr black hole, ApJ 183, 237 https://ui.adsabs.harvard.edu/abs/1973ApJ...183..237C",
+    "Misner, C. W., Thorne, K. S. and Wheeler, J. A. 1973, Gravitation, W. H. Freeman (Schwarzschild geometry, chapters 25 and 31) https://ui.adsabs.harvard.edu/abs/1973grav.book.....M"
+   ],
+   "shown": "1/g = (1 − 3r_g/r)^(−½) (1 − (r_g/r)^(3/2) (b/r_g) sin i sin α)",
+   "equation": {
+    "name": "How much bluer or redder the light from one point of a disc arrives",
+    "formula": "x = r / rg\nbb = b / rg\nz1 = if x <= 3 then 0 else (1 - bb * sin(i) * sin(al) / sqrt(x^3)) / sqrt(1 - 3 / x)\ng = if z1 <= 0 then 0 else 1 / z1",
+    "inputs": {
+     "rg": {
+      "kind": "gravity.gravitational_radius",
+      "unit": "m",
+      "name": "gravitational radius GM/c²"
+     },
+     "r": {
+      "kind": "gravity.distance",
+      "unit": "m",
+      "name": "distance of the glowing point from the centre"
+     },
+     "b": {
+      "kind": "gravity.impact_parameter",
+      "unit": "m",
+      "name": "impact parameter of the ray that reaches the viewer"
+     },
+     "i": {
+      "kind": "light.view_tilt",
+      "unit": "1",
+      "name": "angle between the line of sight and the disc's axis, radians (0 face on)"
+     },
+     "al": {
+      "kind": "light.image_angle",
+      "unit": "1",
+      "name": "angle round the picture from the disc's axis as seen, towards the viewer's left, radians"
+     }
+    },
+    "outputs": {
+     "g": {
+      "kind": "light.shift_factor",
+      "unit": "1",
+      "name": "seen frequency over emitted frequency"
+     }
+    },
+    "source": {
+     "text": "Luminet 1979, eq. 19 (sign of α as here); Cunningham and Bardeen 1973",
+     "url": "https://ui.adsabs.harvard.edu/abs/1979A%26A....75..228L",
+     "where": "gas on circular orbits round a mass that does not spin, viewer far away; disc turning anticlockwise seen from the viewer's side"
+    },
+    "explain": {
+     "curious": "Gas near a black hole orbits at up to half the speed of light. The side coming towards you looks bluer and far brighter, the side going away redder and dimmer, and all of it is reddened by climbing out of the hole's pull.",
+     "science": "1 + z = u^t (1 − Ω λ): u^t = (1 − 3M/r)^(−½) for a circular orbit (gravity and time dilation together), Ω = (M/r³)^½, and λ = b sin i sin α the photon's angular momentum about the disc's axis, which is conserved along the bent ray, so the same expression serves the direct image, the arch and the thin ring. A glowing ring at T is then seen as glowing at gT, with total brightness times g⁴."
+    },
+    "examples": [
+     {
+      "rg": 1.0,
+      "r": 6.0,
+      "b": 0.0,
+      "i": 0.0,
+      "al": 0.0,
+      "g": 0.7071067811865476,
+      "tolerance": 1e-12
+     },
+     {
+      "rg": 1.0,
+      "r": 6.0,
+      "b": 7.0,
+      "i": 1.3962634015954636,
+      "al": 1.5707963267948966,
+      "g": 1.3317860272951298,
+      "tolerance": 1e-12
+     },
+     {
+      "rg": 1.0,
+      "r": 6.0,
+      "b": 7.0,
+      "i": 1.3962634015954636,
+      "al": -1.5707963267948966,
+      "g": 0.48133485617741306,
+      "tolerance": 1e-12
+     }
+    ]
+   }
   }
  ]
 }
