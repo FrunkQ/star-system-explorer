@@ -45,3 +45,19 @@ pub fn magnetic_braking(mass: f64, envelope: f64, radius: f64, omega: f64, k: f6
     let rw = radius / R_SUN * omega * yr;
     -k * (envelope / mass) * rw * rw * rw * msun * R_SUN * R_SUN / (yr * yr)
 }
+
+/// BX2: Blaauw 1961, Brandt and Podsiadlowski 1995: the orbit right after one
+/// of two bodies loses mass at once and is kicked. `ma` is the two's mass
+/// after (kg), `r` the distance between them (m), (`vt`, `vr`) the relative
+/// speed across the line between them and along it just before, and the kick
+/// is (`kt` along the motion, `kr` outward, `kz` out of the plane), m/s.
+/// Returns (new semi-major axis, negative when they come apart, and new
+/// eccentricity).
+pub fn kick_jump(ma: f64, r: f64, vt: f64, vr: f64, k: [f64; 3]) -> (f64, f64) {
+    let ut = vt + k[0];
+    let ur = vr + k[1];
+    let v2 = ut * ut + ur * ur + k[2] * k[2];
+    let inv = 2.0 / r - v2 / (G * ma);
+    let h2 = r * r * (ut * ut + k[2] * k[2]);
+    (1.0 / inv, m::sqrt((1.0 - h2 * inv / (G * ma)).max(0.0)))
+}

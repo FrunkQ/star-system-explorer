@@ -1962,3 +1962,39 @@ fn pair_blocks_match_their_sums() {
     let t = 0.5 * R_SUN / (4.0 * -b::gw_decay(0.6 * m, 0.2 * m, 0.5 * R_SUN, 12.8)) / JULIAN_YEAR;
     assert!((1e7..3e9).contains(&t), "{t}");
 }
+
+#[test]
+fn kick_jump_block_matches_its_sum() {
+    use crate::binary as b;
+    for x in [
+        [3e31, 1.5e12, 4e4, 0.0, 0.0, 0.0, 0.0],
+        [1.4e31, 4e11, 6e4, 1.5e4, -5e4, 2e4, 1e4],
+        [6e30, 3e12, 3e4, 0.0, 2e5, 0.0, 0.0],
+    ] {
+        let got = run("sse.orbit.kick_jump", &x);
+        let (wa, we) = b::kick_jump(x[0], x[1], x[2], x[3], [x[4], x[5], x[6]]);
+        assert!(
+            (got[0] - wa).abs() <= 1e-12 * wa.abs(),
+            "{got:?} against {wa}"
+        );
+        assert!(
+            (got[1] - we).abs() <= 1e-12 * we.abs(),
+            "{got:?} against {we}"
+        );
+    }
+    // Absolute (Blaauw 1961): with no kick a circular pair keeping Ma of Mb
+    // widens to a Ma / (2 Ma - Mb) with e = (Mb - Ma) / Ma, and losing more
+    // than half its mass unbinds it.
+    let g = sse_core::quantity::consts::G;
+    let circ = |mb: f64, a: f64| sse_core::math::sqrt(g * mb / a);
+    let (a1, e1) = b::kick_jump(3e31, 1e11, circ(4e31, 1e11), 0.0, [0.0; 3]);
+    assert!((a1 / 1.5e11 - 1.0).abs() < 1e-9, "{a1}");
+    assert!((e1 - 1.0 / 3.0).abs() < 1e-9, "{e1}");
+    let (a2, e2) = b::kick_jump(1.9e31, 1e11, circ(4e31, 1e11), 0.0, [0.0; 3]);
+    assert!(a2 < 0.0 && e2 > 1.0, "{a2} {e2}");
+    // A kick backwards along the motion can keep together a pair that would
+    // otherwise fly apart.
+    let v0 = circ(4e31, 1e11);
+    let (a3, _) = b::kick_jump(1.9e31, 1e11, v0, 0.0, [-0.4 * v0, 0.0, 0.0]);
+    assert!(a3 > 0.0, "{a3}");
+}

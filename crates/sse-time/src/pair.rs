@@ -36,7 +36,13 @@
 //! A node is a star or a pair of nodes; a pair inside a pair acts one level
 //! up as one body at its centre of mass, its mass the sum it has at each
 //! moment (computed, never stored). Only two stars side by side trade gas in
-//! this step; deaths as jumps are BX2.
+//! this step.
+//!
+//! BX2: a star whose core collapses (a neutron star or black hole) loses its
+//! mass at once and its remnant is kicked (`sse.orbit.kick_jump`): the orbit
+//! jumps to a new size and shape, or the two fly apart; each planet round
+//! the dying star jumps the same way. A massive donor stripped of its
+//! envelope lives on as a helium star and still explodes.
 //!
 //! Times are millions of years of the pair's age, like F7's events (TP1
 //! converts both together); masses solar, lengths au.
@@ -46,10 +52,14 @@ use crate::epoch::TimeEvent;
 use crate::star::{AgeingStar, StarSettings};
 use serde::{Deserialize, Serialize};
 use sse_atoms::binary as bx;
+use sse_core::draw::{Draws, Seed, Stream};
 use sse_core::math as m;
 use sse_core::quantity::consts::*;
+use sse_core::Address;
 use sse_flow::Reference;
-use sse_formation::lifeline::{LifeLine, Phase};
+use sse_formation::lifeline::{
+    helium_star_luminosity, helium_star_mass, helium_star_radius, teff, LifeLine, Phase,
+};
 use std::collections::BTreeMap;
 
 /// Settings for the pair stepper (stand-ins in the fudge register).
@@ -95,6 +105,12 @@ pub struct PairSettings {
     /// BX3: a brown dwarf donor's radius goes as its mass to this power (−1/3,
     /// a degenerate body): the orbit then widens again (the period bounce).
     pub degenerate_radius_exponent: f64,
+    /// BX2: the spread of a newborn neutron star's kick, km/s (each of three
+    /// directions; Hobbs et al. 2005's Maxwellian).
+    pub kick_sigma_kms: f64,
+    /// BX2: a black hole's kick is the neutron star's spread scaled by this
+    /// mass (solar) over its own (the same momentum, a stand-in for fallback).
+    pub kick_reference_msun: f64,
 }
 
 impl Default for PairSettings {
@@ -117,6 +133,8 @@ impl Default for PairSettings {
             driven_thermal_factor: 100.0,
             donor_radius_exponent: 0.8,
             degenerate_radius_exponent: -1.0 / 3.0,
+            kick_sigma_kms: 265.0,
+            kick_reference_msun: 1.4,
         }
     }
 }
@@ -176,6 +194,9 @@ pub struct PairRow {
     pub donor: Option<String>,
     /// Mass that has left the pair altogether so far (beyond winds), solar masses.
     pub lost_msun: f64,
+    /// BX2: true once a death has unbound the two; each then ages alone.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub apart: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -186,6 +207,13 @@ pub struct PlanetFate {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub at_myr: Option<f64>,
     pub semi_major_axis_au: f64,
+    /// BX2: what a host's death left the orbit (0 while it is a circle).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub eccentricity: f64,
+}
+
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }
 
 /// A pair's life as one dated line.
@@ -211,6 +239,11 @@ fn rsun_au() -> f64 {
     R_SUN / AU
 }
 
+/// BX2: a line ending in a neutron star or black hole ends in a collapse.
+fn collapses(p: Phase) -> bool {
+    matches!(p, Phase::NeutronStar | Phase::BlackHole)
+}
+
 /// One star of a pair, with the mass it really has.
 #[derive(Clone)]
 struct Star {
@@ -227,6 +260,8 @@ struct Star {
     built_at: f64,
     /// A stripped core's own line (a white dwarf from the moment it was bared).
     bare: Option<LifeLine>,
+    /// BX2: its core has collapsed (its age is never before its line's end again).
+    collapsed: bool,
 }
 
 struct Now {
@@ -250,15 +285,32 @@ impl Star {
             mass,
             built_at: mass,
             bare: None,
+            collapsed: false,
         })
     }
 
     fn te(&self, t: f64) -> f64 {
-        t + self.offset
+        if self.collapsed {
+            (t + self.offset).max(self.line().t_end)
+        } else {
+            t + self.offset
+        }
     }
 
     fn now(&self, t: f64) -> Now {
         if let Some(l) = &self.bare {
+            // BX2: a stripped core bound to collapse is a helium star until then.
+            if self.te(t) < l.t_end && collapses(l.remnant) {
+                let lum = helium_star_luminosity(self.mass);
+                let r = helium_star_radius(self.mass);
+                return Now {
+                    phase: Phase::WolfRayet,
+                    radius_rsun: r,
+                    lum,
+                    teff: teff(lum, r),
+                    core: self.mass,
+                };
+            }
             let st = l.state_at(&self.star.fits, self.te(t).max(l.t_end));
             return Now {
                 phase: st.phase,
@@ -273,7 +325,16 @@ impl Star {
         let core = if st.phase.is_remnant() {
             self.mass
         } else {
-            self.star.core_at(te).min(self.mass)
+            let mut c = self.star.core_at(te);
+            // BX2: past its main sequence a star bound to collapse has the
+            // helium core of a helium star as bright as it (HPT00 eq. 77
+            // inverted), not the sketch's share of its remnant.
+            if collapses(self.star.line.remnant)
+                && !matches!(st.phase, Phase::MainSequence | Phase::PreMainSequence)
+            {
+                c = c.max(helium_star_mass(st.luminosity));
+            }
+            c.min(self.mass)
         };
         Now {
             phase: st.phase,
@@ -290,7 +351,7 @@ impl Star {
 
     /// Apply the life line's own winds since the last step.
     fn winds(&mut self, t: f64) -> f64 {
-        if self.bare.is_some() {
+        if self.bare.is_some() || self.collapsed {
             return 0.0;
         }
         let w = self.star.mass_at(self.te(t));
@@ -333,14 +394,40 @@ impl Star {
         Ok(())
     }
 
-    /// Bare the core: the rest of the envelope is gone and it is a white dwarf from now.
+    /// Bare the core: the rest of the envelope is gone. A core bound to become
+    /// a white dwarf is one from now; one bound to collapse (BX2) burns on as
+    /// a helium star to the line's end, then explodes.
     fn strip(&mut self, t: f64, core: f64) {
         let mut l = self.star.line.clone();
-        l.remnant = Phase::WhiteDwarf;
-        l.remnant_mass = core;
-        l.t_end = self.te(t);
+        if !collapses(l.remnant) || l.t_end <= self.te(t) {
+            l.remnant = Phase::WhiteDwarf;
+            l.remnant_mass = core;
+            l.t_end = self.te(t);
+        } else {
+            l.t_strip = self.te(t);
+            l.remnant_mass = l.remnant_mass.min(core);
+        }
         self.bare = Some(l);
         self.mass = core;
+    }
+
+    fn line(&self) -> &LifeLine {
+        self.bare.as_ref().unwrap_or(&self.star.line)
+    }
+
+    /// BX2: the pair's age at which this star's core collapses, if it will.
+    fn collapse_at(&self) -> Option<f64> {
+        let l = self.line();
+        (!self.collapsed && collapses(l.remnant)).then_some(l.t_end - self.offset)
+    }
+
+    /// BX2: the star dies now: its mass drops at once to its remnant's.
+    /// Returns the mass it had.
+    fn collapse(&mut self) -> f64 {
+        let before = self.mass;
+        self.mass = self.line().remnant_mass.min(before);
+        self.collapsed = true;
+        before
     }
 
     fn row(&self, t: f64, fill: f64) -> SideRow {
@@ -448,6 +535,57 @@ fn fill(d: &Star, acc: &Star, t: f64, peri: f64) -> f64 {
     n.radius_rsun * rsun_au() / bx::roche_lobe(d.mass / acc.mass, peri)
 }
 
+/// BX2: the draws for one body's death or jump, keyed by its address.
+fn kick_draws(seed: &Seed, address: &str) -> Draws {
+    let at = address
+        .parse::<Address>()
+        .unwrap_or_else(|_| Address::universe("pair").expect("a valid address"));
+    Draws::new(
+        *seed,
+        at,
+        Stream::new("time.pair.kick.v1").expect("a valid stream"),
+    )
+}
+
+/// BX2: where a body is on an orbit of `a_au` and `e` round `m_msun` at the
+/// mean anomaly `turn` (a share of the orbit): the distance (m) and the
+/// relative speed across and along the line between them (m/s).
+fn place(a_au: f64, e: f64, m_msun: f64, turn: f64) -> (f64, f64, f64) {
+    let mean = 2.0 * m::PI * turn;
+    let mut ea = if e > 0.8 { m::PI } else { mean };
+    for _ in 0..50 {
+        ea -= (ea - e * m::sin(ea) - mean) / (1.0 - e * m::cos(ea));
+    }
+    let am = a_au * AU;
+    let gm = G * m_msun * msun_kg();
+    let r = am * (1.0 - e * m::cos(ea));
+    let vr = m::sqrt(gm * am) * e * m::sin(ea) / r;
+    let vt = m::sqrt(gm * am * (1.0 - e * e)) / r;
+    (r, vt, vr)
+}
+
+/// BX2: a kick (m/s, in the orbits' plane and out of it) seen from an orbit
+/// whose line between the two points at `angle` (radians): (along the
+/// motion, outward, out of the plane).
+fn kick_on(k: [f64; 3], angle: f64, sign: f64) -> [f64; 3] {
+    let (c, sn) = (m::cos(angle), m::sin(angle));
+    [
+        sign * (-k[0] * sn + k[1] * c),
+        sign * (k[0] * c + k[1] * sn),
+        sign * k[2],
+    ]
+}
+
+/// A planet followed through the pair's life.
+struct World {
+    p: PlanetIn,
+    gone: Option<f64>,
+    fate: &'static str,
+    e: f64,
+}
+
+const REF_HOBBS: &str = "Hobbs, G., Lorimer, D. R., Lyne, A. G. and Kramer, M. 2005, A statistical study of 233 pulsar proper motions, MNRAS 360, 974: newborn neutron stars are kicked with a Maxwellian spread of 265 km/s in each direction. Unverified until the paper search returns. doi:10.1111/j.1365-2966.2005.09087.x";
+
 const REF_JEANS: &str = "Jeans, J. H. 1924, Cosmogonic problems associated with a secular decrease of mass, MNRAS 85, 2: an orbit widens as a·M stays constant while the pair slowly loses mass. doi:10.1093/mnras/85.1.2";
 
 /// Age a pair of two stars together from birth to `to_myr`.
@@ -465,6 +603,7 @@ fn age_two(
     star_set: &StarSettings,
     rules: &BinaryRules,
     set: &PairSettings,
+    seed: &Seed,
 ) -> Result<PairLine, String> {
     let mut s = [
         Star::new(a_addr, a_mass, z, star_set)?,
@@ -482,14 +621,21 @@ fn age_two(
     };
     let (mut a, mut e) = (sep_au, e0);
     let mut merged = false;
+    // BX2: a death has unbound the two.
+    let mut apart = false;
     let mut lost = 0.0;
     let mut donor: Option<usize> = None;
     // The donor of the last stable episode (a pause in the flow is not a new contact).
     let mut episode: Option<usize> = None;
-    let mut worlds: Vec<(PlanetIn, Option<f64>)> = planets
+    let mut worlds: Vec<World> = planets
         .iter()
         .filter(|p| p.host == a_addr || p.host == b_addr)
-        .map(|p| (p.clone(), None))
+        .map(|p| World {
+            p: p.clone(),
+            gone: None,
+            fate: "kept",
+            e: 0.0,
+        })
         .collect();
     let mut t = 0.0;
     let mut dt = (s[0].star.line.t_tms.min(s[1].star.line.t_tms)
@@ -507,7 +653,7 @@ fn age_two(
     let mut a_episode = sep_au;
     loop {
         // A row when something has moved enough.
-        let fills = if merged {
+        let fills = if merged || apart {
             [0.0, 0.0]
         } else {
             let peri = a * (1.0 - e);
@@ -541,9 +687,9 @@ fn age_two(
                 age_myr: t,
                 a: s[0].row(t, fills[0]),
                 b: (!merged).then(|| s[1].row(t, fills[1])),
-                separation_au: if merged { 0.0 } else { a },
-                eccentricity: if merged { 0.0 } else { e },
-                period_days: if merged {
+                separation_au: if merged || apart { 0.0 } else { a },
+                eccentricity: if merged || apart { 0.0 } else { e },
+                period_days: if merged || apart {
                     0.0
                 } else {
                     kepler_days(a, s[0].mass + s[1].mass)
@@ -551,6 +697,7 @@ fn age_two(
                 transfer_msun_yr: rate_now,
                 donor: donor.map(|d| s[d].address.clone()),
                 lost_msun: lost,
+                apart,
             });
             last_row = Some(key);
         }
@@ -565,17 +712,28 @@ fn age_two(
             ));
             break;
         }
-        let t1 = (t + dt).min(to_myr);
+        let mut t1 = (t + dt).min(to_myr);
+        // BX2: a step ends at the moment a core collapses.
+        let mut dying = None;
+        for k in 0..if merged { 1 } else { 2 } {
+            if let Some(td) = s[k].collapse_at() {
+                if td > t && td <= t1 {
+                    t1 = td;
+                    dying = Some(k);
+                }
+            }
+        }
         let step = t1 - t;
         // Winds: the orbit widens as a·M stays constant.
         let m_before = s[0].mass + if merged { 0.0 } else { s[1].mass };
-        let hosts_before = [s[0].mass, s[1].mass];
-        s[0].winds(t1);
-        if !merged {
-            s[1].winds(t1);
+        let mut hosts_before = [s[0].mass, s[1].mass];
+        for k in 0..if merged { 1 } else { 2 } {
+            if dying != Some(k) {
+                s[k].winds(t1);
+            }
         }
         let m_after = s[0].mass + if merged { 0.0 } else { s[1].mass };
-        if !merged {
+        if !merged && !apart {
             a *= m_before / m_after;
             // BX3: gravitational waves and magnetic braking draw the orbit in.
             let (jdot, adot) = orbit_losses(&s, t1, a, set, &mut braking);
@@ -588,7 +746,106 @@ fn age_two(
             loss_rate = ((a0 - a) / a0).max(0.0) / (step * 1e6).max(1e-30);
         }
         rate_now = 0.0;
-        if !merged {
+        if let Some(k) = dying {
+            let before = s[k].collapse();
+            let rem = s[k].mass;
+            lost += before - rem;
+            let what = s[k].now(t1).phase;
+            let d = kick_draws(seed, &s[k].address);
+            let sigma = set.kick_sigma_kms
+                * 1e3
+                * if what == Phase::BlackHole {
+                    set.kick_reference_msun / rem
+                } else {
+                    1.0
+                };
+            let kick = [
+                sigma * d.normal(0),
+                sigma * d.normal(1),
+                sigma * d.normal(2),
+            ];
+            let kick_kms = m::sqrt(kick[0] * kick[0] + kick[1] * kick[1] + kick[2] * kick[2]) / 1e3;
+            let mut numbers = BTreeMap::new();
+            numbers.insert("mass_before".into(), before);
+            numbers.insert("remnant_mass".into(), rem);
+            numbers.insert("kick_kms".into(), kick_kms);
+            let made = what.label();
+            // Each planet round the dying star feels the same loss and kick.
+            let mut planets_said = vec![];
+            for w in worlds.iter_mut() {
+                let hi = if merged || w.p.host == s[0].address {
+                    0
+                } else {
+                    1
+                };
+                if w.gone.is_some() || hi != k {
+                    continue;
+                }
+                let pd = kick_draws(seed, &w.p.address);
+                let (r, vt, vr) = place(w.p.semi_major_axis_au, w.e, before, pd.unit(0));
+                let kp = kick_on(kick, 2.0 * m::PI * pd.unit(1), -1.0);
+                let (an, en) = bx::kick_jump(rem * msun_kg(), r, vt, vr, kp);
+                if an > 0.0 && en < 1.0 {
+                    w.p.semi_major_axis_au = an / AU;
+                    w.e = en;
+                } else {
+                    w.gone = Some(t1);
+                    w.fate = "unbound";
+                    planets_said.push(w.p.address.clone());
+                }
+            }
+            hosts_before[k] = rem;
+            let mut why = format!("The {before:.2} solar mass star's core collapsed into a {rem:.2} solar mass {made}; the rest was blown off at once and the {made} was kicked at {kick_kms:.0} km/s.");
+            let mut came_apart = false;
+            if !merged && !apart {
+                let o = 1 - k;
+                let (mb, ma) = (before + s[o].mass, rem + s[o].mass);
+                let (r, vt, vr) = place(a, e, mb, d.unit(6));
+                let kp = kick_on(kick, 2.0 * m::PI * d.unit(7), 1.0);
+                let (an, en) = bx::kick_jump(ma * msun_kg(), r, vt, vr, kp);
+                numbers.insert("separation_before_au".into(), a);
+                numbers.insert("eccentricity_before".into(), e);
+                if an > 0.0 && en < 1.0 {
+                    numbers.insert("separation_after_au".into(), an / AU);
+                    numbers.insert("eccentricity_after".into(), en);
+                    why += &format!(" The pair held together: the orbit jumped from {a:.3} au to {:.3} au across, eccentricity {en:.2}.", an / AU);
+                    a = an / AU;
+                    e = en;
+                } else {
+                    let away = m::sqrt(G * ma * msun_kg() / -an) / 1e3;
+                    numbers.insert("speed_apart_kms".into(), away);
+                    why += &format!(" The pair came apart: the two fly away from each other at {away:.0} km/s and age alone from now.");
+                    apart = true;
+                    came_apart = true;
+                    donor = None;
+                }
+            }
+            why += match planets_said.len() {
+                0 => String::new(),
+                1 => " A planet round it was set loose.".into(),
+                n => format!(" {n} planets round it were set loose."),
+            }
+            .as_str();
+            let other = if merged {
+                ""
+            } else {
+                s[1 - k].address.as_str()
+            };
+            let mut ev = event(t1, "supernova", &s[k].address, other, why, numbers);
+            ev.subjects.retain(|x| !x.is_empty());
+            out.events.push(ev);
+            if came_apart {
+                out.events.push(event(
+                    t1,
+                    "unbound",
+                    &s[k].address,
+                    other,
+                    "The supernova unbound the pair.".into(),
+                    BTreeMap::new(),
+                ));
+            }
+        }
+        if !merged && !apart {
             let peri = a * (1.0 - e);
             let f = [fill(&s[0], &s[1], t1, peri), fill(&s[1], &s[0], t1, peri)];
             let d = if f[0] >= 1.0 && f[0] >= f[1] {
@@ -837,12 +1094,17 @@ fn age_two(
                     if giant && s[di].mass - core_now < set.strip_share * core_now {
                         let core = core_now;
                         s[di].strip(t1, core);
+                        let then = if s[di].collapse_at().is_some() {
+                            "a helium star that will collapse at its end"
+                        } else {
+                            "a white dwarf from now"
+                        };
                         out.events.push(event(
                             t1,
                             "stripped",
                             &s[di].address,
                             &s[ai].address,
-                            format!("The donor has given away its whole envelope: its bare {core:.2} solar mass core is left, a white dwarf from now."),
+                            format!("The donor has given away its whole envelope: its bare {core:.2} solar mass core is left, {then}."),
                             BTreeMap::new(),
                         ));
                         donor = None;
@@ -851,10 +1113,11 @@ fn age_two(
             }
         }
         // Planets: orbits widen as their star loses mass; swallowed when it swells past them.
-        for (p, gone) in worlds.iter_mut() {
-            if gone.is_some() {
+        for w in worlds.iter_mut() {
+            if w.gone.is_some() {
                 continue;
             }
+            let p = &mut w.p;
             // After a merger every planet circles the one star left.
             let hi = if merged || p.host == s[0].address {
                 0
@@ -864,8 +1127,9 @@ fn age_two(
             let before = hosts_before[hi];
             p.semi_major_axis_au *= before / s[hi].mass.max(1e-6);
             let r = s[hi].now(t1).radius_rsun * rsun_au();
-            if r >= p.semi_major_axis_au {
-                *gone = Some(t1);
+            if r >= p.semi_major_axis_au * (1.0 - w.e) {
+                w.gone = Some(t1);
+                w.fate = "engulfed";
                 out.events.push(event(
                     t1,
                     "engulfed",
@@ -898,20 +1162,21 @@ fn age_two(
             let envelope = (s[d].mass - s[d].now(t1).core).max(1e-6);
             dt = dt.min(set.transfer_step * envelope / rate_now / 1e6);
         }
-        if !merged && loss_rate > 0.0 {
+        if !merged && !apart && loss_rate > 0.0 {
             dt = dt.min(set.radius_step / loss_rate / 1e6);
         }
         dt = dt.max(1e-9);
         last_r = r_now;
         t = t1;
     }
-    for (p, gone) in worlds {
+    for w in worlds {
         out.planets.push(PlanetFate {
-            address: p.address,
-            host: p.host,
-            fate: if gone.is_some() { "engulfed" } else { "kept" }.into(),
-            at_myr: gone,
-            semi_major_axis_au: p.semi_major_axis_au,
+            address: w.p.address,
+            host: w.p.host,
+            fate: w.fate.into(),
+            at_myr: w.gone,
+            semi_major_axis_au: w.p.semi_major_axis_au,
+            eccentricity: w.e,
         });
     }
     out.why.push(if out.events.is_empty() {
@@ -955,7 +1220,9 @@ fn stand_ins(set: &PairSettings) -> Vec<String> {
         "a white dwarf, neutron star or black hole keeps none of the gas it is given (novae and X-ray binaries are BX4)".into(),
         "a donor stripped to its core is a white dwarf of that core from then (a helium star stage is left out)".into(),
         "a main-sequence star rebuilt at its new mass keeps its share of the main sequence; an accretor's share falls as the mass ratio (fresh fuel mixed into its core)".into(),
-        "a pair acting as one body one level up trades no gas; a death is still the life line's slow mass loss (jumps and kicks are BX2)".into(),
+        "a pair acting as one body one level up trades no gas, and a death inside it is still slow mass loss to the orbit one level up (BX2 jumps only the pair the star is in)".into(),
+        format!("a core's collapse loses the mass at once and kicks the remnant, each of three directions drawn with a spread of {} km/s for a neutron star (Hobbs et al. 2005) and that times {} solar masses over the remnant's for a black hole (the same momentum; fallback stands in); the blast's push on the companion and planets is left out, and a planet's orbit lies in the pair's plane", set.kick_sigma_kms, set.kick_reference_msun),
+        "a massive donor stripped of its envelope is a helium star of its core's mass (Hurley, Pols and Tout 2000 eqs. 77-78) until its line's end, then collapses".into(),
         format!("orbits shrink by gravitational waves (Peters 1964) and, below a {}-day period where tides lock spin to orbit, by magnetic braking of main-sequence stars between {} and {} solar masses (Hurley, Tout and Pols 2002 eq. 50); a star convective through brakes no more", set.lock_period_days, set.braking_mass_msun[0], set.braking_mass_msun[1]),
         format!("a dwarf feeding a compact star gives just what keeps it at its lobe, its radius going as its mass to the {} (a brown dwarf's to the {:.2}), up to {} times its thermal rate; it never swells out of balance, so it does not detach at the period gap's top", set.donor_radius_exponent, set.degenerate_radius_exponent, set.driven_thermal_factor),
         "ages in millions of years like F7's events, until the time scales design (TP1) converts both".into(),
@@ -967,11 +1234,13 @@ fn references() -> Vec<Reference> {
         Reference::parse(crate::binary::REF_HTP02),
         Reference::parse(crate::binary::REF_WEBBINK),
         Reference::parse(REF_JEANS),
+        Reference::parse(REF_HOBBS),
     ];
     for d in sse_atoms::decls_of(&[
         "sse.orbit.roche_lobe",
         "sse.orbit.overflow_rate",
         "sse.star.thermal_timescale",
+        "sse.orbit.kick_jump",
     ]) {
         for r in d.references {
             if !out.contains(&r) {
@@ -995,6 +1264,8 @@ fn mass_on(line: &PairLine, t: f64) -> f64 {
 
 /// Age any node from birth to `to_myr`: a star alone, two stars side by
 /// side trading gas, or a pair whose sides are nodes acting as one body each.
+/// `seed` keys what is drawn (BX2: where on the orbit a death falls, and its kick).
+#[allow(clippy::too_many_arguments)]
 pub fn age_node(
     node: &Node,
     z: f64,
@@ -1003,6 +1274,7 @@ pub fn age_node(
     star_set: &StarSettings,
     rules: &BinaryRules,
     set: &PairSettings,
+    seed: &Seed,
 ) -> Result<PairLine, String> {
     if to_myr.is_nan() || to_myr < 0.0 {
         return Err("the age must not be negative".into());
@@ -1036,6 +1308,7 @@ pub fn age_node(
                     transfer_msun_yr: 0.0,
                     donor: None,
                     lost_msun: 0.0,
+                    apart: false,
                 });
             }
             Ok(out)
@@ -1068,11 +1341,12 @@ pub fn age_node(
                 star_set,
                 rules,
                 set,
+                seed,
             ),
             _ => {
                 // Each side acts as one body at its centre of mass.
-                let la = age_node(a, z, to_myr, planets, star_set, rules, set)?;
-                let lb = age_node(b, z, to_myr, planets, star_set, rules, set)?;
+                let la = age_node(a, z, to_myr, planets, star_set, rules, set, seed)?;
+                let lb = age_node(b, z, to_myr, planets, star_set, rules, set, seed)?;
                 let m0 = mass_on(&la, 0.0) + mass_on(&lb, 0.0);
                 let side = |l: &PairLine, n: &Node, t: f64| -> SideRow {
                     let mass = mass_on(l, t);
@@ -1124,6 +1398,7 @@ pub fn age_node(
                         transfer_msun_yr: 0.0,
                         donor: None,
                         lost_msun: 0.0,
+                        apart: false,
                     });
                 }
                 for l in [la, lb] {

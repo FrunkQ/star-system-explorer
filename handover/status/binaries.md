@@ -25,9 +25,9 @@ Coordinator, from the time scales audit (PR 651): age the pair in one window kep
 
 | Package | What | State |
 |---|---|---|
-| BX1 the pair aged together | One recursive node-pair stepping in one window: both stars from their life lines with the masses they really have; Roche fill each step (Eggleton 1983); transfer at a rate (thermal or nuclear timescale of the donor, or angular momentum loss by magnetic braking and gravitational waves once the donor is small), taken out of the donor's budget and given to the accretor (with the share lost from the pair), the orbit following; common envelope and merger as now; engulfment of planets by either star; dated lines | built (log `packages/BX1.md`); magnetic braking and gravitational waves moved to BX3 |
-| BX2 deaths as jumps | Instant mass loss and a kick drawn from the measured spread (Hobbs et al. 2005 for neutron stars, reduced for black holes by fallback): bound or not, the new orbit, and what each planet and the companion end up circling; for lone stars too | after BX1 |
-| BX3 feeding after a common envelope | The pair's orbit shrinks by magnetic braking and gravitational waves until the companion fills its lobe on the white dwarf: a cataclysmic variable, with the transfer rate from that loss | built locally (log `packages/BX3.md`), PR after BX1 merges |
+| BX1 the pair aged together | One recursive node-pair stepping in one window: both stars from their life lines with the masses they really have; Roche fill each step (Eggleton 1983); transfer at a rate (thermal or nuclear timescale of the donor, or angular momentum loss by magnetic braking and gravitational waves once the donor is small), taken out of the donor's budget and given to the accretor (with the share lost from the pair), the orbit following; common envelope and merger as now; engulfment of planets by either star; dated lines | on main (PR 695; log `packages/BX1.md`); magnetic braking and gravitational waves moved to BX3 |
+| BX2 deaths as jumps | Instant mass loss and a kick drawn from the measured spread (Hobbs et al. 2005 for neutron stars, reduced for black holes by fallback): bound or not, the new orbit, and what each planet and the companion end up circling; for lone stars too | part 1 (pairs, their planets, stripped massive donors as helium stars) built, log `packages/BX2.md`; part 2 (lone stars, `epoch.rs`) next, moves the core golden |
+| BX3 feeding after a common envelope | The pair's orbit shrinks by magnetic braking and gravitational waves until the companion fills its lobe on the white dwarf: a cataclysmic variable, with the transfer rate from that loss | on main (PR 725; log `packages/BX3.md`) |
 | BX4 what the accretor does | A white dwarf: novae when the hydrogen layer reaches its ignition mass (recurrence from mass and rate), mass gained or lost each cycle; a Type Ia when it reaches the Chandrasekhar limit. A neutron star or black hole: an X-ray binary | after BX3 |
 | BX5 the flow at a date | An op giving, for any pair at any date: lobe fill, L1 point, the stream's path (Lubow and Shu 1975), circularisation radius, disc radii and temperatures (sharing the black hole disc light of PR 618 where it fits), the hot spot, the rate | after BX1 |
 | BX6 planets in pairs | Ruling 2: one formation run per star plus one round a close pair, combined, trimmed by the stable edge; ruling 4 for belts and clouds | after BX1 |
@@ -35,8 +35,9 @@ Coordinator, from the time scales audit (PR 651): age the pair in one window kep
 | BX8 drawing | In True, on the sim clock: the donor filling its lobe as a teardrop (with VP-S2), the stream from L1, the disc and hot spot, nova outbursts | after BX5 |
 
 ## Next
-- PR 658 (SG6 part 1), then BX1 (area-only, its own PR). SG7 (one set of active regions) waits for its core-lane turn.
-- Then BX2 or BX3.
+- SG6, SG7, BX1, BX3 and the star close-up (PR 733) are on main.
+- BX2 part 1 (area-only PR), then BX2 part 2 (core lane turn), then BX4 and BX5.
+- Owed: the GPU check of the star close-up and an eruption on Alex's PC when it is reachable.
 
 ## Left on Alex's PC (for later cleanup)
 - `C:\Development\sse4-sg6`, `C:\Development\sse4-main-check`, `C:\Development\sse4-sg6-capture` (Playwright capture scripts), worktrees and copies used for the SG6 capture.
