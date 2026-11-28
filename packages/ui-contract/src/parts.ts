@@ -256,6 +256,30 @@ export function paletteByEra(palette: PartsPalette, year: number): { era?: Era; 
   return out;
 }
 
+/** The palette by what parts are for (the mock-up's groups): crew and rooms, tanks, drives, power and heat, structure,
+ * sensors. In each, shapes with no year first, then by first flight. Every part is listed whatever the year; the picker
+ * fades the ones not flown yet. */
+export const PART_USES: readonly { label: string; kinds: readonly PartKind[] }[] = [
+  { label: "Crew and rooms", kinds: ["habitat", "node", "pod", "bay"] },
+  { label: "Tanks and stages", kinds: ["tank", "stage"] },
+  { label: "Drives", kinds: ["engine"] },
+  { label: "Power and heat", kinds: ["power", "solar", "radiator"] },
+  { label: "Structure", kinds: ["truss", "legs", "shield"] },
+  { label: "Sensors and dishes", kinds: ["sensor", "dish"] },
+];
+export function paletteByUse(palette: PartsPalette): { label: string; parts: Part[] }[] {
+  const eras = palette.eras ?? [];
+  const from = (p: Part) => p.year ?? eraOf(p, eras)?.from ?? -Infinity;
+  const out: { label: string; parts: Part[] }[] = [];
+  for (const u of PART_USES) {
+    const ps = palette.parts.filter((p) => u.kinds.includes(p.kind)).sort((a, b) => from(a) - from(b) || a.name.localeCompare(b.name));
+    if (ps.length) out.push({ label: u.label, parts: ps });
+  }
+  const rest = palette.parts.filter((p) => !PART_USES.some((u) => u.kinds.includes(p.kind)));
+  if (rest.length) out.push({ label: "Other", parts: rest });
+  return out;
+}
+
 /** The palette as it stood in a year (the era control is CM15; this is its reading): parts that had flown by then,
  * and generic parts, which have no year. */
 export function flownBy(parts: readonly Part[], year: number): Part[] {

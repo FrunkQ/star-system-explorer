@@ -61,6 +61,8 @@ try {
     await gm.waitForFunction(() => Number(document.querySelector("[data-builder] canvas[data-ship-model]")?.dataset.parts) >= 3, null, { timeout: 60000 }).catch(async (e) => {
       throw new Error(`the catalogue ship did not open as parts: ${(await gm.locator("[data-builder-screen]").innerText()).slice(0, 400)} ${errors.join(" | ")} (${e.message})`);
     });
+    // Its tanks hold what the kernel's sheet says (the propellant read lands a moment after the parts).
+    await gm.waitForFunction(() => Number(document.querySelector("[data-builder] [data-dv]")?.textContent?.replace(/[^0-9.]/g, "")) > 0, null, { timeout: 30000 });
     await gm.waitForTimeout(1500);
     await shot("catalogue");
 

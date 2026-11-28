@@ -3,10 +3,12 @@
 // and front drawings cast on its walls by a camera that never moves (ruling 14A.2: the blueprint does not turn with
 // the model); and the glowing connection points while a part is being placed. Geometry and lookups only: the pieces
 // come from ship-build.ts through the same ship-mesh.ts every ship uses, and nothing here works out a figure.
-import { AdditiveBlending, AmbientLight, BufferAttribute, BufferGeometry, CanvasTexture, Color, DataTexture, DirectionalLight, DoubleSide, Float32BufferAttribute, Group, HemisphereLight, LinearMipmapLinearFilter, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, type Object3D, PerspectiveCamera, PlaneGeometry, Raycaster, RepeatWrapping, RGBAFormat, Scene, Sprite, SpriteMaterial, SRGBColorSpace, Vector2, Vector3 } from "three";
+import { AdditiveBlending, AmbientLight, CylinderGeometry, type Material, BufferAttribute, BufferGeometry, CanvasTexture, Color, DataTexture, DirectionalLight, DoubleSide, Float32BufferAttribute, Group, HemisphereLight, LinearMipmapLinearFilter, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, type Object3D, PerspectiveCamera, PlaneGeometry, Raycaster, RepeatWrapping, RGBAFormat, Scene, Sprite, SpriteMaterial, SRGBColorSpace, Vector2, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import { panelTexture, shipMesh, type SkinSpec, type Surface } from "./ship-mesh.ts";
 import type { ShipLayout } from "./ship-design.ts";
+import type { PlacedPart } from "./ship-build.ts";
+import { nameCarrier, partShapes, type Finish } from "./builder-shapes.ts";
 import { sayNumber } from "../../ui-contract/src/index.ts";
 
 /** A connection point on offer, coloured by its kind as the mock-up's legend. */
@@ -17,6 +19,10 @@ export interface BuilderMarker {
 
 export interface BuilderShow {
   layout: ShipLayout;
+  /** The build's parts where they sit: each drawn as what it is (builder-shapes.ts). Without them, the layout's pieces. */
+  placed?: readonly PlacedPart[];
+  /** The ship's name, lettered along its biggest crew or tank part. */
+  name?: string;
   /** The part being placed, drawn as a see-through ghost where it would go. */
   ghost?: string | null;
   selected?: readonly string[];
@@ -93,6 +99,56 @@ function textPlane(text: string, h: number): Mesh {
   return new Mesh(g, new MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, opacity: 0.85, side: DoubleSide }));
 }
 
+/** Solar cells: dark blue squares with pale gaps between them. */
+function cellTexture(): CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = 256;
+  c.height = 128;
+  const x = c.getContext("2d")!;
+  x.fillStyle = "#1d3568";
+  x.fillRect(0, 0, 256, 128);
+  x.strokeStyle = "rgba(143,176,232,.4)";
+  x.lineWidth = 1.5;
+  for (let i = 0; i <= 256; i += 16) x.beginPath(), x.moveTo(i, 0), x.lineTo(i, 128), x.stroke();
+  for (let j = 0; j <= 128; j += 16) x.beginPath(), x.moveTo(0, j), x.lineTo(256, j), x.stroke();
+  const t = new CanvasTexture(c);
+  t.colorSpace = SRGBColorSpace;
+  t.wrapS = t.wrapT = RepeatWrapping;
+  return t;
+}
+
+/** The ship's name along the side of a part that faces the viewer (the -y side), in ink that stands off its hull. */
+function lettering(host: PlacedPart, name: string, paint: string | null, skin: SkinSpec): Mesh<CylinderGeometry, MeshBasicMaterial> {
+  const L = host.part.shape.length_m;
+  const R = host.part.shape.radius_m * 1.03;
+  const arc = 0.9;
+  const segL = L * 0.75;
+  const W = 192;
+  const H = Math.max(256, Math.min(2048, Math.round((W * segL) / (R * arc))));
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const x = c.getContext("2d")!;
+  const base = paint ? new Color(paint) : new Color(...(host.part.kind === "habitat" ? skin.surfaces.hull.albedo : skin.surfaces.tanks.albedo));
+  x.fillStyle = base.r * 0.3 + base.g * 0.59 + base.b * 0.11 > 0.45 ? "rgba(16,19,26,.95)" : "rgba(244,247,252,.95)";
+  x.translate(W / 2, H / 2);
+  x.rotate(-Math.PI / 2);
+  const text = name.toUpperCase();
+  let px = W * 0.55;
+  x.font = `700 ${px}px "IBM Plex Sans", system-ui, sans-serif`;
+  const w = x.measureText(text).width;
+  if (w > H * 0.92) (px *= (H * 0.92) / w), (x.font = `700 ${px}px "IBM Plex Sans", system-ui, sans-serif`);
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.fillText(text, 0, 0);
+  const t = new CanvasTexture(c);
+  t.colorSpace = SRGBColorSpace;
+  // Around the cylinder (its own y axis turned onto x): the arc centred on the -y side.
+  const g = new CylinderGeometry(R, R, segL, 32, 1, true, Math.PI / 2 - arc / 2, arc).rotateZ(-Math.PI / 2);
+  g.translate(host.x0 + L * 0.5, host.y, host.z);
+  return new Mesh(g, new MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
+}
+
 /** Mount the builder's view on a canvas. Returns null where the device draws no 3D. */
 export async function mountBuilder(canvas: HTMLCanvasElement, skin: SkinSpec, o: { segments: number }): Promise<BuilderScene | null> {
   let renderer: WebGPURenderer;
@@ -118,10 +174,14 @@ export async function mountBuilder(canvas: HTMLCanvasElement, skin: SkinSpec, o:
   const ring = ringTexture();
 
   const scene = new Scene();
-  scene.add(new HemisphereLight(0xcfe0ff, 0x1a1d24, 0.9));
-  const sun = new DirectionalLight(0xfff4e6, 2.6);
-  sun.position.set(0.5, 0.7, 0.6);
-  scene.add(sun, new AmbientLight(0xffffff, 0.2));
+  // A studio's lights (the mock-up's look): a bright sky over a dark floor, a key from above the viewer's shoulder, a
+  // softer fill from the far side, so white blankets read white and bare metal still shows its form.
+  scene.add(new HemisphereLight(0xe4ecff, 0x2a2e36, 1.5));
+  const sun = new DirectionalLight(0xfff6ea, 2.4);
+  sun.position.set(0.4, -0.8, 0.7);
+  const fill = new DirectionalLight(0xcfdcff, 0.9);
+  fill.position.set(-0.6, 0.7, 0.2);
+  scene.add(sun, fill, new AmbientLight(0xffffff, 0.25));
   const bg = new Scene();
   const marks = new Scene();
   const cam = new PerspectiveCamera(35, 1, 0.05, 1e6);
@@ -130,6 +190,17 @@ export async function mountBuilder(canvas: HTMLCanvasElement, skin: SkinSpec, o:
   const ghostMat = new MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.38, depthWrite: false });
   const shadowFill = new MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.06, depthWrite: false, side: DoubleSide });
   const lineMat = (opacity: number) => new LineBasicMaterial({ color: ACCENT, transparent: true, opacity, depthWrite: false });
+
+  // The few looks the skin has no entry for yet: solar cells, windows and dark openings (fixed, named here).
+  const cells = cellTexture();
+  const finishMaterial = (f: Finish, paint: string | undefined, wire: boolean): Material => {
+    if (f === "cells") return new MeshStandardMaterial({ map: cells, roughness: 0.35, metalness: 0.3, side: DoubleSide, wireframe: wire });
+    if (f === "window") return new MeshStandardMaterial({ color: 0x0b0f16, emissive: 0xffd890, emissiveIntensity: 0.25, roughness: 0.2, wireframe: wire });
+    if (f === "dark") return new MeshStandardMaterial({ color: 0x14171c, roughness: 0.8, side: DoubleSide, wireframe: wire });
+    const look = (f === "shield" ? skin.surfaces.shield : skin.surfaces[f]) ?? skin.surfaces.hull;
+    const painted = paint && (f === "hull" || f === "tanks");
+    return new MeshStandardMaterial({ color: painted ? new Color(paint) : new Color(...look.albedo), roughness: look.roughness, metalness: Math.min(look.metalness, 0.7), side: DoubleSide, wireframe: wire });
+  };
 
   let ship = new Group();
   let room = new Group();
@@ -251,35 +322,49 @@ export async function mountBuilder(canvas: HTMLCanvasElement, skin: SkinSpec, o:
       scene.add(ship);
       parts = [];
       const sel = new Set(s.selected ?? []);
-      const keys = [...new Set(s.layout.pieces.map((p) => p.member ?? ""))];
-      for (const key of keys) {
-        const pieces = s.layout.pieces.filter((p) => (p.member ?? "") === key);
-        if (!pieces.length) continue;
-        const m = shipMesh({ ...s.layout, pieces }, { segments: o.segments, panel_m: skin.panel_m });
-        for (const [name, b] of Object.entries(m.surfaces) as [Surface, NonNullable<(typeof m.surfaces)[Surface]>][]) {
-          const look = (name === "shield" ? skin.surfaces.shield : skin.surfaces[name]) ?? skin.surfaces.hull;
-          const ghost = key === s.ghost;
-          const paint = s.paints?.[key];
-          const mat = ghost ? ghostMat : new MeshStandardMaterial({ color: paint && (name === "hull" || name === "tanks") ? new Color(paint) : new Color(...look.albedo), roughness: look.roughness, metalness: look.metalness, map: tex, wireframe: s.wire === true });
-          if (!ghost) {
-            owned.push(mat);
-            if (sel.has(key)) ((mat as MeshStandardMaterial).emissive = ACCENT.clone()), ((mat as MeshStandardMaterial).emissiveIntensity = 0.35);
+      const isGhost = (key: string) => !!s.ghost && (key === s.ghost || key.startsWith(`${s.ghost}-`));
+      const addMesh = (key: string, g: BufferGeometry, mat: Material) => {
+        const ghost = isGhost(key);
+        owned.push(g);
+        if (!ghost) {
+          owned.push(mat);
+          if (sel.has(key) && mat instanceof MeshStandardMaterial) (mat.emissive = ACCENT.clone()), (mat.emissiveIntensity = 0.35);
+        } else mat.dispose();
+        const mesh = new Mesh(g, ghost ? ghostMat : mat);
+        mesh.userData.key = ghost ? null : key;
+        ship.add(mesh);
+        if (!ghost) parts.push({ key, mesh });
+      };
+      if (s.placed?.length) {
+        for (const q of s.placed) for (const p of partShapes(q, o.segments)) addMesh(q.key, p.geometry, finishMaterial(p.finish, s.paints?.[q.key], s.wire === true));
+        const host = s.name ? nameCarrier(s.placed.filter((q) => !isGhost(q.key))) : null;
+        if (host && s.name && !s.wire) {
+          const lt = lettering(host, s.name, s.paints?.[host.key] ?? null, skin);
+          owned.push(lt.geometry, lt.material, lt.material.map!);
+          ship.add(lt);
+        }
+      } else {
+        const keys = [...new Set(s.layout.pieces.map((p) => p.member ?? ""))];
+        for (const key of keys) {
+          const pieces = s.layout.pieces.filter((p) => (p.member ?? "") === key);
+          if (!pieces.length) continue;
+          const m = shipMesh({ ...s.layout, pieces }, { segments: o.segments, panel_m: skin.panel_m });
+          for (const [name, b] of Object.entries(m.surfaces) as [Surface, NonNullable<(typeof m.surfaces)[Surface]>][]) {
+            const look = (name === "shield" ? skin.surfaces.shield : skin.surfaces[name]) ?? skin.surfaces.hull;
+            const paint = s.paints?.[key];
+            addMesh(key, geometryOf(b), new MeshStandardMaterial({ color: paint && (name === "hull" || name === "tanks") ? new Color(paint) : new Color(...look.albedo), roughness: look.roughness, metalness: look.metalness, map: tex, wireframe: s.wire === true }));
           }
-          const mesh = new Mesh(geometryOf(b), mat);
-          mesh.userData.key = ghost ? null : key;
-          ship.add(mesh);
-          if (!ghost) parts.push({ key, mesh });
         }
       }
       ship.updateMatrixWorld(true);
       // Frame on the build without its ghost, so the camera holds still while a part is tried at each point.
       const lo = new Vector3(Infinity, Infinity, Infinity);
       const hi = new Vector3(-Infinity, -Infinity, -Infinity);
-      for (const p of s.layout.pieces) {
-        if (p.member === s.ghost) continue;
-        const r = p.shape === "body" ? Math.max(p.r0, p.r1) : Math.abs(p.span ?? 0);
-        lo.min(new Vector3(Math.min(p.x0, p.x1), p.y - r, p.z - r));
-        hi.max(new Vector3(Math.max(p.x0, p.x1), p.y + r, p.z + r));
+      for (const p of parts) {
+        p.mesh.geometry.computeBoundingBox();
+        const b = p.mesh.geometry.boundingBox!;
+        lo.min(b.min);
+        hi.max(b.max);
       }
       if (!Number.isFinite(lo.x)) lo.set(-5, -3, -3), hi.set(5, 3, 3);
       box = { lo, hi };
@@ -349,6 +434,7 @@ export async function mountBuilder(canvas: HTMLCanvasElement, skin: SkinSpec, o:
       disposeAll();
       for (const m of [ghostMat, shadowFill]) m.dispose();
       tex.dispose();
+      cells.dispose();
       ring.dispose();
       renderer.dispose();
     },

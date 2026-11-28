@@ -11,7 +11,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { PAINT_SWATCHES, budgets, buildLayout, driveFacts, freePoints, fromLayout, designShip, readPropellants, shipViews, startBuilder, type BuildRecipe, type BuiltPart, type BuilderMarker, type BuilderScene, type DesignRules, type DesignShip, type FreePoint, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
-  import { eraOf, paletteByEra, sayNumber, shipRecordOf, verdictWords, type NavShip, type Part, type PartsPalette, type ShipAtWorld, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { eraOf, paletteByUse, sayNumber, shipRecordOf, verdictWords, type NavShip, type Part, type PartsPalette, type ShipAtWorld, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
     ctx,
@@ -71,9 +71,15 @@
     const got = fromLayout(old, s, palette);
     untrack(() => ((recipe = got.recipe), (notes = got.notes), (opened = key), (selected = null), reframe++));
   });
+  // The tanks' propellants, read from the kernel's sheet. Only the latest ask lands (an older answer arriving late must
+  // not overwrite it).
+  let fuelAsk = 0;
   $effect(() => {
     const f = recipe.fuels ?? [];
-    void readPropellants(ctx.session, f).then((x) => (fuels = x)).catch(() => (fuels = {}));
+    const id = ++fuelAsk;
+    void readPropellants(ctx.session, f)
+      .then((x) => id === fuelAsk && (fuels = x))
+      .catch(() => id === fuelAsk && (fuels = {}));
   });
 
   // --- what is being worked on ---
@@ -285,7 +291,7 @@
     for (const b of recipe.parts) if (b.paint?.startsWith("#")) paints[b.key] = b.paint;
     const frame = reframe !== lastFrame;
     lastFrame = reframe;
-    s.show({ layout: l, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", frame });
+    s.show({ layout: l, placed: l.placed, name: recipe.name, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", frame });
     s.draw({ yaw_deg: cam.yaw, pitch_deg: cam.pitch, zoom: cam.zoom, pan: cam.pan }, box.w, box.h);
   });
   // "Seen from": a short turn to the preset; a drag makes it Free.
@@ -431,9 +437,9 @@
     if ((e.ctrlKey || e.metaKey) && e.key === "z") (doUndo(), e.preventDefault());
   }
 
-  // --- the parts list, by era, every part shown; those not yet flown by the year are faint ---
+  // --- the parts list, by what parts are for (the mock-up's groups), every part shown; those not yet flown by the year are faint ---
   const fromYear = (p: Part) => p.year ?? (palette?.eras ? eraOf(p, palette.eras)?.from : undefined);
-  const groups = $derived(palette ? paletteByEra(palette, 1e6) : []);
+  const groups = $derived(palette ? paletteByUse(palette) : []);
   const later = (p: Part) => (fromYear(p) ?? -Infinity) > year;
   const predicted = (p: Part) => (fromYear(p) ?? -Infinity) > NOW;
   const dryOf = (p: Part) => p.figures.dry_t?.v ?? p.figures.mass_t?.v;
@@ -564,7 +570,7 @@
         </div>
         {#each groups as g (g.label)}
           <div class="grp">
-            <span class="lbl" title={g.era?.about ?? "Generic shapes: geometry only, any year"}>{g.label}{g.era?.from !== undefined ? ` · ${g.era.from}${g.era.to !== undefined ? `–${g.era.to}` : " on"}` : ""}</span>
+            <span class="lbl">{g.label}</span>
             {#each g.parts as p (p.id)}
               {@const yr = fromYear(p)}
               {@const dry = dryOf(p)}
