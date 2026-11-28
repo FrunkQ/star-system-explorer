@@ -29,3 +29,5 @@ F37c: a fit by three tolerances, not a likelihood over the cell's population, an
 
 ## Merging main after TP4 (27 Nov)
 TP4's check asks every op that takes a date to be named by a process in `packs/base-time`. `site_history` takes a window (`from_myr`, `to_myr`), so it gets its own declaration, `galaxy.events`: G6's event layer on the star's path, paced by its own marks. The live ladder test now finds both rungs paced by marks (the campaign's record and the galaxy's events) among the last, rather than asking that the campaign's record be the only one. Goldens that print the base-time stack hash move with it.
+
+Found by the browser walk (`your-systems.e2e.mjs`): the campaign's systems list (`systems`) counted each pinned slot star as a system of its own, because the star sits at a `sys:` address of the home galaxy. `adopt::systems_of` now leaves out a `sys` whose `star.slot_of` names another system; the slot test asserts it (red without the fix). The core golden's `systems_listed` line is back to main's.

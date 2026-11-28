@@ -99,6 +99,17 @@ fn an_imported_system_is_given_a_drawn_star_of_home_at_adoption() {
     assert!(s["drawn"]["mass_msun"].is_f64());
     let r_kpc = s["r_kpc"].as_f64().unwrap();
     assert!(r_kpc > 1.0 && r_kpc < 30.0, "{r_kpc}");
+    // The slot star is the system's place, not a second system of the
+    // campaign: the systems list names the adopted system only.
+    let listed = send(&mut k, json!({"op": "systems"}));
+    let names: Vec<&str> = listed["systems"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|x| x["system"].as_str().unwrap())
+        .collect();
+    assert!(names.contains(&sys.as_str()), "{listed}");
+    assert!(!names.contains(&star.as_str()), "{listed}");
 }
 
 /// A map position is laid out from the Sun's place: 300 ly on the map
