@@ -114,8 +114,18 @@ try {
     await Promise.race([b.locator("[data-can-do] li").first().waitFor({ timeout: 30000 }), b.locator("[data-ask-failed]").waitFor({ timeout: 30000 }).then(async () => assert.fail(await b.locator("[data-ask-failed]").innerText()))]);
     await shot("can-do");
 
-    // Example ships: a blank build, then a part starts it.
+    // Example ships assembled from parts (the mock-up's): Kestrel opens as its parts at once; its generic parts have no
+    // mass yet, so its delta-v is said to need them and "What can it do?" waits for them.
     await b.locator(".pop .close").click();
+    await b.locator("[data-example-ships]").click();
+    await b.locator('[data-example-ship="kestrel"]').click();
+    await gm.waitForFunction(() => Number(document.querySelector("[data-builder] canvas[data-ship-model]")?.dataset.parts) >= 8);
+    await b.locator("[data-needs-mass]").first().waitFor();
+    assert.ok(await b.locator("[data-what-can-it-do]").isDisabled(), "no verdicts from masses that are not known");
+    await gm.waitForTimeout(1200);
+    await shot("example");
+
+    // Example ships: a blank build, then a part starts it.
     await b.locator("[data-example-ships]").click();
     await b.locator('[data-catalogue-ship=""]').click();
     const blank = gm.locator("[data-builder-screen] [data-builder]");

@@ -59,3 +59,27 @@ test("a tank has domed ends and the name goes on the biggest crew or tank part",
   assert.ok(endR < 0.7 * midR, `ends ${endR} m narrower than its widest ${midR} m`);
   assert.equal(nameCarrier(placed)?.key, "h");
 });
+
+test("the example ships open as parts: every part placed, the name on a crew or tank part, and no mass invented", async () => {
+  const pack = JSON.parse(readFileSync(new URL("../../../packs/base-parts/pack.json", import.meta.url), "utf8")).provides.other;
+  const { buildTotals } = await import("../src/ship-build.ts");
+  assert.ok(pack.examples.length >= 4);
+  for (const e of pack.examples as { id: string; build: BuildRecipe }[]) {
+    const { placed, notes } = placeBuild(e.build, PALETTE);
+    assert.equal(placed.length, e.build.parts.length, `${e.id}: ${notes.join(" ")}`);
+    assert.ok(nameCarrier(placed), `${e.id} has a part to letter its name on`);
+    assert.equal(e.build.structure_t, undefined, `${e.id} types no structure mass`);
+    const t = buildTotals(e.build, placed, {});
+    assert.ok(t.unmassed.length > 0, `${e.id}: generic parts have no mass yet, so the build says so`);
+  }
+});
+
+test("a bay is open along its top", () => {
+  const r: BuildRecipe = { format: "sse.build/1", name: "bay", parts: [{ key: "b", part: "bay" }] };
+  const { placed } = placeBuild(r, PALETTE);
+  const g = partShapes(placed[0]!, 32)[0]!.geometry;
+  const pos = g.getAttribute("position");
+  let topZ = -Infinity;
+  for (let i = 0; i < pos.count; i++) if (Math.abs(pos.getY(i)) < 0.3) topZ = Math.max(topZ, pos.getZ(i));
+  assert.ok(topZ < 0, `nothing of the shell straight overhead (highest near the middle line ${topZ})`);
+});

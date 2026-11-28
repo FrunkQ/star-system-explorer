@@ -53,6 +53,9 @@ export interface PartShape {
   profile?: [number, number][];
   /** Panel or box: its span across. */
   span_m?: number;
+  /** How the builder draws it where its kind alone does not say (a capsule is a habitat, a docking port a node).
+   * A picture hint only: no figure reads it. */
+  look?: "capsule" | "port";
 }
 
 /** How a part resizes in place (ruling 14A.4: "you got the volume, that's all that matters"). `volume`: figures in

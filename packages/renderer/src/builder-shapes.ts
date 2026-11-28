@@ -51,6 +51,19 @@ function local(q: PlacedPart, seg: number): ShapePiece[] {
     const gs = xs.map((x) => new TorusGeometry(R * 1.005, Math.max(0.03, R * 0.025), 6, seg).rotateY(Math.PI / 2).translate(x, 0, 0));
     if (gs.length) add(merge(gs), finish);
   };
+  if (s.look === "capsule") {
+    // A crew capsule: a blunt cone from its heat-shield end, a dark band of tiles at the base, two windows.
+    const prof = s.profile && s.profile.length > 1 ? s.profile : ([[0, 1], [0.1, 1], [0.9, 0.36], [1, 0.3]] as [number, number][]);
+    add(lathe([V2(0, -L / 2), ...prof.map(([a, r]) => V2(r * R, -L / 2 + a * L)), V2(0, L / 2)], seg), "hull");
+    add(lathe([V2(0, -L / 2 - R * 0.04), V2(R * 1.01, -L / 2 - R * 0.01), V2(R * 1.01, -L / 2 + L * 0.03), V2(0, -L / 2 + L * 0.03)], seg), "dark");
+    add(merge([1, -1].map((side) => new BoxGeometry(R * 0.16, R * 0.11, R * 0.04).translate(-0.05 * L, side * R * 0.7, R * 0.2))), "window");
+    return out;
+  }
+  if (s.look === "port") {
+    add(cylX(R, R, L, seg), "drive");
+    add(new TorusGeometry(R * 0.95, R * 0.12, 8, seg).rotateY(Math.PI / 2).translate(L / 2, 0, 0), "hull");
+    return out;
+  }
   switch (q.part.kind) {
     case "tank":
       domed(R * 0.7, "tanks");
@@ -154,7 +167,8 @@ function local(q: PlacedPart, seg: number): ShapePiece[] {
     case "bay": {
       // An open bay: a shell with a gap along its top, a ring at each end, a back wall.
       const gap = (80 * Math.PI) / 180;
-      add(new CylinderGeometry(R, R, L, seg, 1, true, Math.PI * 1.5 + gap / 2, Math.PI * 2 - gap).rotateZ(-Math.PI / 2), "hull");
+      // Turned onto x, angle 0 is straight up (+z): the gap is centred there.
+      add(new CylinderGeometry(R, R, L, seg, 1, true, gap / 2, Math.PI * 2 - gap).rotateZ(-Math.PI / 2), "hull");
       add(merge([-L / 2, L / 2].map((x) => new TorusGeometry(R, Math.max(0.04, R * 0.06), 6, seg).rotateY(Math.PI / 2).translate(x, 0, 0))), "spine");
       add(cylX(R * 0.98, R * 0.98, Math.max(0.02, L * 0.01), seg).translate(-L / 2, 0, 0), "dark");
       break;
@@ -166,10 +180,16 @@ function local(q: PlacedPart, seg: number): ShapePiece[] {
       break;
     }
     case "shield":
+      if (s.profile && s.profile.length > 1) {
+        // A shadow shield: a cone, wide towards the crew.
+        add(lathe([V2(0, -L / 2), ...s.profile.map(([a, r]) => V2(r * R, -L / 2 + a * L)), V2(0, L / 2)], seg), "spine");
+        break;
+      }
       add(lathe([V2(0, -L / 2 - R * 0.05), V2(R * 0.7, -L / 2), V2(R, -L / 2 + 0.3 * L), V2(R, L / 2), V2(0, L / 2)], seg), "shield");
       break;
     case "legs":
-      add(merge([cylX(R, R, L, 10), cylX(R * 4.5, R * 4.5, Math.max(0.05, L * 0.05), 16).translate(L / 2, 0, 0)]), "spine");
+      // A strut with its foot pad at the stern end (a lander stands on its tail).
+      add(merge([cylX(R, R, L, 10), cylX(R * 4.5, R * 4.5, Math.max(0.05, L * 0.05), 16).translate(-L / 2, 0, 0)]), "spine");
       break;
     default: {
       // Any other lathe follows its own profile; without one, a can.
@@ -204,7 +224,7 @@ export function nameCarrier(placed: readonly PlacedPart[]): PlacedPart | null {
   for (const q of placed) {
     if (!["habitat", "tank", "stage", "bay"].includes(q.part.kind)) continue;
     const near = q.y <= 1e-6 ? 1 : 0.4;
-    const a = q.part.shape.length_m * q.part.shape.radius_m * (q.part.kind === "habitat" ? 1.5 : 1) * near;
+    const a = q.part.shape.length_m * q.part.shape.radius_m * (q.part.kind === "habitat" ? 3 : 1) * near;
     if (a > score) (score = a), (best = q);
   }
   return best;

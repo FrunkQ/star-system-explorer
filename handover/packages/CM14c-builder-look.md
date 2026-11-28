@@ -21,3 +21,16 @@ Track CM. Builds on CM14b (the builder to the mock-up, PR 746). Mock-up: `sse4/h
 - `packages/ui-contract/test/parts.test.ts`: the parts list by use, every part once, ordered by first flight.
 - `npm run ui:test` 1266 pass; `ui:check` clean; ship-builder, manifest and voyage e2e pass.
 - Pictures: project files `sse4/handover-screens/CM14c-screens/`.
+
+# CM14c part 2: example ships assembled from parts
+
+- **Six example ships built from the palette's parts**, as the mock-up's are (pack data, `packs/base-parts/pack.json` `provides.other.examples`, built by `scripts/build-base-parts.py`, which checks every part exists and every clip comes after its carrier): Kestrel (a 1970s capsule, service tank and two solar wings), Harbour station (modules on a node), Highland lander (capsule over a squat tank, strap-on tanks, four legs), Long-hauler (crew forward, long spine, shadow shield, nuclear rocket), Bulk frame (sixteen painted cargo pods on a spine) and Wayfarer (a survey carrier with its lander in a bay). Each is only a recipe: open it from Example ships, under "Assembled from parts", and pull it apart. The catalogue's four stay below, under "From the catalogue (converted from the old layout)"; the builder still opens on the first of them, since only those have masses yet.
+- **New generic parts** they need: crew capsule (a habitat drawn as a capsule), docking port (the docking standard's passage), heat shield, radiation shadow shield and landing leg. Geometry figures only; each names what is still to be read. `PartShape.look` is a picture hint (capsule, port) no figure reads.
+- **No mass is invented** (coordinator's ruling 28 Nov 18:50, from Alex's "we dont fudge unless we HAVE to"). A build with a part that has no mass, and nothing carried over standing in, says "needs part masses" for delta-v, mass and push, names the parts, and "What can it do?" waits for them. The examples type no structure mass. Part 3 reads real masses: tank walls from `sse.ship.tank_wall_mass`, engines from a cited published table in the reference pack.
+- Fixes: a bay is open along its top (it was open on the far side); a landing leg's foot is at the stern end.
+
+## Checks (part 2)
+
+- `builder-shapes.test.ts` gains: every example places all its parts, has a part to letter its name on, types no structure mass and says it needs part masses; a bay is open along its top (seen red with the old opening, green restored).
+- `ship-builder.e2e.mjs` opens Kestrel from Example ships: eight or more parts at once, "needs part masses" shown, "What can it do?" disabled. Picture `example-*.png`.
+- `ui:test` 1271 pass; `ui:check` clean; `build-base-parts.py --check`; ship-builder, manifest and voyage e2e pass.
