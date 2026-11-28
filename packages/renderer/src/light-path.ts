@@ -1,23 +1,25 @@
 // The `light-path` stage (XO4; exotic objects design 2.1, 3.1 to 3.4, 7): for a pixel near a compact mass, where the
 // light it shows really came from, and what it passed on the way. It runs before the pixel looks anything up.
 //
-// Everything here repeats the kernel, so the picture and the kernel's numbers agree (`read_light_paths`, XO2 and XO3;
-// handover/packages/XO2-XO3.md "For XO4"):
+// Geometry and lookups only (edits-reach design section 11, ER11a): the physics comes from the kernel.
 //
 // - the bend table (`sse_gravity::bend`): its layout, `row_of_b`, `u_at` and each row's turn, read from the table the
 //   kernel hands over (`table: true`, keyed by its hash). Nothing here traces a ray of its own;
 // - where a ray first lands on the disc (`sse_light::disc_image::landing`): the crossing angles φ₀ = π/2 +
 //   atan(cos α tan i) and φ₀ + π, the first inside the disc's edges wins; beyond the table a straight ray;
-// - the ring temperature (`sse_light::disc_temperature`) and the shift (block `sse.light.disc_shift`, Luminet 1979);
+// - the shift and the ring's temperature there: read off the disc table the kernel bakes (`bake`, table
+//   `sse.light.disc`, format `sse.table/1`) at the landing radius and the ray's angular momentum over it,
+//   b sin i sin α / r. The kernel fills it from the block in force `sse.light.disc_shift` (Luminet 1979) and
+//   `sse_light::disc_temperature`, so an edit to the block changes the picture;
 // - light seen at a shift g from a surface at T is a blackbody at gT, so each band's recipe colours it.
 //
 // Rays that miss the disc and escape are turned by the table's turn (the strong bender) inside 64 gravitational
 // radii and by 4 r_g / b (block `sse.gravity.weak_bend`) beyond, and look the sky up in the direction they came from.
-// The GPU pass (gpu-light-path.ts) evaluates the same expressions per pixel; this file is the reference it is tested
-// against, and the CPU trace that sets the exposure and each band's brightest.
+// The GPU pass (gpu-light-path.ts) does the same reads per pixel; this file is the reference it is tested against,
+// and the CPU trace that sets the exposure and each band's brightest.
 //
 // Units: lengths in gravitational radii (r_g = GM / c²) unless named otherwise; angles in radians.
-import { BANDS, bandRadiance, constant, linearSrgb, xyz, type LightDescription } from "../../ui-contract/src/index.ts";
+import { BANDS, bandRadiance, channelOf, constant, linearSrgb, sampleTable, xyz, type LightDescription, type Table } from "../../ui-contract/src/index.ts";
 
 /** The bend table's layout (sse_gravity::bend). The kernel's `table` reference carries the same numbers. */
 export const ROWS = 256;
@@ -161,53 +163,34 @@ export function landing(t: BendTable, b: number, alpha: number, tilt: number, rI
   return null;
 }
 
-/** Seen over emitted frequency for gas orbiting at `r` (block `sse.light.disc_shift`, r_g = 1). */
-export function discShift(r: number, b: number, tilt: number, alpha: number): number {
-  if (r <= 3) return 0;
-  const z1 = (1 - (b * Math.sin(tilt) * Math.sin(alpha)) / Math.sqrt(r * r * r)) / Math.sqrt(1 - 3 / r);
-  return z1 <= 0 ? 0 : 1 / z1;
-}
-
-const SIGMA = constant("sigma_SB");
-const C = constant("c");
-
-/**
- * The thin disc's temperature at `r` (sse_light::disc_temperature, Shakura and Sunyaev, Newtonian brightness law):
- * σT⁴ = 3 GM Ṁ / (8π r³) (1 − √(r_in / r)), with GM = r_g c². Zero inside the inner edge.
- */
-export function discTemperature(rg_m: number, rate_kg_s: number, rIn: number, r: number): number {
-  if (r <= rIn) return 0;
-  const rm = r * rg_m;
-  const t4 = ((3 * rg_m * C * C * rate_kg_s) / (8 * Math.PI * SIGMA * rm * rm * rm)) * (1 - Math.sqrt(rIn / r));
-  return Math.sqrt(Math.sqrt(t4));
-}
-
-/**
- * The disc's temperature scale: T⁴ = scale⁴ r⁻³ (1 − √(r_in / r)) with r in r_g, so scale⁴ = 3 c² Ṁ / (8π σ r_g²)
- * (discTemperature with GM = r_g c²). The GPU pass takes it as one number.
- */
-export function discTScale(d: Disc): number {
-  return ((3 * C * C * d.rate_kg_s) / (8 * Math.PI * SIGMA * d.rg_m * d.rg_m)) ** 0.25;
-}
-
-/** The disc the picture draws, in gravitational radii, and what feeds it (sse_light::feed::Feed::disc_rate_kg_s). */
+/** The disc the picture draws, in gravitational radii: its edges and the table the kernel baked for it. */
 export interface Disc {
-  rg_m: number;
   rIn: number;
   rOut: number;
-  /** The rate the thin disc carries: the thin and thick shares of the feed. */
-  rate_kg_s: number;
+  /** The kernel's `sse.light.disc` table (`bake`): 1 + z (the inverse of the shift) and the ring's T⁴ against r and b sin i sin α / r. */
+  table: Table;
 }
 
-/** The disc a `read_light_paths` answer describes, or null for a bare body. */
-export function discOf(p: LightPathsRead): Disc | null {
-  const f = p.feed;
-  if (!f) return null;
-  const s = (k: string) => f.flows.find((x) => x.kind === k)?.strength ?? 0;
-  const rate = (s("thin") + s("thick")) * f.rate_kg_s;
-  const rg = p.gravitational_radius_m;
-  if (!(rate > 0)) return null;
-  return { rg_m: rg, rIn: f.disc.inner_m / rg, rOut: f.disc.outer_m / rg, rate_kg_s: rate };
+/** What to ask the kernel to bake for a `read_light_paths` answer's disc (the hole's size and its feed), or null for
+ * a bare body. The kernel takes the disc's edges and the rate its thin flow carries from the feed itself. */
+export function discSubject(p: LightPathsRead): { gravitational_radius_m: number; feed: NonNullable<LightPathsRead["feed"]> } | null {
+  if (!p.feed) return null;
+  return { gravitational_radius_m: p.gravitational_radius_m, feed: p.feed };
+}
+
+/** The disc a baked `sse.light.disc` table describes (its first axis runs from the inner edge to the outer). */
+export function discOf(table: Table | null): Disc | null {
+  if (!table || table.id !== "sse.light.disc") return null;
+  const r = table.axes[0]!;
+  return { rIn: r.from, rOut: r.to, table };
+}
+
+/** The shift and the ring's own temperature where a ray landed: one read of the disc table. */
+export function discAt(disc: Disc, r: number, b: number, tilt: number, alpha: number): { g: number; t_emitted_k: number } {
+  const v = sampleTable(disc.table, [r, (b * Math.sin(tilt) * Math.sin(alpha)) / r]);
+  const t4 = v[channelOf(disc.table, "t4")]!;
+  const z = v[channelOf(disc.table, "redshift")]!;
+  return { g: z > 0 ? 1 / z : 0, t_emitted_k: t4 > 0 ? Math.sqrt(Math.sqrt(t4)) : 0 };
 }
 
 /** What one ray shows. */
@@ -221,8 +204,7 @@ export function traceRay(t: BendTable, disc: Disc | null, b: number, alpha: numb
   if (disc) {
     const hit = landing(t, b, alpha, tilt, disc.rIn, disc.rOut);
     if (hit) {
-      const te = discTemperature(disc.rg_m, disc.rate_kg_s, disc.rIn, hit.r);
-      const g = discShift(hit.r, b, tilt, alpha);
+      const { g, t_emitted_k: te } = discAt(disc, hit.r, b, tilt, alpha);
       if (te > 0 && g > 0) return { kind: "disc", order: hit.order, r: hit.r, g, t_emitted_k: te, t_seen_k: g * te };
     }
   }

@@ -762,6 +762,7 @@ dependencies = [
  "sse-atoms",
  "sse-core",
  "sse-flow",
+ "sse-formula",
  "sse-gravity",
  "sse-pack",
  "sse-physics",

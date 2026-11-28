@@ -1,0 +1,62 @@
+# WS5: the stirred face
+
+Design: `handover/design/SSE4-stirred-clouds-design.md`, sections 3.6, 6 and 11A. Needs WS3, WS3b and WS4. Status row: `handover/status/true-air.md`.
+
+## What it costs (measured 28 Nov 2026, before building)
+
+The design guessed about 40 backward steps a pixel, a few milliseconds a face. Measured on the kernel's own carrying (release build, fixtures, one cell):
+
+| World | τ | Steps a cell (with halvings) | Wind sums | Eddies in reach a sum | Time a cell |
+|---|---|---|---|---|---|
+| Jupiter | 32 days | about 9,900 | 118,000 | about 1 | 430 ms |
+| Neptune | 13 days | about 1,000 | 12,500 | about 3 | 90 ms |
+| Saturn | 336 days | | | | 3.4 s |
+
+- Most of the kernel's cost is the reference's own care: three paths a step for the Jacobian, and halving in strong strain.
+- The picture needs neither. The stretch for reading coarser levels comes from neighbouring pixels' paths.
+- Without them, the estimate is about 2 to 8 million operations a pixel on Jupiter. That is about 0.1 s for a 512-wide face on a desktop GPU and 1 to 2 s on a phone (unverified). Saturn takes about ten times that.
+- Re-stirring every frame on the H tier, as the design has it, would cost about a tenth of a second a frame. Alex was asked on 28 Nov whether every device should build a still instead, rebuilt as time moves (recommended).
+
+## WS5a: the carry table and the renderer's carrying
+
+- **Kernel:** weather want `carry` (`stirred.rs` `CarryTable`). It holds everything the `Carrier` sums, over the two renewals and a day that a picture reaches back:
+  - the bands' Ψ(ρ) tables and the eastward wind every 0.01°;
+  - the poles' polygons;
+  - every storm with its drift;
+  - every eddy;
+  - each band's generation offset;
+  - the steps.
+- **Fix:** the span's last instant now reads the last bin's eddies. They were dropped there, at the first stage of every step from the picture's own date.
+- **Renderer:** `packages/renderer/src/stirred-carry.ts` sums the same winds and carries the same way. It has two modes:
+  - the kernel's way (Jacobian, halving), used for the test;
+  - fixed steps, the picture's way, which the GPU pass will run.
+- **Held by test:**
+  - `ws5_the_renderers_reference_is_current` keeps `tests/fixtures/weather/carry.json` current. It holds Neptune's whole table with a 4×4 stirred patch, and Saturn's table round day 1000 with the kernel's winds at 80 places, round its polygon and storms.
+  - `test/stirred-carry.test.ts` checks four things:
+    - winds within 1e-3 m/s (worst 6e-4);
+    - the generations;
+    - the kernel's way of carrying within a kilometre;
+    - fixed steps within a kilometre per 64 times the stretch, far inside a 1024-wide face's pixel.
+  - The wind check goes red with the storms' shield removed (seen).
+- **Kernel test:** `a_giants_carry_table_holds_what_moves_its_cloud`.
+- **Fudge row:** "The renderer's carrying of a giant's cloud".
+
+## WS5c: the carrying on the GPU
+
+- **Renderer:** `packages/renderer/src/stirred-gpu.ts`.
+  - `packCarry` lays the carry table out as float textures. Eddies are filed by half day and on a 5° grid, each listed in every cell its reach touches.
+  - `carryOnGpu` runs `sourcePlaces` (stirred-carry.ts, its processor twin) for every pixel at once. It is one three.js TSL source for WebGPU and WebGL2.
+  - Each draw takes one fixed RK4 step. The state lives between draws in float targets, and every four draws one texel is read back, so the device never holds a long queue.
+- **What the test machine taught** (all three.js r187 on SwiftShader, the software device in the cloud container):
+  - A texture read inside a shader function of its own (`setLayout`) is named after another uniform on WebGL, and the shader fails to compile. Functions that read the table are written inline.
+  - The device's own sin, cos, asin and atan are off by up to 1e-3. Carried over a thousand steps, that moved cloud by hundreds of kilometres. The carrying writes sine, cosine and arc tangent out as series. A place's frame and its neighbours a step away come from its own vector, with no angles.
+  - A loop round the wind made the compiler take 13 GB. So there is one step a draw, and no loop wraps the wind.
+  - A target reads back from the bottom row up on WebGL; `carryOnGpu` turns it over.
+- **Held by test:** `tests/ui/stirred-gpu.e2e.mjs` carries an 8×8 patch on Neptune on the kernel's own table (`tests/fixtures/weather/carry.json`, 1,334 steps a pixel).
+  - Younger generation: within 0.82 km of the processor (limit 2 km).
+  - Older generation: within 27 km (limit a quarter of a 1024-wide face's pixel, 38 km). Its read place is its carried place drifted along the row for 21 days, so a float's 0.001° in latitude moves it by the jet's shear times the age.
+  - Goes red with the eddies' winds weakened by a tenth (seen: 7,600 km off).
+  - About 290 s on SwiftShader, most of it building the shader.
+  - SwiftShader's WebGPU loses its device on this shader, so the WebGPU half is skipped here. On a real GPU it is unchecked.
+  - `SSE_PROBE=probe` prints the places, winds and one step against the processor.
+- **Next:** the stirred still. Compose today's face from the source map with the two generations' weights, wire it into the true face, keep it in memory only, and rebuild it as time moves.

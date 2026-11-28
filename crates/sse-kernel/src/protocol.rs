@@ -617,6 +617,24 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// ER11a: bake a table for the renderer (`sse.table/1`, edits-reach
+    /// design section 11) from the physics in force: `table` is its id
+    /// (`"sse.light.disc"`), `subject` what it is baked for, and `tier` the
+    /// renderer's quality tier, which picks its size. Kept by id, subject,
+    /// size and physics hash. An unknown id lists the known ones. With
+    /// `values: false` the numbers are left out (the hash still names them).
+    Bake {
+        table: String,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        subject: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        values: Option<bool>,
+    },
     /// Light near a mass (XO2, XO3; exotic objects design 3.5): for each body
     /// and its far viewer, which bender applies, the sizes from the gravity
     /// blocks, the bend table's hash and layout, the feed (what falls onto
@@ -694,8 +712,8 @@ pub enum Request {
     /// address, mass_msun}` or a pair `{node: "pair", a, b, separation_au,
     /// eccentricity}` of nodes; the answer is its dated line from birth to
     /// `to_myr` (each star's phase, mass, radius and lobe fill; the orbit; the
-    /// transfer; common envelopes, mergers, strippings; what each planet in
-    /// `planets` `{address, host, semi_major_axis_au}` ends up doing).
+    /// transfer; common envelopes, mergers, strippings, supernovae; what each
+    /// planet in `planets` `{address, host, semi_major_axis_au}` ends up doing).
     AgePair {
         #[ts(type = "unknown")]
         node: serde_json::Value,
@@ -706,6 +724,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         planets: Option<Vec<serde_json::Value>>,
+        /// BX2: keys where on the orbit a death falls and its kick ("sse4" if left out).
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
     },
     /// Phase tables per kind of particle (K-e): each of `items` is
     /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
@@ -2928,6 +2950,7 @@ impl Request {
             Request::Weather { .. } => "weather",
             Request::ReadLight { .. } => "read_light",
             Request::ReadLightPaths { .. } => "read_light_paths",
+            Request::Bake { .. } => "bake",
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
@@ -3298,6 +3321,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_light",
             Cost::Light,
             "per body: one small flow run and about 2,000 Planck evaluations",
+        ),
+        o(
+            "bake",
+            Cost::Light,
+            "per table: one block evaluation per node (about 34,000 at the medium size), kept by subject, size and physics hash",
         ),
         o(
             "read_light_paths",
@@ -3955,6 +3983,13 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `bake`: `table` is `sse_physics::table::Table` (`sse.table/1`);
+    /// `kept` says it came from the kernel's cache.
+    Baked {
+        #[ts(type = "unknown")]
+        table: serde_json::Value,
+        kept: bool,
     },
     /// `read_light_paths`: each of `paths` is `sse_light::paths::LightPaths`;
     /// `bend_table`, when asked, is `{ hash, rows, cols, row_length, flat }`

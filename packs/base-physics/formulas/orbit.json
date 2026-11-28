@@ -878,6 +878,172 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.orbit.kick_jump",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass_after",
+     "letter": "ma"
+    },
+    {
+     "port": "distance",
+     "letter": "r"
+    },
+    {
+     "port": "speed_along",
+     "letter": "vt"
+    },
+    {
+     "port": "speed_out",
+     "letter": "vr"
+    },
+    {
+     "port": "kick_along",
+     "letter": "kt"
+    },
+    {
+     "port": "kick_out",
+     "letter": "kr"
+    },
+    {
+     "port": "kick_up",
+     "letter": "kz"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "semi_major_axis",
+     "letter": "anew"
+    },
+    {
+     "port": "eccentricity",
+     "letter": "enew"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "models": {},
+   "positive": [
+    {
+     "port": "mass_after",
+     "says": "mass"
+    },
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Blaauw, A. 1961, On the origin of the O- and B-type stars with high velocities (the run-away stars), and some related problems, Bull. Astron. Inst. Netherlands 15, 265: a circular pair losing more than half its mass at once comes apart. https://ui.adsabs.harvard.edu/abs/1961BAN....15..265B",
+    "Brandt, N. and Podsiadlowski, Ph. 1995, The effects of high-velocity supernova kicks on the orbital properties and sky distributions of neutron-star binaries, MNRAS 274, 461: the orbit after an instant mass loss and a kick, from the new speed at the same place. https://doi.org/10.1093/mnras/274.2.461"
+   ],
+   "shown": "1/a′ = 2/r − |v + k|² / (G M′),  e′² = 1 − r² ((v_t + k_t)² + k_z²) / (G M′ a′)",
+   "equation": {
+    "name": "The orbit just after a star's sudden death",
+    "formula": "ut = vt + kt\nur = vr + kr\nv2 = ut * ut + ur * ur + kz * kz\ninv = 2 / r - v2 / (G * ma)\nanew = 1 / inv\nh2 = r * r * (ut * ut + kz * kz)\nenew = sqrt(max(0, 1 - h2 * inv / (G * ma)))",
+    "inputs": {
+     "ma": {
+      "kind": "binary.total_mass",
+      "unit": "kg",
+      "name": "mass of the two together just after"
+     },
+     "r": {
+      "kind": "orbit.distance",
+      "unit": "m",
+      "name": "distance between them at the moment"
+     },
+     "vt": {
+      "kind": "orbit.velocity",
+      "unit": "m s-1",
+      "name": "one's speed relative to the other across the line between them, just before"
+     },
+     "vr": {
+      "kind": "orbit.velocity",
+      "unit": "m s-1",
+      "name": "one's speed relative to the other straight away from it, just before"
+     },
+     "kt": {
+      "kind": "binary.kick_velocity",
+      "unit": "m s-1",
+      "name": "kick along the orbital motion"
+     },
+     "kr": {
+      "kind": "binary.kick_velocity",
+      "unit": "m s-1",
+      "name": "kick straight away from the partner"
+     },
+     "kz": {
+      "kind": "binary.kick_velocity",
+      "unit": "m s-1",
+      "name": "kick out of the orbit's plane"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     }
+    },
+    "outputs": {
+     "anew": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "the new orbit's semi-major axis (negative: the two are no longer bound and fly apart)"
+     },
+     "enew": {
+      "kind": "orbit.eccentricity",
+      "unit": "1",
+      "name": "the new orbit's eccentricity (1 or more: unbound)"
+     }
+    },
+    "source": {
+     "text": "Brandt, N. and Podsiadlowski, Ph. 1995, MNRAS 274, 461",
+     "url": "https://doi.org/10.1093/mnras/274.2.461",
+     "where": "section 2"
+    },
+    "explain": {
+     "curious": "When a star explodes, most of its mass is gone in an instant and the leftover core is kicked. Its partner suddenly feels far less pull: the orbit stretches into an ellipse, or the two fly apart.",
+     "science": "Energy and angular momentum just after an instant mass loss, at the same place, with the remnant's kick added to the relative velocity the orbit had there. With no kick, a circular pair losing more than half its mass comes apart (Blaauw 1961). The same sum serves a planet round the exploding star. Unverified until the paper search returns."
+    },
+    "examples": [
+     {
+      "ma": 3e+31,
+      "r": 1500000000000.0,
+      "vt": 40000.0,
+      "vr": 0.0,
+      "kt": 0.0,
+      "kr": 0.0,
+      "kz": 0.0,
+      "anew": 1871788879332.9097,
+      "enew": 0.19862757143071144
+     },
+     {
+      "ma": 1.4e+31,
+      "r": 400000000000.0,
+      "vt": 60000.0,
+      "vr": 15000.0,
+      "kt": -50000.0,
+      "kr": 20000.0,
+      "kz": 10000.0,
+      "anew": 287773058906.5017,
+      "enew": 0.9386132108871553
+     },
+     {
+      "ma": 6e+30,
+      "r": 3000000000000.0,
+      "vt": 30000.0,
+      "vr": 0.0,
+      "kt": 200000.0,
+      "kr": 0.0,
+      "kz": 0.0,
+      "anew": -7608492522.983856,
+      "enew": 395.2962408042792
+     }
+    ]
+   }
   }
  ]
 }

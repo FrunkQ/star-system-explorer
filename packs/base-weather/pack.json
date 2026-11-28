@@ -534,7 +534,8 @@
       "eddy_area_share_per_octave": 0.25,
       "eddy_life_turns": 2.0,
       "fallback_particle_um": 5.0,
-      "source": "WS2 (design SSE4-stirred-clouds-design.md 3.3): the weather layer down to 1 bar is the mass the heat stirs (convention); eddies cover a quarter of each band's area per doubling of size, and one the shear does not tear lives two of its own turns; a deck whose particle radius the pack does not hold renews as if its particles were 5 um (all stand-ins, unverified). Their speed is the blocks sse.weather.eddy_power and sse.weather.cascade_speed, their fate in shear sse.weather.torn_by_shear."
+      "fallback_deep_mole_fraction": 0.00084,
+      "source": "WS2 (design SSE4-stirred-clouds-design.md 3.3): the weather layer down to 1 bar is the mass the heat stirs (convention); eddies cover a quarter of each band's area per doubling of size, and one the shear does not tear lives two of its own turns; a deck whose particle radius the pack does not hold renews as if its particles were 5 um; a giant whose air holds no share of its deepest deck's gas overturns as if it held solar water, 8.4e-4 by molecules from Asplund et al. 2009's O/H in hydrogen and helium (all stand-ins, unverified). Their speed is the blocks sse.weather.eddy_power and sse.weather.cascade_speed, their fate in shear sse.weather.torn_by_shear."
     },
     "references": [
      {

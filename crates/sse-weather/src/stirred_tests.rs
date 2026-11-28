@@ -152,3 +152,91 @@ fn ws4_a_storms_outline_keeps_its_shape_for_a_renewal() {
         assert!(worst < 0.1, "{w} {id}: a point's radius moved by {worst}");
     }
 }
+
+/// The renderer's reference (WS5): a carry table and the kernel's answers on it, so the renderer's carrying is held
+/// to this one. Neptune's whole table with a stirred patch (short renewal, so small), and Saturn's winds at sample
+/// places near its polygon and an oval, with the table cut to the two days round them.
+fn carry_reference() -> serde_json::Value {
+    let gs = base_settings();
+    let cs = climate();
+    let nep = world("Neptune");
+    let ln = layout(&gs, &nep);
+    let day = 1000.0;
+    let table = carry_table(&gs, &cs, &nep, &ln, day).expect("Neptune renews");
+    let patch = stirred_patch(&gs, &cs, &nep, &ln, day, -30.0, 40.0, 8000.0, 4);
+    let sat = world("Saturn");
+    let ls = layout(&gs, &sat);
+    let sday = 1000.0;
+    let carrier = Carrier::new(&gs, &sat, &ls, sday - 1.0, sday + 1.0);
+    let tau = renewal_s(&gs, &cs, &sat, &ls).unwrap() / DAY_S;
+    let st = carrier.table(&sat, sday, tau);
+    let mut places = vec![];
+    for lat in [
+        -82.0, -78.0, -75.0, -60.7, -45.0, 0.0, 30.0, 61.0, 75.0, 77.0, 80.0, 88.0,
+    ] {
+        for lon in [-170.0, -60.0, 0.0, 15.0, 100.0] {
+            places.push((lat, lon));
+        }
+    }
+    // Round Saturn's storms too, where the shield and the storm's own winds act.
+    for s in &st.storms {
+        for (dl, dn) in [(0.0, 0.0), (1.0, 0.5), (-2.0, 1.0), (3.0, -1.5)] {
+            places.push((
+                s.lat_deg + dn,
+                s.lon_deg + s.drift_deg_d * (sday - s.day_ref) + dl,
+            ));
+        }
+    }
+    let winds: Vec<serde_json::Value> = places
+        .iter()
+        .map(|&(lat, lon)| {
+            let w = carrier.wind(unit(lat, lon), sday);
+            let (e, n) = frame(lat, lon);
+            serde_json::json!({"lat": lat, "lon": lon, "east": dot(w, e), "north": dot(w, n)})
+        })
+        .collect();
+    serde_json::json!({
+        "about": "WS5: the kernel's carry tables and its answers on them, so the renderer's carrying (stirred-carry.ts) is held to sse-weather's stirred.rs. Regenerate with SSE_BLESS=1 cargo test -p sse-weather ws5_the_renderers_reference_is_current.",
+        "neptune": {"table": table, "patch": patch},
+        "saturn": {"table": st, "day": sday, "winds": winds},
+    })
+}
+
+#[test]
+fn ws5_the_renderers_reference_is_current() {
+    let path = format!(
+        "{}/../../tests/fixtures/weather/carry.json",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let text = serde_json::to_string(&carry_reference()).unwrap() + "\n";
+    if std::env::var("SSE_BLESS").is_ok() {
+        std::fs::write(&path, &text).unwrap();
+        return;
+    }
+    let want = std::fs::read_to_string(&path).expect("run with SSE_BLESS=1 once");
+    assert!(want.replace("\r\n", "\n") == text, "tests/fixtures/weather/carry.json is stale: run SSE_BLESS=1 cargo test -p sse-weather ws5_the_renderers_reference_is_current");
+}
+
+#[test]
+fn ws5_a_carry_table_reaches_back_two_renewals() {
+    let gs = base_settings();
+    let c = world("Jupiter");
+    let l = layout(&gs, &c);
+    let t = carry_table(&gs, &climate(), &c, &l, 500.0).expect("Jupiter renews");
+    assert!(
+        t.day - t.day0 >= 2.0 * t.renewal_days,
+        "{} {} {}",
+        t.day,
+        t.day0,
+        t.renewal_days
+    );
+    assert_eq!(t.generation_offset_days.len(), 2 * t.jets as usize);
+    assert!(t
+        .generation_offset_days
+        .iter()
+        .all(|o| *o >= 0.0 && *o < t.renewal_days));
+    assert_eq!(t.u_m_s.len(), 18001);
+    assert!(!t.storms.is_empty() && !t.eddies.is_empty());
+    // Every eddy alive at some moment of the span.
+    assert!(t.eddies.iter().all(|e| e.ends > t.day0 && e.born < t.day));
+}

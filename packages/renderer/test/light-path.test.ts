@@ -1,15 +1,16 @@
-// The light-path stage (XO4): the renderer's repeat of the kernel's light near a mass agrees with the kernel. The bend
-// table, the disc and its shift come from `read_light_paths` through a real kernel; the picture's rays must land where
-// the kernel's traced points landed, with the same shift and seen temperature, and the dimming note must give the
-// kernel's figure. The GPU pass is a transliteration of these functions (gpu-light-path.ts); the e2e measures it.
+// The light-path stage (XO4): the renderer's reads of the kernel's light near a mass agree with the kernel. The bend
+// table and the disc come from `read_light_paths` through a real kernel, and the disc's shift and glow from the table
+// the kernel bakes for it (`bake`, `sse.light.disc`; ER11a); the picture's rays must land where the kernel's traced
+// points landed, with the same shift and seen temperature within the table's stated sampling bound, and the dimming
+// note must give the kernel's figure. The GPU pass does the same reads (gpu-light-path.ts); the e2e measures it.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Session } from "../../ui-contract/src/session.ts";
-import { constant } from "../../ui-contract/src/index.ts";
+import { constant, type Json, type Table } from "../../ui-contract/src/index.ts";
 import { gmSeat } from "../../ui-contract/src/seat.ts";
 import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
-import { B_CRIT, bandMean, bandTable, BAND_SLOT, brightest, discOf, discShift, discTemperature, landing, LOG_T0, LOG_T1, marksOf, PICTURE_BANDS, RAMP, rayOf, rowOfB, traceRay, turnOf, uAt, type BendTable, type LightPathsRead } from "../src/light-path.ts";
+import { B_CRIT, bandMean, bandTable, BAND_SLOT, brightest, discAt, discOf, discSubject, landing, LOG_T0, LOG_T1, marksOf, PICTURE_BANDS, RAMP, rayOf, rowOfB, traceRay, turnOf, uAt, type BendTable, type LightPathsRead } from "../src/light-path.ts";
 import { holeSky, skyFrame, galactic } from "../src/hole-sky.ts";
 
 const root = new URL("../../../", import.meta.url);
@@ -20,12 +21,24 @@ const block = (file: string, id: string) => {
   return a.examples ?? a.equation?.examples ?? [];
 };
 
-test("the shift is the block's: every worked example of sse.light.disc_shift", () => {
+test("the baked shift is the block's: every worked example of sse.light.disc_shift read off the kernel's table", async () => {
   const ex = block("light.json", "sse.light.disc_shift");
   assert.ok(ex.length >= 2, "the block has worked examples");
-  for (const e of ex) {
-    const g = discShift(e.r! / e.rg!, e.b! / e.rg!, e.i!, e.al!);
-    assert.ok(Math.abs(g - e.g!) <= Math.max(e.tolerance ?? 1e-9, 1e-9) * Math.max(1, Math.abs(e.g!)), `g ${g} against ${e.g}`);
+  const k = nodeKernel();
+  try {
+    const base = JSON.parse(readFileSync(new URL("packs/base-physics/pack.json", root), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "holes", seed: "holes" }, [base]);
+    // A disc whose inner edge is the examples' radius, so they fall on the table's first column of nodes.
+    for (const e of ex) {
+      const r = e.r! / e.rg!;
+      const b = await s.bake({ table: "sse.light.disc", subject: { gravitational_radius_m: 1, rate_kg_s: 1, inner_m: r, outer_m: 100 * r } as unknown as Json });
+      assert.ok(b.ok, JSON.stringify(b));
+      const g = discAt(discOf(b.table)!, r, e.b! / e.rg!, e.i!, e.al!).g;
+      const bound = b.table.sampling.bound[0]!;
+      assert.ok(Math.abs(g - e.g!) <= bound * Math.abs(e.g!), `g ${g} against ${e.g} (bound ${bound})`);
+    }
+  } finally {
+    await k.close();
   }
 });
 
@@ -71,30 +84,38 @@ test("the picture repeats the kernel: its rays land where the kernel's traced po
     const table = r.bend_table as unknown as BendTable;
     const paths = r.paths as unknown as (LightPathsRead & { table: { hash: string } })[];
     assert.equal(paths.length, 3);
+    const discs: Table[] = [];
     assert.equal(table.flat.length, 256 * 260);
     for (const p of paths) {
       assert.equal(p.table.hash, table.hash, "the table handed over is the one the answer names");
-      const disc = discOf(p)!;
+      const baked = await s.bake({ table: "sse.light.disc", subject: discSubject(p) as unknown as Json, tier: "gpu-high" });
+      assert.ok(baked.ok, JSON.stringify(baked));
+      assert.ok(baked.table.sampling.within, JSON.stringify(baked.table.sampling));
+      discs.push(baked.table);
+      const disc = discOf(baked.table)!;
       assert.ok(disc, `${p.address} has a disc`);
+      const [gBound, t4Bound] = baked.table.sampling.bound as [number, number];
       const img = p.image!;
       for (const spot of [img.brightest, img.approaching, img.receding]) {
         const ray = traceRay(table, disc, spot.impact_rg, spot.image_angle_rad, img.tilt_rad);
         assert.equal(ray.kind, "disc", `${p.address}: the kernel's point is on the disc`);
         if (ray.kind !== "disc") continue;
         assert.equal(ray.order, spot.order);
-        const close = (a: number, b: number, what: string) => assert.ok(Math.abs(a - b) <= 1e-9 * Math.abs(b), `${p.address} ${what}: ${a} against ${b}`);
+        const close = (a: number, b: number, what: string, tol = 1e-9) => assert.ok(Math.abs(a - b) <= tol * Math.abs(b), `${p.address} ${what}: ${a} against ${b}`);
         close(ray.r, spot.r_rg, "landing distance");
-        close(ray.g, spot.shift, "shift");
-        close(ray.t_emitted_k, spot.t_emitted_k, "temperature");
-        close(ray.t_seen_k, spot.t_seen_k, "seen temperature");
+        // The shift and temperature are read off the baked table: within its stated bound (T is t4^¼, a quarter of it).
+        close(ray.g, spot.shift, "shift", gBound);
+        close(ray.t_emitted_k, spot.t_emitted_k, "temperature", t4Bound / 4);
+        close(ray.t_seen_k, spot.t_seen_k, "seen temperature", gBound + t4Bound / 4);
       }
       // The side ratio, from two of the picture's own rays.
       const a = traceRay(table, disc, img.approaching.impact_rg, img.approaching.image_angle_rad, img.tilt_rad);
       const b = traceRay(table, disc, img.receding.impact_rg, img.receding.image_angle_rad, img.tilt_rad);
-      if (a.kind === "disc" && b.kind === "disc") assert.ok(Math.abs((a.t_seen_k / b.t_seen_k) ** 4 / img.side_ratio - 1) < 1e-9, "side ratio");
+      if (a.kind === "disc" && b.kind === "disc") assert.ok(Math.abs((a.t_seen_k / b.t_seen_k) ** 4 / img.side_ratio - 1) < 4 * (2 * gBound + t4Bound / 2), "side ratio");
       // The dimming note: the kernel's figure at its viewer's tilt. The kernel integrates the visible band by Simpson's
       // rule at 64 steps a decade, ui-contract's bandRadiance by 48 trapezoids; they agree to 0.02% for the fed holes,
-      // and to 0.6% for the starved one, whose 800 K disc puts the visible band deep in Planck's tail.
+      // and to 0.6% for the starved one, whose 800 K disc puts the visible band deep in Planck's tail. The seen
+      // temperature is read off the desk tier's baked table (gpu-high), which keeps the starved hole within the same 1%.
       const br = brightest(table, disc, img.tilt_rad)!;
       assert.ok(img.exposure.times_sun_surface !== null, "the sheet's Sun is in force");
       assert.ok(Math.abs(br.times_sun_surface / img.exposure.times_sun_surface! - 1) < (img.brightest.t_seen_k > 1e4 ? 0.001 : 0.01), `${p.address}: dimmed ${br.times_sun_surface} against the kernel's ${img.exposure.times_sun_surface}`);
@@ -114,11 +135,11 @@ test("the picture repeats the kernel: its rays land where the kernel's traced po
     const turn = traceRay(table, null, 7, 0, 1);
     assert.ok(turn.kind === "sky" && turn.turn > 4 / 7);
     // A disc seen face on is the same all round: the direct image lands at one distance whatever the angle.
-    const d0 = discOf(paths[0]!)!;
+    const d0 = discOf(discs[0]!)!;
     const l1 = landing(table, 10, 0.3, 0, d0.rIn, d0.rOut)!;
     const l2 = landing(table, 10, 2.1, 0, d0.rIn, d0.rOut)!;
     assert.ok(Math.abs(l1.r - l2.r) < 1e-12);
-    assert.equal(discTemperature(d0.rg_m, d0.rate_kg_s, d0.rIn, d0.rIn), 0, "nothing glows at the inner edge");
+    assert.equal(discAt(d0, d0.rIn, 7, 1, 1).t_emitted_k, 0, "nothing glows at the inner edge");
   } finally {
     await k.close();
   }

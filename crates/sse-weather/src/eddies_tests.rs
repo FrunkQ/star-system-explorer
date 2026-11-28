@@ -162,3 +162,45 @@ fn ws3_a_deck_is_renewed_in_months() {
     assert!(d > 10.0 && d < 1000.0, "{d} days");
     eprintln!("Jupiter's deck renewed in {d:.0} days");
 }
+
+/// The renewal time, its fall-out half, and the decks, for a fixture world.
+fn renewal_parts(c: &Conditions) -> (f64, f64, String) {
+    let gs = base_settings();
+    let cs = &crate::scenario::settings().climate;
+    let l = layout(&gs, c);
+    let tau = renewal_s(&gs, cs, c, &l).expect("the deck renews") / DAY_S;
+    let fall = fall_out_s(&gs, cs, c, &l).expect("the deck falls out") / DAY_S;
+    (tau, fall, l.layers.join(", "))
+}
+
+#[test]
+fn ws3b_rising_air_renews_jupiters_deck_in_one_to_three_months() {
+    // Note SSE4-cloud-renewal-rising-air-note.md section 3: about 40 to 70 days (absolute, unverified).
+    let (tau, fall, deep) = renewal_parts(&world("Jupiter"));
+    eprintln!("Jupiter: renewed in {tau:.1} days, fall-out alone {fall:.1} days, decks {deep}");
+    assert!(tau > 30.0 && tau < 100.0, "{tau} days");
+    assert!(
+        tau < 0.8 * fall,
+        "overturning should matter on Jupiter: {tau} against {fall}"
+    );
+}
+
+#[test]
+fn ws3b_no_heat_from_below_renews_by_fall_out_alone() {
+    let mut c = world("Jupiter");
+    c.internal_flux_w_m2 = 0.0;
+    let (tau, fall, _) = renewal_parts(&c);
+    assert_eq!(tau, fall);
+}
+
+#[test]
+fn ws3b_uranus_barely_overturns() {
+    // Little heat from inside: its deck is renewed almost only by fall-out (note section 3).
+    let (tau, fall, deep) = renewal_parts(&world("Uranus"));
+    eprintln!("Uranus: renewed in {tau:.2} days, fall-out alone {fall:.1} days, decks {deep}");
+    assert!(tau > 0.95 * fall, "{tau} against {fall}");
+    assert!(
+        tau < fall,
+        "Uranus's small heat should still overturn a little: {tau} against {fall}"
+    );
+}

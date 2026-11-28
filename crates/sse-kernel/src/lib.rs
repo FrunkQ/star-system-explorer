@@ -11,6 +11,9 @@ mod adopt_bary_tests;
 mod atmos;
 #[cfg(test)]
 mod atmos_tests;
+mod bake;
+#[cfg(test)]
+mod bake_tests;
 #[cfg(test)]
 mod bary_tests;
 mod catalogue;
@@ -724,6 +727,9 @@ pub struct Kernel {
     reports: Vec<trust::PackReport>,
     /// `reference_tiles`' private Solar System, kept until the stack loads again.
     reference: Option<Universe>,
+    /// ER11a: tables baked for the renderer, kept by id, subject, size and
+    /// physics hash.
+    baked: bake::Cache,
 }
 
 impl Default for Kernel {
@@ -1259,6 +1265,7 @@ impl Kernel {
             climates: sse_climate::Cache::new(8),
             reports: vec![],
             reference: None,
+            baked: bake::Cache::default(),
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -4491,6 +4498,19 @@ impl Kernel {
                 bodies,
                 table,
             } => systems::read_light_paths(fixture.as_deref(), bodies, table.unwrap_or(false))?,
+            Request::Bake {
+                table,
+                subject,
+                tier,
+                values,
+            } => bake::bake(
+                &mut self.baked,
+                &self.physics,
+                &table,
+                subject,
+                tier,
+                values.unwrap_or(true),
+            )?,
             Request::ReadNebulae {
                 at_s,
                 seed,
@@ -4529,7 +4549,8 @@ impl Kernel {
                 to_myr,
                 z,
                 planets,
-            } => systems::age_pair(node, to_myr, z, planets, self.time.as_ref())?,
+                seed,
+            } => systems::age_pair(node, to_myr, z, planets, seed, self.time.as_ref())?,
             Request::ReadScattering { items } => systems::read_scattering(items)?,
             Request::ReadShadowLight { items } => {
                 systems::read_shadow_light(items, &self.observe.reference)?
