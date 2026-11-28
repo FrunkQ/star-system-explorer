@@ -22,6 +22,20 @@ const kept = new Map<string, TrueTexture>();
 let gpu: Promise<WebGPURenderer | null> | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 
+/** Whether the renderer's device is drawn in software. */
+function softwareDevice(r: WebGPURenderer): boolean {
+  const b = r.backend as { gl?: WebGL2RenderingContext; device?: { adapterInfo?: { vendor?: string; architecture?: string; description?: string } } | null };
+  let name = "";
+  if (b.gl) {
+    const ext = b.gl.getExtension("WEBGL_debug_renderer_info");
+    name = String(b.gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : b.gl.RENDERER) ?? "");
+  } else if (b.device?.adapterInfo) {
+    const i = b.device.adapterInfo;
+    name = `${i.vendor ?? ""} ${i.architecture ?? ""} ${i.description ?? ""}`;
+  }
+  return /swiftshader|llvmpipe|software/i.test(name);
+}
+
 function renderer(): Promise<WebGPURenderer | null> {
   gpu ??= (async () => {
     try {
@@ -29,6 +43,12 @@ function renderer(): Promise<WebGPURenderer | null> {
       canvas.width = canvas.height = 1;
       const r = new WebGPURenderer({ canvas, antialias: false });
       await r.init();
+      // A software device (SwiftShader, llvmpipe: no graphics card, as in CI) takes minutes over a still and holds
+      // the page's own drawing up meanwhile; it keeps the unstirred face (the processor's still is WS5b).
+      if (softwareDevice(r)) {
+        r.dispose();
+        return null;
+      }
       return r;
     } catch {
       return null;
