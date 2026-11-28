@@ -252,6 +252,9 @@ pub struct Stirring {
     pub eddy_life_turns: f64,
     /// A deck's particle radius where the pack holds none, µm (WS3, the renewal time).
     pub fallback_particle_um: f64,
+    /// The deepest deck's gas share of the air below its cloud where the world's air holds none, by
+    /// molecules (WS3b, the overturn time): solar water's.
+    pub fallback_deep_mole_fraction: f64,
     pub source: String,
 }
 

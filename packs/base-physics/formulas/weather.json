@@ -608,7 +608,7 @@
   },
   {
    "id": "sse.weather.plume_count",
-   "version": "1.0.0",
+   "version": "1.1.0",
    "cost": "trivial",
    "inputs": [
     {
@@ -628,6 +628,10 @@
     {
      "port": "plumes",
      "letter": "N"
+    },
+    {
+     "port": "convected_flux",
+     "letter": "Fc"
     }
    ],
    "params": [
@@ -675,10 +679,10 @@
    "references": [
     "Gierasch, P. J. et al. 2000, Observation of moist convection in Jupiter's atmosphere, Nature 403, 628: moist storms carrying Jupiter's internal heat (unverified). doi:10.1038/35001017"
    ],
-   "shown": "N = s F_int 4π a² / (F_p π r_p²), r_p = L_d / 2",
+   "shown": "N = s F_int 4π a² / (F_p π r_p²), r_p = L_d / 2; F_c = s F_int",
    "equation": {
     "name": "How many tall storms the heat from inside needs",
-    "formula": "rp = Ld / 2\nN = s * Fi * 4 * pi * a * a / (Fp * pi * rp * rp)",
+    "formula": "rp = Ld / 2\nN = s * Fi * 4 * pi * a * a / (Fp * pi * rp * rp)\nFc = s * Fi",
     "inputs": {
      "Fi": {
       "kind": "body.internal_heat_flux",
@@ -711,6 +715,11 @@
       "kind": "weather.plume_count",
       "unit": "1",
       "name": "plumes alive at once"
+     },
+     "Fc": {
+      "kind": "weather.convected_flux",
+      "unit": "W m-2",
+      "name": "heat the plumes carry up, over the whole sphere"
      }
     },
     "source": {
@@ -727,7 +736,209 @@
       "Fi": 5.4,
       "a": 70000000.0,
       "Ld": 1430000.0,
-      "N": 69.01070957015013
+      "N": 69.01070957015013,
+      "Fc": 5.4
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.weather.overturn_time",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "convected_flux",
+     "letter": "Fc"
+    },
+    {
+     "port": "latent_heat",
+     "letter": "L"
+    },
+    {
+     "port": "deep_mole_fraction",
+     "letter": "x"
+    },
+    {
+     "port": "condensate_molar_mass",
+     "letter": "Mg"
+    },
+    {
+     "port": "molar_mass",
+     "letter": "M"
+    },
+    {
+     "port": "deck_base_pressure",
+     "letter": "pb"
+    },
+    {
+     "port": "deck_scale_heights",
+     "letter": "th"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "fall_time",
+     "letter": "tf"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "overturn_rate",
+     "letter": "ru"
+    },
+    {
+     "port": "renewal_time",
+     "letter": "tau"
+    }
+   ],
+   "checks": [
+    {
+     "port": "convected_flux",
+     "min": 0,
+     "finite": true,
+     "says": "the heat the plumes carry must not be negative, got {}"
+    },
+    {
+     "port": "latent_heat",
+     "min": 0,
+     "finite": true,
+     "says": "the latent heat must be more than zero, got {}"
+    },
+    {
+     "port": "deep_mole_fraction",
+     "min": 0,
+     "finite": true,
+     "says": "the condensing gas's share must be more than zero, got {}"
+    },
+    {
+     "port": "condensate_molar_mass",
+     "min": 0,
+     "finite": true,
+     "says": "the condensing gas's molar mass must be more than zero, got {}"
+    },
+    {
+     "port": "molar_mass",
+     "min": 0,
+     "finite": true,
+     "says": "the air's molar mass must be more than zero, got {}"
+    },
+    {
+     "port": "deck_base_pressure",
+     "min": 0,
+     "finite": true,
+     "says": "the deck's base pressure must be more than zero, got {}"
+    },
+    {
+     "port": "deck_scale_heights",
+     "min": 0,
+     "finite": true,
+     "says": "the deck's thickness must be more than zero, got {}"
+    },
+    {
+     "port": "gravity",
+     "min": 0,
+     "finite": true,
+     "says": "gravity must be more than zero, got {}"
+    },
+    {
+     "port": "fall_time",
+     "min": 0,
+     "finite": true,
+     "says": "the fall time must be more than zero, got {}"
+    }
+   ],
+   "references": [
+    "Gierasch, P. J. et al. 2000, Observation of moist convection in Jupiter's atmosphere, Nature 403, 628: moist storms carrying Jupiter's internal heat (unverified). doi:10.1038/35001017",
+    "Ackerman, A. S. and Marley, M. S. 2001, Precipitating condensation clouds in substellar atmospheres, ApJ 556, 872: cloud as a balance of mixing and fall-out (unverified). doi:10.1086/321540"
+   ],
+   "shown": "ṁ = F_c / (L q), q = x M_g / M, Δm = p_b (1 − e^(−h)) / g; r = ṁ / Δm; τ = τ_fall / (1 + τ_fall r)",
+   "equation": {
+    "name": "How fast rising and sinking air renews a cloud deck",
+    "formula": "q = x * Mg / M\ndm = pb * (1 - exp(-th)) / g\nru = Fc / (L * q * dm)\ntau = tf / (1 + tf * ru)",
+    "inputs": {
+     "Fc": {
+      "kind": "weather.convected_flux",
+      "unit": "W m-2",
+      "name": "heat the plumes carry up, over the whole sphere"
+     },
+     "L": {
+      "kind": "material.latent_heat",
+      "unit": "J kg-1",
+      "name": "latent heat of the deepest condensate"
+     },
+     "x": {
+      "kind": "weather.deep_mole_fraction",
+      "unit": "1",
+      "name": "its share of the air below its cloud, by molecules"
+     },
+     "Mg": {
+      "kind": "material.molar_mass",
+      "unit": "kg mol-1",
+      "name": "its molar mass"
+     },
+     "M": {
+      "kind": "material.molar_mass",
+      "unit": "kg mol-1",
+      "name": "mean molar mass of the air"
+     },
+     "pb": {
+      "kind": "weather.deck_pressure",
+      "unit": "Pa",
+      "name": "pressure at the top deck's base"
+     },
+     "th": {
+      "kind": "weather.deck_scale_heights",
+      "unit": "1",
+      "name": "the deck's thickness in scale heights"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the cloud tops"
+     },
+     "tf": {
+      "kind": "weather.renewal_time",
+      "unit": "s",
+      "name": "how long the deck takes to fall out"
+     }
+    },
+    "outputs": {
+     "ru": {
+      "kind": "weather.overturn_rate",
+      "unit": "s-1",
+      "name": "how fast air crossing the deck replaces it"
+     },
+     "tau": {
+      "kind": "weather.renewal_time",
+      "unit": "s",
+      "name": "how long the deck lasts before it is made anew"
+     }
+    },
+    "source": {
+     "text": "Gierasch et al. 2000, Nature 403, 628",
+     "doi": "10.1038/35001017",
+     "where": "moist convection carrying the internal heat; its return flow sinks through the decks"
+    },
+    "explain": {
+     "curious": "Cloud is renewed two ways: its crystals fall out, and air rising through it brings new vapour while sinking air dries it out. The more heat a giant sends up from inside, the faster its clouds turn over, so Jupiter's are younger than Uranus's.",
+     "science": "Each kilogram of rising air carries the latent heat of the water it condenses lower down, so the heat the plumes carry fixes the air mass crossing each square metre. The deck's own air mass over that flux is its overturn time; the two losses add as rates."
+    },
+    "examples": [
+     {
+      "Fc": 5.4,
+      "L": 2500000.0,
+      "x": 0.002,
+      "Mg": 0.018,
+      "M": 0.00227,
+      "pb": 70000.0,
+      "th": 0.5,
+      "g": 24.79,
+      "tf": 9653034.426075874,
+      "ru": 1.225870791041297e-07,
+      "tau": 4421229.119813919
      }
     ]
    }

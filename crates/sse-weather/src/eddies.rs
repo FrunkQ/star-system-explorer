@@ -393,10 +393,69 @@ pub fn plumes_between(
     out
 }
 
-/// How long the top deck lasts before its particles fall out and it is made anew, s (`sse.weather.
-/// particle_fall_time`): the pack's particle radius for the deck's condensate (or the fallback), the data
-/// sheet's density of its solid, the air in the middle of the deck, and the deck's thickness.
+/// How long the top deck lasts before it is made anew, s. Two causes, added as rates
+/// (`sse.weather.overturn_time`, WS3b, note SSE4-cloud-renewal-rising-air-note.md):
+/// - its particles fall out (`sse.weather.particle_fall_time`): the pack's particle radius for the deck's
+///   condensate (or the fallback), the data sheet's density of its solid, the air in the middle of the deck,
+///   and the deck's thickness;
+/// - air rising and sinking through it replaces it: the heat the plumes carry (`sse.weather.plume_count`),
+///   carried as the latent heat of the deepest deck's condensate the climate knows, crossing the deck's own air mass.
 pub fn renewal_s(
+    gs: &GiantSettings,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    l: &GiantLayout,
+) -> Option<f64> {
+    let fall = fall_out_s(gs, cs, c, l)?;
+    // The deepest deck whose condensate the climate knows (an ice giant's ammonium hydrosulphide is not one).
+    let Some(deep) = l.layers.iter().find_map(|d| {
+        let name = d.trim_end_matches(" ice");
+        cs.substances.iter().find(|s| s.name == name)
+    }) else {
+        return Some(fall);
+    };
+    let x = c
+        .gases
+        .get(&deep.gas)
+        .copied()
+        .filter(|x| *x > 0.0)
+        .unwrap_or(gs.stirring.fallback_deep_mole_fraction);
+    let dh = gs.clouds.heights.as_ref()?;
+    let base = crate::giants::deck_base_bar(dh, cs, c, &l.layers)[2];
+    sse_physics::run(
+        "sse.weather.overturn_time",
+        &[
+            convected_flux(gs, c),
+            deep.latent_j_kg,
+            x,
+            deep.molar_kg,
+            c.mean_molar_kg,
+            base * BAR_PA,
+            dh.thickness_h,
+            c.gravity_m_s2,
+            fall,
+        ],
+    )
+    .ok()
+    .map(|v| v[1])
+}
+
+/// The heat a giant's plumes carry up, averaged over the sphere, W/m² (`sse.weather.plume_count`).
+pub fn convected_flux(gs: &GiantSettings, c: &Conditions) -> f64 {
+    let ld = deformation_m(gs, c, 45.0);
+    if c.internal_flux_w_m2 <= 0.0 || ld <= 0.0 {
+        return 0.0;
+    }
+    sse_physics::run(
+        "sse.weather.plume_count",
+        &[c.internal_flux_w_m2, c.radius_m, ld],
+    )
+    .map(|v| v[1])
+    .unwrap_or(0.0)
+}
+
+/// How long the top deck's particles take to fall through it, s (`sse.weather.particle_fall_time`).
+pub fn fall_out_s(
     gs: &GiantSettings,
     cs: &sse_climate::settings::ClimateSettings,
     c: &Conditions,
