@@ -5724,6 +5724,20 @@
         "range": null
       },
       {
+        "description": "heat given out when a kilogram of a substance condenses (J/kg)",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.latent_heat",
+        "range": null
+      },
+      {
         "description": "mass of one mole of a substance",
         "dim": [
           0,
@@ -9511,6 +9525,20 @@
         "range": null
       },
       {
+        "description": "heat a giant's tall storms carry up, averaged over the sphere (W/m²)",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.convected_flux",
+        "range": null
+      },
+      {
         "description": "an eddy's or storm's own core vorticity (s⁻¹)",
         "dim": [
           0,
@@ -9539,6 +9567,20 @@
         "range": null
       },
       {
+        "description": "a cloud deck's thickness in pressure scale heights",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deck_scale_heights",
+        "range": null
+      },
+      {
         "description": "a cloud deck's thickness (m)",
         "dim": [
           1,
@@ -9550,6 +9592,20 @@
           0
         ],
         "id": "weather.deck_thickness",
+        "range": null
+      },
+      {
+        "description": "a condensing gas's share of the air below its cloud, by molecules",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.deep_mole_fraction",
         "range": null
       },
       {
@@ -9648,6 +9704,20 @@
           0
         ],
         "id": "weather.layer_pressure",
+        "range": null
+      },
+      {
+        "description": "how fast air rising and sinking through a cloud deck replaces it (s⁻¹)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "weather.overturn_rate",
         "range": null
       },
       {
