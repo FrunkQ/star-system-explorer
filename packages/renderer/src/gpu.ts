@@ -16,6 +16,8 @@ import { BAKE_BUDGET, faceSize } from "./texture-ladder.ts";
 import { createTextureBaker } from "./texture-ladder-gpu.ts";
 import { makeShade, type ShadeState } from "./gpu-shade.ts";
 import type { Shade } from "./eclipse.ts";
+import { makeAurora, type AuroraGpu } from "./gpu-aurora.ts";
+import type { AuroraDraw } from "./aurora.ts";
 
 /** Clouds are drawn this far out (over the radius) until the weather op gives their height: a hair, so they do not fight the ground. */
 const CLOUD_LIFT = 1.002;
@@ -82,6 +84,11 @@ export interface GpuItem {
   flatten?: number;
   /** The world's north pole in camera space, for `flatten` when no `frame` is given. */
   pole?: Vec3;
+  /**
+   * True look: the world's aurora shells (aurora.ts `exposeAurora`, drawn by gpu-aurora.ts as on the Body globe), keyed
+   * by world; `pole` its spin pole in the drawing's frame (the plan's magnetic axis is in the globe's own frame, z the pole).
+   */
+  aurora?: { key: string; draw: AuroraDraw; pole: Vec3 };
   /**
    * True look: the bodies that may shadow this world, where they really are, in its drawn radii (eclipse.ts
    * `shadeFor`), and its star's angular radius. Its rings' shadow and its own on its rings need nothing more.
@@ -224,6 +231,8 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
   const fineGlobe = new SphereGeometry(1, 512, 256).rotateX(Math.PI / 2);
   const textures = new Map<string, DataTexture>();
   const shells = new Map<string, AirShell>();
+  // Aurora shells, one set per world (each holds its own light and centre).
+  const auroras = new Map<string, AuroraGpu>();
   // Clouds over a surface: lit like the ground, premultiplied, so the ground shows through where they are thin.
   const cloudMats = new Map<string, MeshStandardNodeMaterial>();
   const cloudMat = (c: NonNullable<GpuItem["clouds"]>, id: string) => {
@@ -580,6 +589,16 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
           am.renderOrder = 1;
           scene.add(am);
         }
+        if (o.light && it.aurora && !it.shines && it.emit === undefined) {
+          let au = auroras.get(it.aurora.key);
+          if (!au) auroras.set(it.aurora.key, (au = makeAurora()));
+          const t = o.light.at ? [o.light.at[0] - it.rel[0], o.light.at[1] - it.rel[1], o.light.at[2] - it.rel[2]] : (o.light.from ?? [0, 0, 1]);
+          const tl = Math.hypot(t[0]!, t[1]!, t[2]!) || 1;
+          const p = it.aurora.pole;
+          const turn = new Matrix4().compose(new Vector3(it.rel[0], it.rel[1], it.rel[2]), new Quaternion().setFromUnitVectors(zAxis, new Vector3(p[0], p[1], p[2]).normalize()), new Vector3(it.radius, it.radius, it.radius));
+          au.set(it.aurora.draw, [t[0]! / tl, t[1]! / tl, t[2]! / tl], turn, it.rel);
+          scene.add(au.group);
+        }
         if (o.light && it.rings) {
           const rs = ringSet(it.rings, it.id);
           const n = it.rings.normal;
@@ -694,6 +713,7 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
       torus.dispose();
       textures.forEach((t) => t.dispose());
       shells.forEach((x) => x.dispose());
+      auroras.forEach((x) => x.dispose());
       cloudMats.forEach((m) => m.dispose());
       meshGeoms.forEach((g) => g.dispose());
       faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));

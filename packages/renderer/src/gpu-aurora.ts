@@ -7,7 +7,7 @@
 // The globe is unit-sized at the origin (rendering rule 3); shells carry the globe's turn.
 import { AdditiveBlending, DoubleSide, Group, Matrix4, Mesh, SphereGeometry, Vector3 } from "three";
 import { MeshBasicNodeMaterial } from "three/webgpu";
-import { abs, acos, clamp, dot, exp, float, max, min, normalize, positionLocal, positionWorld, select, smoothstep, uniform, vec3, vec4 } from "three/tsl";
+import { abs, acos, clamp, dot, exp, float, max, min, mix, normalize, positionLocal, positionWorld, select, smoothstep, uniform, vec3, vec4 } from "three/tsl";
 import type { AuroraDraw } from "./aurora.ts";
 
 /** Most shells drawn at once (two hemispheres share one shell). */
@@ -15,8 +15,13 @@ export const AURORA_SHELLS_MAX = 8;
 
 export interface AuroraGpu {
   group: Group;
-  /** Set the shells for this frame: the plan under its exposure, the light's direction and the globe's turn. */
-  set(d: AuroraDraw | null, light: [number, number, number], turn: Matrix4): void;
+  /**
+   * Set the shells for this frame: the plan under its exposure, the light's direction and the globe's turn. `at`, for
+   * a world drawn away from the origin in a perspective view (system True, camera at the origin): its centre, so the
+   * day side and the path through the shell are worked out from it and toward the camera. Left out, the globe sits
+   * at the origin and is seen along z (the Body globe).
+   */
+  set(d: AuroraDraw | null, light: [number, number, number], turn: Matrix4, at?: [number, number, number]): void;
   dispose(): void;
 }
 
@@ -26,6 +31,8 @@ export function makeAurora(): AuroraGpu {
   const geo = new SphereGeometry(1, 192, 96);
   const shells: { mesh: Mesh; mat: MeshBasicNodeMaterial; set(l: AuroraDraw["layers"][number], axis: AuroraDraw["axis"]): void }[] = [];
   const uL = uniform(new Vector3(0, 0, 1));
+  const uCentre = uniform(new Vector3(0, 0, 0));
+  const uPersp = uniform(0);
   for (let i = 0; i < AURORA_SHELLS_MAX; i++) {
     const uAxis = uniform(new Vector3(0, 0, 1));
     const uColat = uniform(0.3);
@@ -42,10 +49,11 @@ export function makeAurora(): AuroraGpu {
     const t = c.sub(uColat).div(sigma);
     const ring = select(uDiffuse.greaterThan(0.5), float(1), exp(t.mul(t).mul(-0.5)));
     // Daylight: the shell point's sun, faded over a few degrees of the terminator.
-    const nW = normalize(positionWorld);
+    const nW = normalize(positionWorld.sub(uCentre));
     const night = smoothstep(float(0.05), float(-0.12), dot(nW, uL));
-    // Path through the layer: 1 / cos of the view angle (the camera looks along −z), capped at the limb's chord.
-    const cosv = max(abs(nW.z), float(1e-4));
+    // Path through the layer: 1 / cos of the view angle (toward the camera; along z for the Body globe), capped at the limb's chord.
+    const view = mix(vec3(0, 0, 1), normalize(positionWorld.negate()), uPersp);
+    const cosv = max(abs(dot(nW, view)), float(1e-4));
     const path = min(float(1).div(cosv), uChord);
     // Each of the two surfaces gives its half of the layer's column.
     const k = ring.mul(night).mul(path).mul(0.5);
@@ -71,8 +79,10 @@ export function makeAurora(): AuroraGpu {
   }
   return {
     group,
-    set(d, light, turn) {
+    set(d, light, turn, at) {
       uL.value.set(light[0], light[1], light[2]);
+      uCentre.value.set(at?.[0] ?? 0, at?.[1] ?? 0, at?.[2] ?? 0);
+      uPersp.value = at ? 1 : 0;
       shells.forEach((s, i) => {
         const l = d?.layers[i];
         s.mesh.visible = !!l;

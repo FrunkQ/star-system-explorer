@@ -4,6 +4,7 @@
 // the view keeps only where the body is and how big. Pure, apart from a cache of ring profiles by key.
 import { smallBodyColour, smallBodyMesh, type SmallFigure } from "./small-body.ts";
 import type { GpuItem } from "./gpu.ts";
+import type { AuroraDraw } from "./aurora.ts";
 import type { Vec3 } from "./frames.ts";
 import { kernelProfile, ringProfile, type KernelRing, type RingBand, type RingLookData } from "./rings.ts";
 import type { TrueTexture } from "./true-look.ts";
@@ -57,12 +58,14 @@ export interface TrueBody {
   ring_kernel?: KernelRing;
   /** How much its spin flattens it (true-shape.ts `readTrueShape`, TA6). */
   flatten?: number;
+  /** Its aurora under the view's exposure (aurora.ts `exposeAurora`), drawn as shells round its pole. */
+  aurora?: AuroraDraw | null;
   /** Its seas' glint, as the kernel works it out (weather op `glint`: slope variance and reflectance), when read. */
   sea?: { slope_variance?: number; normal_reflectance?: number };
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air" | "glow" | "plumes" | "flatten" | "pole" | "glint">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air" | "glow" | "plumes" | "flatten" | "pole" | "glint" | "aurora">;
 
 // Whether a surface has any liquid ground, worked out once per picture.
 const wetSeen = new WeakMap<object, boolean>();
@@ -165,6 +168,7 @@ export function trueLook(b: TrueBody): TrueLook {
     const brightness = plumeBrightness(p.facts, cosPhase);
     if (brightness > 0) out.plumes = { points: turnToPole(plumeKept(b.key, p.facts, b.radius_m), b.pole), brightness };
   }
+  if (!b.star && b.aurora?.layers.length) out.aurora = { key: `${b.key}|aurora`, draw: b.aurora, pole: b.pole };
   if (b.figure && !b.star) {
     out.mesh = smallBodyMesh(b.figure, b.key);
     if (!b.surface) out.colour = smallBodyColour(b.figure);

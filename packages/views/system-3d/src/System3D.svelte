@@ -17,7 +17,7 @@
 -->
 <script lang="ts">
   import { onDestroy, tick, untrack } from "svelte";
-  import { closeMin, outlineRadius, haloReachDeg, FACE_STEPS, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, beltAt, beltParticles, drawStarNow, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, type CometActivity } from "../../../renderer/src/index.ts";
+  import { closeMin, outlineRadius, haloReachDeg, FACE_STEPS, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, shadeFor, umbraKey, BELT_DUST, beltAt, beltParticles, drawStarNow, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun, cometNote, cometTails, comaPicture, ionColour, isActive, showing, hexLinear, linearCss, exposeAurora, type AuroraDraw, type AuroraPlan, type CometActivity } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
   import { clockAt, constant, motionWords, phaseAt, pictureSpan, SEEN_ELEVATION, thermalColour, tooFast, type PictureClock, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
@@ -38,6 +38,7 @@
     trueLook = false,
     surfaces = new Map(),
     plumes = new Map(),
+    aurorae = new Map(),
     airs = new Map(),
     umbras = new Map(),
     starColour = "",
@@ -74,6 +75,8 @@
     surfaces?: ReadonlyMap<string, TrueTexture>;
     /** True look: each world's plume facts by body id (the kernel's surface record, plumes.ts), when it has any. */
     plumes?: ReadonlyMap<string, PlumeFacts>;
+    /** True look: each world's aurora plan by body id (renderer true-aurora.ts), drawn as shells in Visible. */
+    aurorae?: ReadonlyMap<string, { plan: AuroraPlan; radius_m: number }>;
     /** True look: each world's air, by body id (renderer true-air.ts `readTrueFace`): its clouds alone, drawn over its ground, and its air's rim (VP-A3, VP-A4). */
     airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number; sea?: { slope_variance: number; normal_reflectance: number } }>;
     /** True look: the light each body's air bends into its shadow on another (renderer eclipse-read.ts `readUmbras`), by `umbraKey(caster, receiver)`; none, a black umbra. */
@@ -514,6 +517,16 @@
     }
     return st?.t_k && st.radius_m && top.a_m ? { t_k: st.t_k, r_m: st.radius_m, d_m: top.a_m } : null;
   }
+  // Aurorae (aurora.ts): the world's plan under the view's exposure, its star's light at the top of its air as the
+  // point light's strength (3) gives it, so the shells and the lit ground share one exposure; Long lifts faint light.
+  function auroraOf(b: Body3D): AuroraDraw | null {
+    const a = aurorae.get(b.id);
+    const day = daylightOf(b);
+    if (!a || !day) return null;
+    const flux = constant("sigma_SB") * day.t_k ** 4 * (day.r_m / day.d_m) ** 2;
+    return exposeAurora(a.plan, a.radius_m, long ? "long" : "eye", 3, flux);
+  }
+  const auroraNote = $derived(isTrue && trueBand === "visible" && !mag ? shown.filter((b) => aurorae.has(b.id)).map((b) => `${b.name}: ${aurorae.get(b.id)!.plan.note}`).join(" ") : "");
   const neg = (v: Vec3): Vec3 => [-v[0], -v[1], -v[2]];
   // From a world toward its light, camera-relative (as lightFor gives it).
   function lightOf(b: Body3D): Vec3 {
@@ -767,7 +780,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: b.axes ? b.axes[1] : poleOf(b.tilt_rad), ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : b.figure ? { figure: b.figure } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.ring_kernel ? { ring_kernel: b.ring_kernel } : {}) } : {}), pole: b.axes ? b.axes[1] : poleOf(b.tilt_rad), ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : b.figure ? { figure: b.figure } : {}), ...(visible && !mag ? { aurora: auroraOf(b) } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(b.axes && !isStar ? { frame: spinFrame(b.axes) } : {}), ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });
@@ -1071,6 +1084,7 @@
     {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
     {#if isTrue && using === "gpu" && ringNote && trueBand === "visible" && !mag}<span data-true-rings={ringed.length} data-true-belts={beltHazes.length}>{ringNote}</span>{/if}
     {#if using === "gpu" && plumeNotes}<span data-true-plumes>{plumeNotes}</span>{/if}
+    {#if isTrue && using === "gpu" && auroraNote}<span data-true-aurorae={shown.filter((b) => aurorae.has(b.id)).length}>{auroraNote}</span>{/if}
     {#if isTrue && using === "gpu" && smallNote && trueBand === "visible" && !mag}<span data-true-small={smallShown.length} data-true-comets={cometLooks.length}>{smallNote}</span>{/if}
     {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
     {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
