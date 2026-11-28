@@ -11,7 +11,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { PAINT_SWATCHES, budgets, buildLayout, driveFacts, freePoints, fromLayout, designShip, readPropellants, shipViews, startBuilder, type BuildRecipe, type BuiltPart, type BuilderMarker, type BuilderScene, type DesignRules, type DesignShip, type FreePoint, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
-  import { eraOf, paletteByEra, sayNumber, shipRecordOf, verdictWords, type NavShip, type Part, type PartsPalette, type ShipAtWorld, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { eraOf, paletteByUse, sayNumber, shipRecordOf, verdictWords, type NavShip, type Part, type PartsPalette, type ShipAtWorld, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
     ctx,
@@ -46,13 +46,28 @@
   const read = (path: string) => fetch(new URL(path, document.baseURI)).then((r) => r.json());
   $effect(() => {
     void Promise.all([read(SHIPS_PACK), read(PARTS_PACK)])
-      .then(([s, p]: [{ provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }, { provides: { other: { palette: PartsPalette } } }]) => {
+      .then(([s, p]: [{ provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }, { provides: { other: { palette: PartsPalette; examples?: Example[] } } }]) => {
         pack = { rules: s.provides.other.ship_design, styles: s.provides.other.ship_styles };
         palette = p.provides.other.palette;
+        examples = p.provides.other.examples ?? [];
       })
       .catch((e) => (missing = `The parts could not be read (${e instanceof Error ? e.message : String(e)}).`));
   });
 
+  // Example ships assembled from parts (the parts pack's, as the mock-up's): each is only a recipe, opened as it is.
+  type Example = { id: string; name: string; about: string; year?: number; build: BuildRecipe };
+  let examples = $state<Example[]>([]);
+  function openExample(e: Example) {
+    push();
+    recipe = structuredClone($state.snapshot(e.build) as BuildRecipe);
+    notes = [];
+    opened = `example:${e.id}`;
+    selected = null;
+    placing = null;
+    if (e.year !== undefined && e.year > year) year = e.year;
+    reframe++;
+    toast(`${e.name} opened. Every part can be picked, resized, repainted or removed.`);
+  }
   const blank = (name: string): BuildRecipe => ({ format: "sse.build/1", name, parts: [] });
   let recipe = $state<BuildRecipe>(untrack(() => saved ?? blank(ship?.name ?? "New ship")));
   let opened = $state<string | null>(untrack(() => (saved ? "saved" : null)));
@@ -71,9 +86,15 @@
     const got = fromLayout(old, s, palette);
     untrack(() => ((recipe = got.recipe), (notes = got.notes), (opened = key), (selected = null), reframe++));
   });
+  // The tanks' propellants, read from the kernel's sheet. Only the latest ask lands (an older answer arriving late must
+  // not overwrite it).
+  let fuelAsk = 0;
   $effect(() => {
     const f = recipe.fuels ?? [];
-    void readPropellants(ctx.session, f).then((x) => (fuels = x)).catch(() => (fuels = {}));
+    const id = ++fuelAsk;
+    void readPropellants(ctx.session, f)
+      .then((x) => id === fuelAsk && (fuels = x))
+      .catch(() => id === fuelAsk && (fuels = {}));
   });
 
   // --- what is being worked on ---
@@ -91,6 +112,9 @@
   const style = $derived(pack ? (pack.styles.spine ?? Object.values(pack.styles)[0]!) : null);
   const layout = $derived(pack && palette ? buildLayout(recipe, palette, fuels, pack.rules) : null);
   const facts = $derived(layout ? driveFacts(layout.record) : null);
+  // A part with no mass yet leaves the build's masses unknown: delta-v and push are said as needing them.
+  const massKnown = $derived(!!layout && !layout.totals.unmassed.length);
+  const needsMass = $derived(layout?.totals.unmassed.length ? `needs part masses (${layout.totals.unmassed.length > 2 ? `${layout.totals.unmassed.slice(0, 2).join(", ")} and more` : layout.totals.unmassed.join(", ")})` : "");
   const free = $derived(layout && placing ? freePoints(recipe, layout.placed, { sym }) : []);
   const partOf = (id: string) => palette?.parts.find((p) => p.id === id) ?? null;
   const placingPart = $derived(placing ? partOf(placing) : null);
@@ -285,7 +309,7 @@
     for (const b of recipe.parts) if (b.paint?.startsWith("#")) paints[b.key] = b.paint;
     const frame = reframe !== lastFrame;
     lastFrame = reframe;
-    s.show({ layout: l, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", frame });
+    s.show({ layout: l, placed: l.placed, name: recipe.name, ghost: hover !== null ? "ghost" : null, selected: groupOf(selected), paints, markers, hover, wire: viewStyle === "wire", frame });
     s.draw({ yaw_deg: cam.yaw, pitch_deg: cam.pitch, zoom: cam.zoom, pan: cam.pan }, box.w, box.h);
   });
   // "Seen from": a short turn to the preset; a drag makes it Free.
@@ -431,9 +455,9 @@
     if ((e.ctrlKey || e.metaKey) && e.key === "z") (doUndo(), e.preventDefault());
   }
 
-  // --- the parts list, by era, every part shown; those not yet flown by the year are faint ---
+  // --- the parts list, by what parts are for (the mock-up's groups), every part shown; those not yet flown by the year are faint ---
   const fromYear = (p: Part) => p.year ?? (palette?.eras ? eraOf(p, palette.eras)?.from : undefined);
-  const groups = $derived(palette ? paletteByEra(palette, 1e6) : []);
+  const groups = $derived(palette ? paletteByUse(palette) : []);
   const later = (p: Part) => (fromYear(p) ?? -Infinity) > year;
   const predicted = (p: Part) => (fromYear(p) ?? -Infinity) > NOW;
   const dryOf = (p: Part) => p.figures.dry_t?.v ?? p.figures.mass_t?.v;
@@ -547,9 +571,9 @@
       <label class="namefield"><span class="lbl">Name</span><input value={recipe.name} maxlength="40" aria-label="Ship name" oninput={(e) => (recipe = { ...recipe, name: e.currentTarget.value })} data-name /></label>
       <label class="era"><span class="lbl">Parts from</span><input type="range" min="1940" max="2250" step="1" bind:value={year} aria-label="Parts flown by this year" data-year /><b data-year-out>{year}</b>{#if year > NOW}<span class="tag">predicted parts</span>{/if}</label>
       <div class="grow"></div>
-      {#if catalogue.length && onopen}<button type="button" class="btn" onclick={() => (pop = pop === "ships" ? null : "ships")} data-example-ships>Example ships ▾</button>{/if}
+      {#if (catalogue.length || examples.length) && onopen}<button type="button" class="btn" onclick={() => (pop = pop === "ships" ? null : "ships")} data-example-ships>Example ships ▾</button>{/if}
       {#if onkeep}<button type="button" class="btn" onclick={() => onkeep?.($state.snapshot(recipe) as BuildRecipe)} disabled={!recipe.parts.length} data-keep-build>Keep with the ship</button>{/if}
-      <button type="button" class="btn primary" onclick={whatCanItDo} disabled={asking || !layout?.pieces.length} data-what-can-it-do>{asking ? "Asking..." : "What can it do?"}</button>
+      <button type="button" class="btn primary" onclick={whatCanItDo} disabled={asking || !layout?.pieces.length || !massKnown} title={massKnown ? undefined : `What it can do ${needsMass}`} data-what-can-it-do>{asking ? "Asking..." : "What can it do?"}</button>
       <button type="button" class="btn icon" onclick={fullscreen} title="Full screen" aria-label="Full screen">⛶</button>
     </header>
 
@@ -564,7 +588,7 @@
         </div>
         {#each groups as g (g.label)}
           <div class="grp">
-            <span class="lbl" title={g.era?.about ?? "Generic shapes: geometry only, any year"}>{g.label}{g.era?.from !== undefined ? ` · ${g.era.from}${g.era.to !== undefined ? `–${g.era.to}` : " on"}` : ""}</span>
+            <span class="lbl">{g.label}</span>
             {#each g.parts as p (p.id)}
               {@const yr = fromYear(p)}
               {@const dry = dryOf(p)}
@@ -666,8 +690,13 @@
             </div>
           {/each}
         {:else if layout && facts}
-          <div class="bar fig"><div class="t"><span>Δv</span></div><div class="left" data-dv>{kms(facts.delta_v_m_s)}</div></div>
-          <div class="bar fig"><div class="t"><span>Mass full / empty</span></div><div class="left">{t(layout.record.wet_t)} / {t(layout.record.dry_t)}</div></div>
+          {#if massKnown}
+            <div class="bar fig"><div class="t"><span>Δv</span></div><div class="left" data-dv>{kms(facts.delta_v_m_s)}</div></div>
+            <div class="bar fig"><div class="t"><span>Mass full / empty</span></div><div class="left">{t(layout.record.wet_t)} / {t(layout.record.dry_t)}</div></div>
+          {:else}
+            <div class="bar fig" data-needs-mass title={needsMass}><div class="t"><span>Δv and mass</span></div><div class="left muted">needs part masses</div></div>
+            <div class="bar fig"><div class="t"><span>Propellant</span></div><div class="left">{t(layout.totals.propellant_t)}</div></div>
+          {/if}
           <div class="bar fig"><div class="t"><span>Tank room</span></div><div class="left">{m3(Object.values(layout.totals.tank_m3).reduce((a, v) => a + v, 0))}</div></div>
           <div class="bar fig"><div class="t"><span>Room aboard</span></div><div class="left">{m3(layout.totals.habitat_m3)}</div></div>
           <div class="bar fig"><div class="t"><span>Radiator</span></div><div class="left">{sayNumber(layout.totals.radiator_m2, 0, { decimals: 0 })} m²</div></div>
@@ -676,7 +705,7 @@
       </div>
       <div class="shop">
         {#if shopping.length}<span><b>Parts you should use:</b> {shopping.join(" · ")}</span>{/if}
-        {#if layout && facts}<span>{#if bars.length}Δv <b data-dv>{kms(facts.delta_v_m_s)}</b> · {/if}Mass about <b>{t(layout.record.wet_t)}</b> · thrust to weight at Earth <b>{sayNumber(layout.record.accel_g, 0, { decimals: 2 })}</b></span>{/if}
+        {#if layout && facts && massKnown}<span>{#if bars.length}Δv <b data-dv>{kms(facts.delta_v_m_s)}</b> · {/if}Mass about <b>{t(layout.record.wet_t)}</b> · thrust to weight at Earth <b>{sayNumber(layout.record.accel_g, 0, { decimals: 2 })}</b></span>{:else if layout && needsMass}<span data-needs-mass>Δv, mass and push: {needsMass}, until their sizing blocks read them</span>{/if}
         <button type="button" class="btn small notesbtn" onclick={() => (pop = pop === "notes" ? null : "notes")} data-notes>{allNotes.length ? `${allNotes.length} note${allNotes.length > 1 ? "s" : ""} to look at` : "No warnings"}</button>
       </div>
     </footer>
@@ -688,6 +717,9 @@
           <h3>Example ships</h3>
           <div class="sub">Each opens as the same parts, so you can pull any of them apart.</div>
           <div class="ships">
+            {#if examples.length}<span class="lbl">Assembled from parts</span>{/if}
+            {#each examples as e (e.id)}<button type="button" onclick={() => ((pop = null), openExample(e))} data-example-ship={e.id}><b>{e.name}</b><span>{e.about}{e.year !== undefined ? ` · ${e.year}` : ""}</span></button>{/each}
+            {#if catalogue.length}<span class="lbl">From the catalogue (converted from the old layout)</span>{/if}
             {#each catalogue as c (c.id)}<button type="button" onclick={() => ((pop = null), onopen?.(c.id))} data-catalogue-ship={c.id}><b>{c.name}</b>{#if c.drive}<span>{c.drive}</span>{/if}</button>{/each}
             <button type="button" onclick={() => ((pop = null), onopen?.(""))} data-catalogue-ship=""><b>Nothing</b><span>a blank build</span></button>
           </div>
@@ -760,6 +792,8 @@
   .symrow { display: flex; align-items: center; gap: 6px; padding: 4px 12px 10px; flex-wrap: wrap; }
   .grp { padding: 4px 8px 8px; }
   .grp > .lbl { padding: 6px 4px 4px; display: block; }
+  .pop .ships > .lbl { display: block; padding: 8px 2px 2px; }
+  .left.muted { color: var(--b-muted); font-size: 0.9em; }
   .part { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 5px 6px; touch-action: none; transition: background 0.12s, border-color 0.12s; }
   .part:hover { background: var(--b-raised); border-color: var(--b-line); }
   .part.armed { border-color: var(--b-accent); background: color-mix(in srgb, var(--b-accent) 12%, var(--b-raised)); }

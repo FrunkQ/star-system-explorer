@@ -251,6 +251,9 @@ export interface BuildTotals {
   across_m: number;
   /** What the sum could not count, in words. */
   missing: string[];
+  /** Parts with no mass yet, when nothing carried over stands in for them: the build's masses, and so its delta-v and
+   * push, are not known (said as "needs part masses", never a number from a missing mass). */
+  unmassed: string[];
 }
 
 const kg = (p: Part): number | undefined => {
@@ -270,7 +273,7 @@ export function fuelDensity(store: Propellants, fuel: string): number | undefine
 }
 
 export function buildTotals(r: BuildRecipe, placed: readonly PlacedPart[], store: Propellants): BuildTotals {
-  const t: BuildTotals = { dry_t: 0, propellant_t: 0, tank_m3: {}, habitat_m3: 0, cargo_m3: 0, radiator_m2: 0, solar_m2: 0, electric_w: 0, thrust_n: 0, exhaust_km_s: 0, advances: [], length_m: 0, across_m: 0, missing: [] };
+  const t: BuildTotals = { dry_t: 0, propellant_t: 0, tank_m3: {}, habitat_m3: 0, cargo_m3: 0, radiator_m2: 0, solar_m2: 0, electric_w: 0, thrust_n: 0, exhaust_km_s: 0, advances: [], length_m: 0, across_m: 0, missing: [], unmassed: [] };
   const fuel0 = r.fuels?.[0] ?? "propellant";
   let thrustV = 0;
   const noMass: string[] = [];
@@ -311,6 +314,7 @@ export function buildTotals(r: BuildRecipe, placed: readonly PlacedPart[], store
     t.dry_t += r.structure_t;
     t.missing.push(`${r.structure_t >= 10 ? Math.round(r.structure_t) : Math.round(r.structure_t * 10) / 10} t of structure is carried over from the catalogue record it was opened from, until the parts' own masses are read.`);
   }
+  if (noMass.length && !r.structure_t) t.unmassed = [...new Set(noMass)];
   if (noMass.length && !r.structure_t) t.missing.push(`No mass given for ${[...new Set(noMass)].join(", ")}: counted as nothing until their sizing blocks read them (tank walls: sse.ship.tank_wall_mass).`);
   if (t.advances.length) t.missing.push(`${[...new Set(t.advances)].join(", ")}: the drive's figures are the tech advance's at the setting's level, which this sum does not read yet.`);
   const bodies = buildPieces(placed);

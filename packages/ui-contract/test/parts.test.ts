@@ -7,7 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { clips, flownBy, partWarnings, shapeVolume, stretchPart, type PartsPalette, type Part } from "../src/parts.ts";
+import { clips, flownBy, paletteByUse, partWarnings, shapeVolume, stretchPart, type PartsPalette, type Part } from "../src/parts.ts";
 
 const PACK = JSON.parse(readFileSync(new URL("../../../packs/base-parts/pack.json", import.meta.url), "utf8"));
 const PAL = PACK.provides.other.palette as PartsPalette;
@@ -113,4 +113,17 @@ test("the era reading keeps what had flown by then, and every generic part", () 
   assert.ok(in1970.some((p) => p.id === "tank-4m"), "generic parts have no year and are always offered");
   const parts: Part[] = flownBy(PAL.parts, 1941);
   assert.ok(parts.every((p) => p.year === undefined));
+});
+
+test("the parts list groups the palette by what parts are for, every part once, shapes first then by first flight", () => {
+  const groups = paletteByUse(PAL);
+  assert.deepEqual(groups.map((g) => g.label), ["Crew and rooms", "Tanks and stages", "Drives", "Power and heat", "Structure", "Sensors and dishes"]);
+  const all = groups.flatMap((g) => g.parts.map((p) => p.id));
+  assert.equal(all.length, PAL.parts.length);
+  assert.equal(new Set(all).size, PAL.parts.length);
+  const drives = groups.find((g) => g.label === "Drives")!.parts;
+  assert.ok(drives.every((p) => p.kind === "engine"));
+  const years = drives.filter((p) => p.year !== undefined).map((p) => p.year!);
+  assert.deepEqual(years, [...years].sort((a, b) => a - b));
+  assert.equal(groups[0]!.parts[0]!.year, undefined, "a shape with no year leads its group");
 });

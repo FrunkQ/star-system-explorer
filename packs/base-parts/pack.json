@@ -4635,6 +4635,408 @@
       ]
      },
      {
+      "id": "crew-capsule",
+      "name": "crew capsule",
+      "kind": "habitat",
+      "alone": true,
+      "figures": {
+       "volume_m3": {
+        "v": 22.349458,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "its profile turned about its axis"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         3.5,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "port1",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         1.75,
+         0.0,
+         1.4
+        ],
+        "facing": [
+         0,
+         0.0,
+         1.0
+        ]
+       },
+       {
+        "id": "port2",
+        "place": "port",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         1.75,
+         0.0,
+         -1.4
+        ],
+        "facing": [
+         0,
+         0.0,
+         -1.0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 3.5,
+       "radius_m": 2.0,
+       "profile": [
+        [
+         0,
+         1
+        ],
+        [
+         0.1,
+         1
+        ],
+        [
+         0.9,
+         0.36
+        ],
+        [
+         1,
+         0.3
+        ]
+       ],
+       "look": "capsule"
+      },
+      "scale": {
+       "law": "volume",
+       "stretch": true,
+       "widen": true,
+       "with_volume": [
+        "volume_m3"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "berths from the room per person (base-ships crew rule), worked out by the kernel"
+      ]
+     },
+     {
+      "id": "docking-port",
+      "name": "docking port",
+      "kind": "node",
+      "alone": false,
+      "figures": {
+       "volume_m3": {
+        "v": 2.412743,
+        "unit": "m3",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "length times radius squared"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         1.2,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 0.8,
+        "lines": [
+         "air",
+         "people",
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 1.2,
+       "radius_m": 0.8,
+       "look": "port"
+      },
+      "scale": {
+       "law": "fixed",
+       "stretch": false,
+       "widen": false,
+       "src": "the docking standard's passage (idss)"
+      }
+     },
+     {
+      "id": "heat-shield",
+      "name": "heat shield",
+      "kind": "shield",
+      "alone": false,
+      "figures": {
+       "area_m2": {
+        "v": 12.566371,
+        "unit": "m2",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "the disc it covers"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 4.0,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0.5,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 4.0,
+        "lines": [
+         "power"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 0.5,
+       "radius_m": 2.0
+      },
+      "scale": {
+       "law": "area",
+       "stretch": false,
+       "widen": true,
+       "with_area": [
+        "area_m2"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "ablator thickness and mass from the entry heating it must take"
+      ]
+     },
+     {
+      "id": "shadow-shield",
+      "name": "radiation shadow shield",
+      "kind": "shield",
+      "alone": false,
+      "figures": {
+       "area_m2": {
+        "v": 28.274334,
+        "unit": "m2",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "the disc it shades, at its wide end"
+       }
+      },
+      "points": [
+       {
+        "id": "front",
+        "place": "front",
+        "size_m": 4.0,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         1.0,
+         0,
+         0
+        ],
+        "facing": [
+         1,
+         0,
+         0
+        ]
+       },
+       {
+        "id": "behind",
+        "place": "behind",
+        "size_m": 4.0,
+        "lines": [
+         "power",
+         "propellant"
+        ],
+        "at": [
+         0,
+         0,
+         0
+        ],
+        "facing": [
+         -1,
+         0,
+         0
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 1.0,
+       "radius_m": 3.0,
+       "profile": [
+        [
+         0,
+         0.4
+        ],
+        [
+         1,
+         1
+        ]
+       ]
+      },
+      "scale": {
+       "law": "area",
+       "stretch": true,
+       "widen": true,
+       "with_area": [
+        "area_m2"
+       ],
+       "src": "geometry"
+      },
+      "to_read": [
+       "thickness and mass from the dose it must cut (the drive's keep-away rule)"
+      ]
+     },
+     {
+      "id": "landing-leg",
+      "name": "landing leg",
+      "kind": "legs",
+      "alone": false,
+      "figures": {
+       "reach_m": {
+        "v": 4.0,
+        "unit": "m",
+        "src": "geometry",
+        "mark": "derived",
+        "why": "its length"
+       }
+      },
+      "points": [
+       {
+        "id": "root",
+        "place": "hull",
+        "size_m": 0.8,
+        "lines": [],
+        "at": [
+         4.0,
+         0,
+         0
+        ],
+        "facing": [
+         0,
+         0,
+         -1
+        ]
+       }
+      ],
+      "shape": {
+       "hint": "lathe",
+       "length_m": 4.0,
+       "radius_m": 0.12
+      },
+      "scale": {
+       "law": "area",
+       "stretch": true,
+       "widen": true,
+       "with_area": [],
+       "src": "geometry"
+      },
+      "to_read": [
+       "strut size from the landed weight at the world's gravity"
+      ]
+     },
+     {
       "id": "tech-chemical-rocket",
       "name": "hydrogen-oxygen rocket",
       "kind": "engine",
@@ -5068,7 +5470,831 @@
     "cbm": "Common Berthing Mechanism on the International Space Station: a 50 inch (1.27 m) square passage (from memory, unverified).",
     "authored": "authored for play and pictures; in the fudge register",
     "geometry": "geometry: volume is length times radius squared (a lathe's frustums); outer area its side and ends"
-   }
+   },
+   "examples": [
+    {
+     "id": "kestrel",
+     "name": "Kestrel",
+     "year": 1975,
+     "about": "A 1970s tin can: capsule, service tank, two solar wings",
+     "build": {
+      "format": "sse.build/1",
+      "name": "Kestrel",
+      "fuels": [
+       "hydrogen-oxygen"
+      ],
+      "crew": 3,
+      "parts": [
+       {
+        "key": "capsule",
+        "part": "crew-capsule"
+       },
+       {
+        "key": "port",
+        "part": "docking-port",
+        "on": "capsule",
+        "place": "front"
+       },
+       {
+        "key": "shield",
+        "part": "heat-shield",
+        "on": "capsule",
+        "place": "behind"
+       },
+       {
+        "key": "tank",
+        "part": "tank-4m",
+        "on": "shield",
+        "place": "behind",
+        "length_m": 4.2,
+        "radius_m": 1.9
+       },
+       {
+        "key": "engine",
+        "part": "engine-rl10a-3",
+        "on": "tank",
+        "place": "behind"
+       },
+       {
+        "key": "wing1",
+        "part": "solar-panel",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 90.0,
+        "sym": "wing-g",
+        "along": 0.55,
+        "length_m": 2.5
+       },
+       {
+        "key": "wing2",
+        "part": "solar-panel",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 270.0,
+        "sym": "wing-g",
+        "along": 0.55,
+        "length_m": 2.5
+       },
+       {
+        "key": "dish",
+        "part": "dish",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 0,
+        "along": 0.3
+       }
+      ]
+     }
+    },
+    {
+     "id": "harbour",
+     "name": "Harbour station",
+     "year": 2026,
+     "about": "Modules on a node, never released. It cannot move itself",
+     "build": {
+      "format": "sse.build/1",
+      "name": "Harbour",
+      "crew": 6,
+      "parts": [
+       {
+        "key": "node",
+        "part": "node-4"
+       },
+       {
+        "key": "hab1",
+        "part": "habitat-4m",
+        "on": "node",
+        "place": "front",
+        "length_m": 10
+       },
+       {
+        "key": "port1",
+        "part": "docking-port",
+        "on": "hab1",
+        "place": "front"
+       },
+       {
+        "key": "hab2",
+        "part": "habitat-4m",
+        "on": "node",
+        "place": "behind",
+        "length_m": 9,
+        "paint": "#E0A030"
+       },
+       {
+        "key": "truss",
+        "part": "truss",
+        "on": "hab2",
+        "place": "behind",
+        "length_m": 18
+       },
+       {
+        "key": "wa1",
+        "part": "solar-panel",
+        "on": "truss",
+        "place": "hull",
+        "clock_deg": 90.0,
+        "sym": "wa-g",
+        "along": 0.3
+       },
+       {
+        "key": "wa2",
+        "part": "solar-panel",
+        "on": "truss",
+        "place": "hull",
+        "clock_deg": 270.0,
+        "sym": "wa-g",
+        "along": 0.3
+       },
+       {
+        "key": "wb1",
+        "part": "solar-panel",
+        "on": "truss",
+        "place": "hull",
+        "clock_deg": 90.0,
+        "sym": "wb-g",
+        "along": 0.75
+       },
+       {
+        "key": "wb2",
+        "part": "solar-panel",
+        "on": "truss",
+        "place": "hull",
+        "clock_deg": 270.0,
+        "sym": "wb-g",
+        "along": 0.75
+       },
+       {
+        "key": "rad1",
+        "part": "radiator-panel",
+        "on": "hab1",
+        "place": "hull",
+        "clock_deg": 0.0,
+        "sym": "rad-g",
+        "along": 0.5,
+        "length_m": 6
+       },
+       {
+        "key": "rad2",
+        "part": "radiator-panel",
+        "on": "hab1",
+        "place": "hull",
+        "clock_deg": 180.0,
+        "sym": "rad-g",
+        "along": 0.5,
+        "length_m": 6
+       },
+       {
+        "key": "port2",
+        "part": "docking-port",
+        "on": "truss",
+        "place": "behind"
+       }
+      ]
+     }
+    },
+    {
+     "id": "lander",
+     "name": "Highland lander",
+     "year": 2030,
+     "about": "Crew capsule over a squat tank, strap-on tanks, four legs",
+     "build": {
+      "format": "sse.build/1",
+      "name": "Highland",
+      "fuels": [
+       "hydrogen-oxygen"
+      ],
+      "crew": 2,
+      "parts": [
+       {
+        "key": "capsule",
+        "part": "crew-capsule",
+        "length_m": 3.0,
+        "radius_m": 1.8
+       },
+       {
+        "key": "tank",
+        "part": "tank-4m",
+        "on": "capsule",
+        "place": "behind",
+        "length_m": 6,
+        "radius_m": 2.9
+       },
+       {
+        "key": "engine",
+        "part": "engine-rl10a-3",
+        "on": "tank",
+        "place": "behind"
+       },
+       {
+        "key": "strap1",
+        "part": "tank-2m",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 90.0,
+        "sym": "strap-g",
+        "along": 0.55,
+        "length_m": 6.5,
+        "radius_m": 1.3
+       },
+       {
+        "key": "strap2",
+        "part": "tank-2m",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 270.0,
+        "sym": "strap-g",
+        "along": 0.55,
+        "length_m": 6.5,
+        "radius_m": 1.3
+       },
+       {
+        "key": "leg1",
+        "part": "landing-leg",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 45.0,
+        "sym": "leg-g",
+        "along": 0.2,
+        "length_m": 6.5
+       },
+       {
+        "key": "leg2",
+        "part": "landing-leg",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 135.0,
+        "sym": "leg-g",
+        "along": 0.2,
+        "length_m": 6.5
+       },
+       {
+        "key": "leg3",
+        "part": "landing-leg",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 225.0,
+        "sym": "leg-g",
+        "along": 0.2,
+        "length_m": 6.5
+       },
+       {
+        "key": "leg4",
+        "part": "landing-leg",
+        "on": "tank",
+        "place": "hull",
+        "clock_deg": 315.0,
+        "sym": "leg-g",
+        "along": 0.2,
+        "length_m": 6.5
+       },
+       {
+        "key": "wing1",
+        "part": "solar-panel",
+        "on": "capsule",
+        "place": "hull",
+        "clock_deg": 0.0,
+        "sym": "wing-g",
+        "along": 0.3,
+        "length_m": 1.2
+       },
+       {
+        "key": "wing2",
+        "part": "solar-panel",
+        "on": "capsule",
+        "place": "hull",
+        "clock_deg": 180.0,
+        "sym": "wing-g",
+        "along": 0.3,
+        "length_m": 1.2
+       }
+      ]
+     }
+    },
+    {
+     "id": "long-hauler",
+     "name": "Long-hauler",
+     "year": 2055,
+     "about": "Predicted 2050s: crew forward, long spine, shadow shield, nuclear rocket",
+     "build": {
+      "format": "sse.build/1",
+      "name": "Long-hauler",
+      "fuels": [
+       "hydrogen"
+      ],
+      "crew": 4,
+      "parts": [
+       {
+        "key": "hab",
+        "part": "habitat-4m",
+        "length_m": 11,
+        "radius_m": 2.6
+       },
+       {
+        "key": "port",
+        "part": "docking-port",
+        "on": "hab",
+        "place": "front"
+       },
+       {
+        "key": "wing1",
+        "part": "solar-panel",
+        "on": "hab",
+        "place": "hull",
+        "clock_deg": 90.0,
+        "sym": "wing-g",
+        "along": 0.5
+       },
+       {
+        "key": "wing2",
+        "part": "solar-panel",
+        "on": "hab",
+        "place": "hull",
+        "clock_deg": 270.0,
+        "sym": "wing-g",
+        "along": 0.5
+       },
+       {
+        "key": "spine",
+        "part": "truss",
+        "on": "hab",
+        "place": "behind",
+        "length_m": 26
+       },
+       {
+        "key": "rad1",
+        "part": "radiator-panel",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 0.0,
+        "sym": "rad-g",
+        "along": 0.4,
+        "length_m": 12
+       },
+       {
+        "key": "rad2",
+        "part": "radiator-panel",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 180.0,
+        "sym": "rad-g",
+        "along": 0.4,
+        "length_m": 12
+       },
+       {
+        "key": "pod1",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 90.0,
+        "sym": "pod-g",
+        "along": 0.62
+       },
+       {
+        "key": "pod2",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 270.0,
+        "sym": "pod-g",
+        "along": 0.62
+       },
+       {
+        "key": "shield",
+        "part": "shadow-shield",
+        "on": "spine",
+        "place": "behind"
+       },
+       {
+        "key": "tank1",
+        "part": "tank-10m",
+        "on": "shield",
+        "place": "behind",
+        "length_m": 15,
+        "radius_m": 3.6
+       },
+       {
+        "key": "tank2",
+        "part": "tank-10m",
+        "on": "tank1",
+        "place": "behind",
+        "length_m": 15,
+        "radius_m": 3.6
+       },
+       {
+        "key": "engine",
+        "part": "tech-nuclear-thermal",
+        "on": "tank2",
+        "place": "behind"
+       }
+      ]
+     }
+    },
+    {
+     "id": "frame",
+     "name": "Bulk frame",
+     "year": 2070,
+     "about": "Predicted 2070s frame freighter: a long spine with sixteen cargo pods",
+     "build": {
+      "format": "sse.build/1",
+      "name": "Bulk frame",
+      "fuels": [
+       "hydrogen"
+      ],
+      "crew": 3,
+      "parts": [
+       {
+        "key": "hab",
+        "part": "habitat-4m",
+        "length_m": 7,
+        "radius_m": 2.4
+       },
+       {
+        "key": "node",
+        "part": "node-4",
+        "on": "hab",
+        "place": "front"
+       },
+       {
+        "key": "dish",
+        "part": "dish",
+        "on": "hab",
+        "place": "hull",
+        "clock_deg": 180,
+        "along": 0.5,
+        "radius_m": 1.4
+       },
+       {
+        "key": "wing1",
+        "part": "solar-panel",
+        "on": "hab",
+        "place": "hull",
+        "clock_deg": 45.0,
+        "sym": "wing-g",
+        "along": 0.5
+       },
+       {
+        "key": "wing2",
+        "part": "solar-panel",
+        "on": "hab",
+        "place": "hull",
+        "clock_deg": 135.0,
+        "sym": "wing-g",
+        "along": 0.5
+       },
+       {
+        "key": "wing3",
+        "part": "solar-panel",
+        "on": "hab",
+        "place": "hull",
+        "clock_deg": 225.0,
+        "sym": "wing-g",
+        "along": 0.5
+       },
+       {
+        "key": "wing4",
+        "part": "solar-panel",
+        "on": "hab",
+        "place": "hull",
+        "clock_deg": 315.0,
+        "sym": "wing-g",
+        "along": 0.5
+       },
+       {
+        "key": "spine",
+        "part": "truss",
+        "on": "hab",
+        "place": "behind",
+        "length_m": 44,
+        "radius_m": 1.6
+       },
+       {
+        "key": "pod01",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 45.0,
+        "sym": "pod0-g",
+        "along": 0.14,
+        "paint": "#ECEFF4"
+       },
+       {
+        "key": "pod02",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 135.0,
+        "sym": "pod0-g",
+        "along": 0.14,
+        "paint": "#ECEFF4"
+       },
+       {
+        "key": "pod03",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 225.0,
+        "sym": "pod0-g",
+        "along": 0.14,
+        "paint": "#ECEFF4"
+       },
+       {
+        "key": "pod04",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 315.0,
+        "sym": "pod0-g",
+        "along": 0.14,
+        "paint": "#ECEFF4"
+       },
+       {
+        "key": "pod11",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 45.0,
+        "sym": "pod1-g",
+        "along": 0.38,
+        "paint": "#2E7D5B"
+       },
+       {
+        "key": "pod12",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 135.0,
+        "sym": "pod1-g",
+        "along": 0.38,
+        "paint": "#2E7D5B"
+       },
+       {
+        "key": "pod13",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 225.0,
+        "sym": "pod1-g",
+        "along": 0.38,
+        "paint": "#2E7D5B"
+       },
+       {
+        "key": "pod14",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 315.0,
+        "sym": "pod1-g",
+        "along": 0.38,
+        "paint": "#2E7D5B"
+       },
+       {
+        "key": "pod21",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 45.0,
+        "sym": "pod2-g",
+        "along": 0.62,
+        "paint": "#C8402A"
+       },
+       {
+        "key": "pod22",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 135.0,
+        "sym": "pod2-g",
+        "along": 0.62,
+        "paint": "#C8402A"
+       },
+       {
+        "key": "pod23",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 225.0,
+        "sym": "pod2-g",
+        "along": 0.62,
+        "paint": "#C8402A"
+       },
+       {
+        "key": "pod24",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 315.0,
+        "sym": "pod2-g",
+        "along": 0.62,
+        "paint": "#C8402A"
+       },
+       {
+        "key": "pod31",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 45.0,
+        "sym": "pod3-g",
+        "along": 0.86,
+        "paint": "#2B5FA8"
+       },
+       {
+        "key": "pod32",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 135.0,
+        "sym": "pod3-g",
+        "along": 0.86,
+        "paint": "#2B5FA8"
+       },
+       {
+        "key": "pod33",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 225.0,
+        "sym": "pod3-g",
+        "along": 0.86,
+        "paint": "#2B5FA8"
+       },
+       {
+        "key": "pod34",
+        "part": "pod-4m",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 315.0,
+        "sym": "pod3-g",
+        "along": 0.86,
+        "paint": "#2B5FA8"
+       },
+       {
+        "key": "rad1",
+        "part": "radiator-panel",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 0.0,
+        "sym": "rad-g",
+        "along": 0.85,
+        "length_m": 10
+       },
+       {
+        "key": "rad2",
+        "part": "radiator-panel",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 180.0,
+        "sym": "rad-g",
+        "along": 0.85,
+        "length_m": 10
+       },
+       {
+        "key": "shield",
+        "part": "shadow-shield",
+        "on": "spine",
+        "place": "behind"
+       },
+       {
+        "key": "tank1",
+        "part": "tank-10m",
+        "on": "shield",
+        "place": "behind",
+        "length_m": 22,
+        "radius_m": 4.4
+       },
+       {
+        "key": "tank2",
+        "part": "tank-10m",
+        "on": "tank1",
+        "place": "behind",
+        "length_m": 22,
+        "radius_m": 4.4
+       },
+       {
+        "key": "engine",
+        "part": "tech-nuclear-thermal",
+        "on": "tank2",
+        "place": "behind"
+       }
+      ]
+     }
+    },
+    {
+     "id": "wayfarer",
+     "name": "Wayfarer",
+     "year": 2080,
+     "about": "Predicted 2080s survey carrier with its own lander inside a bay",
+     "build": {
+      "format": "sse.build/1",
+      "name": "Wayfarer",
+      "fuels": [
+       "hydrogen"
+      ],
+      "crew": 6,
+      "parts": [
+       {
+        "key": "hab",
+        "part": "habitat-4m",
+        "length_m": 13,
+        "radius_m": 3.2
+       },
+       {
+        "key": "node",
+        "part": "node-4",
+        "on": "hab",
+        "place": "front"
+       },
+       {
+        "key": "dish",
+        "part": "dish",
+        "on": "node",
+        "place": "hull",
+        "clock_deg": 0,
+        "along": 0.5
+       },
+       {
+        "key": "port",
+        "part": "docking-port",
+        "on": "node",
+        "place": "front"
+       },
+       {
+        "key": "bay",
+        "part": "bay",
+        "on": "hab",
+        "place": "behind",
+        "length_m": 15,
+        "radius_m": 3.6
+       },
+       {
+        "key": "lander",
+        "part": "crew-capsule",
+        "on": "bay",
+        "place": "bay",
+        "length_m": 2.6,
+        "radius_m": 1.5,
+        "paint": "#E0A030"
+       },
+       {
+        "key": "spine",
+        "part": "truss",
+        "on": "bay",
+        "place": "behind",
+        "length_m": 14
+       },
+       {
+        "key": "rad1",
+        "part": "radiator-panel",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 0.0,
+        "sym": "rad-g",
+        "along": 0.5,
+        "length_m": 12
+       },
+       {
+        "key": "rad2",
+        "part": "radiator-panel",
+        "on": "spine",
+        "place": "hull",
+        "clock_deg": 180.0,
+        "sym": "rad-g",
+        "along": 0.5,
+        "length_m": 12
+       },
+       {
+        "key": "shield",
+        "part": "shadow-shield",
+        "on": "spine",
+        "place": "behind",
+        "radius_m": 3.9
+       },
+       {
+        "key": "tank1",
+        "part": "tank-10m",
+        "on": "shield",
+        "place": "behind",
+        "length_m": 18,
+        "radius_m": 4.4
+       },
+       {
+        "key": "tank2",
+        "part": "tank-10m",
+        "on": "tank1",
+        "place": "behind",
+        "length_m": 18,
+        "radius_m": 4.4
+       },
+       {
+        "key": "engine",
+        "part": "tech-nuclear-thermal",
+        "on": "tank2",
+        "place": "behind"
+       }
+      ]
+     }
+    }
+   ]
   }
  }
 }
