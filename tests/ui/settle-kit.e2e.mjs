@@ -16,6 +16,9 @@ const bench = process.argv.includes("--bench");
 const screens = process.argv.includes("--screens") ? process.argv[process.argv.indexOf("--screens") + 1] : null;
 // SSE_CHANNEL=chrome runs the installed Chrome (a real GPU, as on AC-ProArt) in place of Playwright's Chromium.
 const channel = process.env.SSE_CHANNEL;
+// SSE_GPU=high asks Chrome for the high-performance GPU: on AC-ProArt it otherwise picks the built-in AMD 890M, not
+// the RTX 4070 (found 28 Nov 2026).
+const high = process.env.SSE_GPU === "high" ? ["--force_high_performance_gpu"] : [];
 const dir = mkdtempSync(join(tmpdir(), "settle-kit-"));
 await build({ root: "tests/ui/settle-kit", base: "./", logLevel: "warn", build: { outDir: dir, emptyOutDir: true, chunkSizeWarningLimit: 8000 } });
 const port = 9800 + Math.floor(Math.random() * 90);
@@ -32,7 +35,7 @@ try {
     [`?gl${bench ? "&bench" : ""}${screens ? "&show" : ""}`, "WebGL2", [], true],
     [`?x${bench ? "&bench" : ""}${screens ? "&show" : ""}`, "WebGPU", ["--enable-unsafe-webgpu"], false],
   ]) {
-    const browser = await chromium.launch({ args, ...(channel ? { channel } : {}) });
+    const browser = await chromium.launch({ args: [...args, ...high], ...(channel ? { channel } : {}) });
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     if (process.env.SSE_DEBUG) page.on("console", (m) => console.log(`  [${label}] ${m.text()}`));
     await page.goto(`http://localhost:${port}/index.html${q}`);

@@ -17,6 +17,7 @@ import { DataTexture, FloatType, Mesh, NearestFilter, NoBlending, OrthographicCa
 import { MeshBasicNodeMaterial, type WebGPURenderer } from "three/webgpu";
 import { Fn, abs, clamp, float, floor, int, ivec2, min, screenCoordinate, select, sign, textureLoad, uniform, vec2, vec4 } from "three/tsl";
 import type { WindTable } from "./wind-table.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 import { EXPOSURE_TAPS, rowMeans } from "./settle-kit-cpu.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -212,7 +213,8 @@ export async function benchKit(renderer: WebGPURenderer, width = 512, height = 2
   const { windTable } = await import("./wind-table.ts");
   const table = windTable(256, 128, (lat) => 1e-5 * Math.cos(3 * lat), (lat, lon) => [2e-6 * Math.sin(5 * lon) * Math.cos(lat), 1e-6 * Math.cos(4 * lon)]);
   const out: { piece: KitDraw["kind"]; width: number; height: number; ms: number }[] = [];
-  const draws: KitDraw[] = [{ kind: "carry", dt_s: 86_400 }, { kind: "exposure", span_s: 86_400 }, { kind: "fade", other: held, weight: 0.5 }];
+  const day = constant("day");
+  const draws: KitDraw[] = [{ kind: "carry", dt_s: day }, { kind: "exposure", span_s: day }, { kind: "fade", other: held, weight: 0.5 }];
   for (const d of draws) {
     await drawKit(renderer, held, width, height, table, d);
     const ms: number[] = [];

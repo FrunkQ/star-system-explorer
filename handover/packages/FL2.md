@@ -68,3 +68,9 @@ banded face with a spot, held, carried a day and three days, a day's exposure an
 
 - The check on AC-ProArt's real GPU, WebGPU and WebGL2 (`SSE_CHANNEL=chrome node tests/ui/settle-kit.e2e.mjs --bench
   --screens ...`), its timings and screens. Recorded in the next package's log when done.
+
+## CI's first run
+
+The rust job's matter audit failed: a day typed as 86,400 s in the bench and a Julian year typed in `LOOP_MAX_S`.
+Both now read the sheet (`constant("day")`, `constant("yr_julian")`); `audit-matter.py` passes locally. The check
+also takes `SSE_GPU=high` now, for the RTX 4070 on AC-ProArt (Chrome otherwise picks its built-in AMD GPU).

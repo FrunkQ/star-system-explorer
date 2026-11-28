@@ -7,6 +7,8 @@
 // `loop_s` (Max and Becker 1995, Vlachos 2010; both unverified until 1 Dec 2026). Kernel numbers only: a use bakes its
 // table from its own kernel read (a giant's from `want: "carry"`, FL3), never from constants here.
 
+import { constant } from "../../ui-contract/src/index.ts";
+
 /** RGBA per cell: jet east (rad/s), turning east (rad/s of longitude), turning north (rad/s), unused. */
 export interface WindTable {
   width: number;
@@ -48,8 +50,8 @@ export function windTable(
 /** Rows nearer a pole than this (cos φ under it, about 3°) do not set the loop. */
 const POLE_COS = 0.05;
 
-/** The longest loop allowed, clock seconds (a year): a table with no shear and no eddies still needs a finite loop. */
-export const LOOP_MAX_S = 3.15576e7;
+/** The longest loop allowed, clock seconds (a Julian year, from the sheet): a table with no shear and no eddies still needs a finite loop. */
+export const LOOP_MAX_S = constant("yr_julian");
 
 /**
  * The loop's length from the table (design 4.4): the shortest of the jets' shear time (one over the largest rate at
