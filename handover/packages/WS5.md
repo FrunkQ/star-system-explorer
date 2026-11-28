@@ -69,7 +69,7 @@ The design guessed about 40 backward steps a pixel, a few milliseconds a face. M
   - The disc's mean colour is the face's own.
 - **Source:** `detailGiant(..., { source: true })` is today's face with no winding and no curls. The carrying does both.
 - **Built** (`stirred-runner.ts`):
-  - It runs on a GPU of its own, off screen and made on first use, one still at a time, with a frame's wait every eight steps.
+  - It runs on a GPU of its own, off screen and made on first use, one still at a time, its draws in batches with a frame between (see the second round below).
   - Finished stills are kept in memory only, by world, date and size, up to 32.
 - **Wired:** `readTrueFace` returns `stirred` for a giant: the kernel's `carry` table for the date, then the still. It does this only where a page can make a GPU, never in node. The system chart shows the unstirred face, then swaps in the still when it comes.
 - **Held by test:** `test/stirred-still.test.ts`.
@@ -95,10 +95,24 @@ The design guessed about 40 backward steps a pixel, a few milliseconds a face. M
   - The eddies are filed in each row's frame turning with that row's wind, in 2-day bins. In that frame an eddy sweeps only its drift against the row. Jupiter's list now needs 1,138 rows and Saturn's 4,373. `test/stirred-pack.test.ts` checks every eddy that reaches 4,000 random places and dates is in the list the shader reads, and goes red with the drift left out (seen).
   - `carryOnGpu` checks every texture against the device's limit, and refuses the result on any WebGPU validation or out-of-memory error.
   - Each material's shader is built with `compileAsync`.
-  - The product takes 4 steps a draw, with a frame between draws. The test keeps 1, because SwiftShader cannot build a loop round the wind; `SSE_CHUNK=4` runs it as the product does.
+  - The product took 4 steps a draw, with a frame between draws (undone in the second round, below).
   - Filing the table and composing the still run in a worker (`stirred-worker.ts`). The table filing is `stirred-pack.ts`, free of three.js.
 - **How far cloud moves, at a 1024-wide face** (processor twin, median per row):
   - Neptune: 0 to 4 px north-south; along the bands, against the row's drift, 1 to 140 px.
   - Jupiter: 1 to 6 px north-south in the belts and 10 to 25 px towards the poles; along the bands, 4 to 250 px.
   - The unstirred face changes little along a band, so stirring shows at band edges, round storms and towards the poles, not as a whole-globe change.
 - **Steps a leg:** Jupiter 955, Uranus 788, Saturn 11,820. Saturn's cloud lasts 336 days, so its still is about 25 times Neptune's work.
+
+### The second round on AC-ProArt (28 Nov), and what it changed
+
+- **What it found** (commit 2071fc7f, both GPUs alike):
+  - Four steps a draw never built: three.js r187's node builder overflows its stack on a `Loop` round the step (`Maximum call stack size exceeded`), on WebGL2 and WebGPU. It only says so on the console; the shader read back zeros and the runner called Jupiter's and Neptune's stills built.
+  - Saturn's list needed 9,099 rows of 2,048 on that date (18.6 million entries), past 8,192, and was refused.
+  - Freezes were down to 1.2 s at worst. Jupiter took 65 s, from a frame's wait after every draw.
+  - The globe never changed: `gpu.ts` keeps one texture a world and uploads again only on a new `version`, and the still came under the same key with none.
+- **Fixes:**
+  - One step a draw always, with no loop round it. The draws go in batches with a frame between, each batch waited on, doubled while it takes under 4 ms and halved over 8 ms (`carryOnGpu` `budgetMs`). The twin test runs the same way.
+  - The eddy list is laid out as wide as it needs (2,048 to 16,384, never taller than wide), and where each cell's list starts is kept in two parts, because a float holds whole numbers exactly only to 2^24.
+  - Each picture handed to the globe gets a version of its own (`true-body.ts`), so a new picture under the same key is uploaded; one of another size gets a new texture. `test/true-air.test.ts` goes red without it (seen).
+  - Before a still is shown, six places are carried by the processor too, in the worker, while the GPU works. Latitude must agree to a pixel of the face, and the whole place to a twentieth of the way round (along the bands a float's last digit times the shear moves it by tens to hundreds of kilometres, on both). A shader that failed to build misses both by far.
+

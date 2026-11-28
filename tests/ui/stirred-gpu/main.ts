@@ -52,8 +52,8 @@ const km = (a: number, la1: number, lo1: number, la2: number, lo2: number) => {
     const t0 = performance.now();
     let draws = 0;
     const gpu = await carryOnGpu(r, packed, places, n, n, {
-      // Steps a draw: one by default (SwiftShader cannot build a loop round the wind); `?chunk=4` as the product runs.
-      chunk: Number(/chunk=(\d+)/.exec(location.search)?.[1] ?? 1),
+      // In batches with a wait between, as the product runs (stirred-runner.ts).
+      budgetMs: 8,
       each: async () => {
         draws++;
         if (draws % 200 === 0) console.log(`draw ${draws} at ${((performance.now() - t0) / 1000).toFixed(1)} s`);

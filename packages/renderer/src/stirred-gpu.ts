@@ -23,7 +23,7 @@
 import { ClampToEdgeWrapping, DataTexture, type Texture, FloatType, Mesh, NearestFilter, NoBlending, OrthographicCamera, PlaneGeometry, RedFormat, RGBAFormat, RenderTarget, RGFormat, Scene } from "three";
 import { MeshBasicNodeMaterial, type WebGPURenderer } from "three/webgpu";
 import { Fn, If, Loop, abs, atan, ceil, clamp, cross, dot, exp, float, floor, int, ivec2, length, max, min, normalize, screenCoordinate, select, sqrt, textureLoad, uniform, vec2, vec3, vec4 } from "three/tsl";
-import { CELL_DEG, COLS, GRID_D, ROWS, W, mostSteps, type PackedCarry } from "./stirred-pack.ts";
+import { CELL_DEG, COLS, GRID_D, ROWS, SPLIT, W, mostSteps, type PackedCarry } from "./stirred-pack.ts";
 import { constant } from "../../ui-contract/src/index.ts";
 
 export { packCarry, mostSteps, type PackedCarry } from "./stirred-pack.ts";
@@ -33,8 +33,8 @@ type N = any;
 
 const DEG = 180 / Math.PI;
 const DAY_S = constant("day");
-const dataTexture = (data: Float32Array, per: 1 | 2 | 4) => {
-  const tex = new DataTexture(data, W, data.length / per / W, per === 1 ? RedFormat : per === 2 ? RGFormat : RGBAFormat, FloatType);
+const dataTexture = (data: Float32Array, per: 1 | 2 | 4, w = W) => {
+  const tex = new DataTexture(data, w, data.length / per / w, per === 1 ? RedFormat : per === 2 ? RGFormat : RGBAFormat, FloatType);
   tex.magFilter = NearestFilter;
   tex.minFilter = NearestFilter;
   tex.wrapS = ClampToEdgeWrapping;
@@ -66,9 +66,9 @@ export function carryMaterial(p: PackedCarry, places: DataTexture) {
     psiS: dataTexture(p.psiS, 1),
     storms: dataTexture(p.storms, 4),
     eddies: dataTexture(p.eddies, 4),
-    grid: dataTexture(p.grid, 2),
+    grid: dataTexture(p.grid, 4),
     rates: dataTexture(p.rates, 1),
-    list: dataTexture(p.list, 1),
+    list: dataTexture(p.list, 1, p.listW),
     ages: dataTexture(p.ages, 2),
   };
   // Shader functions that read the table's textures are written out where they are called, not as functions of their
@@ -83,8 +83,8 @@ export function carryMaterial(p: PackedCarry, places: DataTexture) {
   // The table's textures are data read by index, never pictures, so they are never flipped. On WebGL three.js adds a
   // flip check per texture (a uniform it declares as it builds), and inside a shader function of its own that uniform
   // is given the texture's name (three r187): the check is left out here.
-  const at = (tex: DataTexture, i: N): N => {
-    const node = textureLoad(tex, ivec2(int(i).mod(int(W)), int(i).div(int(W))));
+  const at = (tex: DataTexture, i: N, w = W): N => {
+    const node = textureLoad(tex, ivec2(int(i).mod(int(w)), int(i).div(int(w))));
     (node as unknown as { setupUV: (b: unknown, uv: N) => N }).setupUV = (_b, uv) => uv;
     return node;
   };
@@ -317,10 +317,11 @@ export function carryMaterial(p: PackedCarry, places: DataTexture) {
       const turned = lon.sub(at(textures.rates, row).x.mul(day.sub(bin.mul(GRID_D))));
       const col = clamp(floor(wrapLon(turned).add(180).div(CELL_DEG)), 0, COLS - 1);
       const cell = at(textures.grid, bin.mul(ROWS * COLS).add(row.mul(COLS)).add(col));
-      const first = cell.x;
-      const count = int(cell.y);
+      // Where its list starts, in two parts (stirred-pack.ts `SPLIT`): the whole of it is past a float's whole numbers.
+      const first = int(cell.x).mul(SPLIT).add(int(cell.y));
+      const count = int(cell.z);
       Loop({ start: int(0), end: count, type: "int", condition: "<" }, ({ i }: { i: N }) => {
-        const idx = at(textures.list, first.add(float(i))).x;
+        const idx = at(textures.list, first.add(i), p.listW).x;
         const e0 = at(textures.eddies, idx.mul(2));
         const e1 = at(textures.eddies, idx.mul(2).add(1));
         const born = e1.y;
@@ -498,10 +499,10 @@ export function carryMaterial(p: PackedCarry, places: DataTexture) {
     return at(textures.ages, select(lat.greaterThanEqual(0), k, j.add(k)));
   };
   /**
-   * One stretch of `chunk` steps of a leg, for every pixel: the state is (place, steps done); the leg starts at `start`
+   * One step of a leg, for every pixel: the state is (place, steps done); the leg starts at `start`
    * (leg 0: the picture's places, lat and lon; leg 1: where leg 0 ended, a unit vector) on its own date.
    */
-  const legMaterial = (leg: 0 | 1, startTex: Texture, stateTex: Texture, chunk: number) => {
+  const legMaterial = (leg: 0 | 1, startTex: Texture, stateTex: Texture) => {
     const m = raw();
     m.fragmentNode = Fn(() => {
       const here = textureLoad(places, ij());
@@ -516,15 +517,13 @@ export function carryMaterial(p: PackedCarry, places: DataTexture) {
       const dt = select(abs(latOf(start)).greaterThanEqual(t.poly_lat_deg), float(t.dt_poly_s), float(t.dt_s));
       const n = select(days.greaterThan(0), max(ceil(days.mul(DAY_S).div(dt)), 1), float(0));
       const h = days.mul(DAY_S).div(max(n, 1));
-      const one = (s: N) =>
-        If(s.lessThan(n), () => {
-          q.assign(step(q, from.sub(s.mul(h).div(DAY_S)), h.negate()));
-        });
-      // One step a draw writes no loop round the step: SwiftShader, the software device tests run on, takes minutes and
-      // gigabytes to build a loop round the wind. More a draw loops, its count a uniform so no compiler unrolls it.
-      if (chunk === 1) one(done);
-      else Loop({ start: int(0), end: int(uniform(chunk)), type: "int", condition: "<" }, ({ i }: { i: N }) => one(done.add(float(i))));
-      return vec4(q, min(done.add(chunk), n));
+      // One step a draw, with no loop round the step: SwiftShader, the software device the tests run on, takes minutes
+      // and gigabytes to build a loop round the wind, and three.js r187 cannot build one at all (its node builder
+      // overflows its stack, on every device: AC-ProArt, 28 Nov). Many draws go to a frame instead (carryOnGpu).
+      If(done.lessThan(n), () => {
+        q.assign(step(q, from.sub(done.mul(h).div(DAY_S)), h.negate()));
+      });
+      return vec4(q, min(done.add(1), n));
     })();
     return m;
   };
@@ -588,17 +587,18 @@ function maxSide(renderer: WebGPURenderer): number {
 
 /**
  * Carry every place given (lat, lon in degrees, `width` × `height` of them, row by row) back on the GPU. The steps run
- * in short draws of `chunk` each, the state kept between them in float targets, so no one draw runs long enough to
- * stall the device. `each` is called after every draw (a view can wait a frame there). Returns RGBA per place:
- * younger lat, lon, older lat, lon.
+ * one a draw, the state kept between them in float targets, so no one draw runs long enough to stall the device.
+ * With `each` (a view waits a frame there), the draws go in batches, each waited on and then `each` called, the batch
+ * doubled while it takes under half of `budgetMs` and halved when over it; without, one texel is read back every
+ * `wait` draws. Returns RGBA per place: younger lat, lon, older lat, lon.
  */
-export async function carryOnGpu(renderer: WebGPURenderer, p: PackedCarry, places: Float32Array, width: number, height: number, opts: { chunk?: number; wait?: number; each?: () => Promise<void>; probe?: { kind: 0 | 1 | 2; h?: number } } = {}): Promise<Float32Array> {
-  const chunk = opts.chunk ?? 1;
+export async function carryOnGpu(renderer: WebGPURenderer, p: PackedCarry, places: Float32Array, width: number, height: number, opts: { wait?: number; budgetMs?: number; each?: () => Promise<void>; probe?: { kind: 0 | 1 | 2; h?: number } } = {}): Promise<Float32Array> {
   // Every table texture must fit the device: a texture too tall to exist is not an error three.js throws, it only
   // leaves every draw after it invalid, and the carrying would return its places unmoved (AC-ProArt, 28 Nov).
   const side = maxSide(renderer);
-  const tallest = Math.max(...[p.u.length, p.psiN.length, p.psiS.length, p.storms.length / 4, p.eddies.length / 4, p.grid.length / 2, p.list.length].map((n) => n / W));
-  if (tallest > side || width > side || height > side) throw new Error(`the carry table needs a texture ${Math.ceil(tallest)} tall; this device allows ${side}`);
+  const tallest = Math.max(p.list.length / p.listW, ...[p.u.length, p.psiN.length, p.psiS.length, p.storms.length / 4, p.eddies.length / 4, p.grid.length / 4].map((n) => n / W));
+  const widest = Math.max(p.listW, W, width);
+  if (tallest > side || widest > side || height > side) throw new Error(`the carry table needs a texture ${widest} wide and ${Math.ceil(tallest)} tall; this device allows ${side}`);
   const device = (renderer.backend as { device?: Device | null }).device ?? null;
   device?.pushErrorScope("out-of-memory");
   device?.pushErrorScope("validation");
@@ -632,6 +632,9 @@ export async function carryOnGpu(renderer: WebGPURenderer, p: PackedCarry, place
   // Draws queue up unrun until something waits on them: every few, one texel is read back, so the device never holds
   // a long queue of them (a long queue is lost as surely as one long draw).
   let queued = 0;
+  let batch = 1;
+  let since = performance.now();
+  const budget = opts.budgetMs ?? 8;
   const built = new Set<MeshBasicNodeMaterial>();
   const draw = async (m: MeshBasicNodeMaterial, into: RenderTarget) => {
     quad.material = m;
@@ -642,11 +645,15 @@ export async function carryOnGpu(renderer: WebGPURenderer, p: PackedCarry, place
       await renderer.compileAsync(scene, cam);
     }
     renderer.render(scene, cam);
-    if (++queued >= (opts.wait ?? 4)) {
-      queued = 0;
-      await renderer.readRenderTargetPixelsAsync(into, 0, 0, 1, 1);
-    }
-    if (opts.each) await opts.each();
+    if (++queued < (opts.each ? batch : (opts.wait ?? 4))) return;
+    queued = 0;
+    await renderer.readRenderTargetPixelsAsync(into, 0, 0, 1, 1);
+    if (!opts.each) return;
+    const took = performance.now() - since;
+    if (took < budget / 2 && batch < 1024) batch *= 2;
+    else if (took > budget && batch > 1) batch = Math.max(1, batch >> 1);
+    await opts.each();
+    since = performance.now();
   };
   // A target reads back from the bottom row up on WebGL, while the shaders count rows from the top as WebGPU does.
   const readBack = async (): Promise<Float32Array> => {
@@ -666,12 +673,12 @@ export async function carryOnGpu(renderer: WebGPURenderer, p: PackedCarry, place
       return readBack();
     }
     const steps = mostSteps(p);
-    const draws = Math.max(1, Math.ceil(steps / chunk));
+    const draws = Math.max(1, steps);
     // Each leg ping-pongs between two targets; the state starts from the places (leg 0) or where leg 0 ended (leg 1).
     const runLeg = async (leg: 0 | 1, start: Texture, first: Texture, a: RenderTarget, b: RenderTarget): Promise<RenderTarget> => {
-      const fromFirst = prog.legMaterial(leg, start, first, chunk);
-      const ab = prog.legMaterial(leg, start, a.texture, chunk);
-      const ba = prog.legMaterial(leg, start, b.texture, chunk);
+      const fromFirst = prog.legMaterial(leg, start, first);
+      const ab = prog.legMaterial(leg, start, a.texture);
+      const ba = prog.legMaterial(leg, start, b.texture);
       materials.push(fromFirst, ab, ba);
       await draw(fromFirst, a);
       let cur = a;

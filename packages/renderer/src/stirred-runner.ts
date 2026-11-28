@@ -7,15 +7,17 @@
 
 import { WebGPURenderer } from "three/webgpu";
 import type { TrueTexture } from "./true-look.ts";
-import type { CarryTable } from "./stirred-carry.ts";
+import { unit, type CarryTable } from "./stirred-carry.ts";
 import { carryOnGpu } from "./stirred-gpu.ts";
 import { packCarry, type PackedCarry } from "./stirred-pack.ts";
-import { composeStill, placesFor } from "./stirred-still.ts";
+import { composeStill, placesFor, twinOf } from "./stirred-still.ts";
 import type { StirAnswer, StirWork } from "./stirred-worker.ts";
 
 const KEPT = 32;
-/** Steps each draw takes: a few, so a 1024-wide face's draw stays well inside a frame on a laptop's own graphics. */
-const STEPS_A_DRAW = 4;
+/** How long the carrying's draws may hold the GPU each frame, ms: about half a frame at 60 a second. */
+const BUDGET_MS = 8;
+/** Latitudes (degrees) of the places checked against the processor, one in each kind of band, longitudes spread. */
+const CHECKED = [-62, -27, -6, 9, 33, 64];
 const kept = new Map<string, TrueTexture>();
 let gpu: Promise<WebGPURenderer | null> | null = null;
 let queue: Promise<unknown> = Promise.resolve();
@@ -62,6 +64,7 @@ async function work(q: StirWork, move: Transferable[] = []): Promise<StirAnswer>
   const w = theWorker();
   if (!w) {
     if (q.op === "pack") return { id: 0, packed: packCarry(q.table) };
+    if (q.op === "twin") return { id: 0, twin: twinOf(q.table, q.places) };
     return { id: 0, still: composeStill(q.face, q.table, q.read) };
   }
   const id = ++asked;
@@ -73,6 +76,13 @@ async function work(q: StirWork, move: Transferable[] = []): Promise<StirAnswer>
 
 /** A still kept from before, by its key. */
 export const keptStill = (key: string): TrueTexture | undefined => kept.get(key);
+
+/** Great-circle distance between two places (degrees), m. */
+function apart(a: number, la1: number, lo1: number, la2: number, lo2: number): number {
+  const p = unit(la1, lo1);
+  const q = unit(la2, lo2);
+  return Math.acos(Math.min(1, p[0] * q[0] + p[1] * q[1] + p[2] * q[2])) * a;
+}
 
 const frame = () => new Promise<void>((done) => (typeof requestAnimationFrame === "function" ? requestAnimationFrame(() => done()) : setTimeout(done, 0)));
 
@@ -93,8 +103,34 @@ export function stirFace(key: string, face: TrueTexture, table: CarryTable): Pro
       const filed = await work({ op: "pack", table });
       if (!filed.packed) throw new Error(filed.error ?? "the table could not be filed");
       const packed: PackedCarry = { ...filed.packed, table };
-      // A frame between draws, so the view's own frames keep coming while the still is built.
-      const read = await carryOnGpu(r, packed, placesFor(face.width, face.height), face.width, face.height, { chunk: STEPS_A_DRAW, wait: 1, each: frame });
+      // A few places carried by the processor too, alongside: a shader three.js fails to build only says so on the
+      // console and reads back zeros, so the GPU's answer is held to the processor's before it is shown (AC-ProArt,
+      // 28 Nov). Latitude is held to a pixel of the face. Along the bands the place is read where it has drifted for its
+      // age, so a float's last digit of latitude times the jets' shear moves it by tens to hundreds of kilometres on
+      // the processor and the GPU alike (tests/ui/stirred-gpu.e2e.mjs): there the bound is a twentieth of the way round.
+      // A broken shader misses both.
+      const places = placesFor(face.width, face.height);
+      const at = CHECKED.map((lat, n) => {
+        const j = Math.min(face.height - 1, Math.max(0, Math.floor(((lat + 90) / 180) * face.height)));
+        const i = Math.floor(((n * 0.37 + 0.11) % 1) * face.width);
+        return j * face.width + i;
+      });
+      const sample = new Float32Array(at.flatMap((k) => [places[k * 2]!, places[k * 2 + 1]!]));
+      const twin = work({ op: "twin", table, places: sample });
+      // A frame between batches of draws, so the view's own frames keep coming while the still is built.
+      const read = await carryOnGpu(r, packed, places, face.width, face.height, { budgetMs: BUDGET_MS, each: frame });
+      const cpu = (await twin).twin;
+      if (!cpu) throw new Error("the processor's check could not be made");
+      const pixelDeg = 180 / face.height;
+      const far = (2 * Math.PI * table.radius_m) / 20;
+      at.forEach((k, n) => {
+        for (const g of [0, 1]) {
+          const [la, lo, cla, clo] = [read[k * 4 + g * 2]!, read[k * 4 + g * 2 + 1]!, cpu[n * 4 + g * 2]!, cpu[n * 4 + g * 2 + 1]!];
+          const off = apart(table.radius_m, la, lo, cla, clo);
+          if (!(Math.abs(la - cla) <= pixelDeg && off <= far))
+            throw new Error(`the GPU read ${la.toFixed(2)}°, ${lo.toFixed(2)}° where the processor reads ${cla.toFixed(2)}°, ${clo.toFixed(2)}° (place ${sample[n * 2]!.toFixed(1)}°, ${sample[n * 2 + 1]!.toFixed(1)}°)`);
+        }
+      });
       const made = await work({ op: "compose", face, table, read }, [read.buffer]);
       if (!made.still) throw new Error(made.error ?? "the still could not be composed");
       kept.set(key, made.still);

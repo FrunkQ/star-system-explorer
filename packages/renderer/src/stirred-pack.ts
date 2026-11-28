@@ -8,8 +8,13 @@ import { constant } from "../../ui-contract/src/index.ts";
 
 export const DEG = 180 / Math.PI;
 export const DAY_S = constant("day");
-/** Width of every packed table texture. */
+/** Width of every packed table texture but the eddy list's (`PackedCarry.listW`). */
 export const W = 2048;
+/**
+ * Where a cell's list starts is kept as two floats, `first = hi × SPLIT + lo`: a float holds whole numbers exactly only
+ * to 2^24, and Saturn's list runs past that (about 18.6 million entries, AC-ProArt 28 Nov).
+ */
+export const SPLIT = 4096;
 /**
  * The eddies' grid: cells this many degrees on a side, filed per `GRID_D` days, each row's longitude counted in a frame
  * turning with that row's own wind from the start of each bin. The eddies drift with the bands, so in its row's frame
@@ -37,12 +42,14 @@ export interface PackedCarry {
   stormCount: number;
   /** Eddies, two texels each: [lat, lon at birth, size, strength], [sense, born, ends, drift m/s]. */
   eddies: Float32Array;
-  /** Per bin and cell, [first, count] into `list`. */
+  /** Per bin and cell, [first ÷ SPLIT, first mod SPLIT, count, 0] into `list`. */
   grid: Float32Array;
   /** Each row's frame: how fast it turns, degrees a day east. */
   rates: Float32Array;
-  /** Eddy indices. */
+  /** Eddy indices, in rows `listW` wide. */
   list: Float32Array;
+  /** The list's texture width: the narrowest of 2048, 4096, 8192, 16384 no taller than it is wide. */
+  listW: number;
   bins: number;
   /** Per band, [younger age, older age], days. */
   ages: Float32Array;
@@ -104,14 +111,15 @@ export function packCarry(t: CarryTable): PackedCarry {
       }
     }
   });
-  const grid = padded(bins * cells, 2);
+  const grid = padded(bins * cells, 4);
   let total = 0;
   lists.forEach((l, i) => {
-    grid[i * 2] = total;
-    grid[i * 2 + 1] = l.length;
+    grid.set([Math.floor(total / SPLIT), total % SPLIT, l.length, 0], i * 4);
     total += l.length;
   });
-  const list = padded(total, 1);
+  let listW = W;
+  while (listW < 16384 && Math.ceil(total / listW) > listW) listW *= 2;
+  const list = new Float32Array(listW * Math.max(1, Math.ceil(total / listW)));
   let at = 0;
   for (const l of lists) for (const x of l) list[at++] = x;
   // The two generations' ages in each band on the picture's date.
@@ -126,7 +134,7 @@ export function packCarry(t: CarryTable): PackedCarry {
     if (bandOf(t, lat) !== b) throw new Error(`band ${b} misfiled`);
     ages.set([g[0][0], g[1][0]], b * 2);
   }
-  return { table: t, u, psiN, psiS, storms, stormCount: ns, eddies, grid, rates, list, bins, ages };
+  return { table: t, u, psiN, psiS, storms, stormCount: ns, eddies, grid, rates, list, listW, bins, ages };
 }
 
 

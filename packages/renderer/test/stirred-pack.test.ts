@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { unit, wrap, type CarryTable } from "../src/stirred-carry.ts";
-import { CELL_DEG, COLS, DAY_S, GRID_D, ROWS, W, packCarry } from "../src/stirred-pack.ts";
+import { CELL_DEG, COLS, DAY_S, GRID_D, ROWS, SPLIT, packCarry } from "../src/stirred-pack.ts";
 
 const fx = JSON.parse(readFileSync(new URL("../../../tests/fixtures/weather/carry.json", import.meta.url), "utf8")) as { neptune: { table: CarryTable }; saturn: { table: CarryTable } };
 
@@ -17,8 +17,8 @@ function listAt(p: ReturnType<typeof packCarry>, lat: number, lon: number, day: 
   const turned = lon - p.rates[row]! * (day - bin * GRID_D);
   const col = Math.min(Math.max(Math.floor((wrap(turned) + 180) / CELL_DEG), 0), COLS - 1);
   const c = bin * ROWS * COLS + row * COLS + col;
-  const first = p.grid[c * 2]!;
-  const n = p.grid[c * 2 + 1]!;
+  const first = p.grid[c * 4]! * SPLIT + p.grid[c * 4 + 1]!;
+  const n = p.grid[c * 4 + 2]!;
   return new Set(Array.from(p.list.subarray(first, first + n)));
 }
 
@@ -26,7 +26,7 @@ for (const name of ["neptune", "saturn"] as const) {
   test(`${name}: every eddy reaching a place is in its cell's list`, () => {
     const t = fx[name].table;
     const p = packCarry(t);
-    assert.ok(p.list.length / W < 8192, "the list fits a GPU's texture");
+    assert.ok(p.list.length / p.listW <= p.listW, "the list is no taller than it is wide");
     const a = t.radius_m;
     let checked = 0;
     let s = 1;

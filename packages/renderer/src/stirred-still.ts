@@ -10,7 +10,7 @@
 // The face is equirectangular, row 0 at the south pole, lat = (j + ½)/h · 180 − 90, lon = (i + ½)/w · 360 − 180.
 
 import type { TrueTexture } from "./true-look.ts";
-import { generations, wrap, type CarryTable } from "./stirred-carry.ts";
+import { Carrier, generations, sourcePlaces, wrap, type CarryTable } from "./stirred-carry.ts";
 
 /** The places of a `width` × `height` face's pixel centres, lat and lon in degrees, row by row from the south. */
 export function placesFor(width: number, height: number): Float32Array {
@@ -112,4 +112,15 @@ export function composeStill(face: TrueTexture, t: CarryTable, read: Float32Arra
   for (let k = 0; k < data.length; k++) data[k] = Math.min(255, Math.max(0, Math.round(acc[k]!)));
   // Stirring moves the colours and makes none, so the disc's mean colour is the face's own.
   return { width, height, data, mean: [...face.mean] as [number, number, number] };
+}
+
+/** Where the processor reads a few places (lat, lon pairs): younger lat, lon, older lat, lon each, as the GPU returns. */
+export function twinOf(table: CarryTable, places: Float32Array): Float32Array {
+  const c = new Carrier(table);
+  const out = new Float32Array((places.length / 2) * 4);
+  for (let k = 0; k < places.length / 2; k++) {
+    const s = sourcePlaces(c, places[k * 2]!, places[k * 2 + 1]!);
+    out.set([s.places[0][0], s.places[0][1], s.places[1][0], s.places[1][1]], k * 4);
+  }
+  return out;
 }

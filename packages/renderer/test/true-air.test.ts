@@ -218,8 +218,11 @@ test("the one True door carries a giant's face by its winds, and the size compar
   for (let j = 0; j < tex.height; j++) tex.data.set([0, 0, 0, 255], (j * tex.width + 10) * 4);
   const base = { key: "j", star: false, colour: "#888", radius_m: JUP_A, surface: tex, pole: [0, 0, 1] as [number, number, number] };
   assert.equal(trueLook(base).surface!.texture, tex, "no flow: the face as read");
+  // A new picture under the same key (a giant's stirred still) gets a new version, so the GPU uploads it.
+  assert.notEqual(trueLook({ ...base, surface: { ...tex } }).surface!.version, trueLook(base).surface!.version);
+  assert.equal(trueLook(base).surface!.version, trueLook(base).surface!.version, "the same picture keeps its version");
   const moved = trueLook({ ...base, flow: { flow: look.flow!, dt_s: 86400 } }).surface!;
-  assert.equal(moved.version, 86400);
+  assert.notEqual(moved.version, trueLook({ ...base, flow: { flow: look.flow!, dt_s: 2 * 86400 } }).surface!.version, "a new moment, a new upload");
   assert.notDeepEqual(moved.texture.data, tex.data);
   // One turn watched is one of the body's days at "same" pace; at "true" pace the quickest body's day.
   assert.equal(bodySeconds(9.9, SECONDS_PER_TURN, "same", 9.9), 9.9 * 3600);
