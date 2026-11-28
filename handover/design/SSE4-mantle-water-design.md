@@ -1,6 +1,6 @@
 # SSE4: water in the mantle, how it leaves and how it comes back (track HF, package HF7)
 
-**Status: draft for Alex to accept.** Written 27 Nov 2026 by the thread "Fix low heat flow in worlds" at the coordinator's request, after HF4b.2 (melt) stopped at its guarded limits. Nothing here is built. Every paper figure below is from memory and unverified until the paper search returns (1 Dec 2026). Parent design: `SSE4-melt-and-heat-design.md` (sections 3.6, 3.7, 8.3, 10).
+**Status: accepted by Alex, 28 Nov 2026 13:17 UTC** ("agree with all... is there any reason we dont have water from formation... fix upstream if needed"). See section 8A. Written 27 Nov 2026 by the thread "Fix low heat flow in worlds" at the coordinator's request, after HF4b.2 (melt) stopped at its guarded limits. Nothing here is built. Every paper figure below is from memory and unverified until the paper search returns (1 Dec 2026). Parent design: `SSE4-melt-and-heat-design.md` (sections 3.6, 3.7, 8.3, 10).
 
 ## 1. The short answer
 
@@ -94,6 +94,20 @@ regassed = plate speed u × ridge length × hydrated thickness × crust water ×
 3. **HF4b.2 and HF7.1 land together, in one core-lane turn?** *Recommend yes.* Either alone breaks a guarded limit, and never merging red rules out landing one first.
 4. **The dry factor leaves the fudge register, derived from the sheet's water law?** *Recommend yes.* The stiff-dry limit then comes out 10 to 20, not 100. That moves every dry lid world, and the change is honest.
 5. **Earth's inner core (0.31 Gyr ago against a guard of 0.5 to 1.5): a short investigation before HF4b.2 merges, checking the lower mantle's viscosity law and the core's conductivity against their sources once the paper search is back?** *Recommend yes.* Don't move the guard and don't touch the nucleation fudge. If a sourced lower-mantle law still gives an Earth core under 0.5 Gyr old, bring the numbers to you then.
+
+## 8A. Alex's answers, 28 Nov 2026 (13:17 UTC)
+
+All five recommendations of section 8 are rulings. On question 1 he added: "is there any reason we dont have water from formation... fix upstream if needed". What the code does today (checked on main 30574a2a):
+
+- Formation (`crates/sse-formation/src/early.rs`, stage 8) knows each world's bulk water, keeps a typed `MANTLE_RETAINED` = 0.3 of it in the solidifying mantle (Elkins-Tanton 2008) and outgasses the rest. It publishes the bulk share (`interior.water_mass_fraction`) and the surface water, never the mantle's amount. Catalogued worlds carry no water amount at all.
+- The 0.3 is the same for every world, including one whose magma ocean lasted about 100 Myr inside the runaway limit and lost its water to space (`desiccated`, Hamano et al. 2013). Venus is that world.
+
+So the upstream fix is HF7's first slice (HF7.0b, below): formation publishes `interior.mantle_water` (kg); the share kept becomes a cited block reading how long the magma ocean lasted and whether its air escaped, in place of the typed 0.3; the thermal history starts from that amount; Sol's worlds get catalogued values, cited and marked unverified until read at source.
+
+| Package | What | Golden |
+|---|---|---|
+| HF7.0 | Scratch check, as section 7 | none |
+| HF7.0b | Formation hands the mantle's water over as an amount; the kept share as a block; catalogue values for Sol | core (formation lines) |
 
 ## 9. Sources (all unverified until 1 Dec 2026)
 
