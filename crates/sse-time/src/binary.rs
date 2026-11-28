@@ -35,6 +35,10 @@ pub struct BinaryRules {
     /// 0.695 (Hurley, Tout and Pols 2002, section 2.6.1).
     pub q_crit_low_mass_main_sequence: f64,
     pub q_crit_gap: f64,
+    /// BX3: a main-sequence donor feeding a white dwarf, neutron star or black
+    /// hole: 1.0 (Claeys et al. 2014, table 2, from memory).
+    #[serde(default = "one")]
+    pub q_crit_main_sequence_onto_degenerate: f64,
     /// Exponent x in HTP02 eq. 57 for giant donors.
     pub giant_x: f64,
     pub alpha_ce: f64,
@@ -49,12 +53,17 @@ impl Default for BinaryRules {
             q_crit_main_sequence: 3.0,
             q_crit_low_mass_main_sequence: 0.695,
             q_crit_gap: 4.0,
+            q_crit_main_sequence_onto_degenerate: 1.0,
             giant_x: 0.30,
             alpha_ce: 1.0,
             lambda_ce: 0.5,
             search_steps: 600,
         }
     }
+}
+
+fn one() -> f64 {
+    1.0
 }
 
 /// Eggleton 1983: Roche lobe radius over separation, for mass ratio q = M_donor / M_accretor.
@@ -74,6 +83,21 @@ pub fn q_crit(r: &BinaryRules, phase: Phase, mass: f64, core: f64) -> f64 {
         Phase::HertzsprungGap => r.q_crit_gap,
         _ => (1.67 - r.giant_x + 2.0 * m::pow((core / mass).clamp(0.0, 1.0), 5.0)) / 2.13,
     }
+}
+
+/// Webbink 1984 (alpha-lambda form): the separation after a common envelope
+/// of a donor of mass `md` with core `mc` and radius `r_d` round an accretor
+/// `ma` at separation `a_i` (lengths in one unit, masses in another).
+pub fn common_envelope_separation(
+    md: f64,
+    mc: f64,
+    ma: f64,
+    a_i: f64,
+    r_d: f64,
+    rules: &BinaryRules,
+) -> f64 {
+    let menv = md - mc;
+    mc * ma / (2.0 * (md * ma / (2.0 * a_i) + md * menv / (rules.alpha_ce * rules.lambda_ce * r_d)))
 }
 
 /// A contact found for one pair.
@@ -255,9 +279,7 @@ fn contact(a: &Side, b: &Side, sep: f64, e: f64, rules: &BinaryRules) -> Option<
     } else {
         let menv = md - mc;
         let r_d = sd.star.radius * RSUN_AU;
-        let a_f = mc * ma
-            / (2.0
-                * (md * ma / (2.0 * a_i) + md * menv / (rules.alpha_ce * rules.lambda_ce * r_d)));
+        let a_f = common_envelope_separation(md, mc, ma, a_i, r_d, rules);
         // After the envelope: does the companion fit inside its lobe?
         let r_acc = acc.star.state_at(t).star.radius * RSUN_AU;
         let acc_fits = r_acc < roche_fraction(ma / mc) * a_f;

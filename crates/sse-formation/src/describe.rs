@@ -68,8 +68,9 @@ pub struct Description {
     pub mass_msun: f64,
     pub feh: f64,
     pub z: f64,
-    /// The Z the fits were read at: the fits cover 1e-4 to 0.03, and a Z
-    /// outside is read at the nearest edge (as formation does).
+    /// The measured Z the fits were read at: they cover 1e-4 to 0.03 on their
+    /// own scale (7e-5 to 0.021 measured), and a Z outside is read at the
+    /// nearest edge (as formation does).
     pub z_fits: f64,
     pub age_yr: f64,
     pub now: Now,
@@ -108,7 +109,7 @@ pub fn describe(mass_msun: f64, age_yr: f64, feh: f64) -> Result<Description, Ou
     let mut notes = vec![];
     if z_fits != z {
         notes.push(format!(
-            "Z = {z:.2e} is outside the stellar fits (1e-4 to 0.03): read at {z_fits}"
+            "Z = {z:.2e} is outside the stellar fits (7e-5 to 0.021 measured): read at {z_fits}"
         ));
     }
     if mass_msun < 0.1 && !line.is_substellar() {

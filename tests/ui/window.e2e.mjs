@@ -4,6 +4,7 @@
 // the star is a blinding disc, some planets are points of light, and the
 // table lists only what is seen. The telescope looking at a giant resolves
 // its lit disc; the GM can list what the eyes miss. Night chart and phone too.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

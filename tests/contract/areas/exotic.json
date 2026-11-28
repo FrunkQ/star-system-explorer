@@ -1,5 +1,8 @@
 [
  {"op": "load_stack", "packs": ["$pack:base-physics"]},
  {"op": "hazard_map", "fixture": "solar-system", "body": "earth"},
- {"op": "hazard_map", "fixture": "solar-system", "body": "jupiter", "line": "sideways"}
+ {"op": "hazard_map", "fixture": "solar-system", "body": "jupiter", "line": "sideways"},
+ {"op": "read_light_paths", "fixture": "black-holes"},
+ {"op": "read_light_paths", "bodies": [{"address": "test/bare-hole", "mass_kg": 1.988409870698051e31, "viewer": {"distance_m": 3.0e19, "tilt_deg": 60}}]},
+ {"op": "read_light_paths", "fixture": "nowhere"}
 ]

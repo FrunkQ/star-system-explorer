@@ -14,7 +14,7 @@
 //! a changing climate and the world's own catastrophes are not yet inputs,
 //! and the result says so in `held`.
 
-use crate::history::{Epoch, LifeHistory, WorldTimeline};
+use crate::history::{Epoch, GraphWhile, LifeHistory, WorldTimeline};
 use crate::HabitatGraph;
 use serde::{Deserialize, Serialize};
 use sse_climate::{Climate, ClimateSettings, Conditions};
@@ -35,8 +35,10 @@ pub struct FromWorldParams {
     pub atmosphere_top_m: f64,
     pub crust_depth_m: f64,
     pub pore_water_fraction: f64,
-    /// Warming of the rock 5 km down per W/m² of heat flowing out, K.
-    pub warming_at_depth_k_per_w_m2: f64,
+    /// Depth of the deep-crust habitat, m: each W/m² of heat flowing out
+    /// warms the rock there by this over the crust rock's thermal
+    /// conductivity (the data sheet's `crust-rock`).
+    pub warming_depth_m: f64,
     /// Radiation at the ground: `floor + open × exp(-column / column_scale)`.
     pub dose_open_msv_yr: f64,
     pub dose_column_kg_m2: f64,
@@ -49,18 +51,27 @@ pub struct FromWorldParams {
     pub river_p_share: f64,
     /// Vent hydrogen, mol a year per W of the world's inner heat.
     pub vent_h2_mol_yr_per_w: f64,
-    /// Below this O2 mixing ratio the sea keeps its ferrous iron.
+    /// O2 mixing ratio at which the sea keeps half its ferrous iron
+    /// (graded as 1 / (1 + O2 / this)).
     pub anoxic_below_o2: f64,
     pub anoxic_fe2_mol_yr_per_w: f64,
-    /// Heat flow below which there are no vents, W/m².
+    /// Heat flow below which there are no vents, W/m². Still a switch: see
+    /// fudge L3-vents (Earth's modelled heat flow sits just above it).
     pub vents_above_w_m2: f64,
     /// How long a surface lasts by its tectonic regime, Gyr.
     #[serde(default)]
     pub recycling_gyr: BTreeMap<String, f64>,
     /// The air box's volcanic reducing gases, mol O2-equivalent a year per W.
     pub air_reductant_mol_yr_per_w: f64,
-    /// Above this H2 mixing ratio the air is reducing (a giant's).
+    /// H2 mixing ratio at which the air counts half as reducing (graded as
+    /// x^n / (x^n + this^n), n `reducing_hill`).
     pub reducing_above_h2: f64,
+    /// How sharply air turns reducing with its hydrogen.
+    pub reducing_hill: f64,
+    /// L3-heat: a new history epoch where the interior's heat has moved by
+    /// more than this share since the last, and at most `heat_epoch_cap`.
+    pub heat_epoch_step: f64,
+    pub heat_epoch_cap: usize,
     #[serde(default)]
     pub sources: BTreeMap<String, String>,
 }
@@ -109,6 +120,78 @@ pub struct WorldReading {
     pub has_water: bool,
     /// Universe year the world formed (dates the biosphere's guilds).
     pub birth_year: i64,
+    /// Heat flowing out at each age, from the interior's own thermal history
+    /// (L3-heat). Empty: the history holds `heat_flow_w_m2` throughout.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub heat_history: Vec<HeatSample>,
+}
+
+/// Heat flowing out of a world at one age.
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+pub struct HeatSample {
+    /// Myr since the world formed.
+    pub at_myr: f64,
+    pub heat_flow_w_m2: f64,
+}
+
+/// The history's epochs by heat: (from Myr, heat flow) at each age where the
+/// heat has moved by more than `step` (a share) since the last epoch, from
+/// `from_myr` to `to_myr`, at most `cap` of them (the step widened until they
+/// fit). Each epoch takes the heat at its own start, so none reads a later
+/// age. With no history, one epoch at today's heat.
+pub fn heat_epochs(r: &WorldReading, step: f64, cap: usize) -> Vec<(f64, f64)> {
+    let from = r.habitable_from_myr.max(0.0);
+    epochs_by_heat(
+        &r.heat_history,
+        from,
+        r.age_myr.max(from),
+        r.heat_flow_w_m2,
+        step,
+        cap,
+    )
+}
+
+/// [`heat_epochs`] on bare samples: `today` is used when there are none.
+pub fn epochs_by_heat(
+    samples: &[HeatSample],
+    from: f64,
+    to: f64,
+    today: f64,
+    step: f64,
+    cap: usize,
+) -> Vec<(f64, f64)> {
+    let mut h: Vec<HeatSample> = samples
+        .iter()
+        .copied()
+        .filter(|x| x.at_myr.is_finite() && x.heat_flow_w_m2.is_finite())
+        .collect();
+    h.sort_by(|a, b| a.at_myr.total_cmp(&b.at_myr));
+    // The heat at an age: the last sample at or before it (the first if none).
+    let at = |t: f64| {
+        h.iter()
+            .rev()
+            .find(|x| x.at_myr <= t)
+            .or(h.first())
+            .map(|x| x.heat_flow_w_m2.max(0.0))
+    };
+    let Some(first) = at(from) else {
+        return vec![(from, today)];
+    };
+    let mut share = step;
+    loop {
+        let mut out = vec![(from, first)];
+        for x in h.iter().filter(|x| x.at_myr > from && x.at_myr < to) {
+            let last = out.last().map_or(first, |e| e.1);
+            let q = x.heat_flow_w_m2.max(0.0);
+            if (q - last).abs() > share * last.max(1e-12) {
+                out.push((x.at_myr, q));
+            }
+        }
+        if out.len() <= cap.max(1) {
+            return out;
+        }
+        share *= 2.0;
+    }
 }
 
 /// One world's life, every stage kept.
@@ -198,6 +281,25 @@ fn band_climate(
     }
 }
 
+/// Share of the vents' ferrous iron the sea keeps, 0 to 1, from the air's
+/// O2 mixing ratio: half at `anoxic_below_o2`.
+pub fn anoxic_share(o2: f64, p: &FromWorldParams) -> f64 {
+    if p.anoxic_below_o2 <= 0.0 {
+        return 0.0;
+    }
+    1.0 / (1.0 + o2.max(0.0) / p.anoxic_below_o2)
+}
+
+/// How reducing the air is, 0 to 1, from its H2 mixing ratio: half at
+/// `reducing_above_h2`.
+pub fn reducing_share(h2: f64, p: &FromWorldParams) -> f64 {
+    if h2 <= 0.0 || p.reducing_above_h2 <= 0.0 {
+        return if h2 > 0.0 { 1.0 } else { 0.0 };
+    }
+    let x = m::pow(h2 / p.reducing_above_h2, p.reducing_hill.max(0.0));
+    x / (1.0 + x)
+}
+
 fn band_area(radius_m: f64, lo: f64, hi: f64) -> f64 {
     let rad = m::PI / 180.0;
     2.0 * m::PI * radius_m * radius_m * (m::sin(hi * rad) - m::sin(lo * rad))
@@ -215,6 +317,17 @@ pub fn stack(
     r: &WorldReading,
     p: &FromWorldParams,
     cs: &ClimateSettings,
+) -> (WorldStack, Vec<String>) {
+    stack_ocean(r, p, cs, anoxic_share(gas(&r.conditions, "o2"), p))
+}
+
+/// As `stack`, with the share of the ocean that is anoxic (keeping the iron vents bring) given,
+/// whatever the air holds today: the history picks one by its own air.
+pub fn stack_ocean(
+    r: &WorldReading,
+    p: &FromWorldParams,
+    cs: &ClimateSettings,
+    anoxic: f64,
 ) -> (WorldStack, Vec<String>) {
     let c = &r.conditions;
     let mut held: Vec<String> = vec![];
@@ -234,12 +347,15 @@ pub fn stack(
     let q = r.heat_flow_w_m2.max(0.0);
     let heat_w = q * globe;
     let vents = q >= p.vents_above_w_m2;
-    let anoxic = gas(c, "o2") < p.anoxic_below_o2;
     let vent_supply = |extra: &mut Vec<(&'static str, f64)>| {
         if vents {
-            extra.push(("material.h2_mol_yr", p.vent_h2_mol_yr_per_w * heat_w));
-            if anoxic {
-                extra.push(("material.fe2_mol_yr", p.anoxic_fe2_mol_yr_per_w * heat_w));
+            let w = heat_w;
+            extra.push(("material.h2_mol_yr", p.vent_h2_mol_yr_per_w * w));
+            if anoxic > 0.0 {
+                extra.push((
+                    "material.fe2_mol_yr",
+                    p.anoxic_fe2_mol_yr_per_w * w * anoxic,
+                ));
             }
         }
     };
@@ -418,7 +534,10 @@ pub fn stack(
         }
         let mut crust = vec![
             ("temperature_min_k", t_s),
-            ("temperature_max_k", t_s + q * p.warming_at_depth_k_per_w_m2),
+            (
+                "temperature_max_k",
+                t_s + q * p.warming_depth_m / rock_conductivity(),
+            ),
             ("pressure_pa", p_pa),
             ("radiation_dose_msv_yr", 0.0),
             ("persistence_s", persistence),
@@ -490,7 +609,7 @@ fn observables(
         recycling_gyr: p.recycling_gyr.get(&r.regime).copied(),
         erosion_gyr: None,
         age_myr: r.age_myr,
-        reducing_air: gas(c, "h2") >= p.reducing_above_h2,
+        reducing_air: reducing_share(gas(c, "h2"), p),
     }
 }
 
@@ -546,14 +665,54 @@ pub fn life(
             from_myr: 0.0,
             graph: None,
             facts: o2(0.0),
+            graph_while: vec![],
         });
     }
-    epochs.push(Epoch {
-        id: format!("{}.today-held", r.name),
-        from_myr: r.habitable_from_myr.max(0.0),
-        graph: Some(graph.clone()),
-        facts: o2(0.0),
-    });
+    // The interior's heat at each age (L3-heat): vents, their hydrogen and
+    // iron, and the crust's warmth follow it; climate and air stay today's.
+    let by_heat = heat_epochs(r, p.heat_epoch_step, p.heat_epoch_cap);
+    if !r.heat_history.is_empty() {
+        held.retain(|x| !x.starts_with("today's climate, air and heat"));
+        held.push(format!("today's climate and air are held through the whole history (the young star's faintness and the world's own catastrophes are not yet inputs); the interior's heat follows its own history in {} epochs", by_heat.len()));
+    }
+    for (from, heat) in by_heat {
+        let mut then = r.clone();
+        then.heat_flow_w_m2 = heat;
+        let (ws_then, _) = stack(&then, &p, cs);
+        let g_then = HabitatGraph::derive(&ws_then, &rules).map_err(|e| format!("{e:?}"))?;
+        // Today's air may hold oxygen life made: the history does not read
+        // it. While its own air box is still without oxygen, the ocean keeps
+        // the iron its vents bring (an anoxic ocean), whatever today's air
+        // says (L3-air).
+        let mut graph_while = vec![];
+        if gas(c, "o2") >= p.anoxic_below_o2 {
+            // The variant is the fully anoxic sea (share 1) while the box's
+            // own O2 is below the threshold; today's graded share is not
+            // re-read each step (fudge L3-grades).
+            let (ws_anoxic, _) = stack_ocean(&then, &p, cs, 1.0);
+            let g = HabitatGraph::derive(&ws_anoxic, &rules).map_err(|e| format!("{e:?}"))?;
+            if g != g_then {
+                graph_while.push(GraphWhile {
+                    fact: "o2_fraction".into(),
+                    below: p.anoxic_below_o2,
+                    graph: g,
+                    why: "an ocean without oxygen keeps the iron its vents bring".into(),
+                });
+            }
+        }
+        let id = if r.heat_history.is_empty() {
+            format!("{}.today-held", r.name)
+        } else {
+            format!("{}.heat@{:.0}", r.name, from)
+        };
+        epochs.push(Epoch {
+            id,
+            from_myr: from,
+            graph: Some(g_then),
+            facts: o2(0.0),
+            graph_while,
+        });
+    }
     let world = WorldTimeline {
         body: graph.body.clone(),
         end_myr: r.age_myr.max(r.habitable_from_myr),
@@ -643,4 +802,25 @@ pub fn life(
         view,
         held,
     })
+}
+
+/// The crust-rock thermal conductivity in force, W m-1 K-1 (the data sheet's
+/// `mixtures` row `crust-rock`): the stack's sheet inside a kernel call, so an
+/// edit reaches the deep-crust warming; the shipped sheet outside one.
+fn rock_conductivity() -> f64 {
+    fn read(r: &sse_reference::Reference) -> Option<f64> {
+        r.row("mixtures", "crust-rock")?
+            .get("thermal_conductivity")?
+            .get("v")?
+            .as_f64()
+    }
+    static BASE: std::sync::OnceLock<f64> = std::sync::OnceLock::new();
+    sse_physics::now()
+        .and_then(|p| read(p.sheet()))
+        .unwrap_or_else(|| {
+            *BASE.get_or_init(|| {
+                read(&sse_reference::Reference::base())
+                    .expect("crust-rock conductivity on the shipped sheet")
+            })
+        })
 }

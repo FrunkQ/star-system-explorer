@@ -4,11 +4,12 @@
 // view on both. One screen is held with a card while the other carries on; released, it comes back. Live is sent to one
 // screen alone by pressing its dot and then the screen; "Back with Table" ends that. Hold all holds both; Undo takes it
 // back. A send to the table's role, then a Send to Everyone, is a layer: Lift gives the role its own send again.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { desk, go, more } from "./nav.mjs";
+import { desk, go, more, pinClock } from "./nav.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -24,7 +25,7 @@ const shot = async (page, n) => {
 };
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const context = await browser.newContext();
   const errors = [];
   const gm = await context.newPage();

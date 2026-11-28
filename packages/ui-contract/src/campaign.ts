@@ -43,6 +43,8 @@ export interface CampaignSave {
     playbook?: import("./playbook.ts").Playbook;
     /** Layouts the GM made, `sse.screen/1` with `mine.` ids (older saves have none). */
     layouts?: import("./screen.ts").ScreenDoc[];
+    /** The fingerprint of the Solar System sheet the campaign entered Sol from (solFingerprint; older saves have none). */
+    sol_sheet?: string;
   };
   /**
    * The packs over the opening stack (Packs screen) and the campaign's own

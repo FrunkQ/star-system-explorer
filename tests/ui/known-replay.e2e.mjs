@@ -3,9 +3,10 @@
 // The Solar System with the Traveller pack, a far trader at Earth made the party's ship, its row's eye on the Build
 // desk pressed (the kernel's set_known), then the table is shared: the joining screen replays the GM's log to the same
 // state and goes live, never asking to Reload.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import assert from "node:assert/strict";
-import { desk as toDesk, go } from "./nav.mjs";
+import { desk as toDesk, go, pinClock } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -15,7 +16,7 @@ const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dis
 await new Promise((r) => setTimeout(r, 400));
 
 try {
-  const browser = await chromium.launch();
+  const browser = pinClock(await chromium.launch());
   const errors = [];
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const gm = await context.newPage();

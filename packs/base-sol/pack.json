@@ -433,6 +433,12 @@
         "unit": "model",
         "src": "bretagnon-francou1988",
         "note": "where it is comes from this published series inside its span (packs/base-sol/motion/vsop87a.emb.json)"
+       },
+       "spin.model": {
+        "v": "earth-orientation",
+        "unit": "model",
+        "src": "iers2010",
+        "note": "which way it faces at a date comes from this model (packs/base-sol/motion/earth-orientation.json)"
        }
       }
      },
@@ -2556,6 +2562,12 @@
       "text": "Prša, A. et al. 2016, AJ 152, 41: Nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
       "status": "verified",
       "doi": "10.3847/0004-6256/152/2/41"
+     },
+     {
+      "id": "iers2010",
+      "text": "Petit, G. and Luzum, B. (eds.) 2010, IERS Conventions (2010), IERS Technical Note 36, chapter 5: the Earth rotation angle and Greenwich mean sidereal time",
+      "status": "unverified",
+      "url": "https://iers-conventions.obspm.fr/"
      },
      {
       "id": "kaib-volk2022",

@@ -4,6 +4,7 @@
 // chosen body opens from it; a dialog opens from the button that opened it;
 // the ruler glides to a new span while its readout answers at once. With
 // reduced motion asked for, nothing animates and everything still works.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

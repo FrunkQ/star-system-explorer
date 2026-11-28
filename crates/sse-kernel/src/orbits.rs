@@ -60,6 +60,11 @@ pub struct At {
     /// span, `plausible` outside it (a plain orbit fitted at the span's edge).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub motion: Option<String>,
+    /// For a body with a spin model (RW17 part 3, `spin.model`): its own axes
+    /// at this time in the frame of `r_m`, x toward longitude 0 on its
+    /// equator and z its north pole. A screen turns the drawn world by them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub axes: Option<[[f64; 3]; 2]>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -120,6 +125,8 @@ struct Orbit {
     mass: f64,
     source: &'static str,
     measured: Option<Measured>,
+    /// Its spin model and the anchor it reads dates by (`spin.model`).
+    spin: Option<(String, i64)>,
 }
 
 /// A plain orbit: elements and its own mean motion (the hand-over outside a
@@ -445,6 +452,10 @@ pub fn orbits_at(
                     sys_m: me,
                     centre_m: sub(cen[a], hp),
                     motion: o.measured.as_ref().map(|ms| ms.label(t).to_string()),
+                    axes: o
+                        .spin
+                        .as_ref()
+                        .and_then(|(id, anchor)| crate::motion::axes(id, t, *anchor)),
                 }
             })
             .collect();
@@ -698,6 +709,10 @@ fn read_orbits(facts: &Facts, system: &Address, seed: Option<&Seed>) -> Read {
                 mass,
                 source,
                 measured,
+                spin: match row.get(crate::motion::SPIN_FIELD) {
+                    Some(Value::Text(id)) => anchor_of(facts, a).map(|s| (id.clone(), s)),
+                    _ => None,
+                },
             },
         );
     }

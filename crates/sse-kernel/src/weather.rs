@@ -25,6 +25,7 @@ pub(crate) struct Ask {
     pub lat: f64,
     pub lon: f64,
     pub half_km: Option<f64>,
+    pub span_days: f64,
     pub pins: Vec<serde_json::Value>,
     pub sources: Option<serde_json::Value>,
     pub block: Option<serde_json::Value>,
@@ -136,6 +137,47 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             })?;
             let n = a.n.unwrap_or(16).clamp(1, 64);
             to_json(&chosen.field(&c, date, key, n, &pins))
+        }
+        "flow" => {
+            rule_only("flow")?;
+            let t = block.flow(&c, date, a.span_days).ok_or_else(|| {
+                err(
+                    "not_a_giant",
+                    "the flow table is a giant's: its jets, storms and eddies",
+                )
+            })?;
+            to_json(&t)
+        }
+        "carry" => {
+            rule_only("carry")?;
+            let t = block.carry(&c, date).ok_or_else(|| {
+                err(
+                    "not_a_giant",
+                    "a carry table is a giant's whose cloud is renewed: its jets, storms and eddies over two renewals",
+                )
+            })?;
+            to_json(&t)
+        }
+        "stirred" => {
+            rule_only("stirred")?;
+            let half = a.half_km.filter(|h| *h > 0.0).ok_or_else(|| {
+                err(
+                    "bad_patch",
+                    "a stirred patch needs `half_km` > 0 round `lat`, `lon`",
+                )
+            })?;
+            // Each cell follows its cloud back up to two renewals through every eddy (seconds a cell on
+            // Jupiter): a reference for a small patch, kept to 16 across.
+            let n = a.n.unwrap_or(8).clamp(1, 16);
+            let t = block
+                .stirred(&c, date, a.lat, a.lon, half, n)
+                .ok_or_else(|| {
+                    err(
+                        "not_a_giant",
+                        "stirred cloud is a giant's: carried by its jets, storms and eddies",
+                    )
+                })?;
+            to_json(&t)
         }
         "patch" => {
             rule_only("patch")?;

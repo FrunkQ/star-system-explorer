@@ -121,3 +121,30 @@ test("number spellings give one hash through the worker (281, 281.0, 2.81e2)", a
     assert.notEqual(hashes[3], hashes[0]);
   });
 });
+
+// Every shipped pack hashes the same as its file's own text (how the native
+// kernel reads it) and as a browser sends it (JSON.parse, then
+// JSON.stringify: 4.560563969097498e17 goes out as 456056396909749800).
+// The native side of the same rule: crates/sse-pack/tests/web_numbers.rs.
+test("every shipped pack gives one stack hash as written and as a browser sends it", async () => {
+  const { client, worker } = nodeClient();
+  try {
+    const dirs = readdirSync(new URL("packs/", root)).sort();
+    const text = (d: string) => read(`packs/${d}/pack.json`);
+    const physics = text("base-physics");
+    let n = 0;
+    for (const d of dirs) {
+      let own: string;
+      try { own = text(d); } catch { continue; }
+      const stack = d === "base-physics" ? [physics] : [physics, own];
+      const asWritten = JSON.parse(await client.callRaw(`{"op":"load_stack","packs":[${stack.join(",")}]}`));
+      const asSent = JSON.parse(await client.callRaw(JSON.stringify({ op: "load_stack", packs: stack.map((t) => JSON.parse(t)) })));
+      assert.equal(asWritten.type, "stack_loaded", `${d}: ${asWritten.report ?? ""}`);
+      assert.equal(asSent.stack_hash, asWritten.stack_hash, `${d}: the browser's copy hashes differently`);
+      n++;
+    }
+    assert.ok(n > 20, "the shipped packs are found");
+  } finally {
+    await worker.terminate();
+  }
+});

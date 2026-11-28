@@ -11,6 +11,9 @@ mod adopt_bary_tests;
 mod atmos;
 #[cfg(test)]
 mod atmos_tests;
+mod bake;
+#[cfg(test)]
+mod bake_tests;
 #[cfg(test)]
 mod bary_tests;
 mod catalogue;
@@ -69,6 +72,9 @@ mod names;
 mod names_tests;
 mod nav;
 mod orbits;
+mod pace;
+#[cfg(test)]
+mod pace_tests;
 #[cfg(test)]
 mod physics_tests;
 #[cfg(test)]
@@ -718,6 +724,9 @@ pub struct Kernel {
     reports: Vec<trust::PackReport>,
     /// `reference_tiles`' private Solar System, kept until the stack loads again.
     reference: Option<Universe>,
+    /// ER11a: tables baked for the renderer, kept by id, subject, size and
+    /// physics hash.
+    baked: bake::Cache,
 }
 
 impl Default for Kernel {
@@ -1253,6 +1262,7 @@ impl Kernel {
             climates: sse_climate::Cache::new(8),
             reports: vec![],
             reference: None,
+            baked: bake::Cache::default(),
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -2346,7 +2356,7 @@ impl Kernel {
         let mut ms = Vec::new();
         for (i, p) in packs.iter().enumerate() {
             ms.push(
-                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                sse_pack::PackManifest::from_value(p)
                     .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
             );
         }
@@ -2560,7 +2570,7 @@ impl Kernel {
         let mut ms = Vec::new();
         for (i, p) in packs.iter().enumerate() {
             ms.push(
-                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                sse_pack::PackManifest::from_value(p)
                     .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
             );
         }
@@ -3297,6 +3307,7 @@ impl Kernel {
             facts: r.facts,
             evidence: r.evidence,
             spec: r.spec,
+            birth_s: r.birth_s,
             surfaces: r.surfaces,
             tiles: r.tiles,
             refused: r.refused,
@@ -3321,7 +3332,7 @@ impl Kernel {
                 let mut ms = Vec::new();
                 for (i, p) in packs.iter().enumerate() {
                     ms.push(
-                        serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                        sse_pack::PackManifest::from_value(p)
                             .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
                     );
                 }
@@ -4038,6 +4049,7 @@ impl Kernel {
                 lat,
                 lon,
                 half_km,
+                span_days,
                 pins,
                 sources,
                 block,
@@ -4071,6 +4083,7 @@ impl Kernel {
                         lat: lat.unwrap_or(0.0),
                         lon: lon.unwrap_or(0.0),
                         half_km,
+                        span_days: span_days.unwrap_or(0.0),
                         pins: pins.unwrap_or_default(),
                         sources,
                         block,
@@ -4084,6 +4097,24 @@ impl Kernel {
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }
+            Request::ReadLightPaths {
+                fixture,
+                bodies,
+                table,
+            } => systems::read_light_paths(fixture.as_deref(), bodies, table.unwrap_or(false))?,
+            Request::Bake {
+                table,
+                subject,
+                tier,
+                values,
+            } => bake::bake(
+                &mut self.baked,
+                &self.physics,
+                &table,
+                subject,
+                tier,
+                values.unwrap_or(true),
+            )?,
             Request::ReadNebulae {
                 at_s,
                 seed,
@@ -4117,6 +4148,13 @@ impl Kernel {
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::ReadBows { items } => systems::read_bows(items)?,
+            Request::AgePair {
+                node,
+                to_myr,
+                z,
+                planets,
+                seed,
+            } => systems::age_pair(node, to_myr, z, planets, seed, self.time.as_ref())?,
             Request::ReadScattering { items } => systems::read_scattering(items)?,
             Request::ReadShadowLight { items } => {
                 systems::read_shadow_light(items, &self.observe.reference)?
@@ -8042,6 +8080,7 @@ impl Kernel {
             Request::AtmosphereAdvice { body, at_s, facts } => {
                 self.atmosphere_advice(&body, at_s, facts.as_ref())?
             }
+            Request::PaceLadder => pace::ladder()?,
             Request::ReadCatalogue {
                 text,
                 packed_b64,

@@ -4,10 +4,11 @@
 // naming features not built are held back). Escape and "Go to the chart" leave it; More › Start sheet brings it
 // back with another line. "Grow a new system" opens Make on its grow tab; a verb opens the real screen; "Open
 // straight to the chart next time" is remembered; "#chart" skips it. On a phone nothing runs off the side.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { more } from "./nav.mjs";
+import { more, pinClock } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -25,7 +26,7 @@ const shot = async (page, n) => {
 
 try {
   for (const [vp, viewport] of [["desk", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
-    const browser = await chromium.launch();
+    const browser = pinClock(await chromium.launch());
     const context = await browser.newContext({ viewport });
     const gm = await context.newPage();
     const errors = [];

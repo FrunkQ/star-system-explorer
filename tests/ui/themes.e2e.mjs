@@ -5,6 +5,7 @@
 // no page errors. A theme's vocabulary and filter chain are checked too,
 // including reduced motion and the effects switch.
 // Usage: node tests/ui/themes.e2e.mjs [chromium firefox webkit] [--screens <dir>]
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
