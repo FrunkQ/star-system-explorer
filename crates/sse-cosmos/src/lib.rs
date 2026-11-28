@@ -25,6 +25,7 @@ pub mod remains;
 pub mod rings;
 pub mod scenario;
 pub mod sky;
+pub mod slot;
 pub mod star_tree;
 pub mod stars;
 pub mod structure;

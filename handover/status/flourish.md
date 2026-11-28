@@ -7,15 +7,15 @@ What it is, in one line: a picture that is dear to work out is shown as a stand-
 
 | Package | State | Owner (proposed) |
 |---|---|---|
-| FL0 the list of existing uses, and their register rows | accepted, not started | whichever builder starts first |
-| FL1 the schedule (`ui-contract/src/settle.ts`), pure | accepted, not started | "Build quality tiers and speed probe" |
-| FL2 the kit: Carry, Exposure and Fade nodes with processor twins | accepted, not started | "Build quality tiers and speed probe" |
+| FL0 the list of existing uses, and their register rows (`ui-contract/src/stand-ins.json`; rows FL-F1 to FL-F3) | done (PR 744) | "Build the shared flourish system"; log `packages/FL1.md` |
+| FL1 the schedule (`ui-contract/src/settle.ts`), pure | done (PR 744) | "Build the shared flourish system"; log `packages/FL1.md` |
+| FL2 the kit: Carry, Exposure and Fade nodes with processor twins (`renderer/src/settle-kit.ts`, `settle-kit-cpu.ts`, `wind-table.ts`) | built, PR open; AC-ProArt check owed; log `packages/FL2.md` | "Build the shared flourish system" |
 | FL3 giants: the stirred still on the schedule and the kit | accepted, not started; after PR 739 | the stirred clouds thread |
-| FL4 the note's clause, the readout's line, the declared-list check | accepted, not started | "Build quality tiers and speed probe" |
+| FL4 the note's clause, the readout's line, the declared-list check | accepted, not started | "Build the shared flourish system" |
 | FL5 the zoom travels on a coarse picture and settles at a stop | accepted, not started | "Build the crash zoom between places" |
-| FL7 warming up: a queue of builds known to be coming (a journey's levels, the next dates), timed, in memory only | accepted, not started | "Build quality tiers and speed probe" |
+| FL7 warming up: a queue of builds known to be coming (a journey's levels, the next dates), timed, in memory only | accepted, not started | "Build the shared flourish system" |
 | FL6 folding in sharpen at rest, orbits between answers, star cells, finer tiles | accepted, not started | each view's owner |
 
 ## Next
-- The coordinator names builders; FL0 and FL1 can start.
+- FL0 and FL1 on main (PR 744). FL2 built (PR open). Then FL4 and FL7's pure part, by "Build the shared flourish system".
 - PR 739 is not held by this track.

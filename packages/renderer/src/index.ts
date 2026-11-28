@@ -191,3 +191,7 @@ export async function startBuilder(...a: Parameters<typeof import("./builder-sce
   const { mountBuilder } = await import("./builder-scene.ts");
   return mountBuilder(...a);
 }
+// The settle kit (FL2): its wind table and processor twins. The GPU pieces (settle-kit.ts) pull in three/webgpu, so a
+// view imports them directly, as stirred-runner.ts does stirred-gpu.ts.
+export { LOOP_MAX_S, loopLength, rowLat, windAt, windTable, type WindTable } from "./wind-table.ts";
+export { EXPOSURE_TAPS, carryCpu, exposureCpu, fadeCpu, loopPhases, meanShare, rowMeans, sampleAt } from "./settle-kit-cpu.ts";

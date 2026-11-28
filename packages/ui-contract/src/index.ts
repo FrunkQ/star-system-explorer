@@ -44,6 +44,7 @@ export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./composite.ts";
 export * from "./picture-clock.ts";
+export * from "./settle.ts";
 export * from "./part-controls.ts";
 export { DESK_SCHEMA, DESK_WRITES, DESK_TIMES, SHIPPED_DESKS, SHELL_PARTS, DESK_LEVELS, DESK_MEMORY, isDesk, deskDoc, deskKeeps, deskTries, deskChanges, checkDesk, shows, checkDesks, deskWords, shellPart, partShows, deskMemoryKey, deskLevelOf, recallForDesk, keepForDesk, rulerOpens, keepRulerSpan, deskFor } from "./desk.ts";
 export type { DeskDoc, DeskWrites, DeskTime, OnDesks, ShellPart, DeskLevel, DeskMemory } from "./desk.ts";

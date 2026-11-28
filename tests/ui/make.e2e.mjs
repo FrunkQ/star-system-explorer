@@ -62,7 +62,7 @@ try {
     await dlg.getByRole("button", { name: "Try a sample save" }).click();
     const report = dlg.getByLabel("Import report");
     await report.waitFor({ timeout: 8000 });
-    assert.match(await report.innerText(), /1 system, 3 bodies, 1 constructs, 87 facts/);
+    assert.match(await report.innerText(), /1 system, 3 bodies, 1 constructs, 88 facts/);
     assert.equal(await report.getAttribute("data-outside"), "1");
     assert.equal(await report.locator("tr[data-within=false] td").first().innerText(), "Moon (sample)");
     await dlg.locator(".preview .body").first().waitFor({ timeout: 8000 });

@@ -180,6 +180,25 @@
       "how": "The cosmic web read at a cosmic time (sse-cosmos), from the universe's origin."
      },
      {
+      "id": "galaxy.events",
+      "says": "What happens round a star on its path through the galaxy",
+      "shape": "stream",
+      "anchor": "time.origin",
+      "tau": {
+       "marks": "the galaxy's own dated events near the star's path, each kind drawn from the galaxy's rate for it where the path runs, per time bin"
+      },
+      "marks": [
+       "a supernova, kilonova or gamma-ray burst within reach",
+       "a close pass by another star",
+       "a spiral-arm crossing",
+       "a nucleus episode, merger or starburst of the galaxy"
+      ],
+      "ops": [
+       "site_history"
+      ],
+      "how": "G6's event layer (sse-cosmos events.rs) on the star's own orbit through the galaxy, drawn from the seed in time bins so any window is read without the ones before it; GZ13's site_history reads it for a system's star slot. It has no single pace of its own: each kind of event keeps the rate the galaxy gives it at the star's place."
+     },
+     {
       "id": "campaign.record",
       "says": "The campaign's own record",
       "shape": "line",
