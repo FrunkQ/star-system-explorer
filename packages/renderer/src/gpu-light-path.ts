@@ -6,9 +6,10 @@
 // 2. the disc: at the crossing angles φ₀ = π/2 + atan(cos α tan i) and φ₀ + π, the table's u = r_g / r; the first
 //    crossing inside the disc's edges is what shows (order 0 the direct image and the arch, order 1 the thin ring),
 //    a ray that escapes or is swallowed before a crossing shows no disc;
-// 3. there: the ring's temperature T, the shift g (block `sse.light.disc_shift`) and the seen temperature gT, whose
-//    colour or band brightness is one read of the band table (Planck through the sheet's bands and the eye's CIE
-//    curves, light-path.ts `bandTable`);
+// 3. there: 1 + z (the inverse of the shift g) and the ring's T⁴, one bilinear read of the disc table the kernel baked (`sse.light.disc`,
+//    from the block in force `sse.light.disc_shift` and `sse_light::disc_temperature`; ER11a) at r and
+//    b sin i sin α / r, and the seen temperature gT, whose colour or band brightness is one read of the band table
+//    (Planck through the sheet's bands and the eye's CIE curves, light-path.ts `bandTable`);
 // 4. otherwise the sky: an escaping ray turned by the table's turn (4 r_g / b beyond 64 r_g), looked up where it came
 //    from; a swallowed ray is the shadow.
 //
@@ -16,11 +17,12 @@
 // brightest point reads white (the note says by how much); every other band is its own brightness, mapped; Composite
 // lays the bands in their colours, each scaled to its own brightest (XO17). Presentation only: nothing here reaches
 // the kernel or the state hash.
-import { DataTexture, FloatType, HalfFloatType, LinearFilter, Mesh, NearestFilter, OrthographicCamera, PlaneGeometry, RedFormat, RGBAFormat, Scene, Vector2, Vector3, DataUtils, ClampToEdgeWrapping, RepeatWrapping } from "three";
+import { DataTexture, FloatType, HalfFloatType, LinearFilter, Mesh, NearestFilter, OrthographicCamera, PlaneGeometry, RedFormat, RGBAFormat, Scene, Vector2, Vector3, Vector4, DataUtils, ClampToEdgeWrapping, RepeatWrapping } from "three";
 import { MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
-import { Fn, If, abs, asin, atan, clamp, cos, dot, exp2, float, floor, int, ivec2, max, min, mix, normalize, select, sin, sqrt, tan, texture, textureLoad, uniform, uv, vec2, vec3, vec4 } from "three/tsl";
+import { Fn, If, abs, asin, atan, clamp, cos, dot, exp2, float, floor, int, ivec2, log, max, min, mix, normalize, select, sin, sqrt, tan, texture, textureLoad, uniform, uv, vec2, vec3, vec4 } from "three/tsl";
 import { startFinish, type Finish } from "./finish.ts";
-import { B_CRIT, B_MAX, CAPTURED_ROWS, COLS, LOG_T0, LOG_T1, PHI_MAX, PICTURE_BANDS, RAMP, ROW_LENGTH, ROWS, U_HORIZON, bandTable, discTScale, type BendTable, type Disc, type HoleView, type PictureBand } from "./light-path.ts";
+import { B_CRIT, B_MAX, CAPTURED_ROWS, COLS, LOG_T0, LOG_T1, PHI_MAX, PICTURE_BANDS, RAMP, ROW_LENGTH, ROWS, U_HORIZON, bandTable, type BendTable, type Disc, type HoleView, type PictureBand } from "./light-path.ts";
+import { channelOf, rgbaOf } from "../../ui-contract/src/index.ts";
 
 /** One band's layer in the picture: its colour (linear 0..1; visible's is "natural"), and log10 of its brightest. */
 export interface HoleLayer {
@@ -87,6 +89,11 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
   const tableTex = new DataTexture(new Float32Array(ROW_LENGTH * ROWS), ROW_LENGTH, ROWS, RedFormat, FloatType);
   tableTex.magFilter = tableTex.minFilter = NearestFilter;
   let tableHash = "";
+  // The disc table the kernel baked (sse.table/1): RGBA texels, r across (log), b sin i sin α / r down (even); the
+  // 1 + z (the inverse of the shift) and the ring's T⁴ in the channels the table names. Read at four texels and mixed, as the kernel samples it.
+  const discTex = new DataTexture(new Float32Array(16), 2, 2, RGBAFormat, FloatType);
+  discTex.magFilter = discTex.minFilter = NearestFilter;
+  let discHash = "";
   // The band table: log10 radiance by seen temperature (exact from Planck; read at two texels and mixed).
   const bandTex = new DataTexture(bandTable(), RAMP, 2, RGBAFormat, FloatType);
   bandTex.magFilter = bandTex.minFilter = NearestFilter;
@@ -107,7 +114,9 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
   const uTurning = uniform(1);
   const uAspect = uniform(1);
   const uDisc = uniform(new Vector3(6, 1000, 0)); // r_in, r_out, has disc
-  const uTstar = uniform(0); // T at r = 1 r_g with no inner-edge term: T⁴ = uTstar⁴ r⁻³ (1 − √(r_in/r))
+  const uDiscAxes = uniform(new Vector4(0, 1, -1, 1)); // ln r first and last node, b sin i sin α / r first and last
+  const uDiscN = uniform(new Vector2(1, 1)); // nodes along each
+  const uDiscCh = uniform(new Vector2(0, 1)); // which texel channel holds 1 + z, which T⁴
   const uOrders = uniform(2);
   const uSkyGain = uniform(0);
   const uPatchHalf = uniform(0.05);
@@ -161,6 +170,19 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
     const row = (y: number) => mix(textureLoad(bandTex, ivec2(int(i0), int(y))), textureLoad(bandTex, ivec2(int(i1), int(y))), f);
     return [row(0), row(1)] as [N, N];
   };
+  // The disc table at (r, q): the shift and T⁴, bilinear between the four nodes round it (sse_physics::table::sample).
+  const discAt = (r: N, q: N): [N, N] => {
+    const fx = clamp(log(r).sub(uDiscAxes.x).div(uDiscAxes.y.sub(uDiscAxes.x)).mul(uDiscN.x.sub(1)), 0, uDiscN.x.sub(1));
+    const fy = clamp(q.sub(uDiscAxes.z).div(uDiscAxes.w.sub(uDiscAxes.z)).mul(uDiscN.y.sub(1)), 0, uDiscN.y.sub(1));
+    const x0 = min(floor(fx), uDiscN.x.sub(2));
+    const y0 = min(floor(fy), uDiscN.y.sub(2));
+    const tx = fx.sub(x0);
+    const ty = fy.sub(y0);
+    const at = (dx: number, dy: number) => textureLoad(discTex, ivec2(int(x0.add(dx)), int(y0.add(dy))));
+    const v = mix(mix(at(0, 0), at(1, 0), tx), mix(at(0, 1), at(1, 1), tx), ty);
+    const pick = (c: N) => select(c.lessThan(0.5), v.x, select(c.lessThan(1.5), v.y, select(c.lessThan(2.5), v.z, v.w)));
+    return [pick(uDiscCh.x), pick(uDiscCh.y)];
+  };
   const LOG2_10 = Math.log2(10);
   // Kept finite: an absent layer has a huge top (0 here), and an infinity times a zero colour would be NaN.
   const tenTo = (v: N) => exp2(min(v, 30).mul(LOG2_10));
@@ -201,9 +223,10 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
     }
     If(onDisc.greaterThan(0.5), () => {
       const r = rHit;
-      const t4 = uTstar.mul(uTstar).mul(uTstar).mul(uTstar).div(r.mul(r).mul(r)).mul(max(float(1).sub(sqrt(uDisc.x.div(r))), 0));
-      const z1 = float(1).sub(b.mul(sin(uTilt)).mul(sin(alpha)).div(sqrt(r.mul(r).mul(r)))).div(sqrt(max(float(1).sub(float(3).div(r)), 1e-6)));
-      const g = select(z1.greaterThan(0), float(1).div(z1), float(0));
+      const [zRead, t4Read] = discAt(r, b.mul(sin(uTilt)).mul(sin(alpha)).div(r));
+      // The table holds 1 + z (it is what reads linearly); 0 where no light arrives.
+      const g = select(zRead.greaterThan(0), float(1).div(zRead), float(0));
+      const t4 = max(t4Read, 0);
       // log10(g T): T = t4^(1/4).
       const logT = max(t4, 1e-30).log2().mul(0.25 / LOG2_10).add(max(g, 1e-30).log2().div(LOG2_10));
       const [vis, rest] = bandAt(logT);
@@ -248,6 +271,18 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
   const size = new Vector2();
 
   const upload = (f: HoleFrame) => {
+    const dt = f.disc?.table;
+    if (dt && dt.hash !== discHash) {
+      const [ax, ay] = [dt.axes[0]!, dt.axes[1]!];
+      // A new size needs the old upload let go first; the shader keeps the same texture object.
+      discTex.dispose();
+      discTex.image = { data: rgbaOf(dt), width: ax.n, height: ay.n };
+      discTex.needsUpdate = true;
+      uDiscAxes.value.set(Math.log(ax.from), Math.log(ax.to), ay.from, ay.to);
+      uDiscN.value.set(ax.n, ay.n);
+      uDiscCh.value.set(channelOf(dt, "redshift"), channelOf(dt, "t4"));
+      discHash = dt.hash;
+    }
     if (f.table.hash !== tableHash) {
       const d = tableTex.image.data as Float32Array;
       for (let i = 0; i < d.length; i++) d[i] = f.table.flat[i] ?? 0;
@@ -296,7 +331,6 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
       uSkyGain.value = f.sky ? f.skyGain : 0;
       if (f.disc) {
         uDisc.value.set(f.disc.rIn, f.disc.rOut, 1);
-        uTstar.value = discTScale(f.disc);
       } else uDisc.value.set(6, 6, 0);
       uNatural.value = 0;
       PICTURE_BANDS.forEach((b, k) => {
@@ -319,6 +353,7 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
       material.dispose();
       quad.dispose();
       tableTex.dispose();
+      discTex.dispose();
       bandTex.dispose();
       patchTex.dispose();
       wholeTex.dispose();

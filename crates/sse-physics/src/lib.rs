@@ -34,6 +34,9 @@ use std::sync::{Arc, Mutex, OnceLock};
 mod blocks;
 pub use blocks::{Blocks, SettingEdit, SHIPPED_BY};
 
+/// ER11a: the `sse.table/1` format the kernel bakes tables in for the renderer.
+pub mod table;
+
 /// `provides.other` keys that can change no worked-out number: words,
 /// credits, how screens look. They are left out of the physics hash, so
 /// adding a name scheme throws away no physics. Anything not listed here

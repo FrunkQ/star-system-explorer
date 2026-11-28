@@ -362,6 +362,8 @@ export interface ViewSession {
   nameSample(ask: import("./names.ts").SampleAsk): Promise<{ ok: true; value: import("./names.ts").NameSample } | { ok: false; code: string; message: string }>;
   /** MP10: the master data sheet as the stack has it (kernel `read_matter`): the listing, a table's ids, or one row with sources and readers. Read only. */
   readMatter(ask: { table?: string; id?: string }): Promise<{ ok: true; value: Json } | { ok: false; code: string; message: string }>;
+  /** ER11a: a table baked from the physics in force (kernel `bake`, format `sse.table/1`), sized by the quality tier. Read only. */
+  bake(ask: { table: string; subject?: Json; tier?: string }): Promise<{ ok: true; table: import("./table.ts").Table; kept: boolean } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -1060,6 +1062,13 @@ export class Session implements ViewSession {
   async readMatter(ask: { table?: string; id?: string }): Promise<{ ok: true; value: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_matter", ...ask } as Json);
     return r.type === "matter" ? { ok: true, value: (r as unknown as { value: Json }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async bake(ask: { table: string; subject?: Json; tier?: string }): Promise<{ ok: true; table: import("./table.ts").Table; kept: boolean } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "bake", ...ask } as Json);
+    if (r.type !== "baked") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const got = r as unknown as { table: import("./table.ts").Table; kept: boolean };
+    return { ok: true, table: got.table, kept: got.kept };
   }
 
   async windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }> {
