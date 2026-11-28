@@ -276,6 +276,12 @@ export interface ViewSession {
   homeGalaxy(): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
   /** "Make this home" (GZ12, kernel `set_home`): a catalogued halo's address, or null for the web's own choice. GM only. */
   setHome(halo: string | null): Promise<{ ok: true; home: import("./galaxy.ts").HomeGalaxy } | { ok: false; code: string; message: string }>;
+  /** A system's star slot (GZ13, kernel `star_slot`). Read only; GM only. */
+  starSlot(system: string): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }>;
+  /** "Move it" (GZ13, kernel `set_star_slot`): another drawn star as the system's slot, or null to look again as at adoption. GM only. */
+  setStarSlot(system: string, star: string | null): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }>;
+  /** What a system's slot has lived through (GZ13, kernel `site_history`). Read only; GM only. */
+  siteHistory(system: string, window?: { from_myr?: number; to_myr?: number }): Promise<{ ok: true; history: import("./galaxy.ts").SiteHistory } | { ok: false; code: string; message: string }>;
   /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
   haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
   /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
@@ -1092,6 +1098,24 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master chooses the universe's home" };
     const r = await this.#call(halo ? { op: "set_home", halo } : { op: "set_home" });
     return r.type === "home_set" ? { ok: true, home: (r as unknown as { home: import("./galaxy.ts").HomeGalaxy }).home } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async starSlot(system: string): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a system's place in the galaxy is worked out on the game master's machine" };
+    const r = await this.#call({ op: "star_slot", system });
+    return r.type === "star_slot" ? { ok: true, slot: (r as unknown as { slot: import("./galaxy.ts").StarSlot }).slot } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async setStarSlot(system: string, star: string | null): Promise<{ ok: true; slot: import("./galaxy.ts").StarSlot } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master moves a system" };
+    const r = await this.#call(star ? { op: "set_star_slot", system, star } : { op: "set_star_slot", system });
+    return r.type === "star_slot_set" ? { ok: true, slot: (r as unknown as { slot: import("./galaxy.ts").StarSlot }).slot } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async siteHistory(system: string, window?: { from_myr?: number; to_myr?: number }): Promise<{ ok: true; history: import("./galaxy.ts").SiteHistory } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a system's history is worked out on the game master's machine" };
+    const r = await this.#call({ op: "site_history", system, ...(window ?? {}) });
+    return r.type === "site_history" ? { ok: true, history: (r as unknown as { history: import("./galaxy.ts").SiteHistory }).history } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }> {

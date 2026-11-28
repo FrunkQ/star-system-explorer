@@ -2,7 +2,6 @@
 # still <op>: reads physics and does not follow a nudged stack (a side door).
 # quiet <op>: reads no physics, so it should not move (say why after a #).
 # untested <op>: no area contract case runs it yet.
-still adopt
 still atmosphere_advice
 quiet branch # opens a story branch of the record
 still class_sample

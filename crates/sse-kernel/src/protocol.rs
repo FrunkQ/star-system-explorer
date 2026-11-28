@@ -2389,6 +2389,36 @@ pub enum Request {
         #[ts(optional)]
         halo: Option<String>,
     },
+    /// GZ13: a system's star slot, the drawn star of the home galaxy it
+    /// stands for (given at adoption, or the GM's move), with where it is,
+    /// what of it is authored over the drawn star, and advice where the
+    /// authored star is unusual for that birthplace. Read only.
+    StarSlot {
+        system: String,
+    },
+    /// GZ13 "Move it": give a system another drawn star as its slot
+    /// (`…/halo:n/cell:x_y_z/sys:f<frame>k<slot>`), or with `star` absent
+    /// look again as at adoption. The old slot's star goes back to the fill.
+    /// GM machine only.
+    SetStarSlot {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        star: Option<String>,
+    },
+    /// GZ13: what a system's star slot has lived through, from its birth (or
+    /// `from_myr`) to now (or `to_myr`), galaxy time in Myr: supernovae,
+    /// kilonovae, gamma-ray bursts, nucleus episodes, close passes of other
+    /// stars and spiral-arm crossings on the star's own path (G6). Read only.
+    SiteHistory {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        from_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        to_myr: Option<f64>,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -3020,6 +3050,9 @@ impl Request {
             Request::SectorMap { .. } => "sector_map",
             Request::HomeGalaxy => "home_galaxy",
             Request::SetHome { .. } => "set_home",
+            Request::StarSlot { .. } => "star_slot",
+            Request::SetStarSlot { .. } => "set_star_slot",
+            Request::SiteHistory { .. } => "site_history",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
             Request::StarCell { .. } => "star_cell",
@@ -3510,6 +3543,21 @@ pub fn ops() -> Vec<OpInfo> {
             "set_home",
             Cost::Medium,
             "GM machine only; reads the chosen halo's cell to check it, then one record event",
+        ),
+        o(
+            "star_slot",
+            Cost::Medium,
+            "reads the home galaxy's stars (kept per universe) and one origin reconstruction; read only",
+        ),
+        o(
+            "set_star_slot",
+            Cost::Medium,
+            "GM machine only; draws the chosen star (or searches up to 343 cells of 10 pc round the Sun's place), then two to three record events",
+        ),
+        o(
+            "site_history",
+            Cost::Heavy,
+            "the event layer along the slot star's path over the window: every cell the path passes within reach of, per time bin; read only",
         ),
         o(
             "halo_cell",
@@ -4110,6 +4158,11 @@ pub enum Response {
         systems: Vec<String>,
         facts: u32,
         state_hash: String,
+        /// GZ13: the star slot each adopted system was given (as
+        /// `star_slot`), or `{system, star: null, why}` when none could be.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(type = "unknown[]", optional)]
+        places: Vec<serde_json::Value>,
     },
     /// `life_view`: `source` is `fixture:<name>` (or the body's address).
     /// `held`: for a body, what was held at today's value or left out, in words.
@@ -4793,6 +4846,28 @@ pub enum Response {
         home: serde_json::Value,
         event_id: String,
         state_hash: String,
+    },
+    /// `star_slot`: `{system, star, by ("drawn", "map", "fit" or "gm"),
+    /// fits, galaxy, in_home, cell, xyz_pc, r_kpc, phi_deg, authored_over,
+    /// drawn, origin: {feh_gas, birth_r_kpc, unusual}, advice, model}`;
+    /// `star` null when the system has no slot.
+    StarSlot {
+        #[ts(type = "unknown")]
+        slot: serde_json::Value,
+    },
+    /// `set_star_slot`: the slot now (as `star_slot`), the events written
+    /// and the state hash.
+    StarSlotSet {
+        #[ts(type = "unknown")]
+        slot: serde_json::Value,
+        events: Vec<String>,
+        state_hash: String,
+    },
+    /// `site_history`: `{system, star, from_myr, to_myr, counts, harmful,
+    /// hits: [G6 hits], encounters, arm_crossings, model}`.
+    SiteHistory {
+        #[ts(type = "unknown")]
+        history: serde_json::Value,
     },
     /// `halo_cell`: `{address, index, side_mpc, origin_mpc, delta_l, mass_msun,
     /// halo_mass_msun, total, above_min, haloes: [{address, key, mass_msun,

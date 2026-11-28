@@ -153,12 +153,13 @@ test("players replay the GM's events and agree by state hash; GM drop goes read-
     clock = 9000;
     phone.p.tick();
     assert.equal(phone.p.status.state, "offline");
+    // Wait for delivery, not a fixed 30 ms: on a loaded runner the hub's
+    // message can take longer. The clock stands still meanwhile, so only the
+    // GM's beat or goodbye can change the state, never a heartbeat timeout.
     host.beat();
-    await settle();
-    assert.equal(phone.p.status.state, "live", "the GM back: live again");
+    await until(() => phone.p.status.state === "live", "the GM back: live again");
     host.close();
-    await settle();
-    assert.equal(desk.p.status.state, "offline", "the GM's goodbye: read-only at once");
+    await until(() => desk.p.status.state === "offline", "the GM's goodbye: read-only at once");
 
     // A player built from a different app version is told to reload, and never drifts.
     const host2 = new GmHost(gm, room.hub("gm2"), { run: "run-2", kernel: version, app: "test-app", universe, packs: [base, playerData], opening_hash: "", clock_yr: 0 });

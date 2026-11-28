@@ -28,7 +28,7 @@ pub const TIME_AGED: &str = "time.aged";
 pub const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 
 /// The serde name of a plain enum value (kebab-case labels).
-fn json_name<T: serde::Serialize>(v: &T) -> String {
+pub(crate) fn json_name<T: serde::Serialize>(v: &T) -> String {
     serde_json::to_value(v)
         .ok()
         .and_then(|x| x.as_str().map(str::to_string))
@@ -1798,6 +1798,11 @@ pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Valu
         };
         *found.entry(sys).or_insert(0) += 1;
     }
+    // A drawn star pinned as another system's slot (GZ13) is that system's
+    // place in the galaxy, not a system of the campaign's own.
+    found.retain(|sys, _| {
+        !matches!(st.get(sys, crate::slot::SLOT_OF).and_then(as_text), Some(of) if of != sys.to_string())
+    });
     found
         .into_iter()
         .map(|(sys, n)| {

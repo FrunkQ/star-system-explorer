@@ -245,14 +245,19 @@ fn the_live_ladder_works_out_every_rung() {
     );
     let hubble = tau("cosmos.expansion", "today");
     assert!(near(hubble, 14.45e9 * yr, 0.01), "Hubble {}", hubble / yr);
-    // Fastest first; the campaign's record, paced by its marks, last.
+    // Fastest first; those paced by their own marks (the campaign's
+    // record, the galaxy's events on a star's path) last.
     let ts: Vec<Option<f64>> = rungs.iter().map(|g| g["tau_s"].as_f64()).collect();
     let n = ts.iter().filter(|t| t.is_some()).count();
     assert!(ts[..n].windows(2).all(|w| w[0] <= w[1]), "{ts:?}");
     assert!(ts[n..].iter().all(Option::is_none));
-    let last = rungs.last().unwrap();
-    assert_eq!(last["id"], "campaign.record");
-    assert!(last["why"].is_null(), "{last}");
+    for id in ["campaign.record", "galaxy.events"] {
+        let r = rungs[n..]
+            .iter()
+            .find(|g| g["id"] == id)
+            .unwrap_or_else(|| panic!("{id} is not among the rungs paced by marks: {l}"));
+        assert!(r["why"].is_null(), "{r}");
+    }
 }
 
 /// Without the data sheet a rung says what it could not read, and the rest
