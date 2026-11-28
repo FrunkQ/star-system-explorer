@@ -1432,3 +1432,25 @@ fn a_giants_stirred_patch_says_where_its_cloud_came_from() {
     );
     assert_eq!(e["code"], "not_a_giant", "{e:.300}");
 }
+
+#[test]
+fn a_giants_carry_table_holds_what_moves_its_cloud() {
+    let mut k = open_sol(&[]);
+    let j = world(&mut k, "Jupiter");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"carry","system":SOL,"body":j["address"],"day":10.0}),
+    );
+    let t = &w["data"];
+    let tau = t["renewal_days"].as_f64().unwrap();
+    assert!(tau > 0.0, "{w:.400}");
+    assert!(t["day"].as_f64().unwrap() - t["day0"].as_f64().unwrap() >= 2.0 * tau);
+    assert!(!t["eddies"].as_array().unwrap().is_empty());
+    assert!(!t["storms"].as_array().unwrap().is_empty());
+    let earth = world(&mut k, "Earth");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"carry","system":SOL,"body":earth["address"]}),
+    );
+    assert_eq!(e["code"], "not_a_giant", "{e:.300}");
+}
