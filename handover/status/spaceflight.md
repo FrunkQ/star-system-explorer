@@ -4,7 +4,7 @@ Owner thread: "Build real spaceflight history pack". Covers: RS (design: `design
 
 Only the owner thread edits this file. One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`.
 
-The pack is "Sol today" on Explorers, not built into SSE4; the onboarding tour (chart room thread) uses it to teach loading a pack from the store. Parts use the one power model of `design/SSE4-atomic-rockets-plan.md` section 11.3 and the instrument shape of its section 12.
+The pack is "Sol today" on Explorers (`sse.sol-today-0.1.0`), not built into SSE4 and added to a campaign only when someone asks (Alex, 28 Nov 2026, withdrawing the 27 Nov autoload; CM0 log); the onboarding tour (chart room thread) uses it to teach loading a pack from the store. Parts use the one power model of `design/SSE4-atomic-rockets-plan.md` section 11.3 and the instrument shape of its section 12.
 
 | Package | State | Log |
 |---|---|---|
