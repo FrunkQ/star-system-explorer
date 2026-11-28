@@ -6,7 +6,7 @@
   report is made only when the person copies or saves it; nothing is sent.
 -->
 <script lang="ts">
-  import { describeDevice, jsHeapMb, perf, perfReport, sayNumber, watchPage, type ChunkSummary, type DeviceDescription } from "../../ui-contract/src/index.ts";
+  import { describeDevice, jsHeapMb, settleLineWords, perf, perfReport, sayNumber, settleBoard, watchPage, type ChunkSummary, type DeviceDescription, type LayerLine } from "../../ui-contract/src/index.ts";
   import { opensFrom } from "../../chart-grammar/src/index.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { deviceReadout, measureAgain, quality, setQuality } from "../../renderer/src/runtime.ts";
@@ -53,9 +53,16 @@
     ["startup.first_chart", "first chart"],
   ];
   let stages = $state<string[]>([]);
+  // FL4: each dear picture on the settle schedule, its state, last build and size (none until a view reports one).
+  let layers = $state<LayerLine[]>([]);
+  let layersSeen = -1;
 
   let seen = -1;
   function refresh() {
+    if (settleBoard.version !== layersSeen) {
+      layersSeen = settleBoard.version;
+      layers = settleBoard.lines();
+    }
     if (perf.version === seen) return;
     seen = perf.version;
     const s = perf.summary();
@@ -156,6 +163,11 @@
       {#if heapMb !== null}<span>page memory {heapMb} MB</span>{/if}
       <span title="Main-thread tasks over 50 ms since the readout started">{longTasks} long {longTasks === 1 ? "task" : "tasks"}</span>
     </p>
+    {#if layers.length}
+      <ul class="m layers" data-perf-layers aria-label="Pictures settling">
+        {#each layers as l (l.id)}<li data-layer={l.id} data-state={l.state}>{settleLineWords(l, ms)}</li>{/each}
+      </ul>
+    {/if}
     <p class="m line" data-perf-drawing>
       <label title="Auto places this device by its measured speed; the others are your choice, and views say so">Quality <select value={q} onchange={(e) => pickQuality(e.currentTarget.value as QualityChoice)}>{#each QUALITIES as [v, w] (v)}<option value={v}>{w}</option>{/each}</select></label>
       <span>{measuring ? "Measuring the graphics (about half a second)…" : speedWords(speed)}</span>
@@ -188,6 +200,10 @@
     box-shadow: var(--sse-card-shadow);
     font-family: var(--sse-font-body);
     font-size: 12.5px;
+  }
+  .layers {
+    margin: 4px 0;
+    padding-left: 16px;
   }
   .perf.folded {
     width: auto;

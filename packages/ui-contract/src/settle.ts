@@ -261,3 +261,246 @@ export function dragPicture(t_s: number, kept_s: readonly number[], step_s: numb
 export function bySize(asks: readonly ProperAsk[]): ProperAsk[] {
   return [...asks].sort((a, b) => b.size - a.size || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
+
+// ---- FL4: said and checked (design 4.6 and rule 7) ----
+
+/** How a stand-in's subject is named in the note: its name, and whether it reads as one thing or many. */
+export interface StandInSubject {
+  /** "Jupiter's clouds", "the galaxies nearby": as the view words it. */
+  name: string;
+  plural: boolean;
+}
+
+const SETTLES: Readonly<Record<Movement, string>> = {
+  clock: "when the clock stops",
+  camera: "when the view stops moving",
+  place: "when the zoom stops",
+};
+
+/**
+ * The note's clause for a stand-in while it shows (design 4.6), empty when the proper picture is up. One clause from
+ * the kind drawn and what moves the layer; the view adds it to its motion note. Words only, no figures.
+ */
+export function standInClause(subject: StandInSubject, drawn: "proper" | StandInKind, moves: Movement): string {
+  if (drawn === "proper") return "";
+  const { name, plural } = subject;
+  const is = plural ? "are" : "is";
+  const head = name.charAt(0).toUpperCase() + name.slice(1);
+  const settles = `The full picture settles ${SETTLES[moves]}.`;
+  switch (drawn) {
+    case "carried":
+      return `${head} ${is} carried along by ${plural ? "their" : "its"} winds between pictures. ${settles}`;
+    case "exposure":
+      return `${head} ${is} blurred as a long exposure: ${plural ? "they change" : "it changes"} faster than the screen can show. ${settles}`;
+    case "coarse":
+      return `${head} ${is} drawn coarsely ${moves === "place" ? "on the way" : "while things move"}. ${settles}`;
+    case "held":
+      return `${head} ${is} shown as last drawn while the next picture is made. ${settles}`;
+    case "seam":
+      return `${head} ${is} faded across from the level before. ${settles}`;
+    case "hint":
+      return `${head} ${is} drawn with a moving hint between pictures. ${settles}`;
+  }
+}
+
+/** One layer's line in the performance readout: its state, its last build time and its size (design 4.6). */
+export interface LayerLine {
+  id: string;
+  state: SettleState;
+  build_ms: number | null;
+  size: number;
+}
+
+/**
+ * Where layers on the schedule report themselves for the performance readout. A view calls `report` when a layer's
+ * state or build changes and `drop` when it goes; the readout reads `lines()` once a second. Device memory only.
+ */
+export class SettleBoard {
+  #lines = new Map<string, LayerLine>();
+  version = 0;
+
+  report(line: LayerLine): void {
+    const was = this.#lines.get(line.id);
+    if (was && was.state === line.state && was.build_ms === line.build_ms && was.size === line.size) return;
+    this.#lines.set(line.id, { ...line });
+    this.version++;
+  }
+
+  drop(id: string): void {
+    if (this.#lines.delete(id)) this.version++;
+  }
+
+  /** The layers, the biggest on screen first. */
+  lines(): LayerLine[] {
+    return [...this.#lines.values()].sort((a, b) => b.size - a.size || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  }
+}
+
+/** The page's one board (the readout and every view share it). */
+export const settleBoard = new SettleBoard();
+
+const STATE_WORDS: Readonly<Record<SettleState, string>> = {
+  rest: "at rest, the full picture",
+  live: "live, rebuilt as it changes",
+  "carried-on": "carried on, rebuilt when it can be",
+  "too-fast": "too fast, a long exposure",
+};
+
+/** A layer's line in plain words; the build time is given as the readout's own `ms` words it. */
+export function settleLineWords(l: LayerLine, ms: (x: number) => string): string {
+  const built = l.build_ms === null ? "not built yet" : `last built in ${ms(l.build_ms)}`;
+  return `${l.id}: ${STATE_WORDS[l.state]}; ${built} at ${l.size} wide`;
+}
+
+// ---- FL7: warming up (design 6A), the pure part ----
+// A known path (a journey's levels, a playing clock's next lattice dates, the dates either side of a drag) hands the
+// schedule the proper pictures it will need, each with when it is needed. They are built in the background in that
+// order, what is on screen always first, and kept in memory only: nothing here reads or writes storage or a file.
+
+/** A proper picture known to be coming. */
+export interface WarmItem {
+  /** `properKey` of the picture. */
+  key: string;
+  /** What kind of build it is, for its remembered time ("journey.nearby", "giant.cloud"). */
+  kind: string;
+  /** Seconds from now until it is needed (0 for now). */
+  needed_in_s: number;
+  /** On screen now: always built before anything warmed ahead. */
+  on_screen: boolean;
+  /** Steps from where the viewer is (a journey's levels; 0 here), for what is given up first. */
+  distance: number;
+}
+
+/** The order to build in: what is on screen first, then by when each is needed, then nearest first. */
+export function warmOrder(items: readonly WarmItem[]): WarmItem[] {
+  return [...items].sort(
+    (a, b) => Number(b.on_screen) - Number(a.on_screen) || a.needed_in_s - b.needed_in_s || a.distance - b.distance || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
+  );
+}
+
+/** Why a warm-up holds back (design 6A): a hot device, data saver, or memory past its limit. */
+export interface WarmHost {
+  hot: boolean;
+  data_saver: boolean;
+  memory_over: boolean;
+  /** The viewer asked for this journey (pressed it, opened its way in). */
+  asked: boolean;
+}
+
+/**
+ * What to warm, in order. Held back on a hot device, under data saver or past the memory limit: then nothing, unless
+ * the viewer asked for the journey, and then only the next thing needed. What is on screen is never held back.
+ */
+export function warmPlan(items: readonly WarmItem[], host: WarmHost): WarmItem[] {
+  const ordered = warmOrder(items);
+  if (!(host.hot || host.data_saver || host.memory_over)) return ordered;
+  const now = ordered.filter((i) => i.on_screen);
+  const ahead = ordered.filter((i) => !i.on_screen);
+  return host.asked ? [...now, ...ahead.slice(0, 1)] : now;
+}
+
+/**
+ * How long each kind of build took on this device, remembered for this visit (design 6A: "it knows how long"). The
+ * first time a kind is asked, the design's estimate is given and marked "about"; after that, the last time measured
+ * (smoothed), so the time told is close to the time taken on the second run.
+ */
+export class BuildTimes {
+  #ms = new Map<string, number>();
+
+  record(kind: string, ms: number): void {
+    if (!(ms >= 0) || !Number.isFinite(ms)) return;
+    const was = this.#ms.get(kind);
+    this.#ms.set(kind, was === undefined ? ms : 0.5 * was + 0.5 * ms);
+  }
+
+  /** The time to expect, ms, and whether it is only the design's estimate (never measured here). */
+  estimate(kind: string, design_ms: number): { ms: number; about: boolean } {
+    const m = this.#ms.get(kind);
+    return m === undefined ? { ms: design_ms, about: true } : { ms: m, about: false };
+  }
+}
+
+/** What the wait says (design 6A): "Getting the way down ready: about 20 seconds, 3 of 7 levels." */
+export function readyLine(what: string, done: number, of: number, left_ms: number, about: boolean): string {
+  if (done >= of) return `${what.charAt(0).toUpperCase()}${what.slice(1)} is ready.`;
+  const s = Math.max(1, Math.round(left_ms / 1000));
+  const time = s >= 90 ? `${Math.round(s / 60)} minutes` : `${s} ${s === 1 ? "second" : "seconds"}`;
+  return `Getting ${what} ready: ${about ? "about " : ""}${time}, ${done} of ${of} ${of === 1 ? "level" : "levels"}.`;
+}
+
+/** One kept picture in the device's memory. */
+export interface KeptPicture {
+  key: string;
+  bytes: number;
+  /** Warmed ahead rather than drawn on screen now: given up first. */
+  warm: boolean;
+  /** A journey's level index (whole levels go at once), or null for a picture that is not a level. */
+  level: number | null;
+}
+
+/**
+ * The memory cache of proper pictures (design 4.5 and 6A): on the device while memory allows, never in a file. Under
+ * pressure the warm ones go first, whole levels at once, the level furthest from the viewer first; the pictures on
+ * screen go only when nothing warm is left.
+ */
+export class WarmCache {
+  #kept = new Map<string, KeptPicture>();
+
+  keep(p: KeptPicture): void {
+    this.#kept.set(p.key, { ...p });
+  }
+
+  has(key: string): boolean {
+    return this.#kept.has(key);
+  }
+
+  /** Mark a kept picture as on screen (no longer warm) or back to warm. */
+  onScreen(key: string, yes: boolean): void {
+    const p = this.#kept.get(key);
+    if (p) p.warm = !yes;
+  }
+
+  get bytes(): number {
+    let n = 0;
+    for (const p of this.#kept.values()) n += p.bytes;
+    return n;
+  }
+
+  /** Free at least `need` bytes; `at_level` is where the viewer is. Returns the keys given up, in order. */
+  shed(need: number, at_level: number): string[] {
+    const gone: string[] = [];
+    let freed = 0;
+    const drop = (keys: string[]) => {
+      for (const k of keys) {
+        freed += this.#kept.get(k)!.bytes;
+        this.#kept.delete(k);
+        gone.push(k);
+      }
+    };
+    // Warm pictures, grouped by level, furthest level first; a picture that is not a level counts as furthest.
+    const warm = [...this.#kept.values()].filter((p) => p.warm);
+    const levels = new Map<number, string[]>();
+    for (const p of warm) {
+      const d = p.level === null ? Number.POSITIVE_INFINITY : Math.abs(p.level - at_level);
+      levels.set(d, [...(levels.get(d) ?? []), p.key]);
+    }
+    for (const d of [...levels.keys()].sort((a, b) => b - a)) {
+      if (freed >= need) break;
+      drop(levels.get(d)!.sort());
+    }
+    // Only then what is on screen, oldest kept first.
+    for (const p of [...this.#kept.values()]) {
+      if (freed >= need) break;
+      drop([p.key]);
+    }
+    return gone;
+  }
+}
+
+/**
+ * What a journey's level shows when its moment comes (design 6 and 6A): the proper picture if it is kept, its coarse
+ * picture if that is ready (the same things in the same places, more plainly), else the journey holds.
+ */
+export function levelPicture(key: string, cache: Pick<WarmCache, "has">, coarseReady: boolean): "proper" | "coarse" | "hold" {
+  return cache.has(key) ? "proper" : coarseReady ? "coarse" : "hold";
+}
