@@ -314,7 +314,7 @@ export function detailGiant(
   flow: AirFlow | undefined,
   g: GiantFacts,
   colourOf: ColourOf,
-  opts: { deep?: Rgb | null; tint?: Rgb | null; width?: number } = {},
+  opts: { deep?: Rgb | null; tint?: Rgb | null; width?: number; source?: boolean } = {},
 ): { tex: TrueTexture; flow?: AirFlow; said: string[] } {
   const W = opts.width ?? GIANT_W;
   const H = W / 2;
@@ -507,12 +507,13 @@ export function detailGiant(
       let sl = lat;
       let so = lon;
       const free = 1 - cover[j * W + i]!;
-      if (curled && free > 0) {
+      // The stirred still's source (WS5, `source`) is the face before any winding or curls: the carrying does both.
+      if (curled && free > 0 && !opts.source) {
         curlAt(lat, lon, cv);
         sl = lat + (free * cv[1]!) / a / DEG;
         so = lon + (free * cv[0]!) / (a * Math.max(0.02, cl)) / DEG;
       }
-      for (const t of turning) {
+      for (const t of opts.source ? [] : turning) {
         const [x, y] = toPlane(t.f, dirOf(sl, so), a);
         const k = Math.sqrt(t.lam);
         const xr = x / k;
@@ -540,8 +541,8 @@ export function detailGiant(
   }
   const tex: TrueTexture = { width: W, height: H, data, mean: [Math.round(mr / mw), Math.round(mg / mw), Math.round(mb / mw)] };
   const said: string[] = [];
-  if (ready.length) said.push(`Its storms and poles are drawn from the weather's own cells read closer (${ready.length} ${ready.length === 1 ? "patch" : "patches"}); inside each storm the bands are wound round by its own winds.`);
-  if (res) {
+  if (ready.length) said.push(`Its storms and poles are drawn from the weather's own cells read closer (${ready.length} ${ready.length === 1 ? "patch" : "patches"})${opts.source ? "" : "; inside each storm the bands are wound round by its own winds"}.`);
+  if (res && !opts.source) {
     const line = detailLine([{ layer: res, shown: rs }]);
     if (line) said.push(line);
   }

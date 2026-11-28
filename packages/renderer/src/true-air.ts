@@ -13,6 +13,7 @@ import { readGroundOptics, withGround } from "./ground-optics.ts";
 import { airShapeOf, type AirShape } from "./air-luts.ts";
 import { airFactsOf, airFromOptics, airRequest, KERNEL_GASES } from "./atmosphere.ts";
 import { detailGiant, readGiantDetail } from "./giant-detail.ts";
+import type { CarryTable } from "./stirred-carry.ts";
 import { addLayers, CLOUD_G, HAZE_G, liveSystems, slabReflectance, stormAt, type WeatherCell, type WeatherMap, type WeatherSystem, type WeatherTile } from "./weather.ts";
 
 /** Linear RGB, 0..1. */
@@ -43,6 +44,11 @@ export interface AirLook {
   clouds?: TrueTexture;
   /** The world's air in its own radius, from the kernel's optics (VP-A3), for the rim and terminator. */
   air?: AirShape;
+  /**
+   * A giant's stirred still (WS5), on its way: the face carried back along the kernel's winds, built on a GPU of its
+   * own and kept in memory. The view shows `tex` until it comes, then this; null where it could not be built.
+   */
+  stirred?: Promise<TrueTexture | null>;
 }
 
 /**
@@ -701,7 +707,7 @@ export async function readGiantGas(k: FaceReader, system: string, body: string):
  * The system view and the size comparison both read faces through here, so a world looks the same in each; `storms`
  * also reads a giant's storms for a view that carries its bands (the size comparison).
  */
-export async function readTrueFace(k: FaceReader, system: string, body: string, opts: { storms?: boolean; detail?: boolean; detail_px?: number } = {}): Promise<AirLook | string> {
+export async function readTrueFace(k: FaceReader, system: string, body: string, opts: { storms?: boolean; detail?: boolean; detail_px?: number; stir?: boolean } = {}): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
   // A giant's tiles are its cloud deck's relief, not a ground: its face is its decks alone (trueGiant).
   const giantDeck = s.ok && s.kind === "cloud-deck";
@@ -729,6 +735,21 @@ export async function readTrueFace(k: FaceReader, system: string, body: string, 
     const d = detailGiant(giant.tex, giant.flow, detail, colours, { deep: gg?.deep ?? null, tint: gg?.tint ?? null, ...(opts.detail_px ? { width: opts.detail_px } : {}) });
     return { ...giant, tex: d.tex, said: [...giant.said, ...d.said], ...(d.flow ? { flow: d.flow } : {}) };
   })() : giant;
+  // The stirred still (WS5): the same face with no winding or curls, carried back along the kernel's winds on a GPU
+  // of its own; the view shows the face above until it comes. Only where a page can make a GPU (never in node).
+  if (detail && opts.stir !== false && typeof document !== "undefined") {
+    const width = opts.detail_px;
+    look.stirred = (async () => {
+      const key = `${system}|${body}|${at_s ?? "now"}|${width ?? "-"}`;
+      const { keptStill, stirFace } = await import("./stirred-runner.ts");
+      const have = keptStill(key);
+      if (have) return have;
+      const ct = await k.weather({ want: "carry", system, body, ...(at_s !== undefined ? { at_s } : {}), day });
+      if (!ct.ok) return null;
+      const src = detailGiant(giant.tex, giant.flow, detail, colours, { deep: gg?.deep ?? null, tint: gg?.tint ?? null, source: true, ...(width ? { width } : {}) });
+      return stirFace(key, src.tex, ct.data as CarryTable);
+    })().catch(() => null);
+  }
   // Only a view that carries the bands asks for the storms (the size comparison); the rest skip the kernel call.
   if (look.flow && opts.storms) {
     // The storms, so each is carried as one piece as the bands slide (VP-A1).

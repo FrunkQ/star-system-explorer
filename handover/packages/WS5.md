@@ -60,3 +60,25 @@ The design guessed about 40 backward steps a pixel, a few milliseconds a face. M
   - SwiftShader's WebGPU loses its device on this shader, so the WebGPU half is skipped here. On a real GPU it is unchecked.
   - `SSE_PROBE=probe` prints the places, winds and one step against the processor.
 - **Next:** the stirred still. Compose today's face from the source map with the two generations' weights, wire it into the true face, keep it in memory only, and rebuild it as time moves.
+
+## WS5d: the stirred still on the face
+
+- **Composing** (`packages/renderer/src/stirred-still.ts`):
+  - Each pixel takes the unstirred face's colour where each of its two generations was read, weighed as the kernel's `generations` weighs them.
+  - Where the backward map stretches cloud (the larger spread of the read places of the pixels either side), the colour is read from a coarser level of the face, one level per doubling. Cloud stirred finer than a pixel comes out as its local mean.
+  - The disc's mean colour is the face's own.
+- **Source:** `detailGiant(..., { source: true })` is today's face with no winding and no curls. The carrying does both.
+- **Built** (`stirred-runner.ts`):
+  - It runs on a GPU of its own, off screen and made on first use, one still at a time, with a frame's wait every eight steps.
+  - Finished stills are kept in memory only, by world, date and size, up to 32.
+- **Wired:** `readTrueFace` returns `stirred` for a giant: the kernel's `carry` table for the date, then the still. It does this only where a page can make a GPU, never in node. The system chart shows the unstirred face, then swaps in the still when it comes.
+- **Held by test:** `test/stirred-still.test.ts`.
+  - With no wind, the still is the face.
+  - A pixel's shift reads a pixel west, with both generations weighed as the kernel weighs them.
+  - A checkerboard stretched eightfold comes out as its mean. This goes red with the levels left out (seen).
+- **Still to do:**
+  - Rebuild the still as the date moves. Today it is built once per face read, at the date it is read.
+  - The other views: body globe, size comparison, class pictures.
+  - Retire PR 646's winding and curls wherever the still shows.
+  - Screens on a real GPU (AC-ProArt).
+  - The cost there, which is unmeasured.
