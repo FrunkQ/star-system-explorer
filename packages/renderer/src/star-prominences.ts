@@ -9,6 +9,7 @@
 // They are drawn as such a filter shows them, on a stated log scale, and only where they stand off the disc: on the
 // disc they are dark threads in hydrogen light and invisible in white light.
 import { sayNumber } from "../../ui-contract/src/index.ts";
+import { srgb255, linear255 } from "./srgb.ts";
 import { rateShare, turnAt, type LiveStar } from "./live-star.ts";
 import { rateShareOf } from "./star-regions.ts";
 import { nebulaColour, type NebulaShape } from "./star-shells.ts";
@@ -101,8 +102,6 @@ export function prominenceShown(share: number): number {
 /** A prominence's colour from its own hydrogen lines (linear, brightest channel 1): red hydrogen-alpha, a touch of blue-green hydrogen-beta. */
 export const prominenceColour = (p: Prominence): [number, number, number] => nebulaColour({ shells: [], light: { lines: p.light?.lines ?? [] } } as unknown as NebulaShape, "visible");
 
-const decode = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-const encode = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 
 /** An erupting rope's radius over its height above the surface: the aspect ratio of Thernisien et al.'s croissant
  * model of coronal mass ejections (about 0.3 to 0.5; 0.4 here, from memory, docs/fudges.md). */
@@ -203,7 +202,9 @@ export function addProminences(out: { width: number; data: Uint8ClampedArray }, 
   // densely sampled arch is as bright as its gas, never brighter; then added to the picture in its own colour.
   const a = new Float32Array(n * n);
   for (const p of list) {
-    const v = prominenceShown(p.p.share_visible) * p.k;
+    // A risen rope's gas is spread thinner (k falls as the square of its distance): that is its surface brightness,
+    // so it goes through the filter's log scale; growing in and fading out are a fade of the picture.
+    const v = p.erupting ? prominenceShown(p.p.share_visible * p.k) : prominenceShown(p.p.share_visible) * p.k;
     if (v <= 0) continue;
     const rgb = prominenceColour(p.p);
     // A soft spot as wide as the gas is thick, at least a pixel and a half.
@@ -248,8 +249,8 @@ export function addProminences(out: { width: number; data: Uint8ClampedArray }, 
         if (!(w > 0)) continue;
         a[i] = 0;
         const o = i * 4;
-        for (let ch = 0; ch < 3; ch++) d[o + ch] = 255 * encode(Math.min(1, decode((d[o + ch] ?? 0) / 255) + rgb[ch]! * w));
-        d[o + 3] = 255 * encode(Math.min(1, decode((d[o + 3] ?? 0) / 255) + w));
+        for (let ch = 0; ch < 3; ch++) d[o + ch] = srgb255(linear255(d[o + ch] ?? 0) + rgb[ch]! * w);
+        d[o + 3] = srgb255(linear255(d[o + 3] ?? 0) + w);
       }
   }
   return drawn;
@@ -259,10 +260,15 @@ export function addProminences(out: { width: number; data: Uint8ClampedArray }, 
  * The prominences in words, kept short (it sits in the view's note): how many stand at the limb now and the field
  * holding them. Nothing when none shows. How faint they really are is in the star's card, not here.
  */
-export function narrateProminences(s: LiveStar, now: ProminenceNow[], limb: number): string {
+export function narrateProminences(s: LiveStar, now: ProminenceNow[], limb: number, reach?: number): string {
   if (!limb) return "";
   const c = s.corona as { surface_field_t?: number } | undefined;
   const gauss = Number(c?.surface_field_t ?? 0) * 1e4;
-  const up = now.some((p) => p.erupting) ? ", one erupting" : "";
+  // An eruption crosses the picture in minutes to hours: say how fast, and how long it stays in view, so the clock
+  // can be slowed to watch it go.
+  const e = now.find((p) => p.erupting && p.p.eruption);
+  const speed = e ? e.p.eruption!.speed_m_s : 0;
+  const left = e && reach && speed > 0 ? ((reach - 1 - e.h) * s.radius) / speed : 0;
+  const up = e ? `, one erupting at ${sayNumber(speed / 1e3, 2)} km/s${left > 0 ? ` (out of the picture in ${left < 5400 ? `${Math.max(1, Math.round(left / 60))} minutes` : `${sayNumber(left / 3600, 2)} hours`})` : ""}` : "";
   return `${limb === 1 ? "A prominence" : `${limb} prominences`} at the limb${up}: cool gas held by its ${gauss > 0 ? `${sayNumber(gauss, 2)} gauss ` : ""}field, as a hydrogen-alpha filter shows it.`;
 }

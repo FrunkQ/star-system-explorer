@@ -3,8 +3,8 @@
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
 import { AdditiveBlending, AmbientLight, CustomBlending, OneFactor, OneMinusSrcAlphaFactor, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
-import { MeshBasicNodeMaterial, MeshStandardNodeMaterial, WebGPURenderer } from "three/webgpu";
-import { cubeTexture, normalize, positionLocal, texture as textureNode, uv as uvNode, vec3, vec4 } from "three/tsl";
+import { MeshBasicNodeMaterial, MeshStandardNodeMaterial, SpriteNodeMaterial, WebGPURenderer } from "three/webgpu";
+import { clamp, cubeTexture, float, fwidth, length, normalize, positionLocal, texture as textureNode, uv as uvNode, vec2, vec3, vec4 } from "three/tsl";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { ringLight, ringLook, RING_LOOK_SCALE, type RingLookData } from "./rings.ts";
@@ -40,7 +40,7 @@ export interface GpuItem {
    * disc filling `disc` of the square. It faces the camera, so the limb darkening drawn into it is the true one.
    * A new `version` uploads new pixels.
    */
-  face?: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number };
+  face?: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number; round?: boolean };
   /** True look in a band other than visible: the body's own light as a mapped grey, 0..1 (0 is dark), not lit. */
   emit?: number;
   /**
@@ -323,10 +323,19 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     return m;
   };
   // A star's face: one texture and material per star, its pixels replaced when the moment drawn changes.
-  const faces = new Map<string, { tex: DataTexture; mat: SpriteMaterial; version: number; width: number }>();
+  const faces = new Map<string, { tex: DataTexture; mat: SpriteMaterial | SpriteNodeMaterial; version: number; width: number; round: boolean }>();
+  // A round limb is cut on the screen, not in the picture: its edge is as sharp and smooth as the screen's pixels at
+  // any zoom, however few texels the face has (the GPU check of 28 Nov 2026 found the texture's edge stepped).
+  const roundFace = (tex: DataTexture, disc: number) => {
+    const m = new SpriteNodeMaterial({ transparent: true, depthWrite: false });
+    const r = length(uvNode().sub(vec2(0.5, 0.5))).mul(float(2 / disc));
+    m.colorNode = vec4(textureNode(tex).rgb, float(1));
+    m.opacityNode = clamp(float(1).sub(r).div(fwidth(r).max(1e-6)).add(0.5), 0, 1);
+    return m;
+  };
   const faceMat = (f: NonNullable<GpuItem["face"]>) => {
     let e = faces.get(f.key);
-    if (e && e.width !== f.width) {
+    if (e && (e.width !== f.width || e.round !== !!f.round)) {
       e.tex.dispose();
       e.mat.dispose();
       faces.delete(f.key);
@@ -337,7 +346,7 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
       tex.colorSpace = SRGBColorSpace;
       tex.magFilter = LinearFilter;
       tex.minFilter = LinearFilter;
-      e = { tex, mat: new SpriteMaterial({ map: tex, transparent: true, depthWrite: false }), version: -1, width: f.width };
+      e = { tex, mat: f.round ? roundFace(tex, f.disc) : new SpriteMaterial({ map: tex, transparent: true, depthWrite: false }), version: -1, width: f.width, round: !!f.round };
       faces.set(f.key, e);
     }
     if (e.version !== f.version) {

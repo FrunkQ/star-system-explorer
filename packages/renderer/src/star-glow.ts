@@ -9,6 +9,7 @@
 // the observer's distance gets the same flux as the eye. `exposure` is F_seen / F_exposed; 1 is that daylight
 // exposure, and a view that knows the real flux at its eye (a world's sky, a ship far out) can pass the ratio.
 import { thermalColour } from "../../ui-contract/src/index.ts";
+import { srgb255 } from "./srgb.ts";
 import { limbDarkening } from "./star.ts";
 
 export const GLOW_REFERENCES = [
@@ -66,7 +67,6 @@ export function glareProfile(disc_deg: number, n = 128, reach_deg = GLOW_REACH_D
 }
 
 const decode = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-const encode = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 
 export interface GlowDraw {
   teff_k: number;
@@ -101,11 +101,29 @@ export function haloReachDeg(disc_deg: number): number {
  */
 export function drawGlow(out: { width: number; data: Uint8ClampedArray }, g: GlowDraw): void {
   const n = out.width;
-  const d = out.data;
   const reach = g.reach_deg ?? GLOW_REACH_DEG;
+  const k = (g.exposure ?? 1) * (g.boost ?? 1);
+  // The glow changes only with the zoom and the star's light, not with each picture: a picture already drawn for
+  // the same numbers is copied (the profile, when given, is a function of the disc and reach in the key).
+  const key = `${n}|${g.teff_k}|${g.disc_deg}|${reach}|${k}`;
+  const kept = glows.get(key);
+  if (kept && out.data.length === kept.length) {
+    out.data.set(kept);
+    return;
+  }
+  paintGlow(out, g, reach, k);
+  if (glows.size >= GLOWS_KEPT) glows.delete(glows.keys().next().value!);
+  glows.set(key, out.data.slice());
+}
+
+const GLOWS_KEPT = 4;
+const glows = new Map<string, Uint8ClampedArray>();
+
+function paintGlow(out: { width: number; data: Uint8ClampedArray }, g: GlowDraw, reach: number, k: number): void {
+  const n = out.width;
+  const d = out.data;
   const prof = g.profile ?? glareProfile(g.disc_deg, 128, reach);
   const m = prof.length;
-  const k = (g.exposure ?? 1) * (g.boost ?? 1);
   const base = (thermalColour(g.teff_k).match(/[0-9a-f]{2}/gi) ?? ["ff", "ff", "ff"]).map((h) => decode(parseInt(h, 16) / 255));
   const c = n / 2;
   const rad = Math.PI / 180;
@@ -131,10 +149,10 @@ export function drawGlow(out: { width: number; data: Uint8ClampedArray }, g: Glo
       // nothing, so the picture never shows its edge as a rim.
       const u = Math.max(0, Math.min(1, (1 - r) / 0.6));
       const v = (L / (1 + L)) * u * u * (3 - 2 * u) * into * into;
-      d[o] = 255 * encode(base[0]! * v);
-      d[o + 1] = 255 * encode(base[1]! * v);
-      d[o + 2] = 255 * encode(base[2]! * v);
-      d[o + 3] = 255 * encode(v);
+      d[o] = srgb255(base[0]! * v);
+      d[o + 1] = srgb255(base[1]! * v);
+      d[o + 2] = srgb255(base[2]! * v);
+      d[o + 3] = srgb255(v);
     }
 }
 

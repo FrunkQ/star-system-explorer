@@ -594,11 +594,24 @@
     const haloPx = ((haloSpan / Math.max(1e-6, d)) * h) / Math.tan(cam.fovY / 2) * dpr;
     const haloWidth = HALO_STEPS.find((n) => n >= haloPx) ?? HALO_STEPS[HALO_STEPS.length - 1]!;
     if (!haloBuf || haloBuf.width !== haloWidth) haloBuf = { width: haloWidth, data: new Uint8ClampedArray(haloWidth * haloWidth * 4) };
-    starNow = drawStarNow(faceBuf, xray ? null : haloBuf, s, { t: starT, clock: starRate, span: starRate / STAR_PICTURES_PER_S, calm, light: xray ? "xray" : "visible", disc, lat_deg: 7, disc_deg: discDeg, reach_deg: reachDeg });
-    const version = ++faceVersion;
+    // The face and halo are drawn on the CPU, so only when the star's picture time (ten a second), their sizes or the
+    // angle the disc fills (to a thousandth) move; every other frame reuses them as they are. Redrawing them each
+    // frame cost the Sun's system most of its frame rate (GPU check, 28 Nov 2026).
+    const drawn = `${b.id}|${starId(s)}|${width}|${haloWidth}|${starT}|${starRate}|${xray ? 1 : 0}|${calm ? 1 : 0}|${Math.round(Math.log(discDeg) * 1000)}`;
+    if (drawn !== faceDrawn || faceBuf.width !== width) {
+      starNow = drawStarNow(faceBuf, xray ? null : haloBuf, s, { t: starT, clock: starRate, span: starRate / STAR_PICTURES_PER_S, calm, light: xray ? "xray" : "visible", disc, lat_deg: 7, disc_deg: discDeg, reach_deg: reachDeg });
+      faceDrawn = drawn;
+      ++faceVersion;
+    }
+    const version = faceVersion;
     halo = xray ? null : { key: `star-glow:${b.id}`, version, texture: haloBuf, rel: r, radius: haloSpan };
-    return { key: `star:${b.id}:${xray ? "x" : "v"}`, version, width, data: faceBuf.data, disc };
+    return { key: `star:${b.id}:${xray ? "x" : "v"}`, version, width, data: faceBuf.data, disc, round: !!starNow?.round };
   }
+  let faceDrawn = "";
+  // Each star read gets its own number, so a new read of the same body is drawn afresh.
+  const starIds = new WeakMap<object, number>();
+  let starCount = 0;
+  const starId = (x: object) => starIds.get(x) ?? (starIds.set(x, ++starCount), starCount);
   // The halo: the eye's glare round the star and any mass ejection leaving it, added to the scene as light.
   const HALO_STEPS = [160, 320, 640];
   let haloBuf: { width: number; data: Uint8ClampedArray } | null = null;
