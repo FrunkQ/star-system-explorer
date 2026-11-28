@@ -40,3 +40,23 @@ The design guessed about 40 backward steps a pixel, a few milliseconds a face. M
   - The wind check goes red with the storms' shield removed (seen).
 - **Kernel test:** `a_giants_carry_table_holds_what_moves_its_cloud`.
 - **Fudge row:** "The renderer's carrying of a giant's cloud".
+
+## WS5c: the carrying on the GPU
+
+- **Renderer:** `packages/renderer/src/stirred-gpu.ts`.
+  - `packCarry` lays the carry table out as float textures. Eddies are filed by half day and on a 5° grid, each listed in every cell its reach touches.
+  - `carryOnGpu` runs `sourcePlaces` (stirred-carry.ts, its processor twin) for every pixel at once. It is one three.js TSL source for WebGPU and WebGL2.
+  - Each draw takes one fixed RK4 step. The state lives between draws in float targets, and every four draws one texel is read back, so the device never holds a long queue.
+- **What the test machine taught** (all three.js r187 on SwiftShader, the software device in the cloud container):
+  - A texture read inside a shader function of its own (`setLayout`) is named after another uniform on WebGL, and the shader fails to compile. Functions that read the table are written inline.
+  - The device's own sin, cos, asin and atan are off by up to 1e-3. Carried over a thousand steps, that moved cloud by hundreds of kilometres. The carrying writes sine, cosine and arc tangent out as series. A place's frame and its neighbours a step away come from its own vector, with no angles.
+  - A loop round the wind made the compiler take 13 GB. So there is one step a draw, and no loop wraps the wind.
+  - A target reads back from the bottom row up on WebGL; `carryOnGpu` turns it over.
+- **Held by test:** `tests/ui/stirred-gpu.e2e.mjs` carries an 8×8 patch on Neptune on the kernel's own table (`tests/fixtures/weather/carry.json`, 1,334 steps a pixel).
+  - Younger generation: within 0.82 km of the processor (limit 2 km).
+  - Older generation: within 27 km (limit a quarter of a 1024-wide face's pixel, 38 km). Its read place is its carried place drifted along the row for 21 days, so a float's 0.001° in latitude moves it by the jet's shear times the age.
+  - Goes red with the eddies' winds weakened by a tenth (seen: 7,600 km off).
+  - About 290 s on SwiftShader, most of it building the shader.
+  - SwiftShader's WebGPU loses its device on this shader, so the WebGPU half is skipped here. On a real GPU it is unchecked.
+  - `SSE_PROBE=probe` prints the places, winds and one step against the processor.
+- **Next:** the stirred still. Compose today's face from the source map with the two generations' weights, wire it into the true face, keep it in memory only, and rebuild it as time moves.

@@ -595,3 +595,20 @@ export function patchPlace(a: number, lat: number, lon: number, half_km: number,
   const p: V3 = [0, 1, 2].map((k) => Math.cos(r) * c[k]! + Math.sin(r) * dir[k]!) as V3;
   return latLon(p);
 }
+
+/**
+ * Where the picture reads today's face for a place's two generations, the GPU's way: fixed steps, back to the younger
+ * generation and on from there to the older (as the kernel's patch does), each then moved to where it is read.
+ * Returns [lat, lon] of each, degrees, and the generations' weights.
+ */
+export function sourcePlaces(c: Carrier, lat: number, lon: number): { places: [[number, number], [number, number]]; weights: [number, number]; ages: [number, number] } {
+  const t = c.t;
+  const g = generations(t, lat);
+  const p1 = c.back(unit(lat, lon), t.day, g[0][0]);
+  const p2 = c.back(p1, t.day - g[0][0], g[1][0] - g[0][0]);
+  return {
+    places: [latLon(c.readPlace(p1, t.day, g[0][0])), latLon(c.readPlace(p2, t.day, g[1][0]))],
+    weights: [g[0][1], g[1][1]],
+    ages: [g[0][0], g[1][0]],
+  };
+}
