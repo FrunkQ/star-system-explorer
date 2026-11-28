@@ -29,10 +29,10 @@ export interface GpuItem {
   ring?: boolean;
   selected?: boolean;
   /**
-   * True look: the world's own surface (true-look.ts), keyed so it is uploaded once. A new `version` uploads new
-   * pixels of the same size (a giant's face carried by its winds, true-air.ts `flowFace`).
+   * True look: the world's own surface (true-look.ts), keyed so it is uploaded once. A new `version` uploads its
+   * pixels again (a giant's face carried by its winds, true-air.ts `flowFace`; a new picture, true-body.ts).
    */
-  surface?: { key: string; texture: TrueTexture; version?: number };
+  surface?: { key: string; texture: TrueTexture; version?: number | string };
   /** True look: a star, drawn by its own light (not lit). */
   shines?: boolean;
   /**
@@ -260,7 +260,7 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     }
     return g;
   };
-  const versions = new Map<string, number>();
+  const versions = new Map<string, number | string>();
   // Each world's shadow uniforms (gpu-shade.ts), shared by its surface, cloud and ring materials; set every frame.
   const shades = new Map<string, ShadeState>();
   const shadeOf = (id: string) => shades.get(id) ?? (shades.set(id, makeShade()), shades.get(id)!);
@@ -292,6 +292,14 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     }
     return b.material;
   };
+  const surfaceTexture = (t: TrueTexture): DataTexture => {
+    const map = new DataTexture(t.data.slice(), t.width, t.height, RGBAFormat);
+    map.colorSpace = SRGBColorSpace;
+    map.magFilter = LinearFilter;
+    map.minFilter = LinearFilter;
+    map.needsUpdate = true;
+    return map;
+  };
   const litMat = (it: GpuItem) => {
     // One material per world: its shadows are its own.
     const key = it.surface?.key ?? `plain:${it.colour}:${it.id}`;
@@ -299,21 +307,26 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     if (hit) {
       const map = textures.get(key);
       const v = it.surface?.version ?? 0;
-      if (map && it.surface && versions.get(key) !== v && map.image.width === it.surface.texture.width && map.image.height === it.surface.texture.height) {
-        (map.image.data as Uint8Array).set(it.surface.texture.data);
-        map.needsUpdate = true;
+      if (map && it.surface && versions.get(key) !== v) {
+        const t = it.surface.texture;
+        if (map.image.width === t.width && map.image.height === t.height) {
+          (map.image.data as Uint8Array).set(t.data);
+          map.needsUpdate = true;
+        } else {
+          // A picture of another size: a texture of its own, the old one let go.
+          const next = surfaceTexture(t);
+          map.dispose();
+          textures.set(key, next);
+          hit.map = next;
+          hit.needsUpdate = true;
+        }
         versions.set(key, v);
       }
       return hit;
     }
     let map: DataTexture | null = null;
     if (it.surface) {
-      const t = it.surface.texture;
-      map = new DataTexture(t.data.slice(), t.width, t.height, RGBAFormat);
-      map.colorSpace = SRGBColorSpace;
-      map.magFilter = LinearFilter;
-      map.minFilter = LinearFilter;
-      map.needsUpdate = true;
+      map = surfaceTexture(it.surface.texture);
       textures.set(key, map);
       versions.set(key, it.surface.version ?? 0);
     }

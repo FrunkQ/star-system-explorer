@@ -507,6 +507,16 @@
           const f = await readTrueFace(reader, sys, s.address);
           trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
           if (typeof f !== "string") trueSaid.set(key, f.said);
+          // A giant's stirred still, when its GPU has built it (WS5): it takes the unstirred face's place.
+          if (typeof f !== "string" && f.stirred) {
+            const was = f.tex;
+            const addr = s.address;
+            void f.stirred.then((still) => {
+              if (!still || trueSurfaces.get(key) !== was) return;
+              trueSurfaces.set(key, still);
+              if (untrack(() => surfaces.get(addr)) === was) surfaces = new Map(untrack(() => surfaces)).set(addr, still);
+            });
+          }
           const pf = plumeFacts(record);
           if (pf) truePlumes.set(key, pf);
           // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).

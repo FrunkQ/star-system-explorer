@@ -125,6 +125,17 @@ export function ringsAssumed(b: TrueBody): boolean {
   return ringsOf(b)?.assumed ?? false;
 }
 
+// Each picture handed in gets a number of its own, so a new picture under the same key is uploaded (gpu.ts keeps one
+// texture a key and uploads again only when the version changes): a giant's stirred still arriving after its first
+// face was never shown (AC-ProArt, 28 Nov).
+const pictureIds = new WeakMap<TrueTexture, number>();
+let pictures = 0;
+const pictureId = (t: TrueTexture): number => {
+  let n = pictureIds.get(t);
+  if (n === undefined) pictureIds.set(t, (n = ++pictures));
+  return n;
+};
+
 /** A body's face in True. */
 export function trueLook(b: TrueBody): TrueLook {
   const out: TrueLook = { colour: b.colour };
@@ -134,8 +145,8 @@ export function trueLook(b: TrueBody): TrueLook {
     const f = b.flow;
     // Carried by its winds: a new picture each time asked, uploaded into the same texture by its version.
     if (f && f.dt_s && b.radius_m && b.radius_m > 0)
-      out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: f.dt_s };
-    else out.surface = { key: b.key, texture: b.surface };
+      out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: `${pictureId(b.surface)}:${f.dt_s}` };
+    else out.surface = { key: b.key, texture: b.surface, version: pictureId(b.surface) };
   }
   // Liquid ground glints in its star's light (gpu-shade.ts): drawn on the face pictures, which carry where it is wet.
   if (!b.star && b.surface && hasLiquid(b.surface)) out.glint = { ...(b.sea?.slope_variance !== undefined ? { slope_variance: b.sea.slope_variance } : {}), ...(b.sea?.normal_reflectance !== undefined ? { normal_reflectance: b.sea.normal_reflectance } : {}) };
