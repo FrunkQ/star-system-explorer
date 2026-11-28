@@ -22,6 +22,7 @@ SOURCES = {
     "popov2000": ("Popov, S. G., Ivanov, V. K., Carbajo, J. J. and Yoder, G. L. 2000, Thermophysical properties of MOX and UO2 fuels including the effects of irradiation, ORNL/TM-2000/351, Oak Ridge National Laboratory, sections 2.3 and 3.1: UO2 melting point 3120 +- 30 K unirradiated, theoretical density 10 970 +- 70 kg/m3 at 273 K", None, "https://rsicc.ornl.gov/fmdp/tm2000-351.pdf", "unverified"),
     "iaea-tecdoc1496": ("IAEA 2006, Thermophysical properties database of materials for light water reactors and heavy water reactors, IAEA-TECDOC-1496, section 6.1.1.1: UO2 melting point 3120 K", None, "https://www-pub.iaea.org/MTCD/Publications/PDF/te_1496_web.pdf", "unverified"),
     "panda-msfc": ("Panda, B., Hickman, R. R. and Shah, S., Solid solution carbides are the key fuels for future nuclear thermal propulsion, NASA Marshall Space Flight Center, NTRS 20060004773: UC melts at 2525 C, UC2 at 2480 C", None, "https://ntrs.nasa.gov/api/citations/20060004773/downloads/20060004773.pdf", "unverified"),
+    "aerospacemetals-2219": ("Aerospace Metals, Aluminum 2219-T87 data sheet (Aluminum Association typical values, 'not for design'): density 2.84 g/cc; ultimate tensile strength 476 MPa (69000 psi); tensile yield strength 393 MPa (57000 psi)", None, "https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2219-T87.pdf", "unverified"),
     "nist-srd126": ("Hubbell, J. H. and Seltzer, S. M., X-ray mass attenuation coefficients, NIST Standard Reference Database 126, Tables 1 and 2: densities W 19.30, Pb 11.35, polyethylene 0.930 g/cm3; hydrogen mass fraction of polyethylene 0.143716", None, "https://physics.nist.gov/PhysRefData/XrayMassCoef/tab2.html", "unverified"),
 }
 
@@ -96,6 +97,13 @@ def rows(val, const):
             melting_point_k=val(c_k(2525.0), "K", "panda-msfc", U, note="2525 C")),
         mat("uc2-fuel", "uranium dicarbide fuel (UC2)", "uranium dicarbide fuel", "carbide fuel",
             melting_point_k=val(c_k(2480.0), "K", "panda-msfc", U, note="2480 C; late Rover and NERVA fuels used (U,Zr)C solid solutions to run hotter")),
+        # Tank walls (compound ships CM14c part 3): the weldable alloy of the Saturn V's S-IC and S-II tanks and the
+        # Shuttle's first external tanks; the thin-wall block sizes a tank's wall from its strength and density.
+        mat("al-2219-t87", "aluminium alloy 2219-T87 (Al-6.3Cu)", "aluminium tank alloy", "tank alloy",
+            note="typical values from the Aluminum Association, not design minimums; the product form and direction are not stated",
+            density=val(2840.0, "kg m-3", "aerospacemetals-2219", U, note="2.84 g/cc"),
+            yield_strength=val(393e6, "Pa", "aerospacemetals-2219", U, note="393 MPa (57000 psi), typical"),
+            tensile_strength=val(476e6, "Pa", "aerospacemetals-2219", U, note="476 MPa (69000 psi), typical")),
         # Shields: hydrogen slows neutrons; heavy metals stop gammas.
         mat("polyethylene", "polyethylene (CH2)n", "polyethylene plastic", "plastic",
             note="hydrogen-rich neutron shield; NIST gives one generic grade, not high-density polyethylene",

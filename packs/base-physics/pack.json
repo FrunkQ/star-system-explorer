@@ -1327,6 +1327,134 @@
       },
       {
         "format": "sse.flow/1",
+        "hook": "ship.tank_wall",
+        "id": "sse.base.ship-tank-wall",
+        "inputs": [
+          {
+            "kind": "ship.tank_pressure",
+            "name": "tank_pressure"
+          },
+          {
+            "kind": "ship.stowed_volume",
+            "name": "stowed_volume"
+          },
+          {
+            "kind": "ship.wall_density",
+            "name": "wall_density"
+          },
+          {
+            "kind": "ship.wall_stress",
+            "name": "wall_stress"
+          },
+          {
+            "kind": "ship.vessel_shape",
+            "name": "vessel_shape"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.ship.tank_wall_mass",
+            "id": "wall"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "wall.wall_mass",
+            "kind": "ship.wall_mass"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "ship.wall_mass": {
+                "tol": 0.001,
+                "unit": "kg",
+                "value": 5.058
+              }
+            },
+            "inputs": {
+              "stowed_volume": {
+                "unit": "m3",
+                "value": 1.0
+              },
+              "tank_pressure": {
+                "unit": "pa",
+                "value": 300000.0
+              },
+              "vessel_shape": {
+                "unit": "one",
+                "value": 1.5
+              },
+              "wall_density": {
+                "unit": "kg_m3",
+                "value": 2810.0
+              },
+              "wall_stress": {
+                "unit": "pa",
+                "value": 250000000.0
+              }
+            },
+            "name": "the block's own worked example: a 1 m3 sphere at 3 bar in a 250 MPa aluminium wall"
+          },
+          {
+            "expect": {
+              "ship.wall_mass": {
+                "tol": 0.001,
+                "unit": "kg",
+                "value": 6.744
+              }
+            },
+            "inputs": {
+              "stowed_volume": {
+                "unit": "m3",
+                "value": 1.0
+              },
+              "tank_pressure": {
+                "unit": "pa",
+                "value": 300000.0
+              },
+              "vessel_shape": {
+                "unit": "one",
+                "value": 2.0
+              },
+              "wall_density": {
+                "unit": "kg_m3",
+                "value": 2810.0
+              },
+              "wall_stress": {
+                "unit": "pa",
+                "value": 250000000.0
+              }
+            },
+            "name": "a long cylinder weighs a third more than a sphere of the same room (shape factor 2 against 1.5)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.tank_pressure",
+            "to": "wall.tank_pressure"
+          },
+          {
+            "from": "in.stowed_volume",
+            "to": "wall.stowed_volume"
+          },
+          {
+            "from": "in.wall_density",
+            "to": "wall.wall_density"
+          },
+          {
+            "from": "in.wall_stress",
+            "to": "wall.wall_stress"
+          },
+          {
+            "from": "in.vessel_shape",
+            "to": "wall.vessel_shape"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
         "hook": "star.main_sequence",
         "id": "sse.base.star-main-sequence",
         "inputs": [
@@ -9845,6 +9973,23 @@
         ],
         "id": "wind.transverse_field",
         "range": null
+      }
+    ],
+    "units": [
+      {
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "m3",
+        "offset": 0.0,
+        "scale": 1.0,
+        "symbol": "m³"
       }
     ]
   },

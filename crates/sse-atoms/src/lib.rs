@@ -859,6 +859,18 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("tides.host_power_ceiling", "the most heat the host's tide can keep feeding the moon"),
 ];
 
+/// Units the base-physics flows take that the built-in table lacks (sse_core::Units::standard): a ship's room in
+/// cubic metres for the tank wall flow (CM14c part 3).
+pub fn units() -> Vec<sse_core::quantity::Unit> {
+    vec![sse_core::quantity::Unit {
+        id: "m3".into(),
+        symbol: "m³".into(),
+        dim: Dimension([3, 0, 0, 0, 0, 0, 0]),
+        scale: 1.0,
+        offset: 0.0,
+    }]
+}
+
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.
 pub fn kinds() -> BTreeMap<String, QuantityKind> {
     let desc: BTreeMap<&str, &str> = KIND_DESCRIPTIONS.iter().copied().collect();

@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { PAINT_SWATCHES, budgets, buildLayout, driveFacts, freePoints, fromLayout, designShip, readPropellants, shipViews, startBuilder, type BuildRecipe, type BuiltPart, type BuilderMarker, type BuilderScene, type DesignRules, type DesignShip, type FreePoint, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { PAINT_SWATCHES, budgets, buildLayout, driveFacts, freePoints, fromLayout, designShip, readPropellants, readTankWalls, shipViews, startBuilder, wallKey, type BuildRecipe, type BuiltPart, type BuilderMarker, type BuilderScene, type DesignRules, type DesignShip, type FreePoint, type Propellants, type ShipStyle, type TankWall } from "../../../renderer/src/index.ts";
   import { eraOf, paletteByUse, sayNumber, shipRecordOf, verdictWords, type NavShip, type Part, type PartsPalette, type ShipAtWorld, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
@@ -46,9 +46,10 @@
   const read = (path: string) => fetch(new URL(path, document.baseURI)).then((r) => r.json());
   $effect(() => {
     void Promise.all([read(SHIPS_PACK), read(PARTS_PACK)])
-      .then(([s, p]: [{ provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }, { provides: { other: { palette: PartsPalette; examples?: Example[] } } }]) => {
+      .then(([s, p]: [{ provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }, { provides: { other: { palette: PartsPalette; examples?: Example[]; sources?: Record<string, string> } } }]) => {
         pack = { rules: s.provides.other.ship_design, styles: s.provides.other.ship_styles };
         palette = p.provides.other.palette;
+        partSources = p.provides.other.sources ?? {};
         examples = p.provides.other.examples ?? [];
       })
       .catch((e) => (missing = `The parts could not be read (${e instanceof Error ? e.message : String(e)}).`));
@@ -74,6 +75,10 @@
   let notes = $state<string[]>([]);
   let fuels = $state<Propellants>({});
   let reframe = $state(1);
+  // Tank walls from the kernel's thin-wall flow, cached by what each wall depends on (renderer ship-walls.ts), so a
+  // stretched tank asks again and an unchanged one never does.
+  let walls = $state<Record<string, TankWall>>({});
+  let partSources = $state<Record<string, string>>({});
 
   // Open the ship as parts once the palette is here (convert on open); a saved build wins.
   $effect(() => {
@@ -111,7 +116,16 @@
   let sheet = $state<"palette" | "inspector" | null>(null);
 
   const style = $derived(pack ? (pack.styles.spine ?? Object.values(pack.styles)[0]!) : null);
-  const layout = $derived(pack && palette ? buildLayout(recipe, palette, fuels, pack.rules) : null);
+  const layout = $derived(pack && palette ? buildLayout(recipe, palette, fuels, pack.rules, walls) : null);
+  $effect(() => {
+    const placed = layout?.placed ?? [];
+    const have = untrack(() => walls);
+    if (!placed.some((q) => { const k = wallKey(q); return k !== null && !(k in have); })) return;
+    void readTankWalls(ctx.session, placed, have)
+      .then((got) => Object.keys(got).length && (walls = { ...untrack(() => walls), ...got }))
+      .catch(() => {});
+  });
+  const massOf = (key: string): string => layout?.totals.mass_from[key] ?? "";
   const facts = $derived(layout ? driveFacts(layout.record) : null);
   // A part with no mass yet leaves the build's masses unknown: delta-v and push are said as needing them.
   const massKnown = $derived(!!layout && !layout.totals.unmassed.length);
@@ -638,6 +652,7 @@
                   <dt>{k.replaceAll("_", " ")}</dt><dd>{sayNumber(f.v, 0, { decimals: Math.abs(f.v) >= 100 ? 0 : 2 })} {f.unit} {#if f.mark !== "cited"}<span class="mark">{f.mark}</span>{/if}</dd>
                 {/each}
               </dl>
+              {#if massOf(chosen.key)}<p class="note" data-mass-from title={Object.values(partSources).length ? (partSources[(chosen.part.figures.dry_t ?? chosen.part.figures.mass_t)?.src ?? ""] ?? "") : ""}>Mass: {massOf(chosen.key)}.</p>{:else}<p class="note" data-mass-from="none">Mass: not known yet, so the build's Δv waits for it.</p>{/if}
               {#if chosen.part.to_read?.length}<p class="note">Still to read: {chosen.part.to_read.join("; ")}</p>{/if}
             </div>
             <div class="sect actions"><button type="button" class="btn" onclick={removeSel} data-remove>Remove{groupOf(chosen.key).length > 1 ? " all copies" : ""}</button></div>

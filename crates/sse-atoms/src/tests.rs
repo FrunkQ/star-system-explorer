@@ -651,6 +651,7 @@ fn build_pack() -> serde_json::Value {
         "licence": "Apache-2.0",
         "provides": {
             "quantity_kinds": kinds().into_values().collect::<Vec<_>>(),
+            "units": units(),
             "flows": flows,
         }
     })

@@ -7,9 +7,10 @@
 // Nothing here is physics: placing is geometry, totals are sums of the parts' own figures, propellant mass is a tank's
 // room times the sheet's density, and every judgement (what it can do at a world, its power books) is the kernel's.
 
-import { stretchPart, type Part, type PartKind, type PartsPalette } from "../../ui-contract/src/index.ts";
+import { stretchPart, type KindMass, type Part, type PartKind, type PartsPalette } from "../../ui-contract/src/index.ts";
 import { constant } from "../../ui-contract/src/index.ts";
 import { driveFacts, type Propellants, type ShipRecord } from "./ship.ts";
+import { wallKey, type TankWall } from "./ship-walls.ts";
 import { needsOf, type DesignRules, type DesignShip, type Piece, type ShipLayout, type SystemKind } from "./ship-design.ts";
 
 /** The builder's paint swatches (the mock-up's): a build's own colours, kept in its recipe like its name. */
@@ -254,6 +255,9 @@ export interface BuildTotals {
   /** Parts with no mass yet, when nothing carried over stands in for them: the build's masses, and so its delta-v and
    * push, are not known (said as "needs part masses", never a number from a missing mass). */
   unmassed: string[];
+  /** Where each part's mass came from, in words, by placed key (CM14c part 3: the app can say why a part weighs what
+   * it does). A part with no mass has no entry. */
+  mass_from: Record<string, string>;
 }
 
 const kg = (p: Part): number | undefined => {
@@ -272,17 +276,47 @@ export function fuelDensity(store: Propellants, fuel: string): number | undefine
   return specific > 0 ? 1 / specific : undefined;
 }
 
-export function buildTotals(r: BuildRecipe, placed: readonly PlacedPart[], store: Propellants): BuildTotals {
-  const t: BuildTotals = { dry_t: 0, propellant_t: 0, tank_m3: {}, habitat_m3: 0, cargo_m3: 0, radiator_m2: 0, solar_m2: 0, electric_w: 0, thrust_n: 0, exhaust_km_s: 0, advances: [], length_m: 0, across_m: 0, missing: [], unmassed: [] };
+/** The kind's mass row and the part's figure it multiplies, when the part has both. */
+const kindRow = (rows: readonly KindMass[], p: Part): [KindMass, number] | null => {
+  const row = rows.find((x) => x.kind === p.kind);
+  const per = row ? p.figures[row.per]?.v : undefined;
+  return row && per !== undefined && per > 0 ? [row, per] : null;
+};
+
+const massWords = (kg: number): string => (kg >= 1e3 ? `${Math.round(kg / 100) / 10} t` : `${Math.round(kg)} kg`);
+
+/** A figure's mass in words: the figure's own source and why. */
+const massSaid = (p: Part): string => {
+  const f = p.figures.dry_t ?? p.figures.mass_t ?? p.figures.mass_kg;
+  return f ? `${f.unit === "kg" ? "" : "dry "}mass from ${f.src}${f.why ? ` (${f.why})` : ""}${f.check === "unverified" ? ", not yet checked against the source" : ""}` : "";
+};
+
+export function buildTotals(r: BuildRecipe, placed: readonly PlacedPart[], store: Propellants, walls: Readonly<Record<string, TankWall>> = {}, byKind: readonly KindMass[] = []): BuildTotals {
+  const t: BuildTotals = { dry_t: 0, propellant_t: 0, tank_m3: {}, habitat_m3: 0, cargo_m3: 0, radiator_m2: 0, solar_m2: 0, electric_w: 0, thrust_n: 0, exhaust_km_s: 0, advances: [], length_m: 0, across_m: 0, missing: [], unmassed: [], mass_from: {} };
   const fuel0 = r.fuels?.[0] ?? "propellant";
   let thrustV = 0;
   const noMass: string[] = [];
+  // A build opened from a catalogue record carries the record's structure, which stands in for the masses worked out
+  // here (walls, kind rows), so they are said but not counted twice.
+  const carried = r.structure_t ? "; inside the structure carried over from the catalogue record, so not counted again" : "";
   for (const q of placed) {
     const p = q.part;
     const f = p.figures;
     const m = kg(p);
-    if (m !== undefined) t.dry_t += m / 1e3;
-    else if (p.kind !== "truss" || Object.keys(f).length) noMass.push(p.name);
+    const wk = wallKey(q);
+    const wall = wk ? walls[wk] : undefined;
+    if (m !== undefined) {
+      t.dry_t += m / 1e3;
+      t.mass_from[q.key] = `${massWords(m)}, ${massSaid(p)}`;
+    } else if (wall) {
+      if (!r.structure_t) t.dry_t += wall.kg / 1e3;
+      t.mass_from[q.key] = `${massWords(wall.kg)}, ${wall.said}${carried}`;
+    } else if (kindRow(byKind, p)) {
+      const [row, per] = kindRow(byKind, p)!;
+      const k = row.v * per;
+      if (!r.structure_t) t.dry_t += k / 1e3;
+      t.mass_from[q.key] = `${massWords(k)}, by its kind: ${row.why} (${Math.round(row.v * 10) / 10} ${row.unit} from ${row.src}${row.check === "unverified" ? ", not yet checked against the source" : ""})${carried}`;
+    } else noMass.push(p.name);
     if (f.propellant_t) t.propellant_t += f.propellant_t.v;
     const vol = f.volume_m3?.v ?? 0;
     if (p.kind === "tank") {
@@ -315,7 +349,7 @@ export function buildTotals(r: BuildRecipe, placed: readonly PlacedPart[], store
     t.missing.push(`${r.structure_t >= 10 ? Math.round(r.structure_t) : Math.round(r.structure_t * 10) / 10} t of structure is carried over from the catalogue record it was opened from, until the parts' own masses are read.`);
   }
   if (noMass.length && !r.structure_t) t.unmassed = [...new Set(noMass)];
-  if (noMass.length && !r.structure_t) t.missing.push(`No mass given for ${[...new Set(noMass)].join(", ")}: counted as nothing until their sizing blocks read them (tank walls: sse.ship.tank_wall_mass).`);
+  if (noMass.length && !r.structure_t) t.missing.push(`No mass given for ${[...new Set(noMass)].join(", ")}: counted as nothing until their masses are read (a tank's wall comes from the thin-wall block once its material and pressure are known).`);
   if (t.advances.length) t.missing.push(`${[...new Set(t.advances)].join(", ")}: the drive's figures are the tech advance's at the setting's level, which this sum does not read yet.`);
   const bodies = buildPieces(placed);
   t.length_m = Math.max(0, ...bodies.map((b) => b.x1));
@@ -342,9 +376,9 @@ export function buildRecord(r: BuildRecipe, t: BuildTotals): DesignShip {
 }
 
 /** The build laid out as a designer layout, so the plans, call-outs and 3D model draw it. */
-export function buildLayout(r: BuildRecipe, palette: PartsPalette, store: Propellants, rules: DesignRules): ShipLayout & { totals: BuildTotals; placed: PlacedPart[]; record: DesignShip } {
+export function buildLayout(r: BuildRecipe, palette: PartsPalette, store: Propellants, rules: DesignRules, walls: Readonly<Record<string, TankWall>> = {}): ShipLayout & { totals: BuildTotals; placed: PlacedPart[]; record: DesignShip } {
   const { placed, notes } = placeBuild(r, palette);
-  const totals = buildTotals(r, placed, store);
+  const totals = buildTotals(r, placed, store, walls, palette.mass_by_kind ?? []);
   const record = buildRecord(r, totals);
   const pieces = buildPieces(placed);
   return { name: r.name, style: "built", seed: 0, pieces, length_m: totals.length_m, across_m: totals.across_m, needs: needsOf(record, store, rules), notes: [...notes, ...totals.missing], totals, placed, record };

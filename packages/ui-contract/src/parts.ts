@@ -110,6 +110,9 @@ export interface Part {
   /** Figures still wanted from a source. */
   to_read?: string[];
   credit?: string;
+  /** A tank's wall material, by the master data sheet's mixtures id: the thin-wall block sizes the wall from its
+   * density and strength (CM14c part 3). */
+  wall_material?: string;
 }
 
 export interface PortSize {
@@ -140,7 +143,21 @@ export interface PartsPalette {
   eras?: Era[];
   port_sizes: PortSize[];
   parts: Part[];
+  /** What a part of a kind weighs per unit of one of its own figures, when nothing else gives its mass (CM14c part 3c):
+   * one cited, editable row per kind, from a flown example. */
+  mass_by_kind?: KindMass[];
   credits: string[];
+}
+
+export interface KindMass {
+  kind: PartKind;
+  /** The part's figure it multiplies (area_m2 or volume_m3). */
+  per: string;
+  v: number;
+  unit: string;
+  src: string;
+  check?: "unverified";
+  why: string;
 }
 
 const PAIRS: Record<PointPlace, PointPlace[]> = {

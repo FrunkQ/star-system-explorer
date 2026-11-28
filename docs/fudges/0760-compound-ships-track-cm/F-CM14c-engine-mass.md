@@ -1,0 +1,3 @@
+| # | Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|---|
+| F-CM14c-engine-mass | `scripts/build-base-parts.py` `ENGINE_KG` | Five engines carry a dry mass from a published comparison table (Wikipedia, Comparison of orbital rocket engines) rather than each maker's data sheet; the rest carry none and their builds say "needs part masses" | No engine mass is in GCAT's engine list as served here, and the table is the one cited source reachable; it does not say dry or wet | Each engine's mass from its maker or a NASA report, checked in the citation run-through; then an engine mass block (thrust to weight by cycle) for engines with none | stand-in, cited, unverified |

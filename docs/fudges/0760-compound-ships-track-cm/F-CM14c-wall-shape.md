@@ -1,0 +1,3 @@
+| # | Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|---|
+| F-CM14c-wall-shape | `renderer/ship-walls.ts` `TANK_SHAPE_FACTOR` | Every palette tank is weighed by the thin-wall block as a long cylinder (shape factor 2), though it is about twice as long as wide with domed ends | The block takes one shape factor between a sphere (1.5) and a long cylinder (2); the ends, welds, insulation and fittings are not sized | A tank sizing block that takes the part's own proportions and ends, adds insulation for cryogens and a minimum gauge for small tanks | stand-in: errs heavy, never light |

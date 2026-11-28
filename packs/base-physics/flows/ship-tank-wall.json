@@ -1,0 +1,128 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.ship-tank-wall",
+  "version": "0.1.0",
+  "hook": "ship.tank_wall",
+  "inputs": [
+    {
+      "name": "tank_pressure",
+      "kind": "ship.tank_pressure"
+    },
+    {
+      "name": "stowed_volume",
+      "kind": "ship.stowed_volume"
+    },
+    {
+      "name": "wall_density",
+      "kind": "ship.wall_density"
+    },
+    {
+      "name": "wall_stress",
+      "kind": "ship.wall_stress"
+    },
+    {
+      "name": "vessel_shape",
+      "kind": "ship.vessel_shape"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "wall",
+      "atom": "sse.ship.tank_wall_mass"
+    }
+  ],
+  "wires": [
+    {
+      "from": "in.tank_pressure",
+      "to": "wall.tank_pressure"
+    },
+    {
+      "from": "in.stowed_volume",
+      "to": "wall.stowed_volume"
+    },
+    {
+      "from": "in.wall_density",
+      "to": "wall.wall_density"
+    },
+    {
+      "from": "in.wall_stress",
+      "to": "wall.wall_stress"
+    },
+    {
+      "from": "in.vessel_shape",
+      "to": "wall.vessel_shape"
+    }
+  ],
+  "publishes": [
+    {
+      "kind": "ship.wall_mass",
+      "from": "wall.wall_mass"
+    }
+  ],
+  "tests": [
+    {
+      "name": "the block's own worked example: a 1 m3 sphere at 3 bar in a 250 MPa aluminium wall",
+      "inputs": {
+        "tank_pressure": {
+          "value": 300000.0,
+          "unit": "pa"
+        },
+        "stowed_volume": {
+          "value": 1.0,
+          "unit": "m3"
+        },
+        "wall_density": {
+          "value": 2810.0,
+          "unit": "kg_m3"
+        },
+        "wall_stress": {
+          "value": 250000000.0,
+          "unit": "pa"
+        },
+        "vessel_shape": {
+          "value": 1.5,
+          "unit": "one"
+        }
+      },
+      "expect": {
+        "ship.wall_mass": {
+          "value": 5.058,
+          "unit": "kg",
+          "tol": 0.001
+        }
+      }
+    },
+    {
+      "name": "a long cylinder weighs a third more than a sphere of the same room (shape factor 2 against 1.5)",
+      "inputs": {
+        "tank_pressure": {
+          "value": 300000.0,
+          "unit": "pa"
+        },
+        "stowed_volume": {
+          "value": 1.0,
+          "unit": "m3"
+        },
+        "wall_density": {
+          "value": 2810.0,
+          "unit": "kg_m3"
+        },
+        "wall_stress": {
+          "value": 250000000.0,
+          "unit": "pa"
+        },
+        "vessel_shape": {
+          "value": 2.0,
+          "unit": "one"
+        }
+      },
+      "expect": {
+        "ship.wall_mass": {
+          "value": 6.744,
+          "unit": "kg",
+          "tol": 0.001
+        }
+      }
+    }
+  ]
+}
