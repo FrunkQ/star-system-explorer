@@ -461,10 +461,11 @@ impl<'a> Carrier<'a> {
         let mut ve = [0.0f64; 3];
         let mut psi = 0.0f64;
         let bin = m::floor((day - self.day0) / BIN_D);
-        if bin < 0.0 || bin as usize >= self.nbins {
+        if bin < 0.0 || bin as usize > self.nbins {
             return (ve, psi);
         }
-        let bin = bin as usize;
+        // The span's last instant falls in its last bin (a step's first stage reads the picture's own date there).
+        let bin = (bin as usize).min(self.nbins - 1);
         let km = a / 1000.0;
         for (b, reach) in self.group_reach_km.iter().enumerate() {
             let reach = *reach;
@@ -896,6 +897,141 @@ pub fn stirred_patch(
         renewal_days: tau,
         cells,
     }
+}
+
+/// One storm as the carrying holds it (WS5's table): its shape where it stood on `day_ref`, how it drifts, and when
+/// it lives.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct CarryStorm {
+    pub lat_deg: f64,
+    pub lon_deg: f64,
+    pub size_km: f64,
+    pub aspect: f64,
+    pub strength: f64,
+    /// −1 anticyclone, +1 cyclone.
+    pub sense: f64,
+    pub born: f64,
+    pub ends: f64,
+    pub day_ref: f64,
+    pub drift_deg_d: f64,
+}
+
+/// Everything the renderer needs to carry a giant's cloud back over the picture's whole face (WS5, `want: "carry"`):
+/// the [`Carrier`]'s own tables, so the GPU sums the same winds the reference answer does. The bands are given as
+/// their stream function Ψ(ρ) and eastward wind by latitude; the polygon's warp of ρ is geometry (the pole's sides
+/// and turn); the storms and eddies as they are filed here.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct CarryTable {
+    /// The picture's date and the span the table covers (two renewals and a day back), days.
+    pub day: f64,
+    pub day0: f64,
+    /// The span's end, days (the picture's date, save in a reference table that reaches past it).
+    pub day1: f64,
+    pub radius_m: f64,
+    /// +1, or −1 for a world that spins backwards (every vortex mirrored).
+    pub turn: f64,
+    /// Jets a hemisphere: band `k` north of the equator holds sin |φ| in [k, k + 1) / jets (south bands follow).
+    pub jets: u32,
+    /// The renewal time τ, days (0: nothing is carried).
+    pub renewal_days: f64,
+    /// Each band's generation offset, days (the lattice of WS4: cloud is made at `offset + k τ`), north bands first.
+    pub generation_offset_days: Vec<f64>,
+    /// The step, s, and the step near a polygon; poleward of `poly_lat_deg` the second is used.
+    pub dt_s: f64,
+    pub dt_poly_s: f64,
+    pub poly_lat_deg: f64,
+    /// Ψ(ρ), m²/s, every `psi_step_deg` of ρ from the north pole and from the south; `psi_south` joins them.
+    pub psi_step_deg: f64,
+    pub psi_north: Vec<f64>,
+    pub psi_south_table: Vec<f64>,
+    pub psi_south: f64,
+    /// The eastward wind by latitude, m/s, from −90° every `u_step_deg`.
+    pub u_step_deg: f64,
+    pub u_m_s: Vec<f64>,
+    pub polar_jet_lat_deg: f64,
+    pub jet_deformation_km: f64,
+    pub poles: Vec<crate::eddies::FlowPole>,
+    pub storms: Vec<CarryStorm>,
+    pub eddies: Vec<Eddy>,
+}
+
+/// The step of [`CarryTable::u_m_s`], degrees.
+const U_STEP_DEG: f64 = 0.01;
+
+impl<'a> Carrier<'a> {
+    /// The tables behind these winds, for the renderer.
+    pub fn table(&self, c: &Conditions, day: f64, tau: f64) -> CarryTable {
+        let n = (180.0 / U_STEP_DEG) as usize;
+        let jets = self.l.jets.max(1);
+        CarryTable {
+            day,
+            day0: self.day0,
+            day1: self.day0 + self.nbins as f64 * BIN_D,
+            radius_m: self.a,
+            turn: self.turn,
+            jets,
+            renewal_days: tau,
+            generation_offset_days: (0..2 * jets as u64)
+                .map(|b| tau * draws(c, "weather.giant_generations.v1").unit(b))
+                .collect(),
+            dt_s: self.dt_s,
+            dt_poly_s: self.dt_poly_s,
+            poly_lat_deg: self.poly_lat,
+            psi_step_deg: PSI_STEP_DEG,
+            psi_north: self.psi_band[0].clone(),
+            psi_south_table: self.psi_band[1].clone(),
+            psi_south: self.psi_south,
+            u_step_deg: U_STEP_DEG,
+            u_m_s: (0..=n)
+                .map(|k| zonal_wind(self.gs, self.l, self.a, -90.0 + k as f64 * U_STEP_DEG))
+                .collect(),
+            polar_jet_lat_deg: self.l.polar_jet_lat_deg,
+            jet_deformation_km: self.l.jet_deformation_km,
+            poles: self
+                .l
+                .poles
+                .iter()
+                .map(|q| crate::eddies::FlowPole {
+                    north: q.north,
+                    polygon_sides: q.polygon_sides,
+                    orient_lon_deg: q.orient_lon_deg,
+                })
+                .collect(),
+            storms: self
+                .storms
+                .iter()
+                .map(|s| CarryStorm {
+                    lat_deg: s.v.lat_deg,
+                    lon_deg: s.v.lon_deg,
+                    size_km: s.v.size_km,
+                    aspect: s.v.aspect,
+                    strength: s.v.strength,
+                    sense: s.sense,
+                    born: s.born,
+                    ends: s.ends,
+                    day_ref: s.day_ref,
+                    drift_deg_d: s.drift_deg_d,
+                })
+                .collect(),
+            eddies: self.eddies.clone(),
+        }
+    }
+}
+
+/// The carry table for a giant's picture on `day` (WS5, `want: "carry"`): what moves its cloud over the two
+/// renewals the picture reaches back. `None` where the deck has no renewal time.
+pub fn carry_table(
+    gs: &GiantSettings,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    l: &GiantLayout,
+    day: f64,
+) -> Option<CarryTable> {
+    let tau = renewal_s(gs, cs, c, l)
+        .map(|s| s / DAY_S)
+        .filter(|t| *t > 0.0 && t.is_finite())?;
+    let carrier = Carrier::new(gs, c, l, day - 2.0 * tau - 1.0, day);
+    Some(carrier.table(c, day, tau))
 }
 
 #[cfg(test)]

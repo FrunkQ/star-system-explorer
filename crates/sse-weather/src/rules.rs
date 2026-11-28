@@ -273,6 +273,18 @@ impl RuleBlock {
         })
     }
 
+    /// What carries a giant's cloud over the whole picture on a date (WS5, `want: "carry"`): the jets' stream
+    /// function, the polygon, every storm and eddy over the two renewals the picture reaches back; `None` for a world
+    /// that is not a giant, or whose deck has no renewal time.
+    pub fn carry(&self, c: &Conditions, date: Date) -> Option<crate::stirred::CarryTable> {
+        let p = self.prepare(c, date);
+        if !Self::is_giant(&p) {
+            return None;
+        }
+        let l = giants::layout(&self.giants, c);
+        crate::stirred::carry_table(&self.giants, &self.settings.climate, c, &l, date.day)
+    }
+
     /// A giant's cloud over a patch, carried back along its winds (WS4, `want: "stirred"`): where each cell's two
     /// generations of cloud were made and how stretched; `None` for a world that is not a giant.
     #[allow(clippy::too_many_arguments)]

@@ -148,6 +148,16 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             })?;
             to_json(&t)
         }
+        "carry" => {
+            rule_only("carry")?;
+            let t = block.carry(&c, date).ok_or_else(|| {
+                err(
+                    "not_a_giant",
+                    "a carry table is a giant's whose cloud is renewed: its jets, storms and eddies over two renewals",
+                )
+            })?;
+            to_json(&t)
+        }
         "stirred" => {
             rule_only("stirred")?;
             let half = a.half_km.filter(|h| *h > 0.0).ok_or_else(|| {
