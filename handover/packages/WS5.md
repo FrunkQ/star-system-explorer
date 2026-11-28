@@ -82,3 +82,23 @@ The design guessed about 40 backward steps a pixel, a few milliseconds a face. M
   - Retire PR 646's winding and curls wherever the still shows.
   - Screens on a real GPU (AC-ProArt).
   - The cost there, which is unmeasured.
+
+### WS5d on a real GPU (AC-ProArt, 28 Nov), and what it changed
+
+- **Twin test** with Chrome headed, `--force_high_performance_gpu`. Unless forced, Chrome picks the Radeon 890M.
+  - RTX 4070: WebGL2 0.78 km and 24.3 km, in 36.8 s; WebGPU 0.97 km and 30.1 km, in 13.4 s.
+  - Radeon 890M: WebGL2 0.71 km and 22.2 km, in 29.7 s; WebGPU 0.52 km and 17.4 km, in 8.0 s.
+- **The product failed.**
+  - Jupiter's eddy list needed a texture 12,923 tall, and Saturn's 29,123; a GPU allows 8,192. Every draw after that was invalid, the places came back unmoved, and the runner called the still built.
+  - Building a still froze the tab for 1 to 7 s at a time. Jupiter took 40 s and Saturn 123 s on both GPUs, so the time went on the processor.
+- **Fixes:**
+  - The eddies are filed in each row's frame turning with that row's wind, in 2-day bins. In that frame an eddy sweeps only its drift against the row. Jupiter's list now needs 1,138 rows and Saturn's 4,373. `test/stirred-pack.test.ts` checks every eddy that reaches 4,000 random places and dates is in the list the shader reads, and goes red with the drift left out (seen).
+  - `carryOnGpu` checks every texture against the device's limit, and refuses the result on any WebGPU validation or out-of-memory error.
+  - Each material's shader is built with `compileAsync`.
+  - The product takes 4 steps a draw, with a frame between draws. The test keeps 1, because SwiftShader cannot build a loop round the wind; `SSE_CHUNK=4` runs it as the product does.
+  - Filing the table and composing the still run in a worker (`stirred-worker.ts`). The table filing is `stirred-pack.ts`, free of three.js.
+- **How far cloud moves, at a 1024-wide face** (processor twin, median per row):
+  - Neptune: 0 to 4 px north-south; along the bands, against the row's drift, 1 to 140 px.
+  - Jupiter: 1 to 6 px north-south in the belts and 10 to 25 px towards the poles; along the bands, 4 to 250 px.
+  - The unstirred face changes little along a band, so stirring shows at band edges, round storms and towards the poles, not as a whole-globe change.
+- **Steps a leg:** Jupiter 955, Uranus 788, Saturn 11,820. Saturn's cloud lasts 336 days, so its still is about 25 times Neptune's work.

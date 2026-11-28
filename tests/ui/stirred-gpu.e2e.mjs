@@ -27,8 +27,8 @@ const YOUNG_KM = 2;
 let failed = false;
 try {
   for (const [q, label, args, required] of [
-    [`?gl${process.env.SSE_PROBE ? `&${process.env.SSE_PROBE}` : ""}`, "WebGL2", [], true],
-    ["", "WebGPU", ["--enable-unsafe-webgpu"], false],
+    [`?gl${process.env.SSE_PROBE ? `&${process.env.SSE_PROBE}` : ""}${process.env.SSE_CHUNK ? `&chunk=${process.env.SSE_CHUNK}` : ""}`, "WebGL2", [], true],
+    [`${process.env.SSE_CHUNK ? `?chunk=${process.env.SSE_CHUNK}` : ""}`, "WebGPU", ["--enable-unsafe-webgpu"], false],
   ]) {
     const browser = await chromium.launch({ args });
     const page = await browser.newPage();
