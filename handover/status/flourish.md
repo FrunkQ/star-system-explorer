@@ -12,7 +12,7 @@ What it is, in one line: a picture that is dear to work out is shown as a stand-
 | FL2 the kit: Carry, Exposure and Fade nodes with processor twins (`renderer/src/settle-kit.ts`, `settle-kit-cpu.ts`, `wind-table.ts`) | built, PR open; AC-ProArt check owed; log `packages/FL2.md` | "Build the shared flourish system" |
 | FL3 giants: the stirred still on the schedule and the kit | accepted, not started; after PR 739 | the stirred clouds thread |
 | FL4 the note's clause, the readout's line, the declared-list check (`standInClause`, `settleBoard`, `test/stand-ins.test.ts`) | built, PR open; log `packages/FL4.md` | "Build the shared flourish system" |
-| FL5 the zoom travels on a coarse picture and settles at a stop | accepted, not started | "Build the crash zoom between places" |
+| FL5 the zoom travels on a coarse picture and settles at a stop | built with FL7's journey use (`journey-play.ts`, `Journey.svelte`; log `packages/FL5.md`); no level declares a coarse picture yet (the galaxies nearby need a kernel places-only read); the seam on the kit's Fade waits on FL2 | "Build the crash zoom between places" |
 | FL7 warming up: a queue of builds known to be coming (a journey's levels, the next dates), timed, in memory only | pure part built (`settle.ts` `warmPlan`, `BuildTimes`, `WarmCache`; log `packages/FL7.md`); the journey's use with FL5 | "Build the shared flourish system" |
 | FL6 folding in sharpen at rest, orbits between answers, star cells, finer tiles | accepted, not started | each view's owner |
 
