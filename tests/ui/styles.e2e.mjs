@@ -6,6 +6,7 @@
 // budget for a basic device or out of range is rejected with reasons; a
 // new style extends a shipped one and is kept; a screen item names a style
 // in the composer; the state hash never moves.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

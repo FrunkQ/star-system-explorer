@@ -64,6 +64,8 @@ export interface CompareItem {
   day_h?: number;
   /** Its rings, edges from its centre in km, with their depth and brightness when known (the 3D lineups draw them). */
   rings?: { inner_km: number; outer_km: number; tau: number | null; albedo: number | null }[];
+  /** A lump drawn as its own shape (RW16a): how far its farthest point reaches, in its mean radius. */
+  lump_reach?: number;
 }
 
 /** How far out a body reaches, its rings included, km: the room it needs in a lineup that draws its rings. */
@@ -216,8 +218,8 @@ export interface Lineup {
  * label), so small bodies' labels never overprint.
  */
 export function layoutLineup(items: readonly CompareItem[], height: number, maxWidth: number, mode: "true" | "log" = "true", limbRatio = 5, askedSlot = 0, withRings = false): Lineup {
-  // Where rings are drawn, a ringed body takes the room of its rings, at the same scale as its globe.
-  const reach = (i: CompareItem) => (withRings ? reachKm(i) / i.radius_km : 1);
+  // Where globes are drawn, a ringed body takes the room of its rings and a lump the room of its long end, at the same scale as its globe.
+  const reach = (i: CompareItem) => (withRings ? Math.max(reachKm(i) / i.radius_km, i.lump_reach ?? 1) : 1);
   const minR = 1.5;
   if (!items.length) return { placed: [], limb: null, km_per_px: 1, width: 0, mode, slot: askedSlot };
   // A crowded row narrows its gaps and slots (to half the slot room, the rest for the large bodies) before it would

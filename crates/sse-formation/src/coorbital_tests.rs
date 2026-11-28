@@ -60,8 +60,8 @@ fn neighbours_decide_who_keeps_them() {
         .map(|i| s[i].id)
         .collect();
     // Jupiter and Neptune hold long-lived swarms, Saturn and Uranus do not
-    // (Lykawka and Horner 2010); Mars keeps primordial ones (de la Fuente
-    // Marcos et al. 2024); Venus's and Mercury's do not last.
+    // (Lykawka and Horner 2010); Mars keeps primordial ones
+    // (de la Fuente Marcos et al. 2024); Venus's and Mercury's do not last.
     assert_eq!(kept, ["earth", "mars", "jupiter", "neptune"]);
     let sat = disturbed(&s, index("saturn")).unwrap();
     assert_eq!((sat.by.as_str(), sat.p, sat.q), ("jupiter", 5, 2));

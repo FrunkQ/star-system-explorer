@@ -71,8 +71,8 @@ Abbreviations: P = `packs/base-surface/pack.json`; I = `crates/sse-surface/src/i
 | I:359-364 | Pike 1977 | depth and rim fits | unverified (not read) | see Pike row |
 | I:372 | none | central peak height 0.4 x depth | unverified, tuned | none |
 | P `atm_cut_km` 0.1, `atm_cut_exp` 0.75 | "fitted to Earth and Venus (no Venus craters under about 3 km)" | D_min = 0.1 km x P^0.75 (bar) | unverified, fitted | not read. From memory, the smallest Venus craters catalogued from Magellan are about 1.5-2 km (Schaber et al. 1992; Herrick et al. 1997), with a strong deficit below ~30 km. Not confirmed this session |
-| P `kappa_dry` 5.5 | Fassett and Thomson 2014 | dry diffusivity | verified | ADS abstract |
-| P `kappa_wet` 5e4, `kappa_air_m2_myr_bar` 100, `degrade_coeff` 0.016, `ghost_fraction` 0.05 | "set so a 10 km crater loses most relief in ~100 Myr" | relief left = exp(-K / (0.016 D^2)) | tuned (stated in pack) | none |
+| sheet `lunar-soil-mature-mare` `creep_diffusivity` 5.5 m²/Myr | Fassett and Thomson 2014 | dry creep diffusivity | verified | ADS abstract |
+| sheet `sediment` `creep_diffusivity` 5e4 m²/Myr, `air_creep_diffusivity` 100 m²/Myr/bar, P `degrade_coeff` 0.016, `ghost_fraction` 0.05 | "set so a 10 km crater loses most relief in ~100 Myr" | relief left = exp(-K / (0.016 D^2)) | tuned (stated in pack) | none |
 | P resurface myr: ice-shell 60, heat-pipe 1, episodic-lid 500, hydrocarbon 500, plume-lid 1000 | Zahnle 2003 (Europa); others uncited | renewal e-folding | Europa: metadata verified, number from Greeley et al. 2004 / Schenk et al. 2004. Venus 500 is inside the S4 log's own "300-750 Myr". Titan 500, plume-lid 1000 and Io 1 Myr unverified | see Zahnle row |
 | P `resurface_exponent` 3 | none ("renewal rates scale as the cube of heat flow") | rate x (q/q_ref)^3 | unverified, tuned | none |
 | P volcanism q_min 0.02, q_ref 0.06, plains_per_gyr 0.15, cap 0.6, bury 40 km, shields 2/Gyr, height 9 km x 9.81/g, aspect 12, min radius 3000 km | "rule-of-thumb values for lid worlds, labelled as such" | plains and shields | tuned (labelled) | Olympus Mons ~22 km against the code's 23.8 km on Mars is a consistency check, not a source |
@@ -83,7 +83,6 @@ Abbreviations: P = `packs/base-surface/pack.json`; I = `crates/sse-surface/src/i
 | P plates `speed_cm_yr` 4, `q_ref_w_m2` 0.039 | "a few cm/yr scaled by heat flow" | plate speed | tuned | the S2 log says ocean crust lives about 280 Myr against Earth's ~60 Myr |
 | P plates `orogeny_height_m` 3500, `max_relief_m` 9000, arc/trench/plume heights and taus | none | relief | tuned | none |
 | P wear `k_stream` 2e-6, `m` 0.5 | Braun and Willett 2013 | E = K Q^m S, with Q (m^3/yr) standing in for area | tuned, inside the usual published range | Q/(1 m/yr) is used as the drainage area. K 2e-6 /yr for m = 0.5 sits inside the commonly used 1e-7 to 1e-5 range; not checked against a paper |
-| P wear `diffusion_m2_yr` 10 | "effective coarse-grid value; local hillslope about 0.01 m^2/yr" | diffusion | tuned (labelled) | none |
 | P wear `glacial_factor` 2, `ice_k` 263, `lapse_k_m` 0.0065 | none | glaciation | lapse 6.5 K/km textbook (standard atmosphere); factor 2 and 263 K tuned | none |
 | P regime_features clouds `wind_gas_m_s` 150, `wind_ice_m_s` 400, `ice_giant_mass_earth` 50 | "empirical wind scales" | U in the Rhines scale | unverified but plausible (Jupiter's equatorial jet ~100-150 m/s; Neptune ~400 m/s, retrograde) | none read |
 | R:615 | none | H = R T / (mu g), mu = 2.3 g/mol | textbook | none |

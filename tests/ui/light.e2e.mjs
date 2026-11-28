@@ -8,6 +8,7 @@
 // recipe never changes the state hash. The band is chosen once, in the view
 // controls' Band; the panel lists that band's recipes. Players get the same
 // control (every band, as they have no view controls yet).
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import { view } from "./nav.mjs";

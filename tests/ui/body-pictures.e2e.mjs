@@ -5,6 +5,7 @@
 // says it has no surface yet). A star shows its disc, in visible light or X-rays. On the Build desk the GM adds
 // an own picture: the card opens on it from then on, on every desk, and no picture.* field shows among the facts.
 // On a phone the picture fits the card.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

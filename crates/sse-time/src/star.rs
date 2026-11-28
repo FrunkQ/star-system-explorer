@@ -213,6 +213,13 @@ impl AgeingStar {
         a.mass + (b.mass - a.mass) * (t - a.t) / (b.t - a.t)
     }
 
+    /// BX1: the star at age `t` with a mass it really has (after giving or
+    /// taking gas in a pair), not its own winds' mass: on a clocked giant
+    /// branch the radius follows that mass; elsewhere the life line.
+    pub fn state_with_mass(&self, t: f64, mass: f64) -> StarState {
+        self.star_with(t, mass)
+    }
+
     pub fn state_at(&self, t: f64) -> AgedState {
         let mass = self.mass_at(t);
         AgedState {

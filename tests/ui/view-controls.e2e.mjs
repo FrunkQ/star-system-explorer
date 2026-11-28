@@ -6,6 +6,7 @@
 // choice is kept on the device. The galaxy chart follows it in 3D; Galaxies nearby, flat for now, shows Chart seen
 // from above with the rest disabled.
 // On a phone the controls sit over the chart with nothing off the side. Choosing writes nothing.
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

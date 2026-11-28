@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { glarePsf, glareProfile, glowReach, drawGlow, GLOW_REACH_DEG } from "../src/star-glow.ts";
+import { glarePsf, glareProfile, glowReach, drawGlow, haloReachDeg, GLOW_REACH_DEG } from "../src/star-glow.ts";
 import { churningGranules, granuleBlur, limbLumps } from "../src/star-churn.ts";
 import { addEjections, ejectionShare, ejectionsAt, flareBoost, patchRadiusDeg, shownFlares, FLASHES_PER_SECOND_MAX } from "../src/star-events.ts";
 import { drawStar, granuleCount } from "../src/star.ts";
@@ -45,6 +45,26 @@ test("the glow picture is clear over the disc, brightest at its edge, nothing at
   assert.ok(at(32 + 4, 32) > at(32 + 16, 32), "brighter near the star");
   assert.equal(at(0, 0), 0);
   assert.ok(at(63, 32) < 8, "faded to almost nothing at the edge");
+});
+
+test("seen large (the close-up) the halo reaches past the limb, so what stands over it still has room", () => {
+  assert.equal(haloReachDeg(0.25), GLOW_REACH_DEG, "a star seen small keeps the glare's own reach");
+  // At half a radius over the Sun its outline is 41.8 degrees: the halo reaches 2.5 outlines on its plane, under 70.
+  const disc = (Math.asin(1 / 1.5) * 180) / Math.PI;
+  const reach = haloReachDeg(disc);
+  const rad = Math.PI / 180;
+  assert.ok(Math.abs(Math.tan(reach * rad) / Math.tan(disc * rad) - 2.5) < 1e-9, `${reach}`);
+  assert.ok(reach < 70);
+  // The 20-degree reach alone would end inside that disc: nothing over the limb could be drawn.
+  assert.ok(GLOW_REACH_DEG < disc);
+  // The glow picture keeps its disc clear at its true place on the plane, and glows just outside it.
+  const n = 128;
+  const o = { width: n, data: new Uint8ClampedArray(n * n * 4) };
+  drawGlow(o, { teff_k: 5772, disc_deg: disc, reach_deg: reach });
+  const at = (x: number) => o.data[(64 * n + x) * 4 + 3]!;
+  const limbPx = 64 + 64 / 2.5;
+  assert.equal(at(64 + 10), 0, "clear well inside the disc");
+  assert.ok(at(Math.ceil(limbPx) + 1) > 0, "glowing just past the limb");
 });
 
 test("cells churn: the same moment gives the same cells; a moment later most have barely moved and a few are new", () => {

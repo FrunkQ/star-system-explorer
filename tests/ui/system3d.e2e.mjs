@@ -5,6 +5,7 @@
 // opening its moons hands the camera to Vault's frame; zooming out hands back.
 // A players' 3D screen draws too. With WebGL turned off, the same views fall
 // back to Canvas 2D. (The pixel-stability proof is packages/renderer/test.)
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { view as pick } from "./nav.mjs";

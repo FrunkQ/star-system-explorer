@@ -5,6 +5,7 @@
 // clip is recognised; text that is not a clip is refused in words. Copying and reading a paste never change the
 // state hash. "Paste here" places Tarn and its moon as one change: both join the chart, one Undo takes both away and
 // Redo brings them back; the pasted copy can be cut, and Undo puts it back (U20 part 2).
+import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";

@@ -8,6 +8,274 @@
  "provides": {
   "other": {
    "about": "Ageing settings (T1, T2; handoff 6.3): epoch step sizes, when detailed windows open, the predictability horizon, the ageing star's wind and the names of white dwarf colours.",
+   "processes": {
+    "about": "TP4 (time design sections 6, 9 and 10): every process that depends on time says its shape (line, stream or march), its own time tau as physics (a block or an Equation, never a typed number), its anchor, the marks it can publish and, for a march, its grid rule, and which kernel ops read it. The list is the pace ladder (op pace_ladder); a kernel op that takes a date and is named by no declaration fails a check (handover/packages/TP4-undeclared-ops.txt, a ledger that only shrinks). A pack may add a declaration or replace one by its id.",
+    "list": [
+     {
+      "id": "star.life",
+      "says": "A star's life",
+      "shape": "line",
+      "anchor": "system.birth_s",
+      "tau": {
+       "block": "sse.star.ms_lifetime",
+       "output": "lifetime"
+      },
+      "subjects": [
+       {
+        "says": "the Sun",
+        "inputs": {
+         "mass": "sheet/M_sun",
+         "luminosity": "sheet/L_sun"
+        }
+       }
+      ],
+      "marks": [
+       "a change of phase (subgiant, giant, white dwarf)",
+       "the star's last light"
+      ],
+      "ops": [
+       "describe_star",
+       "set_system_age",
+       "age_pair"
+      ],
+      "how": "Drawn once when the star resolves (sse-time star.rs state_at and mass_at); any age is a read of the curve. Its own time is how long it burns hydrogen. Until TP2 the anchor is the star's age in years, read through dated's convention."
+     },
+     {
+      "id": "system.ageing",
+      "says": "A system ageing with its star",
+      "shape": "march",
+      "anchor": "system.birth_s",
+      "tau": {
+       "driver": "star.life"
+      },
+      "grid": "The star's own phases: main-sequence steps of main_sequence_step_myr, then subgiant_steps, giant_steps and white_dwarf_steps (this pack's time settings), with a window over a close pair stepped window_steps_per_orbit times per innermost orbit. Until TP5 the grid also depends on the dates asked from and to (audit 3.4), so two legs do not yet give the bits of one.",
+      "marks": [
+       "a change of the star's phase",
+       "a world engulfed",
+       "oceans lost",
+       "a close encounter",
+       "a world thrown out"
+      ],
+      "ops": [
+       "look_ahead",
+       "commit_look_ahead"
+      ],
+      "how": "The epoch stepper (sse-time epoch.rs) on a look-ahead branch, kept only on a yes. Mass loss is slow beside the orbits, so the orbits follow the star (section 7): the march's own time is its driver's."
+     },
+     {
+      "id": "orbit.kepler",
+      "says": "A body going round its host",
+      "shape": "line",
+      "anchor": "orbit.epoch_s",
+      "tau": {
+       "block": "sse.orbit.period",
+       "output": "period"
+      },
+      "subjects": [
+       {
+        "says": "the Moon round the Earth (the Moon's own mass left out, 1.2 percent)",
+        "inputs": {
+         "semi_major_axis": "sheet/a_moon",
+         "total_mass": "sheet/M_earth"
+        }
+       },
+       {
+        "says": "a world 1 au from the Sun",
+        "inputs": {
+         "semi_major_axis": "sheet/au",
+         "total_mass": "sheet/M_sun"
+        }
+       }
+      ],
+      "marks": [
+       "periapsis",
+       "an eclipse or a transit",
+       "a close approach"
+      ],
+      "ops": [
+       "orbits_at",
+       "elements_in",
+       "orbit_stability"
+      ],
+      "how": "A Kepler orbit read at any date from its own epoch, the angle formed exactly in whole seconds (TP1, Instant::angle_since)."
+     },
+     {
+      "id": "star.activity",
+      "says": "A star's flares and spots",
+      "shape": "stream",
+      "anchor": "system.birth_s",
+      "tau": {
+       "block": "sse.activity.convective_turnover_time",
+       "output": "tau"
+      },
+      "subjects": [
+       {
+        "says": "the Sun",
+        "inputs": {
+         "mass": "sheet/M_sun"
+        }
+       }
+      ],
+      "marks": [
+       "a flare",
+       "a flare storm"
+      ],
+      "ops": [
+       "read_activity"
+      ],
+      "how": "Flares drawn from the seed in bins set by the star's own rate (sse-activity), so any window is read without the ones before it; a window holding too many gives a count and the biggest. Its pace is the dynamo's: the time the outer layer takes to turn over. The op still takes star-age seconds as a double (TP1b)."
+     },
+     {
+      "id": "cosmos.expansion",
+      "says": "The universe expanding",
+      "shape": "line",
+      "anchor": "time.origin",
+      "tau": {
+       "equation": {
+        "name": "How long the universe takes to grow by a large share at today's rate",
+        "formula": "t = 1 / H",
+        "inputs": {
+         "H": {
+          "kind": "constant.H0_si",
+          "unit": "1/s",
+          "name": "the Hubble constant, per second"
+         }
+        },
+        "outputs": {
+         "t": {
+          "kind": "cosmos.hubble_time",
+          "unit": "s",
+          "name": "the Hubble time"
+         }
+        },
+        "source": {
+         "text": "Hogg, D. W. 1999, Distance measures in cosmology, arXiv:astro-ph/9905116",
+         "url": "https://arxiv.org/abs/astro-ph/9905116",
+         "where": "eq. 3"
+        },
+        "explain": {
+         "curious": "At today's rate of expansion, the time it would take the universe to double in size if the rate held. It sets the pace of the cosmic web: nothing on that scale changes much faster.",
+         "science": "The Hubble time t_H = 1/H0, the e-folding time of the scale factor at constant H. The real age differs from it by the history of H; it is a pace, not an age."
+        },
+        "examples": [
+         {
+          "H": 2.1927112672380573e-18,
+          "t": 456056396909749800
+         }
+        ]
+       }
+      },
+      "subjects": [
+       {
+        "says": "today",
+        "inputs": {
+         "H": "sheet/H0_si"
+        }
+       }
+      ],
+      "marks": [],
+      "ops": [
+       "web_slice"
+      ],
+      "how": "The cosmic web read at a cosmic time (sse-cosmos), from the universe's origin."
+     },
+     {
+      "id": "galaxy.events",
+      "says": "What happens round a star on its path through the galaxy",
+      "shape": "stream",
+      "anchor": "time.origin",
+      "tau": {
+       "marks": "the galaxy's own dated events near the star's path, each kind drawn from the galaxy's rate for it where the path runs, per time bin"
+      },
+      "marks": [
+       "a supernova, kilonova or gamma-ray burst within reach",
+       "a close pass by another star",
+       "a spiral-arm crossing",
+       "a nucleus episode, merger or starburst of the galaxy"
+      ],
+      "ops": [
+       "site_history"
+      ],
+      "how": "G6's event layer (sse-cosmos events.rs) on the star's own orbit through the galaxy, drawn from the seed in time bins so any window is read without the ones before it; GZ13's site_history reads it for a system's star slot. It has no single pace of its own: each kind of event keeps the rate the galaxy gives it at the star's place."
+     },
+     {
+      "id": "campaign.record",
+      "says": "The campaign's own record",
+      "shape": "line",
+      "anchor": "campaign.now_s",
+      "tau": {
+       "marks": "the campaign's own dated events: authored facts, notes, holdings, intents, rule ticks, names"
+      },
+      "marks": [
+       "a note arrives",
+       "a rule's tick",
+       "an intent",
+       "a holding starts or ends"
+      ],
+      "ops": [
+       "set_authored_batch",
+       "withdraw",
+       "restore",
+       "state_hash",
+       "branch_state_hash",
+       "commit",
+       "scene",
+       "scan_toggle",
+       "grant",
+       "known_to",
+       "set_known",
+       "undo_known",
+       "known_in",
+       "adopt",
+       "add_note",
+       "set_kept",
+       "transfer",
+       "mine",
+       "add_actor",
+       "record",
+       "hold",
+       "who_holds",
+       "holdings_in",
+       "set_link",
+       "links_in",
+       "set_tech",
+       "tech_of",
+       "tech_reading",
+       "disclosures",
+       "rules_step",
+       "rules_decide",
+       "rules_policy",
+       "set_campaign_now",
+       "set_seats",
+       "send_intent",
+       "create",
+       "retire",
+       "rehost",
+       "preview_tree",
+       "split_construct",
+       "join_constructs",
+     "mount_construct",
+     "release_construct",
+       "intent_decide",
+       "programs",
+       "attach_program",
+       "detach_program",
+       "programs_step",
+       "import_sector",
+       "export_sector",
+       "sector_map",
+       "adopt_dressing",
+       "set_naming",
+       "rename",
+       "fix_names",
+       "read_names",
+       "log_flight",
+       "flight_log"
+      ],
+      "how": "Every authored event is dated in the chronicle; what is true, known or held at a date is a read of the events up to it, so any date is a read and nothing is stepped. It has no pace of its own in physics: it moves when the GM or the rules write."
+     }
+    ]
+   },
    "time": {
     "star": {
      "reimers_eta": 0.5,

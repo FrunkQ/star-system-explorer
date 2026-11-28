@@ -440,6 +440,458 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.ship.tank_wall_mass",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "tank_pressure",
+     "letter": "p"
+    },
+    {
+     "port": "stowed_volume",
+     "letter": "V"
+    },
+    {
+     "port": "wall_density",
+     "letter": "rho"
+    },
+    {
+     "port": "wall_stress",
+     "letter": "s"
+    },
+    {
+     "port": "vessel_shape",
+     "letter": "phi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "wall_mass",
+     "letter": "m"
+    }
+   ],
+   "checks": [
+    {
+     "port": "tank_pressure",
+     "min": 0,
+     "finite": true,
+     "says": "tank pressure must be zero or more, got {}"
+    },
+    {
+     "port": "stowed_volume",
+     "min": 0,
+     "finite": true,
+     "says": "volume must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "wall_density",
+     "says": "wall density"
+    },
+    {
+     "port": "wall_stress",
+     "says": "allowed wall stress"
+    },
+    {
+     "port": "vessel_shape",
+     "says": "shape factor"
+    }
+   ],
+   "references": [
+    "Young, W. C. and Budynas, R. G. 2002, Roark's Formulas for Stress and Strain, 7th edn, McGraw-Hill, chapter 13 (thin-walled shells under internal pressure: the hoop stress is p r / t in a long cylinder and p r / 2t in a sphere, so the wall's mass is the shape factor times p V rho / sigma). https://openlibrary.org/isbn/007072542X"
+   ],
+   "shown": "m = φ p V ρ / σ",
+   "equation": {
+    "name": "How heavy a pressure tank's wall is",
+    "formula": "m = phi * p * V * rho / s",
+    "inputs": {
+     "p": {
+      "kind": "ship.tank_pressure",
+      "unit": "Pa",
+      "name": "pressure the tank holds"
+     },
+     "V": {
+      "kind": "ship.stowed_volume",
+      "unit": "m3",
+      "name": "room inside the tank"
+     },
+     "rho": {
+      "kind": "ship.wall_density",
+      "unit": "kg m-3",
+      "name": "density of the wall material"
+     },
+     "s": {
+      "kind": "ship.wall_stress",
+      "unit": "Pa",
+      "name": "stress the wall may carry (strength over the safety factor)"
+     },
+     "phi": {
+      "kind": "ship.vessel_shape",
+      "unit": "1",
+      "name": "shape factor: 1.5 for a sphere, 2 for a long cylinder",
+      "valid": [
+       1.5,
+       2.0
+      ]
+     }
+    },
+    "outputs": {
+     "m": {
+      "kind": "ship.wall_mass",
+      "unit": "kg",
+      "name": "mass of the tank wall"
+     }
+    },
+    "source": {
+     "text": "Young and Budynas 2002, Roark's Formulas for Stress and Strain",
+     "url": "https://openlibrary.org/isbn/007072542X",
+     "where": "chapter 13"
+    },
+    "explain": {
+     "curious": "A tank's wall weighs in proportion to what it holds times how hard it is squeezed. Big tanks are not worse than small ones for pressure; a sphere is the lightest shape.",
+     "science": "Thin-wall membrane stress: the wall thickness that keeps hoop stress at the allowed value, times its area and density, is phi p V rho / sigma, independent of size. Ends, welds and fittings are left out."
+    },
+    "examples": [
+     {
+      "p": 300000.0,
+      "V": 1.0,
+      "rho": 2810.0,
+      "s": 250000000.0,
+      "phi": 1.5,
+      "m": 5.058
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.ship.split_surface",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "one_tank_surface",
+     "letter": "A"
+    },
+    {
+     "port": "tank_count",
+     "letter": "N"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "split_surface",
+     "letter": "S"
+    }
+   ],
+   "checks": [
+    {
+     "port": "one_tank_surface",
+     "min": 0,
+     "finite": true,
+     "says": "surface must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "tank_count",
+     "says": "number of tanks"
+    }
+   ],
+   "references": [
+    "Galilei, G. 1638, Dialogues Concerning Two New Sciences, trans. Crew, H. and de Salvio, A. 1914, Dover reprint 1954, first day (bodies of one shape: their surfaces go as the squares and their volumes as the cubes of their size, so surface grows as the two-thirds power of volume). https://openlibrary.org/isbn/0486600998"
+   ],
+   "shown": "S = A N^(1/3)",
+   "equation": {
+    "name": "How much skin a load gains when split into tanks",
+    "formula": "S = A * N ^ (1 / 3)",
+    "inputs": {
+     "A": {
+      "kind": "ship.one_tank_surface",
+      "unit": "m2",
+      "name": "surface of one tank holding it all"
+     },
+     "N": {
+      "kind": "ship.tank_count",
+      "unit": "1",
+      "name": "tanks of the same shape it is split into"
+     }
+    },
+    "outputs": {
+     "S": {
+      "kind": "ship.split_surface",
+      "unit": "m2",
+      "name": "surface of all the tanks together"
+     }
+    },
+    "source": {
+     "text": "Galilei 1638, Two New Sciences",
+     "url": "https://openlibrary.org/isbn/0486600998",
+     "where": "first day"
+    },
+    "explain": {
+     "curious": "Splitting a load into eight tanks doubles the skin round it. Insulation, sunshades and the cold that leaks in all grow with the skin, so many small tanks cost more than one big one.",
+     "science": "For similar shapes surface scales as volume to the two-thirds; N tanks of V/N each have N (V/N)^(2/3) = N^(1/3) V^(2/3), so N^(1/3) times the single tank's surface. Insulation mass and boil-off follow the surface."
+    },
+    "examples": [
+     {
+      "A": 100.0,
+      "N": 8.0,
+      "S": 200.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.ship.dish_gain",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "dish_aperture",
+     "letter": "D"
+    },
+    {
+     "port": "link_wavelength",
+     "letter": "lambda"
+    },
+    {
+     "port": "aperture_efficiency",
+     "letter": "eta"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "dish_gain",
+     "letter": "G"
+    }
+   ],
+   "positive": [
+    {
+     "port": "dish_aperture",
+     "says": "dish width"
+    },
+    {
+     "port": "link_wavelength",
+     "says": "wavelength"
+    },
+    {
+     "port": "aperture_efficiency",
+     "says": "aperture efficiency"
+    }
+   ],
+   "references": [
+    "Larson, W. J. and Wertz, J. R. (eds) 1999, Space Mission Analysis and Design, 3rd edn, Microcosm Press, chapter 13 (communications: a parabolic dish's gain is the aperture efficiency times (pi D / lambda)^2, and the link equation gives the data rate a received power supports at the needed energy per bit over the noise density). https://openlibrary.org/isbn/1881883108"
+   ],
+   "shown": "G = η (π D / λ)²",
+   "equation": {
+    "name": "How much a dish concentrates a signal",
+    "formula": "G = eta * (pi * D / lambda) ^ 2",
+    "inputs": {
+     "D": {
+      "kind": "ship.dish_aperture",
+      "unit": "m",
+      "name": "width of the dish"
+     },
+     "lambda": {
+      "kind": "ship.link_wavelength",
+      "unit": "m",
+      "name": "wavelength of the link"
+     },
+     "eta": {
+      "kind": "ship.aperture_efficiency",
+      "unit": "1",
+      "name": "share of the dish that works (about 0.55)",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "G": {
+      "kind": "ship.dish_gain",
+      "unit": "1",
+      "name": "gain over a bare antenna (as a ratio, not decibels)"
+     }
+    },
+    "source": {
+     "text": "Larson and Wertz 1999, Space Mission Analysis and Design",
+     "url": "https://openlibrary.org/isbn/1881883108",
+     "where": "chapter 13"
+    },
+    "explain": {
+     "curious": "Double a dish's width and it throws four times as much of its signal at you. Shorter waves do the same, which is why deep-space links moved to higher bands.",
+     "science": "Directive gain of a filled circular aperture, 4 pi A_eff / lambda^2 with A_eff = eta pi D^2 / 4. Pointing loss and surface error are left to the efficiency."
+    },
+    "examples": [
+     {
+      "D": 3.7,
+      "lambda": 0.0357,
+      "eta": 0.55,
+      "G": 58308.1752999257
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.ship.link_rate",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "transmit_power",
+     "letter": "P"
+    },
+    {
+     "port": "dish_gain",
+     "letter": "Gt"
+    },
+    {
+     "port": "receive_gain",
+     "letter": "Gr"
+    },
+    {
+     "port": "link_wavelength",
+     "letter": "lambda"
+    },
+    {
+     "port": "link_distance",
+     "letter": "d"
+    },
+    {
+     "port": "noise_temperature",
+     "letter": "T"
+    },
+    {
+     "port": "bit_energy_ratio",
+     "letter": "E"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "data_rate",
+     "letter": "R"
+    }
+   ],
+   "constants": {
+    "k_B": "constants/k_B"
+   },
+   "checks": [
+    {
+     "port": "transmit_power",
+     "min": 0,
+     "finite": true,
+     "says": "power must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "dish_gain",
+     "says": "transmit gain"
+    },
+    {
+     "port": "receive_gain",
+     "says": "receive gain"
+    },
+    {
+     "port": "link_wavelength",
+     "says": "wavelength"
+    },
+    {
+     "port": "link_distance",
+     "says": "distance"
+    },
+    {
+     "port": "noise_temperature",
+     "says": "noise temperature"
+    },
+    {
+     "port": "bit_energy_ratio",
+     "says": "energy per bit over noise"
+    }
+   ],
+   "references": [
+    "Larson, W. J. and Wertz, J. R. (eds) 1999, Space Mission Analysis and Design, 3rd edn, Microcosm Press, chapter 13 (communications: a parabolic dish's gain is the aperture efficiency times (pi D / lambda)^2, and the link equation gives the data rate a received power supports at the needed energy per bit over the noise density). https://openlibrary.org/isbn/1881883108"
+   ],
+   "shown": "R = P G_t G_r (λ / 4π d)² / (k_B T_s (E_b/N₀))",
+   "equation": {
+    "name": "How fast a link can send",
+    "formula": "R = P * Gt * Gr * (lambda / (4 * pi * d)) ^ 2 / (k_B * T * E)",
+    "inputs": {
+     "P": {
+      "kind": "ship.transmit_power",
+      "unit": "W",
+      "name": "power sent"
+     },
+     "Gt": {
+      "kind": "ship.dish_gain",
+      "unit": "1",
+      "name": "gain of the sending dish"
+     },
+     "Gr": {
+      "kind": "ship.receive_gain",
+      "unit": "1",
+      "name": "gain of the receiving dish"
+     },
+     "lambda": {
+      "kind": "ship.link_wavelength",
+      "unit": "m",
+      "name": "wavelength of the link"
+     },
+     "d": {
+      "kind": "ship.link_distance",
+      "unit": "m",
+      "name": "distance between the two"
+     },
+     "T": {
+      "kind": "ship.noise_temperature",
+      "unit": "K",
+      "name": "receiver's system noise temperature"
+     },
+     "E": {
+      "kind": "ship.bit_energy_ratio",
+      "unit": "1",
+      "name": "energy per bit over noise density the coding needs (as a ratio, not decibels)"
+     },
+     "k_B": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "R": {
+      "kind": "ship.data_rate",
+      "unit": "s-1",
+      "name": "data rate the link supports, in bits a second"
+     }
+    },
+    "source": {
+     "text": "Larson and Wertz 1999, Space Mission Analysis and Design",
+     "url": "https://openlibrary.org/isbn/1881883108",
+     "where": "chapter 13"
+    },
+    "explain": {
+     "curious": "Twice as far, a quarter of the data. A probe at the edge of the system whispers; a bigger dish at either end, a stronger transmitter or a colder receiver buys the rate back.",
+     "science": "Friis free-space link: received power P Gt Gr (lambda / 4 pi d)^2 over the noise density k_B T_s and the needed Eb/N0 gives the bit rate. Pointing, air and line losses are left out."
+    },
+    "examples": [
+     {
+      "P": 20.0,
+      "Gt": 58308.1752999257,
+      "Gr": 3000000.0,
+      "lambda": 0.0357,
+      "d": 1000000000000.0,
+      "T": 25.0,
+      "E": 2.5,
+      "R": 32721.56790031355
+     }
+    ]
+   }
   }
  ]
 }

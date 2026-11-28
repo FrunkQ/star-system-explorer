@@ -1,0 +1,41 @@
+# TP4 ledger: kernel ops that take a date and that no process declares yet.
+# It only shrinks.
+#
+# One op per line. Checked by crates/sse-kernel/src/pace_tests.rs
+# (`every_dated_op_is_declared_or_on_the_ledger`): an op whose request has a
+# date field (a name ending _s, _yr, _myr or _gyr whose last word says when:
+# at_s, occurred_at_s, t_myr, age_myr ...) must be named in the ops of a
+# declaration in packs/base-time (provides.other.processes), or be listed
+# here. Never add a line: declare the new op's process (time design section
+# 10). When a declaration names an op listed here, delete its line in the
+# same change; the check fails until you do.
+atmosphere_advice
+classify_preview
+codes
+derive
+dressing
+expects
+explain
+galaxy_chart
+jump_map
+plan_descent
+plan_route
+plan_voyage
+read_composition
+read_field
+read_inventory
+read_nebulae
+resolved_system
+roll_profile
+run_formation
+ship_at_world
+ship_power
+sift
+sky_from_here
+sky_glow
+star_cell
+surface_frames
+survey_caves
+survey_surface
+weather
+window_view

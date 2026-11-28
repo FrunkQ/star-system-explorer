@@ -350,6 +350,16 @@
     }
   }
   const all = $derived(centre ? [centre, ...orbiting] : orbiting);
+  // Where each mark is drawn, for the press targets: a body's target reaches at most halfway to its nearest
+  // neighbour, so two bodies drawn close together (Earth and Mars in line, now that the real Solar System is where
+  // it really is) can each still be pressed.
+  const drawnAt = $derived(all.map((s) => (s === centre ? [cx, cy] : pos(s)) as [number, number]));
+  function hitRadius(i: number, size: number): number {
+    const [x, y] = drawnAt[i]!;
+    let near = Infinity;
+    drawnAt.forEach(([u, v], j) => j !== i && (near = Math.min(near, Math.hypot(u - x, v - y))));
+    return Math.max(size + 4, Math.min(Math.max(22, size + 12), near / 2));
+  }
   const selected = $derived(scene.subjects.find((s) => s.address === ctx.workspace.selection));
   // Where each name sits (chart-labels.ts): round its mark, clear of the other names and marks, the belt names and the
   // scale figures, inside the chart. A body that is not named takes no place.
@@ -458,7 +468,10 @@
     const sys = scene.system;
     const sel = ctx.workspace.selection;
     const g = ++trueGen;
-    if (!looksTrue || ctx.session.seat.authority !== "gm") return void (reading = null);
+    // Held (the start sheet covers the stage, or a door is entering a system): no faces read for a system nobody can
+    // see yet, so the door's own kernel calls are not queued behind them (AF3: the Solar System took 13.6 s to open in
+    // True on a Radeon 890M, 0.27 s on Chart, while the hidden base system's faces were read).
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || ctx.workspace.held) return void (reading = null);
     const worlds = scene.subjects.filter((s) => s.orbit && s.kind !== "star" && s.kind !== "belt");
     const order = [...worlds.filter((s) => s.address === sel), ...worlds.filter((s) => s.address !== sel)];
     // The reader runs untracked: worlds already kept are put in `surfaces` without waiting, so a tracked read of
@@ -469,6 +482,8 @@
       let noneWhy = "";
       let done = 0;
       for (const s of order) {
+        // Stop between worlds as soon as the system, the choice or True has changed (or the stage is held).
+        if (g !== trueGen) return;
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
@@ -904,7 +919,7 @@
             onkeydown={(e) => onkey(e, i, s)}
             data-moons={moons || undefined}
           >
-            <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
+            <circle class="hit" cx={x} cy={y} r={hitRadius(i, m.size)} />
             {#if pencilOn && !atCentre && !knows(s)}
               <!-- Pencil (SV3, the shared pencil kit): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
               <g data-pencil><Pencilled pen={penOf("gm_only")} cx={x} cy={y} r={markExtent(m)}><Mark mark={m} cx={x} cy={y} {prefix} /></Pencilled></g>

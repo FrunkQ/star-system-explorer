@@ -57,7 +57,7 @@ fn metal_poor_stars_live_shorter_and_off_the_fits_says_so() {
     let ms = |d: &crate::describe::Description| d.phases[1].to_yr.unwrap();
     assert!(ms(&poor) < ms(&rich));
     let off = describe(1.0, 1.0e9, -3.0).unwrap();
-    assert_eq!(off.z_fits, 1.0e-4);
+    assert_eq!(off.z_fits, crate::history::Z_FITS.0);
     assert!(!off.notes.is_empty());
 }
 

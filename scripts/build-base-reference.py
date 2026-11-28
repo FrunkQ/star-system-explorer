@@ -44,6 +44,8 @@ import liquid_rows  # noqa: E402
 import optical_rows  # noqa: E402
 import band_rows  # noqa: E402
 import photo_rows  # noqa: E402
+import emission_rows  # noqa: E402
+import melt_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -111,6 +113,7 @@ SOURCES = {
     "dupont-kevlar2017": ("DuPont 2017, Kevlar aramid fiber technical guide, Table II-1: typical properties of Kevlar 29 and 49 yarns (Kevlar 49 straight-test yarn 3,000 MPa, resin-impregnated strand 3,600 MPa, density 1.44 g/cm3; typical values, not specifications)", None, "https://www.r-g.de/wiki/images/e/ec/Td_en_Kevlar_guide.pdf", "verified"),
     "fiberline-zylon": ("Fiber-Line, Zylon PBO datasheet (fibre made by Toyobo): high-modulus grade breaking tenacity 42.0 g/d, specific gravity 1.56; typical values, not a specification. Toyobo's own technical information gives 5.8 GPa", None, "https://automotive.polyone.com/sites/default/files/2021-06/fl.us-.datasheet-zylonr-pbo.pdf", "verified"),
     "yu2000": ("Yu, M.-F., Lourie, O., Dyer, M. J., Moloni, K., Kelly, T. F. and Ruoff, R. S. 2000, Science 287, 637: strength and breaking mechanism of multiwalled carbon nanotubes under tensile load (outer shells broke at 11 to 63 GPa)", "10.1126/science.287.5453.637", None, "unverified"),
+    "fassett2014": ("Fassett, C. I. and Thomson, B. J. 2014, JGR Planets 119, 2255: crater degradation on the lunar maria read as topographic diffusion, about 5.5 m2 per Myr (the abstract: ~5.5 m2/Myr; docs/citations/surfaces.md)", "10.1002/2014JE004698", "https://ui.adsabs.harvard.edu/abs/2014JGRE..119.2255F", "verified"),
     "turcotte2014": ("Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press (typical crust 2700, mantle 3300 and sediment 2300 kg/m3 of its worked problems)", "10.1017/CBO9780511843877", None, "unverified"),
     "wallace-hobbs2006": ("Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science: An Introductory Survey, 2nd edition, Academic Press (dry air c_p = 1004 J/kg/K)", "10.1016/C2009-0-00034-8", None, "unverified"),
     "nssdca-venus": ("NASA NSSDCA Venus fact sheet (atmosphere 96.5% CO2, 3.5% N2 by volume)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html", "unverified"),
@@ -757,7 +760,8 @@ MIXTURES = [
      "yield_strength": val(5.6e6, "Pa", "lineweaver2010", "unverified", note="calibrated so ice rounds at about 200 km"),
      "melting_point": val(273.15, "K", NIST, note="at low pressure")},
     {"id": "crust-rock", "names": {"physics": "continental crust rock", "plain": "crust rock", "story": "rock"},
-     "recipe": {}, "by": "mass", "density": val(2700.0, "kg m-3", "turcotte2014", "unverified")},
+     "recipe": {}, "by": "mass", "density": val(2700.0, "kg m-3", "turcotte2014", "unverified"),
+     "thermal_conductivity": val(2.5, "W m-1 K-1", "turcotte2014", "unverified", note="typical of the continental crust's granites and gneisses near the surface (about 2 to 3); read by the life suite's deep-crust warming")},
     {"id": "mantle-rock", "names": {"physics": "upper mantle rock", "plain": "mantle rock", "story": "deep rock"},
      "recipe": {}, "by": "mass", "density": val(3300.0, "kg m-3", "turcotte2014", "unverified")},
     {"id": "sediment", "names": {"physics": "compacted sediment", "plain": "sediment", "story": "sediment"},
@@ -916,14 +920,38 @@ for _m in optical_rows.apply(MIXTURES):
 for _m in optical_rows.sulphur_rows(MIXTURES):
     MIXTURES.append(_m)
 optical_rows.apply_ices(SUBSTANCES, val)
+# HF4b.0: the rock rows the melt and lid blocks read (scripts/melt_rows.py).
+for _k, _v in melt_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+melt_rows.apply(MIXTURES, val)
 # Lifetimes of gases in sunlight, for the ice ground and the comets (scripts/photo_rows.py).
 for _k, _v in photo_rows.SOURCES.items():
     assert _k not in SOURCES, _k
     SOURCES[_k] = _v
 photo_rows.apply(SUBSTANCES, val)
+# Lines ions give off: nebular forbidden lines and comet ion tails (scripts/emission_rows.py).
+for _k, _v in emission_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+emission_rows.apply(SUBSTANCES)
 # MP37: water ice ground, fine and coarse grains (scripts/optical_rows.py, ice_rows).
 for _m in optical_rows.ice_rows(MIXTURES):
     MIXTURES.append(_m)
+# Downslope creep as topographic diffusion, one rate per process (sse.surface.creep_diffusivity): crater fading
+# and slope wear read the same three. Rates are SI (m2 s-1); the notes give them per Myr as the papers do.
+_MYR_S = 1e6 * 365.25 * 86400.0
+for _id, _key, _v, _unit, _src, _check, _note in [
+    ("lunar-soil-mature-mare", "creep_diffusivity", 5.5 / _MYR_S, "m2 s-1", "fassett2014", "verified",
+     "5.5 m2 per Myr: lunar crater degradation read as diffusion, impact gardening on airless ground"),
+    ("sediment", "creep_diffusivity", 5.0e4 / _MYR_S, "m2 s-1", "fudge-register", "authored",
+     "5e4 m2 per Myr (0.05 m2 a year) while wet: set so a 10 km crater on a wet world loses most of its relief in about 100 Myr; hillslope soil creep alone is about 0.003 m2 a year (Roering et al. 1999)"),
+    ("sediment", "air_creep_diffusivity", 100.0 / (_MYR_S * 1e5), "m2 s-1 Pa-1", "fudge-register", "authored",
+     "100 m2 per Myr per bar of air: wind-driven creep and infill"),
+]:
+    _row = next(x for x in MIXTURES if x["id"] == _id)
+    assert _key not in _row.setdefault("hillslope", {}), (_id, _key)
+    _row["hillslope"][_key] = val(_v, _unit, _src, _check, note=_note)
 
 
 def elements():

@@ -79,10 +79,16 @@
   .pop :global(.rail) {
     border-right: 0;
   }
-  /* A phone keeps the rail as its row of chips (the phone's Run frame is TM9). */
+  /* On a phone the button is thumb-sized and the list takes most of the width (design section 8). */
   @media (max-width: 760px) {
     .fold {
-      display: none;
+      align-self: flex-start;
+    }
+    .fold-btn {
+      height: 44px;
+    }
+    .pop {
+      width: min(320px, calc(100vw - 32px));
     }
   }
 </style>

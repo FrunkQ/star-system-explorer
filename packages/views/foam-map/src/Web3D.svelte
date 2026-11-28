@@ -11,7 +11,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { basis, cubeEdges, mixCss, SPACE_CSS, starCss, startGpu, webGlow, webLights, webMarks, webParcelLevels, WEB_DARK_GLOW, WEB_LEVEL_INK, WEB_LIGHT_K, type Gpu, type GpuDots, type Vec3, type WebKind } from "../../../renderer/src/index.ts";
-  import { SEEN_ELEVATION, sayNumber, type SeenFrom, type WebCube, type WebGalaxies } from "../../../ui-contract/src/index.ts";
+  import { SEEN_ELEVATION, WEB_CUBE_FOV, sayNumber, type SeenFrom, type WebCube, type WebGalaxies } from "../../../ui-contract/src/index.ts";
 
   let {
     cube,
@@ -23,6 +23,8 @@
     tier = "gpu-basic",
     onturned,
     reframe = 0,
+    aim = null,
+    inner = null,
   }: {
     cube: WebCube;
     /** The cube's galaxies (True's light), once they are read. */
@@ -36,6 +38,18 @@
     onturned?: () => void;
     /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing. */
     reframe?: number;
+    /**
+     * The journey port (grand zoom GZ8): while a journey travels through the web, the camera it puts here, in the
+     * cube's own units (comoving Mpc, absolute like the cube's centre). Set: the cube does not turn by itself, takes no
+     * drag, and draws only the picture (no buttons, no note), so it can be cross-faded with the level below.
+     */
+    aim?: { eye: Vec3; target: Vec3 } | null;
+    /**
+     * On a journey, at the seam to the galaxies nearby: the galaxies within `radius_mpc` of the journey's target are
+     * drawn at `alpha` of their light (the level below draws those, from its catalogue), the rest at full light, so
+     * the web past the level below stays behind it as a backdrop. Absent: every galaxy at full light.
+     */
+    inner?: { radius_mpc: number; alpha: number } | null;
   } = $props();
 
   const isTrue = $derived(look === "true");
@@ -44,6 +58,14 @@
   const marked = $derived(marks.reduce((a, m) => a + m.points.length, 0));
   const half = $derived(cube.volume.extent / 2);
   const lights = $derived(isTrue && galaxies ? webLights(galaxies.galaxies, cube.volume, shrink) : null);
+  // On a journey's seam to the galaxies nearby: how many of the cube's lit galaxies lie within their reach.
+  const innerCount = $derived.by(() => {
+    if (!inner || !aim || !lights) return undefined;
+    const r2 = inner.radius_mpc ** 2;
+    let k = 0;
+    for (const g of lights) for (const p of g.points) if ((p[0] - lookAt[0]) ** 2 + (p[1] - lookAt[1]) ** 2 + (p[2] - lookAt[2]) ** 2 <= r2) k++;
+    return k;
+  });
   const lit = $derived(lights ? lights.reduce((a, g) => a + g.points.length, 0) : 0);
 
   // Camera orbiting the cube's centre, distances in Mpc (comoving, so the camera stays put as Real shrinks it).
@@ -64,8 +86,11 @@
   const MIN = $derived(half * 0.3);
   const MAX = $derived(half * 10);
   const zoomBy = (f: number) => (dist = Math.min(MAX, Math.max(MIN, dist * f)));
-  const eye = $derived<Vec3>([dist * Math.cos(pitch) * Math.cos(yaw), dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch)]);
-  const FOV = (40 * Math.PI) / 180;
+  // Without a journey the camera orbits the cube's middle; on one it is wherever the journey puts it, about home.
+  const centre = $derived<Vec3>([cube.volume.centre[0], cube.volume.centre[1], cube.volume.centre[2]]);
+  const lookAt = $derived<Vec3>(aim ? [aim.target[0] - centre[0], aim.target[1] - centre[1], aim.target[2] - centre[2]] : [0, 0, 0]);
+  const eye = $derived<Vec3>(aim ? [aim.eye[0] - centre[0], aim.eye[1] - centre[1], aim.eye[2] - centre[2]] : [dist * Math.cos(pitch) * Math.cos(yaw), dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch)]);
+  const FOV = WEB_CUBE_FOV;
   const rel = (p: readonly [number, number, number]): Vec3 => [Math.fround(p[0] - eye[0]), Math.fround(p[1] - eye[1]), Math.fround(p[2] - eye[2])];
 
   // A slow turn so the depth reads, until the viewer takes hold (or asks for less motion).
@@ -73,7 +98,7 @@
   let raf = 0;
   $effect(() => {
     const still = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!spinning || still) return;
+    if (!spinning || still || aim) return;
     let last = 0;
     const step = (t: number) => {
       if (last) yaw += ((t - last) / 1000) * 0.12;
@@ -132,7 +157,19 @@
     if (isTrue) {
       if (lights) {
         if (hud) for (const g of levels) layers.push({ points: g.points, colour: colours.sheet, glow: WEB_DARK_GLOW * WEB_LEVEL_INK[g.level]!, size: 1 });
-        for (const g of lights) layers.push({ points: g.points, colour: starCss(g.colour_k), glow: g.glow, size: g.size });
+        for (const g of lights) {
+          if (!inner || !aim) {
+            layers.push({ points: g.points, colour: starCss(g.colour_k), glow: g.glow, size: g.size });
+            continue;
+          }
+          // Split by distance from the journey's target: the near ones fade as the level below takes them over.
+          const r2 = inner.radius_mpc * inner.radius_mpc;
+          const near: Vec3[] = [];
+          const far: Vec3[] = [];
+          for (const p of g.points) ((p[0] - lookAt[0]) ** 2 + (p[1] - lookAt[1]) ** 2 + (p[2] - lookAt[2]) ** 2 <= r2 ? near : far).push(p);
+          if (far.length) layers.push({ points: far, colour: starCss(g.colour_k), glow: g.glow, size: g.size });
+          if (near.length && inner.alpha > 0.002) layers.push({ points: near, colour: starCss(g.colour_k), glow: g.glow * inner.alpha, size: g.size });
+        }
       } else for (const g of levels) layers.push({ points: g.points, colour: LIGHT, glow: webGlow(total) * (0.4 + 0.6 * WEB_LEVEL_INK[g.level]!), size: 1.5 });
     } else {
       // Fainter to stronger, so the dense are drawn over the sparse.
@@ -141,7 +178,7 @@
       for (const m of marks) layers.push({ points: m.points, colour: m.name === "galaxy" ? colours.filament : colours.knot, size: m.size });
     }
     if (using === "gpu" && gpu) {
-      const { f, u } = basis(eye, [0, 0, 0]);
+      const { f, u } = basis(eye, lookAt);
       const dots: GpuDots[] = layers.map((l) => ({ points: l.points.map(rel), colour: l.colour, size: l.size, ...(l.glow !== undefined ? { glow: l.glow } : {}) }));
       gpu.draw({
         items: [],
@@ -164,7 +201,7 @@
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.fillStyle = isTrue ? SPACE_CSS : ground;
       g.fillRect(0, 0, w, h);
-      const { f, u } = basis(eye, [0, 0, 0]);
+      const { f, u } = basis(eye, lookAt);
       const r: Vec3 = [f[1] * u[2] - f[2] * u[1], f[2] * u[0] - f[0] * u[2], f[0] * u[1] - f[1] * u[0]];
       const k = Math.min(w, h) / 2 / Math.tan(FOV / 2);
       const put = (p: Vec3) => {
@@ -201,6 +238,7 @@
   // Turning: drag with a mouse (the choice becomes Free), arrows, wheel or the buttons to zoom.
   let dragFrom: { x: number; y: number; yaw: number; pitch: number } | null = null;
   function down(e: PointerEvent) {
+    if (aim) return;
     if ((e.target as HTMLElement).closest("button")) return;
     if (e.pointerType === "touch" && seen !== "free") return;
     spinning = false;
@@ -217,10 +255,12 @@
   }
   const up = () => (dragFrom = null);
   function wheel(e: WheelEvent) {
+    if (aim) return;
     e.preventDefault();
     zoomBy(e.deltaY > 0 ? 1.12 : 1 / 1.12);
   }
   function key(e: KeyboardEvent) {
+    if (aim) return;
     const k = e.key;
     if (k.startsWith("Arrow") && seen !== "free") onturned?.();
     if (k === "ArrowLeft") yaw -= 0.12;
@@ -258,21 +298,23 @@
   data-parcels={total}
   data-galaxies={lit}
   data-marks={marked}
-  data-spinning={spinning ? "yes" : "no"}
+  data-spinning={spinning && !aim ? "yes" : "no"}
+  data-journey={aim ? "" : undefined}
+  data-journey-inner={innerCount}
 >
   <div class="stage" bind:clientWidth={w} bind:clientHeight={h}>
     <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true"></canvas>
     <canvas bind:this={canvas2d} class="c2d" class:off={using !== "canvas"} aria-hidden="true"></canvas>
-    <div class="zoom" role="group" aria-label="Zoom and turn">
+    {#if !aim}<div class="zoom" role="group" aria-label="Zoom and turn">
       <button type="button" aria-label={spinning ? "Stop turning" : "Turn slowly"} data-spin onclick={() => (spinning = !spinning)}>{spinning ? "❚❚" : "↻"}</button>
       <button type="button" aria-label="Zoom in" onclick={() => zoomBy(1 / 1.25)}>+</button>
       <button type="button" aria-label="Zoom out" onclick={() => zoomBy(1.25)}>−</button>
-    </div>
+    </div>{/if}
   </div>
-  <p class="note">
+  {#if !aim}<p class="note">
     <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {sayNumber(total, 6)} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {sayNumber(cube.volume.smoothing_mpc, 2)} Mpc.</span>
     {#if isTrue && lights}<span>Light: {sayNumber(lit, 6)} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {sayNumber(WEB_LIGHT_K, 2)} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow. Each dot is inked by how crowded its matter is today, so the dense web stands out of the thin voids.{marked ? ` Bigger dots: ${sayNumber(marked, 6)} big galaxies, groups and clusters (haloes over 10¹² solar masses).` : ""}</span>{/if}
-  </p>
+  </p>{/if}
 </div>
 
 <style>
@@ -292,6 +334,11 @@
     overflow: hidden;
     cursor: grab;
     border: 1px solid var(--sse-rule);
+  }
+  .w3d[data-journey] .stage {
+    min-height: 0;
+    border: 0;
+    cursor: default;
   }
   .w3d:focus-visible {
     box-shadow: inset 0 0 0 2px var(--sse-accent);
