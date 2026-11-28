@@ -170,6 +170,7 @@ jobs:
       - run: node tests/ui/enlarge.e2e.mjs
       - run: node tests/ui/ladder-gpu.e2e.mjs
       - run: node tests/ui/stirred-gpu.e2e.mjs
+      - run: node tests/ui/settle-kit.e2e.mjs
       - run: node tests/ui/aurora.e2e.mjs --screens ui-screens
       - run: node tests/ui/composite.e2e.mjs --screens ui-screens
       - run: node tests/ui/hazard.e2e.mjs --screens ui-screens
