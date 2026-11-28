@@ -1,6 +1,6 @@
 # SSE4: stand-in pictures while things move, the proper picture at rest (track FL)
 
-Status: **PROPOSAL, 28 Nov 2026. Not accepted. Nothing here is built.** Written at the coordinator's word for Alex's ask of 28 Nov 13:14 UTC, after he chose stills for the stirred clouds: "can we 'fake movement' and when they stop, resettle ... A simple shader, rather than real maths. Even mobiles have decent shaders for this type of thing. We need to build this in as a standard feature to reuse. The ability to 'fake it if time moves too fast' and fall back to 'proper render' when you stop ... maybe you can still animate but limit to 1 fps for cloud updates ... Is this a 'visual flourish' system we need to have designed to reuse when this type of thing crops up (eg: transitions between the grand zoom)". Design only. FL is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 28 Nov 2026 13:23 UTC ("all brilliant ideas! yes").** His answers are in section 10A, and the warm-up he then asked about is section 6A (its two questions, 8 to 10, are still open). Nothing here is built. Written at the coordinator's word for Alex's ask of 28 Nov 13:14 UTC, after he chose stills for the stirred clouds: "can we 'fake movement' and when they stop, resettle ... A simple shader, rather than real maths. Even mobiles have decent shaders for this type of thing. We need to build this in as a standard feature to reuse. The ability to 'fake it if time moves too fast' and fall back to 'proper render' when you stop ... maybe you can still animate but limit to 1 fps for cloud updates ... Is this a 'visual flourish' system we need to have designed to reuse when this type of thing crops up (eg: transitions between the grand zoom)". Design only. FL is a code only, never shown in the product.
 
 Read with: `SSE4-visual-polish-design.md` section 3 (the three grades every drawn thing has) and 8 (tiers, the governor, sharpen at rest); `SSE4-stirred-clouds-design.md` sections 4 and 11A and `packages/WS5.md` (the measured cost); `packages/CLK1.md` (the picture clock); `SSE4-grand-zoom-design.md` sections 5.3, 5.4 and 10 and `packages/GZ8a-first-seam.md`; `SSE4-time-scales-design.md` section 9 (pace); `interface-style.md` rules 7 to 10.
 
@@ -26,7 +26,9 @@ Read with: `SSE4-visual-polish-design.md` section 3 (the three grades every draw
 
 8. **The grand zoom is the same thing with the place moving in place of the clock.** A level that is not read yet travels on its coarse picture and settles at the stop, in place of holding (question 6). Film, photographs and postcards never use a stand-in.
 
-9. **Seven small packages** (section 8). None touches the kernel or any golden. The first is a list of what exists; the mechanism is two files.
+9. **Warming up is the same system from the other end** (section 6A, added for Alex's question of 13:23 UTC). The stand-in covers a wait; the warm-up shortens it. Both need the same two facts: what is dear, and when its proper picture is ready. So the schedule gains one queue of builds that are known to be coming, worked through in the background and kept in memory.
+
+10. **Eight small packages** (section 8). None touches the kernel or any golden. The first is a list of what exists; the mechanism is two files.
 
 ---
 
@@ -202,6 +204,48 @@ Alex's rule of 27 Nov ("nothing worse than spotting the adventure because it is 
 
 ---
 
+## 6A. Warming up: when we know what is coming
+
+Alex, 28 Nov 13:23 UTC: "When we know something is going to take a great deal of time, like perhaps the Grand Zoom, and we know where it's going to take time because it hasn't been pre-calculated ... have a warm-up period that allows it to do the heavy maths, determine where things sit in the background, cache it up, and then run forward. Would that be a separate system or a variation on this one?"
+
+**A variation on this one.** Everything it needs is already in the record of 4.1: which pictures are dear, how to build each, and what each costs on this device. The one new thing is knowing **ahead**. The grand zoom design already reads ahead for a journey (its section 10); this makes that the schedule's job for every use.
+
+### How it works
+
+- **A known path gives a list.** Anything that knows where the view is going hands the schedule the proper pictures it will need, each with the moment it is needed. A journey's plan lists each level on the way down (it is a pure function of journey time, so the moments are exact). A running clock lists the next dates on the lattice. A drag on the ruler lists the dates either side.
+- **One queue.** The schedule works through the list in the order things are needed, in the background: kernel reads in the kernel's worker, pictures in the frame's spare time, under the governor as in 4.3. What is on screen now always comes first.
+- **It knows how long.** The device remembers how long each kind of build took last time (as the speed probe remembers its timings), so the wait can be told: "Getting the way down ready: about 20 seconds, 3 of 7 levels." The first time, it gives the design's estimate and says "about".
+- **Kept in memory only.** Warmed pictures go in the same cache as every other proper picture (4.5): on the device while memory allows, never in a file, save, pack or postcard. Where things sit (the places and names of a journey's levels) is a different matter: those are kernel facts, and the gazetteer already keeps them with the campaign by Alex's ruling of 25 Nov (GZ17). The warm-up asks the gazetteer first and only works out what it does not hold.
+- **The two ends meet.** If the viewer goes before the warm-up is done, the stand-in covers what is not ready (the coarse picture, question 6). If they wait, there is nothing to cover. The viewer never has to wait and never has to guess: the line says what is ready.
+- **It holds back when it should.** No warm-up on a hot phone (the heat watch), under data saver, or past the memory limit, unless the viewer asked for the journey. Then it warms only the next level.
+
+### While it warms: something worth looking at (Alex, 28 Nov 13:24 UTC)
+
+Alex: "we can have this 'doing something visually interesting' while it prepares to ensure a smooth journey. cache for future runs but ditch quickly if mem is needed elsewhere".
+
+- **The wait is the first stop.** The start level is on screen, live and in full, as any stop is (grand zoom 5.5): it can be turned, its things pressed, its caption read. Nothing is blocked and nothing is a spinner.
+- **The way down draws itself in.** The place line is the progress bar: each step inks in as its level becomes ready. Beside the target, each level's coarse picture appears as a small pane as soon as it is read and sharpens as its proper picture arrives, so the viewer watches the route being worked out, top to bottom. Every pane is a real picture of a real level; nothing is decoration.
+- **The level turns slowly** on the interface's own motion, as the web cube already does, and stops under reduced motion.
+- **Then the journey is smooth.** By default Go on shows "Getting ready…" with the time left and turns to the accent when every level is ready; a press before that goes early on coarse pictures (question 8).
+- **Kept for the next run.** Once warmed, a journey's pictures stay in memory, so playing it again, backing up, or a second journey that shares its upper levels starts at once.
+- **Given up quickly.** The warm cache is the first thing dropped when memory is wanted elsewhere: the picture on screen, the view's own textures and the kernel always come first. Levels furthest from where the viewer is go first, and whole levels go at once. Anything dropped is simply warmed again when next needed. Nothing is ever written to a file (question 10 asks about keeping across visits).
+
+### When a warm-up starts
+
+| Moment | What is warmed | Shown |
+|---|---|---|
+| A way in is opened (a bookmark row, a postcard, "Zoom in from the cosmic web") | every level of that journey | the start level at rest, with the one line and Go already live |
+| A Playbook Show step is next in line on the Run desk | that step's place, date and journey, while the current step is on screen | a quiet "ready" mark on the step for the GM only (question 9) |
+| The clock is playing | the next lattice dates for what is on screen | nothing; it is the Live state seen from ahead |
+| A place line step or a card is pointed at for half a second | that level's coarse picture only | nothing |
+| Film capture | everything, in full, before the first frame | the capture's own progress |
+
+### What it costs, by hand (GZ0's timings)
+
+A cold grand zoom on a desktop: the web cube 4 to 8 s, the neighbourhood 8.7 s, the galaxy's chart under 1 s, the world's faces 1 to 3 s, the site within 2 s: about 20 s in all. Stately travel is about 45 s of motion, so on a desktop a journey that starts once the first two levels are ready (about 15 s) never catches its own warm-up. On the phone stand-in the neighbourhood alone is 37 s; there the journey starts on the coarse picture of that level or waits, as the viewer likes, and the line says which.
+
+---
+
 ## 7. What changes for whom
 
 - **Explore, Edit, Play:** nothing new to press and no new screen. Pictures stop stalling or popping when time runs or a zoom travels, and settle when things stop. One clause in the note says when a stand-in is up.
@@ -224,6 +268,7 @@ Builder threads are the coordinator's to name (section 11). Each leaves main gre
 | **FL3** giants | The stirred still on the schedule: built at the size shown, on lattice dates, capped; `flowFace` replaced by Carry over a table baked from `want: "carry"`; Exposure at speed; the settle. With the stirred clouds thread, after PR 739 | FL2, PR 739 | M |
 | **FL4** said and checked | The note's clause from each use's words; the performance readout's line; a test that every declared use has a register row and every register row marked as a stand-in has a declared use | FL1 | S |
 | **FL5** the zoom | The journey port's "ready" answers proper, coarse or not yet; the journey travels on coarse and settles at a stop; the seam on the kit's Fade; capture waits for proper. With the crash zoom thread | FL2 | M |
+| **FL7** warming up | Section 6A: the schedule's queue of builds known to be coming, ordered by when they are needed; build times remembered per device; the "getting ready" line with its time; the way down drawing itself in at the start stop; the warm cache dropped first under memory pressure; the hold-backs (heat, data saver, memory). The journey's read-ahead and the playing clock's next dates become its first two users. Pure part in `settle.ts`, tests only; the journey's use lands with FL5 | FL1 | S |
 | **FL6** folding in | One at a time, each its own small PR: sharpen at rest takes its "moved" from the schedule (so the clock counts as movement in one place); orbits between answers; star cells; a world's finer tiles | FL1 | S each |
 
 **Later, not queued:** the time exposure for fast bodies (CLK3 already wants it; it is the Exposure kind on a body's arc); a world's cloud faces and sea on the Carry; belts and rings by their shear; a galaxy's turning at play; a view that turns with a giant so its cloud can be watched.
@@ -234,6 +279,7 @@ Red-first tests (each seen red with its fix removed; at least one absolute):
 - FL2: each node agrees with its processor twin within one pixel on a 64-wide patch; the Carry at zero seconds returns the picture untouched, to the bit; a pure jet carried for ten days matches the rows slid exactly; the Exposure at the limit equals the row mean.
 - FL3: a stopped clock shows pixels equal to PR 739's still at that date (absolute: the stand-in leaves nothing behind); a named storm's drawn centre is the kernel's at every picture while playing (rule 2); the still built for a giant 64 pixels across costs under a twentieth of the 512 one.
 - FL4: removing a register row turns the check red; the clause shows only while a stand-in shows.
+- FL7: builds are asked for in the order they are needed, and what is on screen is never queued behind them (absolute); a journey whose levels are all warmed never shows a stand-in; the time told is within a factor of two of the time taken on the second run; nothing warmed is written to storage (the test fails on any write); under memory pressure the warm cache is emptied before anything on screen is touched, furthest level first; a hot device warms one level only.
 - FL5: with the lower level's reads held back the journey travels on the coarse picture and settles at the stop; a coarse picture with fewer galaxies than the proper one makes the journey hold (the filled-in rule); a capture never contains a stand-in frame.
 
 ---
@@ -266,12 +312,36 @@ Red-first tests (each seen red with its fix removed; at least one absolute):
 
 7. **Accept that two seats may differ slightly while moving, and agree at rest?** *Recommend yes.*
 
+8. **May a journey be started before its warm-up is done?** Read with his message of 13:24 ("to ensure a smooth journey"): by default the journey waits at its start, with the way down drawing itself in, and goes when everything is ready. A press on Go before that leaves early and travels on coarse pictures where it catches the warm-up up. *Recommend yes to the early press; film always waits.* (Open.)
+
+9. **Should the Run desk warm the next Show step by itself?** While one step is on screen, the next step's place and journey are made ready, so a GM's reveal does not stall. It costs memory and some battery on the GM's device only. *Recommend yes.* (Open.)
+
+10. **"Cache for future runs": this visit only, or kept between visits?** Read here as: in memory while the app is open, in line with his rule of 27 Nov that stills never go in a file. Keeping pictures between visits would need the device's storage. The places and names already stay with the campaign (the gazetteer), so a later visit is quicker anyway. *Recommend memory only, this visit; look again if warm-ups feel long on return.* (Open.)
+
+---
+
+## 10A. Alex's answers, 28 Nov 2026 (13:23 UTC)
+
+"all brilliant ideas! yes"
+
+Questions 1 to 7: **yes**, each as recommended. So:
+
+- The line of section 3 stands: a stand-in is presentation only, tracked things are always true, and the proper picture is what is seen at rest.
+- The settle is the one change allowed while the clock is stopped.
+- One proper rebuild a second for each world while time runs.
+- Honest kinds first; a Hint needs his yes for each case.
+- Textures blur as a long exposure at speed.
+- A zoom travels on a coarse picture that shows the same things in the same places.
+- Seats may differ slightly while moving and agree at rest.
+
+In the same message he asked about warming up; the answer is section 6A and package FL7. At 13:24 UTC he added that the wait should show something visually interesting, and that the result is cached for future runs but given up quickly when memory is needed elsewhere; both are in 6A. Questions 8, 9 and 10 are still his to answer.
+
 ---
 
 ## 11. Routine choices, for the coordinator
 
 - Track code FL; status in `handover/status/flourish.md`. The design thread owns the note; builders add their own rows.
-- Builders, proposed: FL1, FL2, FL4 and FL6's sharpen-at-rest with "Build quality tiers and speed probe" (it owns `governor.ts`, `true-run.ts` and `still.ts`); FL3 with the stirred clouds thread; FL5 with "Build the crash zoom between places"; FL0 with whichever starts first. Code on Opus.
+- Builders, proposed: FL1, FL2, FL4, FL7 and FL6's sharpen-at-rest with "Build quality tiers and speed probe" (it owns `governor.ts`, `true-run.ts` and `still.ts`); FL3 with the stirred clouds thread; FL5 with "Build the crash zoom between places"; FL0 with whichever starts first. Code on Opus.
 - PR 739 is not held by this note. If it is accepted, the only ask of that thread is the one already made: keep the motion between rebuilds simple and in one place.
 - FL2's and FL3's screens on AC-ProArt under the standing permission, to `sse4/handover-screens/FL2-screens/` and `FL3-screens/`.
 - No CI change beyond each package's own test line.
@@ -288,6 +358,6 @@ Red-first tests (each seen red with its fix removed; at least one absolute):
 
 ## 13. Picking this up without the chat
 
-- Nothing is built. Start with FL0 only after Alex accepts; his answers go in a section 10A here and win where they differ.
-- The whole idea is section 1 points 2 and 3, the seven rules of section 3 and the table in 4.3.
+- Nothing is built. The note is accepted (section 10A); FL0 may start when the coordinator names a builder. Questions 8 to 10 (the warm-up) are open and hold only FL7.
+- The whole idea is section 1 points 2 and 3, the seven rules of section 3, the table in 4.3 and section 6A.
 - The first real user is the stirred still (FL3); read `packages/WS5.md` for its traps on the GPU (no loops round the wind, series for sine and cosine, one step a draw).
