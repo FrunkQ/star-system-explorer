@@ -40,7 +40,7 @@
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSmallSample, fromSystemScene, readRings, readSmallSample, type RingReader, type SmallReader, type SmallSample } from "../../system-3d/src/index.ts";
   import type { KernelRing } from "../../../renderer/src/index.ts";
-  import { readSeaGlint, readUmbras, type GlintReader, type SeaGlint, type UmbraReader, plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { readSeaGlint, readUmbras, type GlintReader, type SeaGlint, type UmbraReader, plumeFacts, readLiveStar, readingStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -605,7 +605,7 @@
     return () => clearTimeout(timer);
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
-  let liveStar = $state<LiveStar | null>(null);
+  let liveStar = $state.raw<LiveStar | null>(null); // raw: a deep proxy made every read of its prominences cost on each picture
   let liveStarWhy = $state("");
   $effect(() => {
     const sys = scene.system;
@@ -615,12 +615,14 @@
     const kept = liveStars.get(key);
     const show = (r: LiveStar | string) => ((liveStar = typeof r === "string" ? null : r), (liveStarWhy = typeof r === "string" ? r : ""));
     if (kept !== undefined) return void show(kept);
-    // While this star is read, the last system's star must not stand in for it: draw it plain until its facts come.
-    liveStar = null;
+    // While this star is read, the last system's star must not stand in for it: draw this one bare (its own
+    // temperature's limb darkening, nothing on it yet) until its activity comes.
+    const num = (k: string) => Number(star?.facts.find((x) => x.field === k)?.value);
+    const given = { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") };
+    liveStar = readingStar(a, given);
     liveStarWhy = "";
     let live = true;
-    const num = (k: string) => Number(star?.facts.find((x) => x.field === k)?.value);
-    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }, "system").then((r) => {
+    void readLiveStar(ctx.session as unknown as StarReader, sys, a, given, "system").then((r) => {
       liveStars.set(key, r);
       if (live) show(r);
     });

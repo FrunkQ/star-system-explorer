@@ -116,7 +116,7 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   }
   const lumpWords = light === "visible" && granules ? narrateLumps(lumps, discPx) : "";
   if (lumpWords) words.push(lumpWords);
-  words.push(narrateEvents(s, shown, light === "visible" ? ejections : [], !!ask.calm));
+  words.push(s.reading ? "Its spots, flares and prominences are still being read from the kernel." : narrateEvents(s, shown, light === "visible" ? ejections : [], !!ask.calm));
   const promWords = light === "visible" && halo ? narrateProminences(s, prominences, limb, reach) : "";
   if (promWords) words.push(promWords);
   const round = light === "visible" && !(granules && Math.min(LUMP_MAX, Math.max(0, lumps ?? 0)) * (discPx / 2) >= 0.25);
