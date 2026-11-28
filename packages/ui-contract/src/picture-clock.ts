@@ -114,12 +114,16 @@ export function rateWords(rate: number): string {
 
 /**
  * What a view says about its motion: at what rate it runs, and which named motions are faster than its pictures.
- * Empty `fast` gives the rate alone.
+ * Empty `fast` gives the rate alone. `standIns` are the clauses of the stand-ins showing now (FL4), added at the end.
  */
-export function motionWords(c: PictureClock, fast: readonly string[]): string {
-  if (!(c.rate > 0)) return "The clock is stopped, so the picture is still; play moves everything at its own speed.";
+export function motionWords(c: PictureClock, fast: readonly string[], standIns: readonly string[] = []): string {
+  // The clauses of any stand-ins showing (settle.ts `standInClause`, FL4): each said only while it shows, so a layer
+  // still settling after the clock stops says so too.
+  const extra = standIns.filter((x) => x.length > 0);
+  const tail = extra.length ? ` ${extra.join(" ")}` : "";
+  if (!(c.rate > 0)) return `The clock is stopped, so the picture is still; play moves everything at its own speed.${tail}`;
   const head = `Everything moves on the campaign's clock, ${rateWords(c.rate)}.`;
-  if (!fast.length) return head;
+  if (!fast.length) return head + tail;
   const list = fast.length === 1 ? fast[0]! : `${fast.slice(0, -1).join(", ")} and ${fast[fast.length - 1]}`;
-  return `${head} ${list} ${fast.length === 1 ? "goes" : "go"} round faster than the screen can show, so ${fast.length === 1 ? "it is" : "they are"} drawn where ${fast.length === 1 ? "it" : "they"} truly ${fast.length === 1 ? "is" : "are"} at each picture and may seem to jump or run backwards.`;
+  return `${head} ${list} ${fast.length === 1 ? "goes" : "go"} round faster than the screen can show, so ${fast.length === 1 ? "it is" : "they are"} drawn where ${fast.length === 1 ? "it" : "they"} truly ${fast.length === 1 ? "is" : "are"} at each picture and may seem to jump or run backwards.${tail}`;
 }
