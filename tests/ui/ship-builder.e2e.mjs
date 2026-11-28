@@ -36,8 +36,10 @@ try {
     await gm.goto(base);
     await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 20000 });
     await gm.locator('[data-door="sol"]').click();
-    await gm.locator('.rail [data-go], [data-rail-fold]').first().waitFor({ timeout: 20000 });
-    await gm.waitForTimeout(1500);
+    // The door is through once the chart shows the Solar System (the place line names it when it finishes); going to the
+    // Workshop before then is undone when it does.
+    await gm.waitForFunction(() => document.querySelector(".place")?.textContent?.includes("The Solar System"), null, { timeout: 60000 });
+    await gm.waitForTimeout(500);
     // The system opens in True (first visit, alpha); software drawing of True starves the page in headless Chromium,
     // so the system is put on its Chart before going to the Workshop.
     const chart = gm.getByRole("button", { name: "Chart", exact: true }).first();
