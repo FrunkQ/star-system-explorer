@@ -84,3 +84,19 @@ this route gives us more options... i.e. we may ship a smaller version of sol an
 - Publishing: the hub's own reader (`starsystemx-creator-hub` `src/lib/v4/read.ts`) accepts the bundled file (pack,
   universe, 1,285 held files, well under the 50 MB gate). It is uploaded from Alex's Explorers account, as the hub
   gives a pack id to whoever publishes it first; the hub takes the listing's title from the upload form ("Sol today").
+
+## Part 3 (28 Nov 2026): optional again
+
+Alex, 28 Nov 13:29 UTC: "Loading the history of Spaceflight pack, I think, was a mistake. I didn't realize the basic
+version came with a fully worked out solar system. We should keep that and only optionally load the Spaceflight pack
+with the history of Spaceflight." This withdraws part 2's autoload.
+
+- `stack.json` loses `from_explorers` and the shell loses the fetch into fresh campaigns: a new campaign opens on the
+  built-in Solar System alone and asks Explorers for nothing.
+- Sol today stays on Explorers (`sse.sol-today-0.1.0`) and is added only when someone asks: the item page's "Add to
+  my campaign in SSE4" link, or the file through Campaign… (Open, or a drop). The Explorers link now has a time limit
+  on each request (15 s listing, 90 s file), so a slow Explorers says why instead of waiting.
+- Campaigns that already took it while autoload was live keep it: nothing is taken off a campaign silently. It is
+  one pack in that campaign's stack, removable with Remove… on the Packs screen.
+- `tests/ui/rollcall.e2e.mjs` last part: a fresh campaign in a browser that says it is not automated asks Explorers
+  for nothing and holds no Sol today; the Explorers link adds it on the press and Roll call reads it.

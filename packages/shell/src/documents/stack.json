@@ -1,1 +1,1 @@
-{"schema": "sse.stack/0", "packs": ["packs/base-physics.json", "packs/base-time.json", "packs/base-reference.json", "packs/base-manifest.json", "packs/kestrel-player-data.json"], "catalogues": {"sol": "packs/base-sol.json"}, "from_explorers": ["https://explorers.starsystemx.com/api/v4/sse.sol-today-0.1.0"]}
+{"schema": "sse.stack/0", "packs": ["packs/base-physics.json", "packs/base-time.json", "packs/base-reference.json", "packs/base-manifest.json", "packs/kestrel-player-data.json"], "catalogues": {"sol": "packs/base-sol.json"}}
