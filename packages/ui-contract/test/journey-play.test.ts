@@ -94,3 +94,82 @@ test("home in the web cube: the halo of home's mass nearest home's own place, th
   assert.ok(Math.abs(h.moved_mpc - 3) < 1e-12);
   assert.equal(homeInCube([gs[2]!], home), null);
 });
+
+// --- FL5: travelling on a coarse picture, and the warm-up of the way down ---------------------------------------
+import { BuildTimes } from "../src/settle.ts";
+import { coarseFits, journeyReadNext, journeyWaitLine, journeyWarm, levelPasses, levelShows, startTurn, type LevelAnswer } from "../src/journey-play.ts";
+
+const HOST = { hot: false, data_saver: false, memory_over: false, asked: true };
+
+test("FL5: gone early, the journey travels on a level's coarse picture and settles onto the proper one at rest", () => {
+  const p = webToCluster();
+  const tIn = p.path[1]!.t_in;
+  const coarse: LevelAnswer = { state: "coarse", things: 70, of: 70 };
+  // Waiting (the default) it holds before the seam; gone early it travels on.
+  assert.equal(readyHold(p, tIn + 1, [true, coarse]).waiting, 1);
+  assert.deepEqual(readyHold(p, tIn + 1, [true, coarse], { early: true, film: false }), { t: tIn + 1, waiting: null });
+  assert.equal(levelShows(coarse, { early: true, film: false }, null, false), "coarse");
+  // The proper picture arrives mid-flight: the coarse one is kept until the journey rests, then it settles.
+  assert.equal(levelShows(true, { early: true, film: false }, "coarse", false), "coarse");
+  assert.equal(levelShows(true, { early: true, film: false }, "coarse", true), "proper");
+  assert.equal(levelShows(true, { early: true, film: false }, null, false), "proper");
+});
+
+test("FL5: a coarse picture with fewer galaxies than the proper one (or one that cannot say) makes the journey hold", () => {
+  const p = webToCluster();
+  const tIn = p.path[1]!.t_in;
+  const early = { early: true, film: false };
+  for (const c of [{ state: "coarse", things: 57, of: 70 }, { state: "coarse", things: 57, of: null }, { state: "coarse", things: 0, of: 0 }] as LevelAnswer[]) {
+    assert.equal(coarseFits(c), false);
+    assert.equal(levelPasses(c, early), false);
+    assert.equal(readyHold(p, tIn + 1, [true, c], early).waiting, 1, JSON.stringify(c));
+    assert.equal(levelShows(c, early, null, false), "hold");
+  }
+});
+
+test("FL5: film never travels on, or shows, a coarse picture", () => {
+  const p = webToCluster();
+  const tIn = p.path[1]!.t_in;
+  const coarse: LevelAnswer = { state: "coarse", things: 70, of: 70 };
+  const film = { early: true, film: true };
+  assert.equal(readyHold(p, tIn + 1, [true, coarse], film).waiting, 1);
+  assert.equal(levelShows(coarse, film, null, false), "hold");
+  // Even a level already showing coarse turns to the proper picture (or holds) under film.
+  assert.equal(levelShows(coarse, film, "coarse", false), "hold");
+  assert.equal(levelShows(true, film, "coarse", false), "proper");
+  // The start level too: a journey for film holds at its start until the first level is proper.
+  assert.deepEqual(readyHold(p, 1, [coarse, true], film), { t: 0, waiting: 0 });
+});
+
+test("FL5: the way down reads one level at a time in the order it is needed, the one on screen first", () => {
+  const p = webToCluster();
+  const at0 = { entry: 0, t: 0 };
+  assert.equal(journeyReadNext(p, at0, [false, false], HOST), 0);
+  assert.equal(journeyReadNext(p, at0, [true, false], HOST), 1);
+  assert.equal(journeyReadNext(p, at0, [true, true], HOST), null);
+  // Backed up to the web with the lower level still unread: the one on screen still comes first.
+  const w = journeyWarm(p, at0, [false, false]);
+  assert.deepEqual(w.map((x) => [x.kind, x.on_screen]), [["journey.web", true], ["journey.cluster", false]]);
+  assert.ok(w[1]!.needed_in_s > 0);
+  // A hot device still reads the next level of a journey the viewer asked for, and nothing it did not ask for.
+  assert.equal(journeyReadNext(p, at0, [true, false], { ...HOST, hot: true }), 1);
+  assert.equal(journeyReadNext(p, at0, [true, false], { ...HOST, hot: true, asked: false }), null);
+});
+
+test("FL5: the wait's line tells the time left from this device's own times once it has them", () => {
+  const p = webToCluster();
+  const times = new BuildTimes();
+  assert.equal(journeyWaitLine(p, [false, false], times), "Getting the way down ready: about 15 seconds, 0 of 2 levels.");
+  assert.equal(journeyWaitLine(p, [true, false], times, 2000), "Getting the way down ready: about 7 seconds, 1 of 2 levels.");
+  times.record("journey.cluster", 37000);
+  assert.equal(journeyWaitLine(p, [true, false], times), "Getting the way down ready: 37 seconds, 1 of 2 levels.");
+  assert.equal(journeyWaitLine(p, [true, true], times), "The way down is ready.");
+});
+
+test("FL5: the start level's slow turn eases back to the journey's line of sight within half a second", () => {
+  let a = startTurn(0, 10, true);
+  assert.ok(Math.abs(a - 1.2) < 1e-12);
+  a = 3; // nearly half a turn round
+  for (let i = 0; i < 30; i++) a = startTurn(a, 1 / 60, false);
+  assert.equal(a, 0);
+});

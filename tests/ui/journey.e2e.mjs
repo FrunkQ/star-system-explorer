@@ -4,6 +4,9 @@
 // travels down: the place line is the progress bar, the width line counts down, the seam draws both levels (the
 // web kept behind past the catalogue's reach), and it ends on the galaxies nearby. Back up returns to the start;
 // Escape leaves. More > "Zoom in from the cosmic web" opens it too.
+// Warming up (FL5): the levels read one at a time, the web first; Go says "Getting ready…" with the time left until
+// every level is in; a press before that goes early and, with no coarse picture of the galaxies nearby yet, holds
+// before the seam; a journey for film (film=1) never shows a coarse picture.
 import "./chart-first.mjs";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -35,14 +38,24 @@ try {
   assert.equal(await page.locator("[data-journey-step=web]").getAttribute("data-state"), "current");
   assert.equal(await page.locator("[data-journey-step=cluster]").getAttribute("data-state"), "coming");
   assert.equal(await page.locator("[data-journey-step=system]").getAttribute("data-state"), "off");
+  // The web reads first, alone: the galaxies nearby wait their turn so they do not delay the start.
+  assert.equal(await player.getAttribute("data-journey-opened"), "0", "only the web is reading at first");
+  assert.match(await page.locator("[data-journey-go]").innerText(), /Getting ready/);
+  assert.match(await page.locator("[data-journey-wait]").innerText(), /^Getting the way down ready: about \d+ seconds, 0 of 2 levels\.$/);
   await page.waitForSelector("[data-journey-layer=web][data-ready]", { timeout: 120000 });
+  await page.waitForFunction(() => document.querySelector("[data-journey-player]")?.getAttribute("data-journey-opened") === "0 1");
+  assert.equal(await page.locator("[data-journey-step=web]").getAttribute("data-ready"), "", "the place line inks in the web");
+  await shot(page, "0-getting-ready");
+  await page.waitForSelector("[data-journey-layer=cluster][data-ready]", { timeout: 120000, state: "attached" });
   assert.equal(await player.getAttribute("data-journey-t"), "0.00", "held at the start until Zoom in");
   assert.match(await page.locator("[data-journey-go]").innerText(), /Zoom in/);
+  assert.equal(await page.locator("[data-journey-wait]").count(), 0, "no wait line once the way down is ready");
   assert.ok(await page.locator("[data-journey-caption]").isVisible());
   assert.ok(await page.locator("[data-web-3d][data-journey]").isVisible(), "the web cube's own view, aimed by the journey");
   await shot(page, "1-web");
 
   await page.keyboard.press("Space");
+  assert.equal(await player.getAttribute("data-journey-early"), null, "waited for the warm-up: not early");
   // While moving: the width line counts down in light years and powers of ten.
   await page.waitForFunction(() => Number(document.querySelector("[data-journey-player]")?.getAttribute("data-journey-t")) > 0.3);
   assert.match(await page.locator("[data-journey-width]").innerText(), /light years across · [\d.]+ × 10/);
@@ -74,6 +87,32 @@ try {
   await player.waitFor({ state: "detached" });
   await more(page, "Zoom in from the cosmic web");
   await player.waitFor();
+  // Opened again in the same visit: the levels are in memory. The web is ready at once; the galaxies nearby answer
+  // from memory too, once the kernel has finished what the chart room behind asked of it on closing.
+  await page.waitForSelector("[data-journey-layer=web][data-ready]", { timeout: 5000, state: "attached" });
+  await page.waitForSelector("[data-journey-layer=cluster][data-ready]", { timeout: 60000, state: "attached" });
+  assert.match(await page.locator("[data-journey-go]").innerText(), /Zoom in/);
+
+  // Gone early, on a fresh visit: the web is in, the galaxies nearby are not; with no coarse picture of them the
+  // journey travels the web and holds before the seam (never half-faded), then goes on once they are read.
+  for (const film of [false, true]) {
+    const p2 = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+    p2.on("pageerror", (e) => errors.push(e.message));
+    await p2.goto(base + `#chart/cluster?from=web${film ? "&film=1" : ""}`);
+    await p2.waitForSelector("[data-journey-layer=web][data-ready]", { timeout: 120000 });
+    assert.equal(await p2.locator("[data-journey-layer=cluster][data-ready]").count(), 0, "the galaxies nearby still reading");
+    await p2.keyboard.press("Space");
+    const pl = p2.locator("[data-journey-player]");
+    assert.equal(await pl.getAttribute("data-journey-early"), film ? null : "", film ? "film never goes early" : "went early");
+    await p2.waitForFunction(() => document.querySelector("[data-journey-player]")?.getAttribute("data-journey-waiting") === "1", null, { timeout: 60000 });
+    if (!(await p2.locator("[data-journey-layer=cluster][data-ready]").count())) assert.match(await p2.locator("[data-journey-reading]").innerText(), /^Reading galaxies nearby…/);
+    assert.equal(await p2.locator("[data-journey-layer=cluster][data-picture]").count(), 0, "held before the seam: the galaxies nearby not shown");
+    // Every frame from here to the end: no stand-in (none is declared yet, and film never takes one).
+    await p2.waitForSelector("[data-journey-done]", { timeout: 120000 });
+    assert.equal(await p2.locator("[data-picture=coarse]").count(), 0);
+    assert.equal(await p2.locator("[data-journey-layer=cluster]").getAttribute("data-picture"), "proper");
+    await p2.context().close();
+  }
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("journey e2e: ok");
