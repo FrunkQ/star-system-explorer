@@ -6,6 +6,7 @@
 // never more than three flashes a second on the screen (exotic objects design, section 2.4), and no flashing at all
 // when the viewer asks for reduced motion.
 import { constant, planck } from "../../ui-contract/src/index.ts";
+import { srgb255, linear255 } from "./srgb.ts";
 import { flareProfile, type Flare, type LiveStar } from "./live-star.ts";
 
 export const EVENT_REFERENCES = [
@@ -161,8 +162,6 @@ export function ejectionShown(share: number, r: number): number {
   return Math.max(0, Math.min(1, v)) * EJECTION_SCALE.peak;
 }
 
-const decode = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-const encode = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 
 /**
  * Add the ejections to a square glow picture whose half-width is `reach` stellar radii, the star tilted `lat_view`
@@ -210,8 +209,8 @@ export function addEjections(out: { width: number; data: Uint8ClampedArray }, ej
       if (v <= 0) continue;
       const o = (py * n + px) * 4;
       v = Math.min(1, v);
-      for (let ch = 0; ch < 3; ch++) d[o + ch] = 255 * encode(Math.min(1, decode((d[o + ch] ?? 0) / 255) + rgb[ch]! * v));
-      d[o + 3] = 255 * encode(Math.min(1, decode((d[o + 3] ?? 0) / 255) + v));
+      for (let ch = 0; ch < 3; ch++) d[o + ch] = srgb255(linear255(d[o + ch] ?? 0) + rgb[ch]! * v);
+      d[o + 3] = srgb255(linear255(d[o + 3] ?? 0) + v);
     }
 }
 

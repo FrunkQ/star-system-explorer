@@ -615,6 +615,9 @@
     const kept = liveStars.get(key);
     const show = (r: LiveStar | string) => ((liveStar = typeof r === "string" ? null : r), (liveStarWhy = typeof r === "string" ? r : ""));
     if (kept !== undefined) return void show(kept);
+    // While this star is read, the last system's star must not stand in for it: draw it plain until its facts come.
+    liveStar = null;
+    liveStarWhy = "";
     let live = true;
     const num = (k: string) => Number(star?.facts.find((x) => x.field === k)?.value);
     void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }, "system").then((r) => {

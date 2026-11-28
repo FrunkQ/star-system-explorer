@@ -10,12 +10,14 @@ export const CLOSE_FLOOR_M = 3000;
 /** ...but never under this share of the radius, so a giant keeps a little of its curve in view (14 km over Jupiter). */
 export const CLOSE_FLOOR_SHARE = 2e-4;
 /**
- * Over a star the camera stops this share of the radius above the surface (the star close-up): 2.6 radii from its
- * centre the whole disc just fills a 45-degree view (asin(1/2.6) is 22.6 degrees), limb and prominences in sight. The
- * star's face and glow are flat pictures facing the camera (gpu.ts sprites) at most 512 and 640 px across; nearer,
- * they would be blown up past their detail and lose the sphere's shape (fudge register).
+ * Over a star the camera stops this share of the radius above the surface (the star close-up): 4.3 radii from its
+ * centre the disc's angular radius is 13.5 degrees, so it fills three fifths of a 45-degree view's height and a
+ * prominence standing a third of a radius over the limb is still in sight, clear of the cards at the top and foot
+ * (at 2.6 radii the disc filled the whole height, GPU check of 28 Nov 2026). The star's face and glow are flat
+ * pictures facing the camera (gpu.ts sprites) at most 512 and 640 px across; nearer, they would be blown up past
+ * their detail and lose the sphere's shape (fudge register).
  */
-export const STAR_CLOSE_SHARE = 1.6;
+export const STAR_CLOSE_SHARE = 3.3;
 /** Within this many radii of the centre a zoom step scales the height over the ground, and the view starts to tip. */
 export const CLOSE_REACH = 4;
 

@@ -2,7 +2,7 @@
 // patches) and the halo round it (the eye's glare, brightened by flares, with mass ejections leaving). Views that
 // show a star turning on its own clock call this; star.ts and live-star.ts stay the parts it is made of.
 import { thermalColour } from "../../ui-contract/src/index.ts";
-import { coronaScaleHeight, drawStar, granulesShow, type Convection, type StarDraw } from "./star.ts";
+import { coronaScaleHeight, drawStar, granulesShow, LUMP_MAX, type Convection, type StarDraw } from "./star.ts";
 import { spotsAt, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
 import { bigCellContrast, cellsAcross, churningBigCells, churningGranules, granuleBlur, limbLumps, narrateLumps } from "./star-churn.ts";
 import { addEjections, ejectionsAt, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares, type EjectionNow, type ShownFlare } from "./star-events.ts";
@@ -43,6 +43,8 @@ export interface StarNow {
   reach: number;
   /** Words for the note beside the view. */
   words: string[];
+  /** The disc's edge is a plain circle (visible light, no lumps showing), so a view may cut it on the screen. */
+  round?: boolean;
 }
 
 const profiles = new Map<string, Float64Array>();
@@ -115,9 +117,10 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   const lumpWords = light === "visible" && granules ? narrateLumps(lumps, discPx) : "";
   if (lumpWords) words.push(lumpWords);
   words.push(narrateEvents(s, shown, light === "visible" ? ejections : [], !!ask.calm));
-  const promWords = light === "visible" && halo ? narrateProminences(s, prominences, limb) : "";
+  const promWords = light === "visible" && halo ? narrateProminences(s, prominences, limb, reach) : "";
   if (promWords) words.push(promWords);
-  return { shown, ejections, prominences, limb, boost, reach, words };
+  const round = light === "visible" && !(granules && Math.min(LUMP_MAX, Math.max(0, lumps ?? 0)) * (discPx / 2) >= 0.25);
+  return { shown, ejections, prominences, limb, boost, reach, words, round };
 }
 
 /**
@@ -133,7 +136,7 @@ const faces = new Map<string, { width: number; data: Uint8ClampedArray; version:
  * one buffer per key, redrawn only when the moment or size changes, `px` the disc's diameter on screen in device
  * pixels. No halo: the caller draws the glare where it has a camera to measure it by.
  */
-export function liveFace(key: string, s: LiveStar, ask: StarNowAsk & { px: number }): { face: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number }; now: StarNow } {
+export function liveFace(key: string, s: LiveStar, ask: StarNowAsk & { px: number }): { face: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number; round: boolean }; now: StarNow } {
   const disc = ask.disc ?? 0.92;
   const width = FACE_STEPS.find((n) => n >= ask.px / disc) ?? FACE_STEPS[FACE_STEPS.length - 1]!;
   const drawn = `${width}|${ask.t}|${ask.light ?? "visible"}|${ask.calm ? 1 : 0}|${disc}|${ask.lat_deg ?? 7}`;
@@ -148,5 +151,5 @@ export function liveFace(key: string, s: LiveStar, ask: StarNowAsk & { px: numbe
     f.drawn = drawn;
     f.version++;
   }
-  return { face: { key: `star:${key}:${ask.light === "xray" ? "x" : "v"}`, version: f.version, width, data: f.data, disc }, now: f.now };
+  return { face: { key: `star:${key}:${ask.light === "xray" ? "x" : "v"}`, version: f.version, width, data: f.data, disc, round: !!f.now.round }, now: f.now };
 }
